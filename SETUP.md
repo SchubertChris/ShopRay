@@ -1,6 +1,6 @@
 # ShopRay — Setup Guide
 
-**Version:** 1.1.0 | **Letzte Aktualisierung:** 2026-05-14
+**Version:** 1.2.0 | **Letzte Aktualisierung:** 2026-05-14
 
 Dieser Guide führt dich Schritt für Schritt durch die Einrichtung deines ShopRay-Templates —
 von der Installation bis zum fertigen, live geschalteten Shop.
@@ -12,17 +12,19 @@ von der Installation bis zum fertigen, live geschalteten Shop.
 1. [Voraussetzungen](#1-voraussetzungen)
 2. [Installation](#2-installation)
 3. [Umgebungsvariablen einrichten](#3-umgebungsvariablen-einrichten)
-4. [Theme wählen](#4-theme-wählen)
-5. [Supabase anbinden (Datenbank & Login)](#5-supabase-anbinden)
+4. [Datenbank einrichten (Supabase Schema)](#4-datenbank-einrichten)
+5. [Supabase anbinden (Auth & API)](#5-supabase-anbinden)
 6. [Stripe anbinden (Zahlungen)](#6-stripe-anbinden)
-7. [E-Mail-Versand einrichten](#7-e-mail-versand-einrichten)
-8. [Shop-Name & Basiseinstellungen](#8-shop-name--basiseinstellungen)
-9. [Features aktivieren oder deaktivieren](#9-features-aktivieren-oder-deaktivieren)
-10. [Produkte befüllen](#10-produkte-befüllen)
-11. [Rechtliche Texte anpassen](#11-rechtliche-texte-anpassen)
-12. [Admin-Bereich einrichten](#12-admin-bereich)
-13. [Deployment (Veröffentlichen)](#13-deployment)
-14. [Was gehört zu welchem Paket?](#14-pakete--was-gehört-wozu)
+7. [Backend starten & Webhook einrichten](#7-backend--webhook)
+8. [E-Mail-Versand einrichten](#8-e-mail-versand-einrichten)
+9. [Theme wählen](#9-theme-wählen)
+10. [Shop-Name & Basiseinstellungen](#10-shop-name--basiseinstellungen)
+11. [Features aktivieren oder deaktivieren](#11-features-aktivieren-oder-deaktivieren)
+12. [Produkte befüllen](#12-produkte-befüllen)
+13. [Rechtliche Texte anpassen](#13-rechtliche-texte-anpassen)
+14. [Admin-Bereich einrichten](#14-admin-bereich)
+15. [Deployment (Veröffentlichen)](#15-deployment)
+16. [Was gehört zu welchem Paket?](#16-pakete--was-gehört-wozu)
 
 ---
 
@@ -107,7 +109,38 @@ VITE_FEATURE_LIVE_CHAT=false    # Live-Chat (erst aktivieren wenn Anbieter konfi
 
 ---
 
-## 4. Theme wählen
+## 4. Datenbank einrichten
+
+Bevor du Supabase verbindest, musst du das Datenbankschema einmalig anlegen.
+Das Schema erstellt alle nötigen Tabellen und Sicherheitsregeln automatisch.
+
+### Schritt 1 — Schema ausführen
+
+1. Gehe zu **supabase.com → Dein Projekt → SQL Editor**
+2. Öffne die Datei `database/schema.sql` aus deinem ShopRay-Ordner
+3. Kopiere den gesamten Inhalt in den SQL Editor
+4. Klicke **"Run"**
+
+Das war's. Folgende Tabellen werden angelegt:
+
+| Tabelle | Inhalt |
+|---|---|
+| `profiles` | Kundendaten (Name, Adresse, Rolle) |
+| `products` | Produkte (Preis, Beschreibung, Lager) |
+| `orders` | Bestellungen mit Status-Verlauf |
+| `order_items` | Einzelne Artikel je Bestellung |
+| `reviews` | Produktbewertungen |
+| `tickets` | Support-Tickets |
+
+### Was passiert automatisch
+
+- Wenn sich ein Nutzer registriert → Profil wird automatisch angelegt
+- Wenn eine Bewertung geändert wird → Produkt-Rating wird aktualisiert
+- Alle Tabellen haben **Row Level Security (RLS)** — jeder Nutzer sieht nur seine eigenen Daten
+
+---
+
+## 5. Supabase anbinden
 
 ShopRay kommt mit **4 Farbpaletten**, jede verfügbar in **Dark und Light Mode** — macht 8 Themes gesamt.
 
@@ -207,16 +240,77 @@ Testkarte die immer funktioniert: `4242 4242 4242 4242`, Ablaufdatum: beliebig i
 
 ### Schritt 3 — Webhook einrichten (für Bestellbestätigungen)
 
-Damit dein Shop automatisch benachrichtigt wird wenn eine Zahlung erfolgreich war:
-
-1. Stripe Dashboard: **Developers → Webhooks → Add endpoint**
-2. URL: `https://api.deinshop.de/webhooks/stripe`
-3. Events auswählen: `payment_intent.succeeded`, `payment_intent.payment_failed`
-4. Den **Signing Secret** kopieren → ins Backend als `STRIPE_WEBHOOK_SECRET`
+Der Webhook wird in Schritt 7 nach dem Backend-Deployment eingerichtet.
 
 ---
 
-## 7. E-Mail-Versand einrichten
+## 7. Backend & Webhook einrichten
+
+Das Backend ist für Stripe-Zahlungen, Bestellverarbeitung und E-Mails zuständig.
+Es läuft als separates Vercel-Projekt.
+
+### Schritt 1 — Backend lokal starten
+
+```bash
+cd Backend
+npm install
+npm run dev
+# → http://localhost:5000
+# Test: http://localhost:5000/api/health → {"status":"ok"}
+```
+
+### Schritt 2 — Stripe Webhook lokal testen
+
+Installiere die [Stripe CLI](https://stripe.com/docs/stripe-cli) und führe aus:
+
+```bash
+stripe login
+stripe listen --forward-to localhost:5000/api/webhook/stripe
+```
+
+Die CLI zeigt einen **Webhook Signing Secret** (`whsec_...`) — trage ihn in `Backend/.env` als `STRIPE_WEBHOOK_SECRET` ein.
+
+Testzahlung auslösen:
+```bash
+stripe trigger checkout.session.completed
+```
+
+### Schritt 3 — Backend deployen (Vercel)
+
+1. Vercel → **"Add New Project"**
+2. Repository auswählen → Root Directory: **`Backend`**
+3. Alle Variablen aus `Backend/.env` eintragen
+4. Deploy
+
+### Schritt 4 — Stripe Webhook in Produktion
+
+Nach dem Deployment:
+
+1. Stripe Dashboard → **Developers → Webhooks → Add endpoint**
+2. URL: `https://DEINE-BACKEND-URL.vercel.app/api/webhook/stripe`
+3. Events auswählen:
+   - `checkout.session.completed`
+   - `payment_intent.payment_failed`
+   - `charge.refunded`
+4. **Signing Secret** kopieren → in Vercel Backend-Projekt als `STRIPE_WEBHOOK_SECRET`
+
+### Backend-Endpoints Übersicht
+
+| Methode | Route | Beschreibung |
+|---|---|---|
+| GET | `/api/health` | Status-Check |
+| POST | `/api/webhook/stripe` | Stripe-Events (intern) |
+| GET | `/api/products` | Alle aktiven Produkte |
+| GET | `/api/products/:slug` | Einzelnes Produkt |
+| POST | `/api/orders/checkout` | Stripe Checkout starten |
+| GET | `/api/orders` | Eigene Bestellungen (Auth) |
+| GET | `/api/customers/me` | Eigenes Profil (Auth) |
+| GET | `/api/customers/me/export` | DSGVO-Datenexport (Auth) |
+| DELETE | `/api/customers/me` | Konto löschen (DSGVO Art. 17) |
+
+---
+
+## 8. E-Mail-Versand einrichten
 
 Der Shop sendet automatisch E-Mails für:
 - Bestellbestätigungen
