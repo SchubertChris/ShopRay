@@ -1,0 +1,23 @@
+@use 'sass:math';
+
+// Konvertiert px → rem (Basis 16px)
+// Verwendung: font-size: rem(14px);
+@function rem($px) {
+  @return math.div(math.div($px, 1px), 16) * 1rem;
+}
+
+// Fluid-Größe mit clamp() — responsive ohne Breakpoints
+// Verwendung: font-size: fluid(16px, 32px);
+@function fluid($min-px, $max-px, $min-vw: 375px, $max-vw: 1280px) {
+  $slope: math.div(
+    math.div($max-px - $min-px, 1px),
+    math.div($max-vw - $min-vw, 1px)
+  );
+  $intercept: math.div($min-px, 1px) - ($slope * math.div($min-vw, 1px));
+
+  @return clamp(
+    #{rem($min-px)},
+    #{$intercept * 0.0625rem} + #{$slope * 100vw},
+    #{rem($max-px)}
+  );
+}

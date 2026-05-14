@@ -1,0 +1,495 @@
+@use '../../abstracts/mixins' as *;
+@use '../../abstracts/functions' as *;
+
+// Breakpoints (alle min-width = mobile-first):
+// respond-to('md')  = 768px+
+// respond-to('lg')  = 1024px+
+
+// ─── COLLECTION HERO ────────────────────────────────────────────────────────
+
+.collection-hero {
+  background: var(--clr-dark-surface);
+  color:      var(--clr-on-dark);
+  padding:    3.5rem 0 2.75rem;
+
+  @include respond-to('lg') { padding: 5rem 0 3.5rem; }
+
+  &__inner {
+    max-width:   1280px;
+    margin:      0 auto;
+    padding:     0 5%;
+    display:     grid;
+    grid-template-columns: 1fr;
+    gap:         2rem;
+    align-items: end;
+
+    @include respond-to('lg') {
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+    }
+  }
+
+  &__eyebrow {
+    display:        block;
+    font-size:      0.62rem;
+    font-weight:    700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color:          color-mix(in srgb, var(--clr-on-dark) 35%, transparent);
+    margin-bottom:  0.5rem;
+  }
+
+  &__title {
+    font-size:      clamp(3.25rem, 10vw, 7.5rem);
+    font-weight:    800;
+    letter-spacing: -0.045em;
+    line-height:    0.88;
+    color:          var(--clr-on-dark);
+    margin:         0;
+  }
+
+  &__search-col { align-self: end; }
+
+  &__sub {
+    font-size:   rem(15px);
+    color:       color-mix(in srgb, var(--clr-on-dark) 55%, transparent);
+    margin-top:  0.75rem;
+    line-height: 1.6;
+
+    strong { color: var(--clr-on-dark); font-weight: 700; }
+  }
+}
+
+// ─── SUCHFELD ───────────────────────────────────────────────────────────────
+
+.collection-search {
+  position: relative;
+  width:    100%;
+
+  &__icon {
+    position:       absolute;
+    left:           1.125rem;
+    top:            50%;
+    transform:      translateY(-50%);
+    font-size:      0.62rem;
+    font-weight:    700;
+    letter-spacing: 0.04em;
+    color:          color-mix(in srgb, var(--clr-on-dark) 25%, transparent);
+    pointer-events: none;
+    font-family:    monospace;
+    user-select:    none;
+  }
+
+  &__input {
+    width:         100%;
+    padding:       0.875rem 3rem 0.875rem 3.25rem;
+    background:    color-mix(in srgb, var(--clr-on-dark) 6%, transparent);
+    border:        1px solid color-mix(in srgb, var(--clr-on-dark) 13%, transparent);
+    border-radius: 14px;
+    color:         var(--clr-on-dark);
+    font-size:     0.9rem;
+    font-family:   inherit;
+    outline:       none;
+    @include transition(border-color, background);
+
+    &::placeholder { color: color-mix(in srgb, var(--clr-on-dark) 24%, transparent); }
+
+    &:focus {
+      border-color: color-mix(in srgb, var(--clr-primary) 55%, transparent);
+      background:   color-mix(in srgb, var(--clr-on-dark) 9%, transparent);
+    }
+  }
+
+  &__clear {
+    position:    absolute;
+    right:       0.875rem;
+    top:         50%;
+    transform:   translateY(-50%);
+    background:  none;
+    border:      none;
+    cursor:      pointer;
+    color:       color-mix(in srgb, var(--clr-on-dark) 40%, transparent);
+    font-size:   1.2rem;
+    line-height: 1;
+    padding:     0.2rem 0.4rem;
+    @include transition(color);
+
+    &:hover { color: var(--clr-on-dark); }
+  }
+}
+
+// ─── STICKY FILTER BAR ──────────────────────────────────────────────────────
+
+.collection-filter {
+  position:              sticky;
+  top:                   64px; // direkt unter Header (nav height: 64px)
+  z-index:               150;
+  background:            var(--clr-background);
+  border-bottom:         1px solid var(--clr-secondary);
+  backdrop-filter:       blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  &__inner {
+    max-width:       1280px;
+    margin:          0 auto;
+    padding:         0.625rem 5%;
+    display:         flex;
+    align-items:     center;
+    gap:             0.3rem;
+    overflow-x:      auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar { display: none; }
+  }
+
+  &__chip {
+    flex-shrink:    0;
+    padding:        0.35rem 0.875rem;
+    border-radius:  100px;
+    border:         1px solid var(--clr-secondary);
+    background:     none;
+    color:          color-mix(in srgb, var(--clr-text) 52%, transparent);
+    font-size:      0.76rem;
+    font-weight:    600;
+    cursor:         pointer;
+    font-family:    inherit;
+    white-space:    nowrap;
+    @include transition(background, color, border-color);
+
+    &:hover   { border-color: var(--clr-primary); color: var(--clr-primary); }
+
+    &.is-active {
+      background:   var(--clr-primary);
+      border-color: var(--clr-primary);
+      color:        #fff;
+    }
+  }
+
+  &__spacer { flex: 1; min-width: 0.5rem; }
+
+  &__sort {
+    flex-shrink:   0;
+    padding:       0.35rem 0.75rem;
+    background:    var(--clr-secondary);
+    border:        none;
+    border-radius: 8px;
+    color:         var(--clr-text);
+    font-size:     0.74rem;
+    font-weight:   600;
+    cursor:        pointer;
+    font-family:   inherit;
+
+    &:focus { outline: none; }
+  }
+}
+
+// ─── BODY ───────────────────────────────────────────────────────────────────
+
+.collection-body {
+  padding: 1.75rem 0 6rem;
+
+  @include respond-to('lg') { padding: 2.25rem 0 8rem; }
+
+  &__count {
+    font-size:      0.74rem;
+    color:          color-mix(in srgb, var(--clr-text) 40%, transparent);
+    margin-bottom:  1.25rem;
+    letter-spacing: 0.02em;
+
+    span { font-weight: 700; color: var(--clr-text); font-size: 0.82rem; }
+    em   { font-style: normal; color: var(--clr-primary); font-weight: 600; }
+  }
+}
+
+// ─── EMPTY STATE ────────────────────────────────────────────────────────────
+
+.collection-empty {
+  padding:        6rem 0;
+  text-align:     center;
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            0.75rem;
+
+  &__zero {
+    display:        block;
+    font-size:      clamp(7rem, 22vw, 16rem);
+    font-weight:    800;
+    letter-spacing: -0.06em;
+    line-height:    1;
+    color:          color-mix(in srgb, var(--clr-text) 5%, transparent);
+    user-select:    none;
+  }
+
+  &__title {
+    font-size:   1.2rem;
+    font-weight: 700;
+    color:       var(--clr-text);
+    margin:      0;
+  }
+
+  &__text {
+    font-size: 0.875rem;
+    color:     color-mix(in srgb, var(--clr-text) 50%, transparent);
+    margin:    0 0 0.5rem;
+  }
+}
+
+// ─── SIGNATURE COLLECTION GRID ──────────────────────────────────────────────
+//
+// Markenzeichen-Raster — 5er-Muster:
+//
+//   [HERO 2×2  ] [  2  ]
+//   [           ] [  3  ]
+//   [  4  ] [WIDE 2×1  ]
+//
+// → Diagonal: Hero oben-links, Wide unten-rechts — wiederholt
+// → Auf Tablet: 2-spaltig, Feature-Karte (5n+1) voll breit
+// → Auf Mobile: einspaltig, alle Karten gleich
+
+.collection-grid {
+  display:               grid;
+  grid-template-columns: 1fr;
+  gap:                   8px;
+
+  // Tablet: 2-spaltig, 5n+1 = Breit-Feature
+  @include respond-to('md') {
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows:        330px;
+    grid-auto-flow:        dense;
+
+    .product-card:nth-child(5n + 1) { grid-column: span 2; }
+  }
+
+  // Desktop: Volles Signature-Muster
+  @include respond-to('lg') {
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows:        370px;
+    grid-auto-flow:        dense;
+
+    .product-card:nth-child(5n + 1) { grid-column: span 2; grid-row: span 2; }
+    .product-card:nth-child(5n)     { grid-column: span 2; }
+  }
+}
+
+// Alle Cards ab Tablet: Flex-Spalte — Bild wächst in verfügbaren Raum
+@include respond-to('md') {
+  .collection-grid .product-card {
+    display:        flex;
+    flex-direction: column;
+
+    .product-card__image-wrap {
+      flex:         1;
+      aspect-ratio: unset;
+      min-height:   0;
+    }
+  }
+}
+
+// ── HERO-CARD (5n+1) — Glass-Panel-Overlay auf Desktop ─────────────────────
+//
+// Bild füllt die gesamte 2×2-Karte (740px+ groß).
+// Body-Bereich als Frosted-Glass-Panel am unteren Rand overlay.
+
+@include respond-to('lg') {
+  .collection-grid .product-card:nth-child(5n + 1) {
+    position: relative;
+
+    .product-card__body {
+      position:                absolute;
+      bottom:                  0;
+      left:                    0;
+      right:                   0;
+      background:              color-mix(in srgb, var(--clr-surface) 78%, transparent);
+      backdrop-filter:         blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top:              1px solid color-mix(in srgb, var(--clr-text) 7%, transparent);
+      padding:                 1.5rem 1.75rem 1.75rem;
+    }
+
+    .product-card__title a { font-size: 1.15rem; }
+    .product-card__price   { font-size: 1.25rem; }
+
+    &:hover {
+      transform:  translateY(-4px);
+      box-shadow: 0 28px 80px var(--clr-shadow);
+    }
+  }
+}
+
+// ── WIDE-CARD (5n) — Horizontales Layout auf Desktop ───────────────────────
+//
+// 2 Spalten × 1 Zeile: Bild links (44%), Content rechts (56%).
+
+@include respond-to('lg') {
+  .collection-grid .product-card:nth-child(5n) {
+    flex-direction: row;
+
+    .product-card__image-wrap {
+      flex:        unset;
+      width:       44%;
+      flex-shrink: 0;
+    }
+
+    .product-card__body {
+      flex:            1;
+      display:         flex;
+      flex-direction:  column;
+      justify-content: center;
+      padding:         1.75rem 2rem;
+    }
+
+    .product-card__title a { font-size: 1.05rem; }
+    .product-card__price   { font-size: 1.15rem; }
+  }
+}
+
+// ─── QUICK-VIEW PREIS (Legacy) ──────────────────────────────────────────────
+.qv-price {
+  margin-top:  1rem;
+  font-weight: 700;
+  color:       var(--clr-primary);
+}
+
+// ─── NEUHEITEN HERO ─────────────────────────────────────────────────────────
+.collection-hero--new {
+  background: var(--clr-primary);
+  position:   relative;
+  overflow:   hidden;
+
+  &::before {
+    content:        '';
+    position:       absolute;
+    width:          520px;
+    height:         520px;
+    border-radius:  50%;
+    border:         72px solid color-mix(in srgb, var(--clr-on-dark) 5%, transparent);
+    top:            -200px;
+    right:          -100px;
+    pointer-events: none;
+  }
+
+  .collection-hero__inner { position: relative; z-index: 1; }
+
+  .collection-hero__eyebrow {
+    color: color-mix(in srgb, var(--clr-on-dark) 55%, transparent);
+
+    &::before {
+      content:        '';
+      display:        inline-block;
+      width:          6px;
+      height:         6px;
+      border-radius:  50%;
+      background:     var(--clr-on-dark);
+      opacity:        0.9;
+      margin-right:   0.5rem;
+      vertical-align: middle;
+      animation:      new-pulse 1.8s ease-in-out infinite;
+    }
+  }
+
+  .collection-hero__title { color: var(--clr-on-dark); }
+
+  .collection-hero__sub {
+    color: color-mix(in srgb, var(--clr-on-dark) 58%, transparent);
+    strong { color: var(--clr-on-dark); }
+  }
+
+  .collection-search__input {
+    background:   color-mix(in srgb, var(--clr-on-dark) 10%, transparent);
+    border-color: color-mix(in srgb, var(--clr-on-dark) 18%, transparent);
+    color:        var(--clr-on-dark);
+
+    &::placeholder { color: color-mix(in srgb, var(--clr-on-dark) 28%, transparent); }
+
+    &:focus {
+      border-color: color-mix(in srgb, var(--clr-on-dark) 42%, transparent);
+      background:   color-mix(in srgb, var(--clr-on-dark) 15%, transparent);
+    }
+  }
+
+  .collection-search__icon  { color: color-mix(in srgb, var(--clr-on-dark) 22%, transparent); }
+  .collection-search__clear {
+    color: color-mix(in srgb, var(--clr-on-dark) 38%, transparent);
+    &:hover { color: var(--clr-on-dark); }
+  }
+}
+
+@keyframes new-pulse {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50%       { opacity: 0.3; transform: scale(0.65); }
+}
+
+// ─── SALE HERO ───────────────────────────────────────────────────────────────
+.collection-hero--sale {
+  background: var(--clr-dark-surface);
+  position:   relative;
+  overflow:   hidden;
+
+  // Massive "SALE" watermark text
+  &::before {
+    content:        'SALE';
+    position:       absolute;
+    font-size:      clamp(10rem, 28vw, 20rem);
+    font-weight:    900;
+    letter-spacing: -0.06em;
+    line-height:    1;
+    color:          color-mix(in srgb, var(--clr-on-dark) 4%, transparent);
+    right:          -1%;
+    top:            50%;
+    transform:      translateY(-50%) rotate(-7deg);
+    pointer-events: none;
+    user-select:    none;
+    font-family:    inherit;
+    z-index:        0;
+  }
+
+  // Diagonal stripe texture
+  &::after {
+    content:    '';
+    position:   absolute;
+    inset:      -50%;
+    background: repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--clr-on-dark) 2%, transparent) 0px,
+      color-mix(in srgb, var(--clr-on-dark) 2%, transparent) 1px,
+      transparent 1px,
+      transparent 24px
+    );
+    pointer-events: none;
+    z-index:        0;
+  }
+
+  .collection-hero__inner { position: relative; z-index: 1; }
+
+  .collection-hero__eyebrow {
+    color:          var(--clr-error);
+    letter-spacing: 0.14em;
+  }
+
+  .collection-hero__title {
+    font-size: clamp(4.5rem, 14vw, 10rem);
+    color:     var(--clr-on-dark);
+  }
+
+  .collection-hero__sub {
+    color: color-mix(in srgb, var(--clr-on-dark) 45%, transparent);
+    strong { color: var(--clr-error); }
+  }
+
+  .collection-search__input {
+    background:   color-mix(in srgb, var(--clr-on-dark) 7%, transparent);
+    border-color: color-mix(in srgb, var(--clr-on-dark) 11%, transparent);
+    color:        color-mix(in srgb, var(--clr-on-dark) 85%, transparent);
+
+    &::placeholder { color: color-mix(in srgb, var(--clr-on-dark) 22%, transparent); }
+
+    &:focus { border-color: color-mix(in srgb, var(--clr-on-dark) 30%, transparent); }
+  }
+
+  .collection-search__icon  { color: color-mix(in srgb, var(--clr-on-dark) 18%, transparent); }
+  .collection-search__clear {
+    color: color-mix(in srgb, var(--clr-on-dark) 28%, transparent);
+    &:hover { color: color-mix(in srgb, var(--clr-on-dark) 65%, transparent); }
+  }
+}

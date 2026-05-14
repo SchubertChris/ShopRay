@@ -1,0 +1,136 @@
+@use '../abstracts/mixins' as *;
+@use '../abstracts/functions' as *;
+
+.footer {
+  background: var(--clr-background);
+  border-top: 1px solid var(--clr-secondary);
+  padding: 4rem 5% 2rem;
+  // Safe-Area: Home-Button-Bereich auf iPhones ohne Homebutton
+  padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+
+  &__inner {
+    max-width: 1280px;
+    margin-inline: auto;
+  }
+
+  // 4-spaltiges Grid ab md
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    margin-bottom: 3rem;
+
+    @include respond-to('md') {
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+    }
+  }
+
+  // Marken-Spalte
+  &__brand-logo {
+    font-size: rem(20px);
+    font-weight: 800;
+    color: var(--clr-text);
+    letter-spacing: -0.03em;
+    margin-bottom: 0.75rem;
+
+    span { color: var(--clr-primary); }
+  }
+
+  // Social-Links
+  &__socials {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  &__social-link {
+    @include flex-center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--clr-secondary);
+    font-size: rem(12px);
+    font-weight: 700;
+    color: var(--clr-text);
+    opacity: 0.6;
+    text-decoration: none;
+    @include transition(opacity);
+
+    &:hover { opacity: 1; }
+  }
+
+  &__brand-desc {
+    font-size: rem(13px);
+    color: var(--clr-text);
+    opacity: 0.5;
+    line-height: 1.75;
+    max-width: 240px;
+  }
+
+  // Link-Spalten
+  &__col-title {
+    font-size: rem(11px);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--clr-text);
+    opacity: 0.35;
+    margin-bottom: 1rem;
+  }
+
+  &__links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  &__link {
+    font-size: rem(14px);
+    color: var(--clr-text);
+    opacity: 0.6;
+    @include transition(opacity, color);
+
+    &:hover {
+      opacity: 1;
+      color: var(--clr-primary);
+    }
+  }
+
+  // Unterer Streifen
+  &__bottom {
+    border-top: 1px solid var(--clr-secondary);
+    padding-top: 1.5rem;
+    @include flex-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  &__copyright {
+    font-size: rem(12px);
+    color: var(--clr-text);
+    opacity: 0.3;
+  }
+
+  &__legal {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  &__legal-link {
+    font-size: rem(12px);
+    color: var(--clr-text);
+    opacity: 0.3;
+    @include transition(opacity);
+
+    &:hover { opacity: 0.8; }
+  }
+
+  // Cookie-Einstellungen zurücksetzen — als Button gestylt wie ein Link
+  &__legal-btn {
+    background:  none;
+    border:      none;
+    padding:     0;
+    cursor:      pointer;
+    font-family: inherit;
+  }
+}

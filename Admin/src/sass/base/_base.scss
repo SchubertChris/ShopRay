@@ -1,0 +1,45 @@
+@use '../abstracts/mixins' as *;
+
+html { font-size: 16px; }
+
+body {
+  color:            var(--clr-text);
+  background-color: var(--clr-background);
+  font-family:      'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  @include transition(background-color, color);
+  -webkit-user-select: none;
+  user-select:         none;
+}
+
+// Text-Selektion auf Lese- und Eingabebereichen erlauben
+.admin-content--readable,
+input,
+textarea,
+select,
+[contenteditable] {
+  -webkit-user-select: text;
+  user-select:         text;
+}
+
+img { -webkit-user-drag: none; }
+
+::selection {
+  background: var(--clr-primary);
+  color: #fff;
+}
+
+::-webkit-scrollbar       { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background:    var(--clr-secondary);
+  border-radius: 3px;
+  &:hover { background: var(--clr-accent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration:       0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration:      0.01ms !important;
+  }
+}

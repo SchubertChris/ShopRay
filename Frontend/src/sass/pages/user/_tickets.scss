@@ -1,0 +1,423 @@
+@use '../../abstracts/mixins' as *;
+@use '../../abstracts/functions' as *;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TICKET-LISTE
+// ═══════════════════════════════════════════════════════════════════════════
+
+.tickets-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            1.75rem;
+  padding-block:  2rem;
+}
+
+// ── Head ─────────────────────────────────────────────────────────────────────
+
+.tickets-head {
+  display:     flex;
+  align-items: flex-start;
+  gap:         1rem;
+
+  &__left {
+    flex:           1;
+    display:        flex;
+    flex-direction: column;
+    gap:            0.2rem;
+  }
+
+  &__title {
+    font-size:      clamp(1.4rem, 2.5vw, 1.9rem);
+    font-weight:    800;
+    letter-spacing: -0.03em;
+    color:          var(--clr-text);
+    margin:         0;
+  }
+
+  &__sub {
+    font-size:   0.82rem;
+    color:       color-mix(in srgb, var(--clr-text) 45%, transparent);
+    margin:      0;
+  }
+}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+
+.tickets-tabs {
+  display:    flex;
+  gap:        0.25rem;
+  flex-wrap:  wrap;
+  border-bottom: 1px solid var(--clr-secondary);
+  padding-bottom: 0;
+}
+
+.tickets-tab {
+  display:     flex;
+  align-items: center;
+  gap:         0.4rem;
+  padding:     0.5rem 0.875rem;
+  border:      none;
+  background:  none;
+  cursor:      pointer;
+  font-size:   0.82rem;
+  font-weight: 600;
+  color:       color-mix(in srgb, var(--clr-text) 45%, transparent);
+  font-family: inherit;
+  border-bottom:  2px solid transparent;
+  margin-bottom:  -1px;
+  @include transition(color, border-color);
+
+  &:hover {
+    color: var(--clr-text);
+  }
+
+  &.is-active {
+    color:        var(--clr-primary);
+    border-color: var(--clr-primary);
+  }
+
+  &__count {
+    font-size:      0.65rem;
+    font-family:    monospace;
+    font-weight:    700;
+    background:     color-mix(in srgb, var(--clr-text) 8%, transparent);
+    border-radius:  10px;
+    padding:        0.1rem 0.4rem;
+    min-width:      18px;
+    text-align:     center;
+
+    .tickets-tab.is-active & {
+      background: color-mix(in srgb, var(--clr-primary) 12%, transparent);
+      color:      var(--clr-primary);
+    }
+  }
+}
+
+// ── Empty State ──────────────────────────────────────────────────────────────
+
+.tickets-empty {
+  display:         flex;
+  flex-direction:  column;
+  align-items:     center;
+  text-align:      center;
+  gap:             0.875rem;
+  padding:         4rem 2rem;
+
+  &__icon {
+    width:           64px;
+    height:          64px;
+    border-radius:   50%;
+    background:      color-mix(in srgb, var(--clr-primary) 8%, transparent);
+    border:          1.5px solid color-mix(in srgb, var(--clr-primary) 20%, transparent);
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    color:           color-mix(in srgb, var(--clr-primary) 55%, transparent);
+    margin-bottom:   0.5rem;
+  }
+
+  &__title {
+    font-size:      1.15rem;
+    font-weight:    800;
+    letter-spacing: -0.02em;
+    color:          var(--clr-text);
+    margin:         0;
+  }
+
+  &__body {
+    font-size:   0.85rem;
+    line-height: 1.7;
+    color:       color-mix(in srgb, var(--clr-text) 48%, transparent);
+    max-width:   360px;
+    margin:      0;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TICKET ERSTELLEN
+// ═══════════════════════════════════════════════════════════════════════════
+
+.ticket-new-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            2rem;
+  padding-block:  2rem;
+  max-width:      640px;
+}
+
+// ── Head ─────────────────────────────────────────────────────────────────────
+
+.ticket-new-head {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.5rem;
+
+  &__back {
+    font-size:       0.78rem;
+    font-weight:     600;
+    color:           var(--clr-primary);
+    text-decoration: none;
+    align-self:      flex-start;
+    @include transition(opacity);
+
+    &:hover { opacity: 0.7; }
+  }
+
+  &__title {
+    font-size:      clamp(1.4rem, 2.5vw, 1.9rem);
+    font-weight:    800;
+    letter-spacing: -0.03em;
+    color:          var(--clr-text);
+    margin:         0;
+  }
+
+  &__sub {
+    font-size:   0.82rem;
+    line-height: 1.6;
+    color:       color-mix(in srgb, var(--clr-text) 45%, transparent);
+    margin:      0;
+    max-width:   480px;
+  }
+}
+
+// ── Form ─────────────────────────────────────────────────────────────────────
+
+.ticket-form {
+  display:        flex;
+  flex-direction: column;
+  gap:            1.25rem;
+
+  &__api-error {
+    padding: 0.875rem 1.125rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--clr-error) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--clr-error) 25%, transparent);
+    color: var(--clr-error-dark);
+    font-size: rem(13px);
+    font-weight: 500;
+  }
+
+  &__row {
+    display: grid;
+    gap:     1rem;
+
+    @include respond-to('md') { grid-template-columns: 1fr 1fr; }
+  }
+
+  &__field {
+    display:        flex;
+    flex-direction: column;
+    gap:            0.4rem;
+  }
+
+  &__label {
+    font-size:      0.68rem;
+    font-weight:    700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color:          color-mix(in srgb, var(--clr-text) 50%, transparent);
+  }
+
+  &__input,
+  &__textarea {
+    width:         100%;
+    padding:       0.8rem 1rem;
+    background:    var(--clr-background);
+    border:        1px solid var(--clr-secondary);
+    border-radius: 12px;
+    color:         var(--clr-text);
+    font-size:     0.9rem;
+    font-family:   inherit;
+    outline:       none;
+    @include transition(border-color, box-shadow);
+
+    &::placeholder { color: color-mix(in srgb, var(--clr-text) 28%, transparent); }
+
+    &:focus {
+      border-color: var(--clr-primary);
+      box-shadow:   0 0 0 3px color-mix(in srgb, var(--clr-primary) 12%, transparent);
+    }
+  }
+
+  &__textarea {
+    resize:      vertical;
+    min-height:  140px;
+    line-height: 1.6;
+  }
+
+  &__select-wrap { position: relative; }
+
+  &__select {
+    width:         100%;
+    padding:       0.8rem 2.5rem 0.8rem 1rem;
+    background:    var(--clr-background);
+    border:        1px solid var(--clr-secondary);
+    border-radius: 12px;
+    color:         var(--clr-text);
+    font-size:     0.9rem;
+    font-family:   inherit;
+    outline:       none;
+    appearance:    none;
+    cursor:        pointer;
+    @include transition(border-color, box-shadow);
+
+    &:focus {
+      border-color: var(--clr-primary);
+      box-shadow:   0 0 0 3px color-mix(in srgb, var(--clr-primary) 12%, transparent);
+    }
+  }
+
+  &__select-arrow {
+    position:       absolute;
+    right:          1rem;
+    top:            50%;
+    transform:      translateY(-50%);
+    pointer-events: none;
+    width:          10px;
+    height:         6px;
+
+    &::before {
+      content:      '';
+      display:      block;
+      width:        0;
+      height:       0;
+      border-left:  5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top:   6px solid color-mix(in srgb, var(--clr-text) 40%, transparent);
+    }
+  }
+
+  // Datei-Upload ──────────────────────────────────────────────────────────────
+
+  &__file-drop {
+    display:       block;
+    cursor:        pointer;
+    border:        1.5px dashed var(--clr-secondary);
+    border-radius: 14px;
+    background:    var(--clr-background);
+    @include transition(border-color, background);
+
+    &:hover {
+      border-color: color-mix(in srgb, var(--clr-primary) 50%, transparent);
+      background:   color-mix(in srgb, var(--clr-primary) 4%, transparent);
+    }
+  }
+
+  &__file-inner {
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    gap:             0.4rem;
+    padding:         2rem 1.5rem;
+    text-align:      center;
+    color:           color-mix(in srgb, var(--clr-text) 38%, transparent);
+    pointer-events:  none;
+  }
+
+  &__file-label {
+    font-size:   0.85rem;
+    font-weight: 600;
+    color:       color-mix(in srgb, var(--clr-text) 55%, transparent);
+  }
+
+  &__file-hint {
+    font-size:   0.7rem;
+    font-family: monospace;
+    letter-spacing: 0.04em;
+  }
+
+  &__file-input {
+    position: absolute;
+    width:    1px;
+    height:   1px;
+    opacity:  0;
+    overflow: hidden;
+  }
+
+  // Footer ─────────────────────────────────────────────────────────────────────
+
+  &__footer {
+    display:    flex;
+    gap:        0.75rem;
+    flex-wrap:  wrap;
+    padding-top: 0.5rem;
+  }
+}
+
+// ── Sende-State ───────────────────────────────────────────────────────────────
+
+.ticket-sent {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.875rem;
+  padding-block:  2rem;
+  max-width:      520px;
+
+  &__icon {
+    width:         52px;
+    height:        52px;
+    border-radius: 50%;
+    background:    color-mix(in srgb, var(--clr-primary) 10%, transparent);
+    border:        1.5px solid color-mix(in srgb, var(--clr-primary) 38%, transparent);
+    position:      relative;
+    margin-bottom: 0.5rem;
+
+    &::before,
+    &::after {
+      content:       '';
+      position:      absolute;
+      background:    var(--clr-primary);
+      border-radius: 2px;
+    }
+
+    &::before {
+      width:     3px;
+      height:    9px;
+      bottom:    15px;
+      left:      16px;
+      transform: rotate(-45deg);
+      transform-origin: bottom left;
+    }
+
+    &::after {
+      width:     3px;
+      height:    17px;
+      bottom:    15px;
+      left:      22px;
+      transform: rotate(40deg);
+      transform-origin: bottom left;
+    }
+  }
+
+  &__tag {
+    font-family:    monospace;
+    font-size:      0.6rem;
+    font-weight:    700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color:          var(--clr-primary);
+    display:        block;
+  }
+
+  &__title {
+    font-size:      1.35rem;
+    font-weight:    800;
+    letter-spacing: -0.02em;
+    color:          var(--clr-text);
+    margin:         0;
+  }
+
+  &__body {
+    font-size:   0.88rem;
+    line-height: 1.7;
+    color:       color-mix(in srgb, var(--clr-text) 50%, transparent);
+    margin:      0;
+  }
+
+  &__actions {
+    display:  flex;
+    gap:      0.75rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+}

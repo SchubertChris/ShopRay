@@ -1,0 +1,27 @@
+@use '../abstracts/variables' as *;
+
+// Standard-Theme beim ersten Laden
+:root {
+  @include set-theme-vars('sage-light');
+  --clr-error:      #ef4444;
+  --clr-error-dark: #dc2626;
+  --clr-success:    #22c55e;
+  --clr-warning:    #f59e0b;
+
+  // Sidebar ist immer dunkel — theme-unabhängig
+  --sidebar-bg:       #0f1110;
+  --sidebar-text:     rgba(240, 244, 241, 0.65);
+  --sidebar-text-active: #f0f4f1;
+  --sidebar-border:   rgba(255, 255, 255, 0.06);
+  --sidebar-width:    240px;
+  --topbar-height:    56px;
+}
+
+[data-theme='sage-light']     { @include set-theme-vars('sage-light');     }
+[data-theme='sage-dark']      { @include set-theme-vars('sage-dark');      --sidebar-bg: #0c0e0d; }
+[data-theme='navy-light']     { @include set-theme-vars('navy-light');     }
+[data-theme='navy-dark']      { @include set-theme-vars('navy-dark');      --sidebar-bg: #060c1a; }
+[data-theme='terra-light']    { @include set-theme-vars('terra-light');    }
+[data-theme='terra-dark']     { @include set-theme-vars('terra-dark');     --sidebar-bg: #0e0a05; }
+[data-theme='electric-light'] { @include set-theme-vars('electric-light'); }
+[data-theme='electric-dark']  { @include set-theme-vars('electric-dark');  --sidebar-bg: #040812; }

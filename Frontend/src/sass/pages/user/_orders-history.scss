@@ -1,0 +1,73 @@
+@use '../../abstracts/mixins' as *;
+@use '../../abstracts/functions' as *;
+
+// ─── SEITENÜBERSCHRIFT ─────────────────────────────────────────────────────
+.orders-history__title {
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 2rem;
+}
+
+.orders-history__count {
+  font-size: rem(16px);
+  font-weight: 500;
+  opacity: 0.45;
+}
+
+// ─── FEHLER- UND LEER-ZUSTÄNDE ────────────────────────────────────────────
+.orders-history__error {
+  padding: 1.25rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--clr-error) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--clr-error) 20%, transparent);
+  color: var(--clr-error-dark);
+  font-size: rem(14px);
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.orders-history__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25rem;
+  padding: 3rem 0;
+}
+
+.orders-history__empty-text {
+  font-size: rem(15px);
+  color: var(--clr-text);
+  opacity: 0.55;
+}
+
+// ─── ORDER-CARD: KLICKBAR ──────────────────────────────────────────────────
+.order-card--clickable {
+  cursor: pointer;
+}
+
+// ─── STATUS-BADGE ──────────────────────────────────────────────────────────
+.order-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 50px;
+  font-size: rem(12px);
+  font-weight: 700;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  &--pending   { background: color-mix(in srgb, var(--clr-warning) 12%, transparent); color: var(--clr-warning-dark); }
+  &--paid      { background: color-mix(in srgb, var(--clr-success) 12%, transparent); color: var(--clr-success-dark); }
+  &--confirmed { background: color-mix(in srgb, var(--clr-info)    12%, transparent); color: var(--clr-info-dark); }
+  &--shipped   { background: color-mix(in srgb, var(--clr-info)    12%, transparent); color: var(--clr-info-dark); }
+  &--delivered { background: color-mix(in srgb, var(--clr-success) 12%, transparent); color: var(--clr-success-dark); }
+  &--cancelled { background: color-mix(in srgb, var(--clr-error)   12%, transparent); color: var(--clr-error-dark); }
+}

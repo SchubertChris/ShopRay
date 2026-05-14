@@ -1,0 +1,81 @@
+@use '../abstracts/functions' as *;
+
+// ─── STARS ─────────────────────────────────────────────────────────────────
+.stars {
+  display: inline-flex;
+  gap: 2px;
+  line-height: 1;
+  font-size: rem(14px);
+
+  &--sm { font-size: rem(13px); }
+  &--lg { font-size: rem(16px); }
+
+  &__star {
+    color: var(--clr-secondary);
+    &--active { color: var(--clr-star); }
+  }
+}
+
+// ─── PRODUCT IMAGE ──────────────────────────────────────────────────────────
+// 8 Gradient-Varianten als Fallback; echte Bilder via IMAGES-Config (images.ts)
+// Bild-Modus: <img> + __overlay (Farb-Tint aus Theme, mix-blend-mode: multiply)
+// Gradient-Modus: __shape (organische Form, Farbe aus Theme)
+.product-image {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--clr-primary) 0%, var(--clr-accent) 100%);
+
+  &--v1 { background: linear-gradient(135deg, var(--clr-primary) 0%, var(--clr-accent) 100%); }
+  &--v2 { background: linear-gradient(160deg, var(--clr-accent) 0%, var(--clr-primary) 80%); }
+  &--v3 { background: linear-gradient(120deg, var(--clr-primary) 30%, var(--clr-secondary) 100%); }
+  &--v4 { background: linear-gradient(145deg, var(--clr-accent) 0%, var(--clr-primary) 100%); }
+  &--v5 { background: linear-gradient(110deg, var(--clr-primary) 0%, var(--clr-accent) 60%); }
+  &--v6 { background: linear-gradient(155deg, var(--clr-accent) 20%, var(--clr-primary) 100%); }
+  &--v7 { background: linear-gradient(130deg, var(--clr-primary) 0%, var(--clr-accent) 80%); }
+  &--v8 { background: linear-gradient(140deg, var(--clr-accent) 0%, var(--clr-primary) 100%); }
+
+  // ── Echtes Bild (URL-Modus) ─────────────────────────────────────────────
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  // Farb-Overlay: legt Theme-Farben als subtilen Tint über das Bild
+  // mix-blend-mode: multiply → Bild + Palette verschmelzen automatisch
+  &__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--clr-primary), var(--clr-accent));
+    mix-blend-mode: multiply;
+    opacity: 0.22;
+    pointer-events: none;
+  }
+
+  // ── Gradient-Fallback (kein Bild) ───────────────────────────────────────
+  &__shape {
+    position: relative;
+    z-index: 1;
+    width: 40%;
+    height: 40%;
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 50%;
+
+    .product-image--v1 & { border-radius: 50%; }
+    .product-image--v2 & { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+    .product-image--v3 & { border-radius: 60% 40% 30% 70% / 40% 50% 50% 60%; }
+    .product-image--v4 & { border-radius: 40%; }
+    .product-image--v5 & { border-radius: 50% 50% 30% 30%; }
+    .product-image--v6 & { border-radius: 70% 30% 40% 60% / 50% 60% 40% 50%; }
+    .product-image--v7 & { border-radius: 40%; }
+    .product-image--v8 & { border-radius: 30% 70% 50% 50% / 50% 50% 50% 50%; }
+  }
+}

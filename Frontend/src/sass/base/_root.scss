@@ -1,0 +1,38 @@
+@use "../abstracts/variables" as *;
+
+// ─── 0. SEMANTISCHE FARBEN — theme-unabhängig, gelten immer ────────────────
+// Statusfarben sind semantisch fix — grün bleibt grün, rot bleibt rot.
+:root {
+  --clr-success:       #22c55e;
+  --clr-success-dark:  #16a34a;
+  --clr-error:         #ef4444;
+  --clr-error-dark:    #dc2626;
+  --clr-warning:       #f59e0b;
+  --clr-warning-dark:  #d97706;
+  --clr-info:          #3b82f6;
+  --clr-info-dark:     #2563eb;
+  --clr-star:          #f59e0b;
+}
+
+// ─── 1. STANDARD-FALLBACK (kommt zuerst → wird von den theme-rules unten überschrieben)
+:root {
+  @include set-theme-vars("sage-light");
+
+  @media (prefers-color-scheme: dark) {
+    &:not([data-theme]) {
+      @include set-theme-vars("sage-dark");
+    }
+  }
+}
+
+// ─── 2. LIGHT MODES — kommen nach :root → gewinnen bei gleicher Spezifität
+[data-theme="sage-light"]     { @include set-theme-vars("sage-light"); }
+[data-theme="navy-light"]     { @include set-theme-vars("navy-light"); }
+[data-theme="terra-light"]    { @include set-theme-vars("terra-light"); }
+[data-theme="electric-light"] { @include set-theme-vars("electric-light"); }
+
+// ─── 3. DARK MODES
+[data-theme="sage-dark"]      { @include set-theme-vars("sage-dark"); }
+[data-theme="navy-dark"]      { @include set-theme-vars("navy-dark"); }
+[data-theme="terra-dark"]     { @include set-theme-vars("terra-dark"); }
+[data-theme="electric-dark"]  { @include set-theme-vars("electric-dark"); }

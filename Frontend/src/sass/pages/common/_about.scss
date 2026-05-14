@@ -1,0 +1,1270 @@
+@use '../../abstracts/mixins' as *;
+@use '../../abstracts/functions' as *;
+
+// Breakpoints (min-width / mobile-first):
+// respond-to('sm')  = 640px+
+// respond-to('md')  = 768px+
+// respond-to('lg')  = 1024px+
+// respond-to('xl')  = 1280px+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KEYFRAMES
+// ═══════════════════════════════════════════════════════════════════════════
+
+@keyframes ag-float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  35%       { transform: translateY(-12px) rotate(2deg); }
+  70%       { transform: translateY(-5px) rotate(-1.5deg); }
+}
+
+@keyframes ag-morph {
+  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  20%       { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+  50%       { border-radius: 50% 40% 60% 30% / 40% 50% 40% 60%; }
+  75%       { border-radius: 40% 60% 30% 60% / 60% 40% 70% 30%; }
+}
+
+@keyframes ag-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ag-orbit {
+  from { transform: rotate(0deg) translateX(var(--orbit-r, 40px)) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(var(--orbit-r, 40px)) rotate(-360deg); }
+}
+
+@keyframes about-line-grow {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+@keyframes metric-blur-in {
+  from { opacity: 0; filter: blur(16px); transform: translateY(24px) scale(0.88); }
+  to   { opacity: 1; filter: blur(0);    transform: translateY(0)   scale(1); }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ANIMATED GRAPHIC (ag) — CSS-Art Platzhalter
+// Drop-in-Replace: ersetze .ag durch ein <img> oder <lottie-player>
+// ═══════════════════════════════════════════════════════════════════════════
+
+.ag {
+  position:        relative;
+  width:           100%;
+  height:          100%;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  animation:       ag-float 7s ease-in-out infinite;
+  will-change:     transform;
+
+  &__blob {
+    position:   absolute;
+    width:      62%;
+    height:     62%;
+    background: linear-gradient(135deg, var(--clr-primary), var(--clr-accent));
+    opacity:    0.9;
+    animation:  ag-morph 10s ease-in-out infinite,
+                ag-float 7s ease-in-out infinite;
+    will-change: border-radius, transform;
+  }
+
+  &__ring {
+    position:      absolute;
+    border-radius: 50%;
+    pointer-events: none;
+
+    &--1 {
+      width:     78%;
+      height:    78%;
+      border:    1.5px solid color-mix(in srgb, var(--clr-primary) 42%, transparent);
+      animation: ag-spin 14s linear infinite;
+    }
+
+    &--2 {
+      width:     96%;
+      height:    96%;
+      border:    1px solid color-mix(in srgb, var(--clr-accent) 22%, transparent);
+      animation: ag-spin 24s linear infinite reverse;
+    }
+  }
+
+  &__dot {
+    position:      absolute;
+    top:           50%;
+    left:          50%;
+    border-radius: 50%;
+    background:    var(--clr-primary);
+    pointer-events: none;
+
+    &--1 {
+      --orbit-r: 38px;
+      width:     9px;
+      height:    9px;
+      margin:    -4.5px 0 0 -4.5px;
+      animation: ag-orbit 8s linear infinite;
+    }
+
+    &--2 {
+      --orbit-r: 52px;
+      width:     6px;
+      height:    6px;
+      margin:    -3px 0 0 -3px;
+      background: var(--clr-accent);
+      animation:  ag-orbit 13s linear infinite reverse;
+    }
+
+    &--3 {
+      --orbit-r: 28px;
+      width:     5px;
+      height:    5px;
+      margin:    -2.5px 0 0 -2.5px;
+      opacity:   0.55;
+      animation: ag-orbit 18s linear infinite;
+    }
+  }
+
+  &__initial {
+    position:       relative;
+    z-index:        2;
+    font-size:      clamp(2.5rem, 6vw, 4rem);
+    font-weight:    800;
+    color:          rgba(255, 255, 255, 0.95);
+    letter-spacing: -0.04em;
+    text-shadow:
+      0 2px 12px rgba(0, 0, 0, 0.35),
+      0 0 40px rgba(0, 0, 0, 0.2);
+  }
+}
+
+// Farbvarianten — jede Chapter / Value / Prozess-Grafik anders
+.ag--c1, .ag--v1, .ag--p1, .ag--t1 {
+  .ag__blob { background: linear-gradient(135deg, var(--clr-primary) 0%, var(--clr-accent) 100%); }
+}
+.ag--c2, .ag--v2, .ag--p2, .ag--t2 {
+  .ag__blob { background: linear-gradient(165deg, var(--clr-accent) 0%, var(--clr-primary) 100%); }
+}
+.ag--c3, .ag--v3, .ag--p3, .ag--t3 {
+  .ag__blob {
+    background: linear-gradient(120deg,
+      var(--clr-primary) 20%,
+      color-mix(in srgb, var(--clr-primary) 55%, var(--clr-accent)) 100%
+    );
+  }
+}
+.ag--c4, .ag--p4, .ag--t4 {
+  .ag__blob {
+    background: linear-gradient(150deg,
+      color-mix(in srgb, var(--clr-accent) 75%, var(--clr-primary)) 0%,
+      var(--clr-accent) 100%
+    );
+  }
+}
+
+// Größenanpassungen
+.ag--hero .ag__blob { width: 55%; height: 55%; }
+.ag--chapter {
+  .ag__blob { width: 70%; height: 70%; }
+  .ag__ring--1 { width: 88%; height: 88%; }
+}
+.ag--team .ag__blob { width: 80%; height: 80%; opacity: 0.75; }
+
+// ─── FOTO-ERSATZ (Drop-in für .ag — echtes Bild mit Theme-Overlay) ──────────
+// Füllt den Parent-Container vollständig aus (position: relative erwartet)
+.about-photo {
+  position: relative;
+  width:    100%;
+  height:   100%;
+  overflow: hidden;
+
+  img {
+    position:   absolute;
+    inset:      0;
+    width:      100%;
+    height:     100%;
+    object-fit: cover;
+    display:    block;
+  }
+
+  &__overlay {
+    position:       absolute;
+    inset:          0;
+    background:     linear-gradient(135deg, var(--clr-primary), var(--clr-accent));
+    mix-blend-mode: multiply;
+    opacity:        0.2;
+    pointer-events: none;
+  }
+
+  // Hero: runde Ecken wie das .ag--hero Element
+  &--hero {
+    border-radius: 24px;
+  }
+
+  // Chapter: leicht abgerundete Ecken für die Timeline
+  &--chapter {
+    border-radius: 16px;
+  }
+
+  // Value: füllt die Karte oben (16/9 aspect-ratio vom Parent)
+  &--value {
+    border-radius: 0;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 1. ABOUT PAGE WRAPPER
+// ═══════════════════════════════════════════════════════════════════════════
+
+.about-page {
+  overflow-x: hidden;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 2. HERO
+// ═══════════════════════════════════════════════════════════════════════════
+
+.about-hero {
+  position:    relative;
+  min-height:  100dvh;
+  display:     flex;
+  align-items: center;
+  background:  var(--clr-dark-surface);
+  color:       var(--clr-on-dark);
+  overflow:    hidden;
+
+  // Hintergrundbild + Farbblobs — parallax-verschoben via --about-sy
+  &__bg {
+    position:            absolute;
+    inset:               0;
+    pointer-events:      none;
+    // Hintergrundbild (gesetzt via --img-hero-about CSS-Variable in main.tsx)
+    background-image:    var(--img-hero-about, none);
+    background-size:     cover;
+    background-position: center;
+    transform:           translateY(calc(var(--about-sy, 0px) * 0.28));
+    will-change:         transform;
+
+    // Farbige Overlays + dunkle Scrim (Lesbarkeit bei Fotos)
+    &::after {
+      content:  '';
+      position: absolute;
+      inset:    0;
+      background:
+        radial-gradient(ellipse 65% 55% at 90% 20%,
+          color-mix(in srgb, var(--clr-primary) 22%, transparent), transparent 65%),
+        radial-gradient(ellipse 45% 55% at 10% 80%,
+          color-mix(in srgb, var(--clr-accent) 14%, transparent), transparent 65%),
+        var(--img-hero-about-overlay, transparent);
+    }
+  }
+
+  &__inner {
+    position:              relative;
+    z-index:               1;
+    width:                 100%;
+    max-width:             1280px;
+    margin:                0 auto;
+    padding:               7rem 5% 5rem;
+    display:               grid;
+    grid-template-columns: 1fr;
+    gap:                   3rem;
+    align-items:           center;
+
+    @include respond-to('lg') {
+      grid-template-columns: 1fr 420px;
+      gap:          5rem;
+      padding-block: 8rem 6rem;
+    }
+  }
+
+  &__content {
+    display:        flex;
+    flex-direction: column;
+    gap:            1.5rem;
+  }
+
+  &__eyebrow {
+    display:        inline-flex;
+    align-items:    center;
+    gap:            0.5rem;
+    font-size:      0.65rem;
+    font-weight:    700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color:          color-mix(in srgb, var(--clr-on-dark) 45%, transparent);
+
+    &::before {
+      content:       '';
+      display:       inline-block;
+      width:         20px;
+      height:        1.5px;
+      background:    var(--clr-primary);
+      flex-shrink:   0;
+    }
+  }
+
+  &__title {
+    font-size:      clamp(3.5rem, 9vw, 7rem);
+    font-weight:    800;
+    letter-spacing: -0.045em;
+    line-height:    0.92;
+    color:          var(--clr-on-dark);
+    margin:         0;
+
+    em {
+      font-style:  italic;
+      font-weight: 300;
+      color:       color-mix(in srgb, var(--clr-primary) 85%, var(--clr-on-dark));
+    }
+  }
+
+  &__sub {
+    font-size:   1.05rem;
+    line-height: 1.7;
+    color:       color-mix(in srgb, var(--clr-on-dark) 56%, transparent);
+    max-width:   480px;
+    margin:      0;
+  }
+
+  &__ctas {
+    display:     flex;
+    align-items: center;
+    gap:         1.5rem;
+    flex-wrap:   wrap;
+  }
+
+  &__scroll-cta {
+    font-size:      0.82rem;
+    font-weight:    600;
+    color:          color-mix(in srgb, var(--clr-on-dark) 50%, transparent);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    @include transition(color);
+
+    &:hover { color: var(--clr-on-dark); }
+  }
+
+  // Animated graphic — parallax scrollt langsamer als Content
+  &__graphic {
+    display:      none;
+    position:     relative;
+    aspect-ratio: 1;
+    transform:    translateY(calc(var(--about-sy, 0px) * -0.14));
+    will-change:  transform;
+
+    @include respond-to('lg') { display: block; }
+  }
+
+  &__graphic-label {
+    position:       absolute;
+    bottom:         -1.5rem;
+    left:           50%;
+    transform:      translateX(-50%);
+    font-size:      0.6rem;
+    font-weight:    600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color:          color-mix(in srgb, var(--clr-on-dark) 22%, transparent);
+    white-space:    nowrap;
+  }
+
+  // Scroll-Indikator unten mittig
+  &__indicator {
+    position:        absolute;
+    bottom:          2.5rem;
+    left:            50%;
+    transform:       translateX(-50%);
+    display:         none;
+    flex-direction:  column;
+    align-items:     center;
+    gap:             0.5rem;
+    opacity:         0.3;
+    z-index:         1;
+
+    @include respond-to('lg') { display: flex; }
+  }
+
+  &__indicator-line {
+    width:      1px;
+    height:     52px;
+    background: linear-gradient(to bottom, var(--clr-on-dark), transparent);
+    animation:  scroll-pulse 2.2s ease-in-out infinite;
+  }
+
+  &__indicator-text {
+    font-size:      0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color:          var(--clr-on-dark);
+    writing-mode:   vertical-lr;
+  }
+}
+
+// Light-Mode: heller Hero mit Farbwolken
+[data-theme$="-light"] .about-hero {
+  background: var(--clr-surface);
+  color:      var(--clr-text);
+
+  &__bg::after {
+    background:
+      radial-gradient(ellipse 80% 70% at 100% 0%,
+        color-mix(in srgb, var(--clr-primary) 25%, transparent), transparent 60%),
+      radial-gradient(ellipse 60% 60% at 0% 100%,
+        color-mix(in srgb, var(--clr-accent) 18%, transparent), transparent 60%),
+      rgba(255, 255, 255, 0.72);
+  }
+
+  .about-hero__eyebrow   { color: color-mix(in srgb, var(--clr-text) 45%, transparent); }
+  .about-hero__title     { color: var(--clr-text); }
+  .about-hero__title em  { color: var(--clr-primary); }
+  .about-hero__sub       { color: color-mix(in srgb, var(--clr-text) 55%, transparent); }
+  .about-hero__scroll-cta { color: color-mix(in srgb, var(--clr-text) 48%, transparent);
+    &:hover { color: var(--clr-text); }
+  }
+  .about-hero__indicator-line  { background: linear-gradient(to bottom, var(--clr-text), transparent); }
+  .about-hero__indicator-text  { color: var(--clr-text); }
+  .about-hero__graphic-label   { color: color-mix(in srgb, var(--clr-text) 22%, transparent); }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 3. MANIFESTO PULL QUOTE
+// ═══════════════════════════════════════════════════════════════════════════
+
+.about-manifesto {
+  background:  var(--clr-dark-surface);
+  color:       var(--clr-on-dark);
+  padding:     5rem 0;
+  overflow:    hidden;
+  position:    relative;
+
+  @include respond-to('lg') { padding: 8rem 0; }
+
+  &__track {
+    max-width: 1280px;
+    margin:    0 auto;
+    padding:   0 5%;
+    position:  relative;
+  }
+
+  &__mark {
+    display:        block;
+    font-size:      clamp(6rem, 18vw, 16rem);
+    line-height:    0.7;
+    color:          color-mix(in srgb, var(--clr-primary) 20%, transparent);
+    font-weight:    800;
+    letter-spacing: -0.06em;
+    user-select:    none;
+    pointer-events: none;
+    margin-bottom:  -2rem;
+
+    @include respond-to('lg') { margin-bottom: -4rem; }
+  }
+
+  &__quote {
+    font-size:      clamp(1.6rem, 4.5vw, 3.5rem);
+    font-weight:    700;
+    line-height:    1.2;
+    letter-spacing: -0.025em;
+    color:          var(--clr-on-dark);
+    margin:         0 0 1.5rem;
+    font-style:     normal;
+    max-width:      900px;
+  }
+
+  &__cite {
+    display:        block;
+    font-size:      0.82rem;
+    font-weight:    600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color:          color-mix(in srgb, var(--clr-on-dark) 40%, transparent);
+    font-style:     normal;
+    padding-left:   2rem;
+    border-left:    2px solid var(--clr-primary);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 4. STORY TIMELINE
+// ═══════════════════════════════════════════════════════════════════════════
+
+.about-timeline {
+  position:   relative;
+  padding:    4rem 0;
+  background: var(--clr-background);
+
+  @include respond-to('lg') { padding: 6rem 0; }
+
+  // Vertikale Linie mittig (Desktop)
+  &__spine {
+    display: none;
+
+    @include respond-to('lg') {
+      display:          block;
+      position:         absolute;
+      top:              0;
+      bottom:           0;
+      left:             50%;
+      width:            1px;
+      background:       linear-gradient(
+        to bottom,
+        transparent,
+        var(--clr-secondary) 8%,
+        var(--clr-secondary) 92%,
+        transparent
+      );
+      transform:        translateX(-50%);
+      transform-origin: top center;
+    }
+  }
+}
+
+// ── CHAPTER (Blog-Eintrag) ─────────────────────────────────────────────────
+
+.about-chapter {
+  position: relative;
+  padding:  2rem 5%;
+
+  @include respond-to('lg') {
+    display:     grid;
+    gap:         0;
+    padding:     3rem 0;
+    max-width:   1280px;
+    margin:      0 auto;
+  }
+
+  // Jahr als riesige Hintergrund-Zahl
+  &__year-bg {
+    display:        none;
+    position:       absolute;
+    font-size:      clamp(6rem, 14vw, 12rem);
+    font-weight:    800;
+    letter-spacing: -0.05em;
+    line-height:    1;
+    color:          color-mix(in srgb, var(--clr-secondary) 80%, transparent);
+    user-select:    none;
+    pointer-events: none;
+    top:            50%;
+    transform:      translateY(-50%);
+    z-index:        0;
+
+    @include respond-to('lg') { display: block; }
+  }
+
+  &__graphic {
+    aspect-ratio:  1;
+    max-width:     200px;
+    margin:        0 auto 1.5rem;
+
+    @include respond-to('lg') {
+      max-width: none;
+      margin:    0;
+      width:     100%;
+      height:    100%;
+      min-height: 240px;
+    }
+  }
+
+  &__body {
+    position: relative;
+    z-index:  1;
+  }
+
+  &__meta {
+    display:     flex;
+    align-items: center;
+    gap:         0.875rem;
+    margin-bottom: 0.75rem;
+  }
+
+  &__tag {
+    display:        inline-block;
+    padding:        0.25rem 0.75rem;
+    border-radius:  100px;
+    border:         1px solid var(--clr-primary);
+    color:          var(--clr-primary);
+    font-size:      0.68rem;
+    font-weight:    700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  &__year-num {
+    font-size:      0.72rem;
+    font-weight:    600;
+    color:          color-mix(in srgb, var(--clr-text) 38%, transparent);
+    letter-spacing: 0.08em;
+  }
+
+  &__title {
+    font-size:      clamp(1.4rem, 3vw, 2.2rem);
+    font-weight:    800;
+    letter-spacing: -0.025em;
+    line-height:    1.15;
+    color:          var(--clr-text);
+    margin:         0 0 1rem;
+  }
+
+  &__text {
+    font-size:   1rem;
+    line-height: 1.75;
+    color:       color-mix(in srgb, var(--clr-text) 60%, transparent);
+    margin:      0;
+    max-width:   520px;
+  }
+
+  // Variante A: Grafik links, Text rechts — Jahr-BG links
+  &--a {
+    @include respond-to('lg') {
+      grid-template-columns: 1fr 40px 1fr;
+
+      .about-chapter__year-bg { right: auto; left: 2%; }
+      .about-chapter__graphic { grid-column: 1; grid-row: 1; padding-right: 4rem; }
+      .about-chapter__body    { grid-column: 3; grid-row: 1; padding-left: 4rem;
+                                 display: flex; flex-direction: column; justify-content: center; }
+    }
+  }
+
+  // Variante B: Text links, Grafik rechts — Jahr-BG rechts
+  &--b {
+    @include respond-to('lg') {
+      grid-template-columns: 1fr 40px 1fr;
+
+      .about-chapter__year-bg { left: auto; right: 2%; }
+      .about-chapter__graphic { grid-column: 3; grid-row: 1; padding-left: 4rem; }
+      .about-chapter__body    { grid-column: 1; grid-row: 1; padding-right: 4rem;
+                                 display: flex; flex-direction: column; justify-content: center; }
+    }
+  }
+}
+
+// ── CHAPTER SCROLL ANIMATIONS ─────────────────────────────────────────────
+//
+// Kein data-reveal hier — eigenes System mit .is-revealed auf .about-chapter.
+// IntersectionObserver in about.tsx fügt die Klasse hinzu.
+//
+// Elemente animieren unabhängig voneinander mit gestaffelten Delays:
+//   __graphic   → Zoom-In + Blur + Directional Slide (A: von links, B: von rechts)
+//   __year-bg   → Scale von 1.22 auf 1 + Fade
+//   __meta      → Slide up (Bounce-Easing)
+//   __title     → Clip-Path Curtain-Reveal (von oben nach unten)
+//   __text      → Slide up + Fade
+// ────────────────────────────────────────────────────────────────────────────
+
+// ① Grafik: Zoom-out + Blur als Startzustand
+.about-chapter__graphic {
+  opacity:    0;
+  filter:     blur(7px);
+  transform:  scale(0.82) translateY(28px);
+  transition:
+    opacity   0.95s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.95s cubic-bezier(0.16, 1, 0.3, 1),
+    filter    0.8s ease;
+  will-change: transform, filter, opacity;
+}
+
+// Desktop: Variante A kommt von links, B von rechts
+@include respond-to('lg') {
+  .about-chapter--a .about-chapter__graphic { transform: scale(0.78) translateX(-56px); }
+  .about-chapter--b .about-chapter__graphic { transform: scale(0.78) translateX(56px); }
+}
+
+// ② Jahres-Wasserzeichen: skaliert von groß auf normal
+.about-chapter__year-bg {
+  opacity:    0;
+  transform:  translateY(-50%) scale(1.24);
+  transition:
+    opacity   1s ease                               0.06s,
+    transform 1s cubic-bezier(0.16, 1, 0.3, 1)     0.06s;
+}
+
+// ③ Meta (Tag + Jahreszahl): Slide up mit Bounce
+.about-chapter__meta {
+  opacity:    0;
+  transform:  translateY(20px);
+  transition:
+    opacity   0.65s ease                            0.22s,
+    transform 0.65s cubic-bezier(0.34, 1.45, 0.64, 1) 0.22s;
+}
+
+// ④ Titel: Clip-Path Curtain — Text erscheint von oben nach unten
+.about-chapter__title {
+  clip-path:  inset(0 0 108% 0);
+  transition: clip-path 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.36s;
+}
+
+// ⑤ Text: Slide up + Fade
+.about-chapter__text {
+  opacity:    0;
+  transform:  translateY(20px);
+  transition:
+    opacity   0.65s ease 0.54s,
+    transform 0.65s ease 0.54s;
+}
+
+// ── Revealed State ─────────────────────────────────────────────────────────
+
+.about-chapter.is-revealed {
+  .about-chapter__graphic {
+    opacity:   1;
+    transform: none;
+    filter:    blur(0);
+  }
+
+  .about-chapter__year-bg {
+    opacity:   1;
+    transform: translateY(-50%) scale(1);
+  }
+
+  .about-chapter__meta {
+    opacity:   1;
+    transform: none;
+  }
+
+  .about-chapter__title {
+    clip-path: inset(0 0 0% 0);
+  }
+
+  .about-chapter__text {
+    opacity:   1;
+    transform: none;
+  }
+}
+
+// ── Reduced Motion ─────────────────────────────────────────────────────────
+
+@media (prefers-reduced-motion: reduce) {
+  .about-chapter__graphic,
+  .about-chapter__meta,
+  .about-chapter__text {
+    transform:  none !important;
+    filter:     none !important;
+    transition: opacity 0.3s ease !important;
+  }
+
+  .about-chapter__year-bg {
+    transform:  translateY(-50%) !important;
+    transition: opacity 0.3s ease !important;
+  }
+
+  .about-chapter__title {
+    clip-path:  none !important;
+    opacity:    0;
+    transition: opacity 0.3s ease !important;
+  }
+
+  .about-chapter.is-revealed .about-chapter__title { opacity: 1; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 5. VALUES — 3D CARDS
+// ═══════════════════════════════════════════════════════════════════════════
+
+.about-values {
+  padding:    4rem 0;
+  background: var(--clr-surface);
+
+  @include respond-to('lg') { padding: 6rem 0; }
+
+  &__head {
+    margin-bottom: 3rem;
+    display:       flex;
+    flex-direction: column;
+    gap:           0.75rem;
+
+    @include respond-to('lg') {
+      flex-direction: row;
+      align-items:    flex-end;
+      justify-content: space-between;
+    }
+  }
+
+  &__title {
+    font-size:      clamp(1.75rem, 4vw, 3rem);
+    font-weight:    800;
+    letter-spacing: -0.03em;
+    line-height:    1.1;
+    color:          var(--clr-text);
+    margin:         0;
+  }
+
+  &__grid {
+    display:               grid;
+    grid-template-columns: 1fr;
+    gap:                   1rem;
+
+    @include respond-to('md') { grid-template-columns: repeat(2, 1fr); }
+    @include respond-to('lg') { grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+  }
+}
+
+// ── VALUE CARD (3D tilt via --tx / --ty CSS vars) ─────────────────────────
+
+.value-card {
+  background:     var(--clr-secondary);
+  border-radius:  20px;
+  padding:        0;
+  overflow:       hidden;
+  cursor:         default;
+  transform:      perspective(900px) rotateX(var(--tx, 0deg)) rotateY(var(--ty, 0deg));
+  @include transition(transform, box-shadow);
+  will-change:    transform;
+
+  &:hover {
+    box-shadow: 0 32px 80px var(--clr-shadow);
+    transition: transform 0s, box-shadow 0.3s ease; // transform sofort, shadow smooth
+  }
+
+  // Graphic placeholder oben
+  &__graphic {
+    aspect-ratio: 16 / 9;
+    background:   var(--clr-background);
+    position:     relative;
+    overflow:     hidden;
+  }
+
+  // Nummer
+  &__num {
+    display:        block;
+    font-size:      0.62rem;
+    font-weight:    700;
+    letter-spacing: 0.16em;
+    color:          var(--clr-primary);
+    padding:        1.5rem 1.5rem 0;
+    margin-bottom:  0.375rem;
+  }
+
+  &__title {
+    font-size:      1.2rem;
+    font-weight:    800;
+    letter-spacing: -0.02em;
+    color:          var(--clr-text);
+    padding:        0 1.5rem;
+    margin:         0 0 0.25rem;
+  }
+
+  &__sub {
+    font-size:    0.8rem;
+    font-weight:  600;
+    color:        var(--clr-primary);
+    padding:      0 1.5rem;
+    margin:       0 0 0.875rem;
+  }
+
+  &__body {
+    font-size:   0.875rem;
+    line-height: 1.7;
+    color:       color-mix(in srgb, var(--clr-text) 58%, transparent);
+    padding:     0 1.5rem;
+    margin:      0 0 1.25rem;
+  }
+
+  &__metric {
+    display:       flex;
+    align-items:   baseline;
+    gap:           0.5rem;
+    border-top:    1px solid color-mix(in srgb, var(--clr-text) 8%, transparent);
+    padding:       1rem 1.5rem 1.5rem;
+    margin-top:    auto;
+  }
+
+  &__metric-val {
+    font-size:      1.75rem;
+    font-weight:    800;
+    letter-spacing: -0.04em;
+    color:          var(--clr-primary);
+    line-height:    1;
+  }
+
+  &__metric-unit {
+    font-size:   0.75rem;
+    font-weight: 600;
+    color:       color-mix(in srgb, var(--clr-text) 44%, transparent);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 6. METRICS — Blur-to-Sharp Reveal
+// ═══════════════════════════════════════════════════════════════════════════
+
+.about-metrics-section {
+  background: var(--clr-dark-surface);
+  color:      var(--clr-on-dark);
+  padding:    5rem 0;
+
+  @include respond-to('lg') { padding: 7rem 0; }
+}
+
+.about-metrics {
+  display:               grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:                   2rem 1rem;
+
+  @include respond-to('lg') {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+}
+
+.about-metric {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.5rem;
+  padding:        0 2rem;
+  position:       relative;
+
+  @include respond-to('lg') {
+    border-left: 1px solid color-mix(in srgb, var(--clr-on-dark) 12%, transparent);
+
+    &:first-child { border-left: none; }
+  }
+
+  &__val {
+    font-size:      clamp(2.5rem, 7vw, 5rem);
+    font-weight:    800;
+    letter-spacing: -0.05em;
+    line-height:    1;
+    color:          var(--clr-on-dark);
+    opacity:        0;
+    filter:         blur(20px);
+    transform:      translateY(20px) scale(0.88);
+    transition:     opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+                    filter  0.9s cubic-bezier(0.16, 1, 0.3, 1),
+                    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  &__label {
+    font-size:      0.75rem;
+    font-weight:    600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color:          color-mix(in srgb, var(--clr-on-dark) 42%, transparent);
+    opacity:        0;
+    transform:      translateY(8px);
+    transition:     opacity 0.7s ease 0.15s,
+                    transform 0.7s ease 0.15s;
+  }
+}
+
+// Gestaffelte Einblend-Delays via nth-child
+.about-metrics.is-counted {
+  .about-metric:nth-child(1) .about-metric__val  { opacity: 1; filter: blur(0); transform: none; transition-delay: 0s; }
+  .about-metric:nth-child(2) .about-metric__val  { opacity: 1; filter: blur(0); transform: none; transition-delay: 0.1s; }
+  .about-metric:nth-child(3) .about-metric__val  { opacity: 1; filter: blur(0); transform: none; transition-delay: 0.2s; }
+  .about-metric:nth-child(4) .about-metric__val  { opacity: 1; filter: blur(0); transform: none; transition-delay: 0.3s; }
+
+  .about-metric:nth-child(1) .about-metric__label { opacity: 1; transform: none; transition-delay: 0.08s; }
+  .about-metric:nth-child(2) .about-metric__label { opacity: 1; transform: none; transition-delay: 0.18s; }
+  .about-metric:nth-child(3) .about-metric__label { opacity: 1; transform: none; transition-delay: 0.28s; }
+  .about-metric:nth-child(4) .about-metric__label { opacity: 1; transform: none; transition-delay: 0.38s; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 7. PROCESS STEPS
+// ═══════════════════════════════════════════════════════════════════════════
+
+.about-process {
+  padding:    4rem 0;
+  background: var(--clr-background);
+
+  @include respond-to('lg') { padding: 6rem 0; }
+
+  &__head {
+    margin-bottom: 3rem;
+
+    .label { margin-bottom: 0.75rem; display: block; }
+  }
+
+  &__title {
+    font-size:      clamp(1.75rem, 4vw, 3rem);
+    font-weight:    800;
+    letter-spacing: -0.03em;
+    line-height:    1.1;
+    color:          var(--clr-text);
+    margin:         0;
+  }
+
+  &__grid {
+    display:               grid;
+    grid-template-columns: 1fr;
+    gap:                   1.5rem;
+    position:              relative;
+
+    @include respond-to('md') { grid-template-columns: repeat(2, 1fr); }
+
+    @include respond-to('lg') {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+
+      // Verbindungslinie zwischen Schritten
+      &::before {
+        content:    '';
+        position:   absolute;
+        top:        80px;
+        left:       12.5%;
+        right:      12.5%;
+        height:     1px;
+        background: linear-gradient(
+          to right,
+          transparent,
+          var(--clr-secondary) 10%,
+          var(--clr-secondary) 90%,
+          transparent
+        );
+      }
+    }
+  }
+}
+
+.process-step {
+  display:        flex;
+  flex-direction: column;
+  align-items:    flex-start;
+  padding:        1.5rem;
+  position:       relative;
+
+  @include respond-to('lg') {
+    padding:    0 2rem;
+    align-items: center;
+    text-align:  center;
+  }
+
+  &__graphic {
+    width:         120px;
+    height:        120px;
+    margin-bottom: 1.5rem;
+    position:      relative;
+    z-index:       1;
+
+    @include respond-to('lg') {
+      width:  160px;
+      height: 160px;
+    }
+  }
+
+  &__num {
+    display:        block;
+    font-size:      0.62rem;
+    font-weight:    700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color:          var(--clr-primary);
+    margin-bottom:  0.5rem;
+  }
+
+  &__title {
+    font-size:   1.05rem;
+    font-weight: 700;
+    color:       var(--clr-text);
+    margin:      0 0 0.5rem;
+    line-height: 1.2;
+  }
+
+  &__text {
+    font-size:   0.875rem;
+    line-height: 1.7;
+    color:       color-mix(in srgb, var(--clr-text) 55%, transparent);
+    margin:      0;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 8. TEAM
+// ═══════════════════════════════════════════════════════════════════════════
+
+.about-team-section {
+  background: var(--clr-dark-surface);
+  color:      var(--clr-on-dark);
+  padding:    4rem 0;
+
+  @include respond-to('lg') { padding: 6rem 0; }
+
+  .label { color: color-mix(in srgb, var(--clr-on-dark) 45%, transparent); }
+}
+
+.about-team__head {
+  margin-bottom: 3rem;
+
+  .label { margin-bottom: 0.75rem; display: block; }
+}
+
+.about-team__title {
+  font-size:      clamp(1.75rem, 4vw, 3rem);
+  font-weight:    800;
+  letter-spacing: -0.03em;
+  color:          var(--clr-on-dark);
+  margin:         0;
+}
+
+.about-team__grid {
+  display:               grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:                   1rem;
+
+  @include respond-to('lg') {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+.team-card {
+  border-radius: 20px;
+  overflow:      hidden;
+  background:    color-mix(in srgb, var(--clr-on-dark) 5%, transparent);
+  border:        1px solid color-mix(in srgb, var(--clr-on-dark) 10%, transparent);
+  transform:     perspective(700px) rotateX(var(--tx, 0deg)) rotateY(var(--ty, 0deg));
+  @include transition(transform, box-shadow, border-color);
+  will-change:   transform;
+  cursor:        default;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--clr-primary) 35%, transparent);
+    box-shadow:   0 24px 60px rgba(0, 0, 0, 0.4);
+    transition:   transform 0s, box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+
+  &__photo {
+    aspect-ratio: 1;
+    position:     relative;
+    overflow:     hidden;
+
+    img {
+      position:   absolute;
+      inset:      0;
+      width:      100%;
+      height:     100%;
+      object-fit: cover;
+      display:    block;
+    }
+  }
+
+  &__name {
+    font-size:   0.95rem;
+    font-weight: 700;
+    color:       var(--clr-on-dark);
+    margin:      0.875rem 1rem 0.2rem;
+  }
+
+  &__role {
+    font-size:     0.75rem;
+    font-weight:   500;
+    color:         var(--clr-primary);
+    margin:        0 1rem 1rem;
+    padding-bottom: 0;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 9. CTA SECTION
+// ═══════════════════════════════════════════════════════════════════════════
+
+.about-cta {
+  position:   relative;
+  background: var(--clr-dark-surface);
+  color:      var(--clr-on-dark);
+  padding:    6rem 0;
+  overflow:   hidden;
+  text-align: center;
+
+  @include respond-to('lg') { padding: 9rem 0; }
+
+  &__bg {
+    position:       absolute;
+    inset:          0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 60% 70% at 50% 50%,
+        color-mix(in srgb, var(--clr-primary) 14%, transparent),
+        transparent 65%);
+    transform: translateY(calc(var(--about-sy, 0px) * 0.08));
+  }
+
+  &__inner {
+    position:        relative;
+    z-index:         1;
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    gap:             1.25rem;
+  }
+
+  &__eyebrow {
+    font-size:      0.62rem;
+    font-weight:    700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color:          color-mix(in srgb, var(--clr-on-dark) 58%, transparent);
+  }
+
+  &__title {
+    font-size:      clamp(2.5rem, 7vw, 5.5rem);
+    font-weight:    800;
+    letter-spacing: -0.04em;
+    line-height:    1;
+    color:          var(--clr-on-dark);
+    margin:         0;
+
+    em {
+      font-style:  italic;
+      font-weight: 300;
+      color:       color-mix(in srgb, var(--clr-primary) 85%, var(--clr-on-dark));
+    }
+  }
+
+  &__text {
+    font-size:   1rem;
+    line-height: 1.7;
+    color:       color-mix(in srgb, var(--clr-on-dark) 52%, transparent);
+    max-width:   480px;
+    margin:      0;
+  }
+
+  &__actions {
+    display:   flex;
+    gap:       0.875rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 0.5rem;
+
+    .btn--ghost {
+      border-color: color-mix(in srgb, var(--clr-on-dark) 28%, transparent);
+      color:        var(--clr-on-dark);
+
+      &:hover {
+        border-color: var(--clr-on-dark);
+        background:   color-mix(in srgb, var(--clr-on-dark) 8%, transparent);
+      }
+    }
+  }
+}
+
+// ── LIGHT-MODE OVERRIDES ───────────────────────────────────────────────────
+
+[data-theme$="-light"] {
+  // Process-Section: ag-Ringe sichtbarer auf hellem Hintergrund
+  .about-process {
+    .ag__ring--1 {
+      border-color: color-mix(in srgb, var(--clr-primary) 60%, transparent);
+    }
+    .ag__ring--2 {
+      border-color: color-mix(in srgb, var(--clr-accent) 35%, transparent);
+    }
+    .ag__dot { background: var(--clr-primary); }
+  }
+
+  // Process connector line stärker sichtbar
+  .about-process__grid::before {
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in srgb, var(--clr-text) 18%, transparent) 10%,
+      color-mix(in srgb, var(--clr-text) 18%, transparent) 90%,
+      transparent
+    );
+  }
+
+  // Values-Karten: Graphic-Bereich auf hellem Theme besser abheben
+  .value-card__graphic {
+    background: color-mix(in srgb, var(--clr-secondary) 60%, var(--clr-background));
+  }
+}

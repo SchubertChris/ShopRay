@@ -1,0 +1,129 @@
+@use 'sass:map';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FARBPALETTEN — Shop Theme-System
+// Wähle eine Palette, der Rest passt sich automatisch an.
+// Aktivierung: data-theme="<palette>-light" oder data-theme="<palette>-dark"
+// ═══════════════════════════════════════════════════════════════════════════
+
+$themes: (
+
+  // ── 1. SAGE GREEN (Standard) ─────────────────────────────────────────────
+  // Ruhig, nachhaltig, premium. Ideal für Natur-, Beauty- und Lifestyle-Shops.
+  sage-light: (
+    text:          #1a1c1b,
+    background:    #fbfcfb,
+    surface:       #ffffff,
+    primary:       #4a6b5d,
+    secondary:     #e8edea,
+    accent:        #a3c4b7,
+    shadow:        rgba(0, 0, 0, 0.04),
+    glass:         rgba(255, 255, 255, 0.75),
+    dark-surface:  #101311,
+    on-dark:       #f0f4f1,
+  ),
+  sage-dark: (
+    text:          #eef1ef,
+    background:    #0f1110,
+    surface:       #181b1a,
+    primary:       #779c8d,
+    secondary:     #242927,
+    accent:        #4e7e6c,
+    shadow:        rgba(0, 0, 0, 0.4),
+    glass:         rgba(24, 27, 26, 0.75),
+    dark-surface:  #181b1a,
+    on-dark:       #eef1ef,
+  ),
+
+  // ── 2. NAVY GOLD (Premium) ───────────────────────────────────────────────
+  // Elegant, hochwertig, luxuriös. Ideal für Mode, Schmuck, High-End-Produkte.
+  navy-light: (
+    text:          #1a1b1f,
+    background:    #fdfdfd,
+    surface:       #ffffff,
+    primary:       #1e293b,
+    secondary:     #f1f5f9,
+    accent:        #c5a059,
+    shadow:        rgba(0, 0, 0, 0.05),
+    glass:         rgba(255, 255, 255, 0.75),
+    dark-surface:  #080d18,
+    on-dark:       #f8fafc,
+  ),
+  navy-dark: (
+    text:          #f8fafc,
+    background:    #0f172a,
+    surface:       #1e293b,
+    primary:       #c5a059,
+    secondary:     #334155,
+    accent:        #94a3b8,
+    shadow:        rgba(0, 0, 0, 0.4),
+    glass:         rgba(15, 23, 42, 0.8),
+    dark-surface:  #1e293b,
+    on-dark:       #f8fafc,
+  ),
+
+  // ── 3. TERRA (Warm/Boho) ─────────────────────────────────────────────────
+  // Warm, organisch, handgemacht. Ideal für Keramik, Handwerk, Food-Shops.
+  terra-light: (
+    text:          #2d241e,
+    background:    #fcfaf8,
+    surface:       #ffffff,
+    primary:       #bc6c25,
+    secondary:     #f2ede9,
+    accent:        #dda15e,
+    shadow:        rgba(45, 36, 30, 0.05),
+    glass:         rgba(252, 250, 248, 0.75),
+    dark-surface:  #120d07,
+    on-dark:       #fefae0,
+  ),
+  terra-dark: (
+    text:          #fefae0,
+    background:    #1c1208,
+    surface:       #2a1e10,
+    primary:       #dda15e,
+    secondary:     #3d2e1e,
+    accent:        #bc6c25,
+    shadow:        rgba(0, 0, 0, 0.4),
+    glass:         rgba(28, 18, 8, 0.8),
+    dark-surface:  #2a1e10,
+    on-dark:       #fefae0,
+  ),
+
+  // ── 4. ELECTRIC (Tech/Modern) ────────────────────────────────────────────
+  // Modern, energetisch, digital. Ideal für Tech, Gaming, Software-Produkte.
+  electric-light: (
+    text:          #0f172a,
+    background:    #f8fafc,
+    surface:       #ffffff,
+    primary:       #3b82f6,
+    secondary:     #e2e8f0,
+    accent:        #8b5cf6,
+    shadow:        rgba(59, 130, 246, 0.08),
+    glass:         rgba(255, 255, 255, 0.75),
+    dark-surface:  #060b18,
+    on-dark:       #f1f5f9,
+  ),
+  electric-dark: (
+    text:          #f1f5f9,
+    background:    #020617,
+    surface:       #0f172a,
+    primary:       #3b82f6,
+    secondary:     #1e293b,
+    accent:        #a855f7,
+    shadow:        rgba(0, 0, 0, 0.6),
+    glass:         rgba(2, 6, 23, 0.8),
+    dark-surface:  #0f172a,
+    on-dark:       #f1f5f9,
+  ),
+
+) !default;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MIXIN — setzt alle CSS-Variablen für ein Theme
+// ═══════════════════════════════════════════════════════════════════════════
+@mixin set-theme-vars($name) {
+  $theme-map: map.get($themes, $name);
+  @each $key, $value in $theme-map {
+    --clr-#{$key}: #{$value};
+  }
+}

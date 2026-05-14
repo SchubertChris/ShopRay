@@ -1,0 +1,98 @@
+@use 'mixins' as *;
+
+// Button-Reset (entfernt alle Browser-Defaults)
+%btn-reset {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+}
+
+// Icon-Button Basis
+%icon-btn {
+  @extend %btn-reset;
+  @include flex-center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--clr-secondary);
+  @include transition(background, transform);
+
+  &:hover {
+    background: var(--clr-accent);
+    transform: scale(1.05);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+// Karten-Basis
+%card-base {
+  background: var(--clr-secondary);
+  border-radius: 16px;
+  @include transition(transform, box-shadow);
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px var(--clr-shadow);
+  }
+}
+
+// Visuell versteckt — bleibt für Screenreader sichtbar
+%visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Link ohne Dekoration
+%link-clean {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--clr-primary);
+  }
+}
+
+// Horizontale Trennlinie
+%divider {
+  border: none;
+  border-top: 1px solid var(--clr-secondary);
+  margin: 2rem 0;
+}
+
+// Form-Input Basis
+%input-base {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--clr-secondary);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--clr-text);
+  font-size: 0.9375rem;
+  @include transition(border-color, box-shadow);
+
+  &::placeholder {
+    color: var(--clr-text);
+    opacity: 0.35;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--clr-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--clr-primary) 15%, transparent);
+  }
+}

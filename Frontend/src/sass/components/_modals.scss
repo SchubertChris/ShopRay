@@ -1,0 +1,128 @@
+@use '../abstracts/mixins' as *;
+@use '../abstracts/functions' as *;
+
+// ─── OVERLAY ───────────────────────────────────────────────────────────────
+.modal-overlay {
+  @include overlay(rgba(0, 0, 0, 0.55), 400);
+  @include flex-center;
+  padding: 1rem;
+  @include anim-fade-in(0.2s);
+}
+
+// ─── MODAL-CONTAINER ───────────────────────────────────────────────────────
+.modal {
+  background: var(--clr-surface);
+  border-radius: 20px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90dvh;
+  overflow-y: auto;
+  @include anim-scale-up(0.25s);
+
+  &--lg { max-width: 720px; }
+  &--sm { max-width: 380px; }
+
+  &__header {
+    @include flex-between;
+    margin-bottom: 1.5rem;
+  }
+
+  &__title {
+    font-size: rem(20px);
+    font-weight: 700;
+    color: var(--clr-text);
+  }
+
+  &__close {
+    @include flex-center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--clr-secondary);
+    border: none;
+    cursor: pointer;
+    color: var(--clr-text);
+    font-size: 1rem;
+    @include transition(background);
+
+    &:hover { background: var(--clr-accent); }
+    &:focus-visible { @include focus-ring; }
+  }
+
+  &__body {
+    font-size: rem(14px);
+    color: var(--clr-text);
+    line-height: 1.75;
+  }
+
+  &__footer {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--clr-secondary);
+  }
+}
+
+// ─── DRAWER (Warenkorb-Sidebar) ────────────────────────────────────────────
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 420px;
+  background: var(--clr-surface);
+  z-index: 500;
+  padding: 2rem;
+  overflow-y: auto;
+  @include anim-slide-in-right(0.3s);
+
+  &__header {
+    @include flex-between;
+    margin-bottom: 2rem;
+  }
+
+  &__title {
+    font-size: rem(20px);
+    font-weight: 700;
+    color: var(--clr-text);
+  }
+
+  &__close {
+    @include flex-center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--clr-secondary);
+    border: none;
+    cursor: pointer;
+    color: var(--clr-text);
+    @include transition(background);
+
+    &:hover { background: var(--clr-accent); }
+  }
+}
+
+// ─── TOAST (Feedback) ──────────────────────────────────────────────────────
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--clr-surface);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border-left: 3px solid var(--clr-primary);
+  font-size: rem(14px);
+  font-weight: 500;
+  color: var(--clr-text);
+  max-width: 380px;
+  @include anim-fade-in-bottom(0.3s);
+
+  &--success { border-left-color: var(--clr-success); }
+  &--error   { border-left-color: var(--clr-error); }
+  &--warning { border-left-color: var(--clr-warning); }
+}

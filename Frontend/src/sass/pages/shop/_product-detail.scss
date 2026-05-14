@@ -1,0 +1,779 @@
+@use '../../abstracts/mixins' as *;
+@use '../../abstracts/functions' as *;
+
+// ─── BREADCRUMB / BACK-NAVIGATION ─────────────────────────────────────────
+.product-detail__breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  font-size: rem(13px);
+  color: var(--clr-text);
+  opacity: 0.5;
+}
+
+.product-detail__back {
+  color: var(--clr-text);
+  text-decoration: none;
+  opacity: 0.6;
+  @include transition(opacity, color);
+
+  &:hover {
+    opacity: 1;
+    color: var(--clr-primary);
+  }
+}
+
+.product-detail__breadcrumb-sep {
+  opacity: 0.3;
+}
+
+// ─── PRODUKT-DETAIL-LAYOUT ─────────────────────────────────────────────────
+.product-detail {
+  padding-block: 3rem;
+
+  &__layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    align-items: start;
+    margin-bottom: 5rem;
+
+    @include respond-to('lg') {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+}
+
+// ─── GALERIE ───────────────────────────────────────────────────────────────
+.product-gallery {
+  &__main {
+    aspect-ratio: 1;
+    background: var(--clr-secondary);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__thumbs {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  &__thumb {
+    width: 72px;
+    height: 72px;
+    border-radius: 10px;
+    background: var(--clr-secondary);
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    @include transition(border-color);
+
+    &.is-active {
+      border-color: var(--clr-primary);
+    }
+
+    img { width: 100%; height: 100%; object-fit: cover; }
+  }
+}
+
+// ─── PRODUKT-INFOS ─────────────────────────────────────────────────────────
+.product-info {
+  &__category {
+    font-size: rem(11px);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--clr-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  &__title {
+    margin-bottom: 1rem;
+  }
+
+  &__rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+
+    &-stars { color: var(--clr-star); font-size: rem(14px); letter-spacing: 0.05em; }
+    &-count { font-size: rem(13px); color: var(--clr-text); opacity: 0.5; }
+  }
+
+  &__price {
+    font-size: rem(32px);
+    font-weight: 800;
+    color: var(--clr-primary);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.375rem;
+  }
+
+  &__price-old {
+    font-size: rem(16px);
+    color: var(--clr-text);
+    opacity: 0.35;
+    text-decoration: line-through;
+    margin-bottom: 1.5rem;
+  }
+
+  &__description {
+    font-size: rem(15px);
+    color: var(--clr-text);
+    opacity: 0.65;
+    line-height: 1.8;
+    margin-bottom: 2rem;
+  }
+
+  // Varianten-Auswahl (Farbe, Größe etc.)
+  &__variants {
+    margin-bottom: 2rem;
+  }
+
+  &__variant-label {
+    font-size: rem(13px);
+    font-weight: 600;
+    color: var(--clr-text);
+    opacity: 0.55;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  &__variant-options {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  &__variant-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: 1.5px solid var(--clr-secondary);
+    background: var(--clr-secondary);
+    color: var(--clr-text);
+    font-size: rem(13px);
+    font-weight: 500;
+    cursor: pointer;
+    @include transition(border-color, background);
+
+    &--active {
+      border-color: var(--clr-primary);
+      background: var(--clr-background);
+      color: var(--clr-primary);
+      font-weight: 700;
+    }
+
+    &:hover:not(&--active) {
+      border-color: var(--clr-accent);
+    }
+  }
+
+  // Menge + In den Warenkorb
+  &__add-row {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+
+    // ATC-Button streckt sich
+    .btn--primary { flex: 1; }
+  }
+
+  // Trust-Badges Reihe
+  &__trust {
+    margin-top: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  &__qty {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--clr-secondary);
+    border-radius: 10px;
+    padding: 0.5rem 0.75rem;
+
+    button {
+      @include flex-center;
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      background: var(--clr-background);
+      border: none;
+      cursor: pointer;
+      font-size: rem(18px);
+      color: var(--clr-text);
+      @include transition(background);
+
+      &:hover { background: var(--clr-accent); }
+    }
+
+    span {
+      min-width: 28px;
+      text-align: center;
+      font-size: rem(16px);
+      font-weight: 700;
+      color: var(--clr-text);
+    }
+  }
+}
+
+// ─── PRODUKT-TABS (Details, Bewertungen) ───────────────────────────────────
+.product-tabs {
+  &__nav {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--clr-secondary);
+    margin-bottom: 2rem;
+  }
+
+  &__tab {
+    padding: 0.875rem 1.5rem;
+    border: none;
+    background: none;
+    font-size: rem(14px);
+    font-weight: 600;
+    color: var(--clr-text);
+    opacity: 0.45;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    @include transition(opacity, border-color, color);
+
+    &--active {
+      opacity: 1;
+      color: var(--clr-primary);
+      border-bottom-color: var(--clr-primary);
+    }
+
+    &:hover:not(&--active) { opacity: 0.75; }
+  }
+}
+
+// ─── TAB-PANEL ─────────────────────────────────────────────────────────────
+.product-tabs {
+  &__panel { }
+
+  &__description {
+    font-size: rem(15px);
+    line-height: 1.8;
+    color: var(--clr-text);
+    opacity: 0.7;
+  }
+}
+
+// ─── LMIV: INHALTSSTOFFE & NÄHRWERTE ──────────────────────────────────────
+.lmiv {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.lmiv-block {
+  &__title {
+    font-size: rem(13px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--clr-text);
+    opacity: 0.5;
+    margin-bottom: 0.75rem;
+  }
+
+  &__note {
+    font-size: rem(13px);
+    color: var(--clr-text);
+    opacity: 0.6;
+    margin-bottom: 0.75rem;
+  }
+
+  &__text {
+    font-size: rem(14px);
+    color: var(--clr-text);
+    opacity: 0.75;
+    line-height: 1.7;
+  }
+
+  &__footnote {
+    font-size: rem(12px);
+    color: var(--clr-text);
+    opacity: 0.4;
+    margin-top: 0.5rem;
+    font-style: italic;
+  }
+}
+
+// ─── NÄHRWERTTABELLE ───────────────────────────────────────────────────────
+.nutrient-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: rem(13.5px);
+
+  th {
+    text-align: left;
+    padding: 0.625rem 0.875rem;
+    font-size: rem(11px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--clr-text);
+    opacity: 0.5;
+    background: var(--clr-background);
+    border-bottom: 1px solid color-mix(in srgb, var(--clr-text) 8%, transparent);
+
+    &:not(:first-child) { text-align: right; }
+  }
+
+  td {
+    padding: 0.625rem 0.875rem;
+    color: var(--clr-text);
+    border-bottom: 1px solid color-mix(in srgb, var(--clr-text) 5%, transparent);
+    vertical-align: middle;
+
+    &:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  tbody tr:nth-child(even) td {
+    background: color-mix(in srgb, var(--clr-background) 30%, transparent);
+  }
+
+  &__sub td:first-child {
+    padding-left: 1.875rem;
+    opacity: 0.65;
+    font-size: rem(13px);
+  }
+}
+
+.nrv-badge {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  font-size: rem(11px);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--clr-primary) 10%, transparent);
+  color: var(--clr-primary);
+}
+
+// ─── ALLERGENE ─────────────────────────────────────────────────────────────
+.allergen-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.allergen-badge {
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: rem(13px);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--clr-warning) 12%, transparent);
+  color: var(--clr-warning-dark);
+  border: 1px solid color-mix(in srgb, var(--clr-warning) 25%, transparent);
+}
+
+// ─── LMIV META (Verzehr, Lagerung) ─────────────────────────────────────────
+.lmiv-meta {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+
+  @include respond-to('md') {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  &__item {
+    padding: 1rem;
+    background: var(--clr-background);
+    border-radius: 10px;
+  }
+
+  &__label {
+    font-size: rem(11px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--clr-text);
+    opacity: 0.45;
+    margin-bottom: 0.5rem;
+  }
+
+  &__value {
+    font-size: rem(13.5px);
+    color: var(--clr-text);
+    opacity: 0.8;
+    line-height: 1.55;
+  }
+}
+
+// ─── LMIV WARNHINWEISE ─────────────────────────────────────────────────────
+.lmiv-warnings {
+  padding: 1rem 1.25rem;
+  background: color-mix(in srgb, var(--clr-warning) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--clr-warning) 20%, transparent);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  &__item {
+    font-size: rem(13px);
+    color: var(--clr-warning-dark);
+    line-height: 1.55;
+    padding-left: 1rem;
+    position: relative;
+
+    &::before {
+      content: '!';
+      position: absolute;
+      left: 0;
+      font-weight: 700;
+    }
+  }
+}
+
+// ─── LMIV HERSTELLER ───────────────────────────────────────────────────────
+.lmiv-manufacturer {
+  font-size: rem(12px);
+  color: var(--clr-text);
+  opacity: 0.4;
+  line-height: 1.55;
+  padding-top: 0.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--clr-text) 8%, transparent);
+}
+
+// ─── BEWERTUNGEN ───────────────────────────────────────────────────────────
+.reviews {
+  &__header {
+    @include flex-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+
+  &__title {
+    font-size: rem(18px);
+    font-weight: 700;
+  }
+
+  &__avg {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: rem(24px);
+    font-weight: 800;
+    color: var(--clr-text);
+
+    span { font-size: rem(14px); opacity: 0.5; font-weight: 400; }
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+  }
+
+  &__empty {
+    font-size: rem(14px);
+    color: var(--clr-text);
+    opacity: 0.5;
+    padding: 1.5rem 0;
+  }
+
+  &__login-hint {
+    font-size: rem(14px);
+    color: var(--clr-text);
+    opacity: 0.55;
+  }
+
+  &__login-link {
+    color: var(--clr-primary);
+    font-weight: 600;
+  }
+}
+
+.review-card {
+  background: var(--clr-secondary);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+
+  &__header {
+    @include flex-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  &__author {
+    font-size: rem(14px);
+    font-weight: 700;
+    color: var(--clr-text);
+  }
+
+  &__date {
+    font-size: rem(12px);
+    color: var(--clr-text);
+    opacity: 0.4;
+  }
+
+  &__title {
+    font-size: rem(14px);
+    font-weight: 600;
+    color: var(--clr-text);
+    margin-bottom: 0.375rem;
+  }
+
+  &__body {
+    font-size: rem(14px);
+    color: var(--clr-text);
+    opacity: 0.65;
+    line-height: 1.7;
+  }
+}
+
+// ─── GALERIE-BILD-FADE ─────────────────────────────────────────────────────
+@keyframes pd-img-fade {
+  from { opacity: 0; transform: scale(1.018); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.product-gallery__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: pd-img-fade 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+// ─── PREIS-BLOCK ─────────────────────────────────────────────────────────
+.product-info__price-block {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+// ─── HIGHLIGHTS ──────────────────────────────────────────────────────────
+.product-highlights {
+  list-style: none;
+  margin: 0 0 1.75rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+
+  &__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    font-size: rem(14px);
+    color: var(--clr-text);
+    line-height: 1.55;
+
+    svg {
+      flex-shrink: 0;
+      margin-top: 0.12em;
+      color: var(--clr-primary);
+    }
+  }
+}
+
+// ─── ZERTIFIKATE ─────────────────────────────────────────────────────────
+.cert-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.75rem;
+}
+
+.cert-badge {
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: rem(11px);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--clr-primary);
+  border: 1.5px solid color-mix(in srgb, var(--clr-primary) 30%, transparent);
+  background: color-mix(in srgb, var(--clr-primary) 6%, transparent);
+}
+
+// ─── RICH DESCRIPTION ────────────────────────────────────────────────────
+.product-rich-description {
+  font-size: rem(15px);
+  color: var(--clr-text);
+  line-height: 1.85;
+  opacity: 0.8;
+  max-width: 72ch;
+
+  p {
+    margin: 0 0 1.25rem;
+    &:last-child { margin-bottom: 0; }
+  }
+
+  h4 {
+    font-size: rem(12px);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--clr-primary);
+    opacity: 1;
+    margin: 2rem 0 0.75rem;
+  }
+
+  ul {
+    padding-left: 1.375rem;
+    margin: 0 0 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  li { font-size: rem(14px); line-height: 1.65; }
+
+  strong {
+    font-weight: 700;
+    color: var(--clr-text);
+    opacity: 1;
+  }
+}
+
+// ─── PD-SECTION (Händler, Downloads) ────────────────────────────────────
+.pd-section {
+  margin-top: 3.5rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--clr-text) 8%, transparent);
+
+  &__title {
+    font-size: rem(12px);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--clr-text);
+    opacity: 0.4;
+    margin-bottom: 1.25rem;
+  }
+}
+
+// ─── HÄNDLER-LINKS ───────────────────────────────────────────────────────
+.dealer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+.dealer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.125rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--clr-secondary);
+  background: var(--clr-secondary);
+  color: var(--clr-text);
+  text-decoration: none;
+  font-size: rem(13px);
+  font-weight: 600;
+  @include transition(border-color, background, color);
+
+  &:hover {
+    border-color: var(--clr-primary);
+    color: var(--clr-primary);
+    background: color-mix(in srgb, var(--clr-primary) 5%, transparent);
+  }
+
+  &__icon { opacity: 0.5; flex-shrink: 0; }
+}
+
+// ─── PRODUKT-DOKUMENTE ──────────────────────────────────────────────────
+.product-documents {
+  display: flex;
+  flex-direction: column;
+}
+
+.product-document {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 0;
+  font-size: rem(13.5px);
+  font-weight: 500;
+  color: var(--clr-text);
+  text-decoration: none;
+  opacity: 0.65;
+  border-bottom: 1px solid color-mix(in srgb, var(--clr-text) 6%, transparent);
+  @include transition(opacity, color);
+
+  &:last-child { border-bottom: none; }
+  &:hover      { opacity: 1; color: var(--clr-primary); }
+
+  svg { flex-shrink: 0; color: var(--clr-primary); opacity: 0.7; }
+}
+
+// ─── BEWERTUNGS-FORMULAR ───────────────────────────────────────────────────
+.review-form {
+  background: var(--clr-secondary);
+  border-radius: 16px;
+  padding: 1.5rem;
+
+  &__title {
+    font-size: rem(16px);
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+  }
+
+  &__stars {
+    display: flex;
+    gap: 0.375rem;
+    margin-bottom: 1.25rem;
+  }
+
+  &__star {
+    font-size: rem(28px);
+    cursor: pointer;
+    color: var(--clr-secondary);
+    filter: grayscale(1);
+    @include transition(filter, transform);
+
+    &--active { filter: grayscale(0); }
+    &:hover   { transform: scale(1.15); }
+  }
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  &__error {
+    padding: 0.75rem 1rem;
+    background: color-mix(in srgb, var(--clr-error) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--clr-error) 25%, transparent);
+    border-radius: 10px;
+    font-size: rem(13px);
+    color: var(--clr-error);
+    margin-bottom: 1rem;
+  }
+
+  &__success {
+    font-size: rem(13px);
+    font-weight: 600;
+    color: var(--clr-success-dark);
+    margin-top: 0.75rem;
+  }
+}

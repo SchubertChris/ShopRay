@@ -1,0 +1,23 @@
+// ─── LIGHT THEME ───────────────────────────────────────────────────────────
+// Das aktive Standard-Theme ist "Sage Green Stack" (in abstracts/_variables.scss).
+// Diese Datei kann für ein komplett anderes Light-Theme genutzt werden.
+//
+// Beispiele für alternative Paletten sind in abstracts/_variables.scss auskommentiert:
+// - Navy + Gold (Premium)
+// - Terrakotta + Sand (Warm/Boho)
+// - Elektrisch Blau + Violett (Tech/Modern)
+//
+// Um ein alternatives Theme zu aktivieren:
+// 1. In abstracts/_variables.scss die gewünschten Farbwerte in den $themes map eintragen
+// 2. Oder hier ein separates Theme-Attribute erstellen:
+//
+// [data-theme="navy"] {
+//   --clr-text:        #1a1b1f;
+//   --clr-background:  #fdfdfd;
+//   --clr-surface:     #ffffff;
+//   --clr-primary:     #1e293b;
+//   --clr-secondary:   #f1f5f9;
+//   --clr-accent:      #c5a059;
+//   --clr-shadow:      rgba(0, 0, 0, 0.05);
+//   --clr-glass:       rgba(255, 255, 255, 0.7);
+// }

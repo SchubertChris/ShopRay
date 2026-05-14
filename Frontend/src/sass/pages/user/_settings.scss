@@ -1,0 +1,167 @@
+@use '../../abstracts/mixins' as *;
+@use '../../abstracts/functions' as *;
+
+// ─── SETTINGS-SEITE ────────────────────────────────────────────────────────
+.settings-page {
+  padding-block: 0.5rem;
+}
+
+// ─── SETTINGS-SECTION ──────────────────────────────────────────────────────
+.settings-section {
+  background: var(--clr-secondary);
+  border-radius: 16px;
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+
+  &__header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--clr-background);
+  }
+
+  &__title {
+    font-size: rem(16px);
+    font-weight: 700;
+    color: var(--clr-text);
+  }
+
+  &__subtitle {
+    font-size: rem(13px);
+    color: var(--clr-text);
+    opacity: 0.5;
+    margin-top: 0.25rem;
+  }
+}
+
+// ─── SETTINGS-FORM ─────────────────────────────────────────────────────────
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  &__row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+
+    @include respond-to('md') {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-top: 0.5rem;
+  }
+
+  &__success {
+    font-size: rem(13px);
+    font-weight: 600;
+    color: var(--clr-success-dark);
+  }
+
+  &__error {
+    padding: 0.75rem 1rem;
+    background: color-mix(in srgb, var(--clr-error) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--clr-error) 25%, transparent);
+    border-radius: 10px;
+    font-size: rem(13px);
+    color: var(--clr-error);
+  }
+}
+
+// ─── DANGER ZONE ───────────────────────────────────────────────────────────
+.danger-zone {
+  background: color-mix(in srgb, var(--clr-error) 4%, var(--clr-secondary));
+  border: 1.5px solid color-mix(in srgb, var(--clr-error) 18%, transparent);
+  border-radius: 16px;
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+
+  &__header {
+    margin-bottom: 1.25rem;
+  }
+
+  &__title {
+    font-size: rem(16px);
+    font-weight: 700;
+    color: var(--clr-error);
+    margin-bottom: 0.3rem;
+  }
+
+  &__subtitle {
+    font-size: rem(13px);
+    color: var(--clr-text);
+    opacity: 0.55;
+    line-height: 1.6;
+    max-width: 520px;
+  }
+}
+
+// ─── KONTO-LÖSCHEN BESTÄTIGUNG ─────────────────────────────────────────────
+.delete-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  &__text {
+    font-size: rem(14px);
+    color: var(--clr-text);
+    opacity: 0.7;
+    line-height: 1.65;
+  }
+
+  &__email {
+    opacity: 1;
+    color: var(--clr-text);
+    font-weight: 600;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+}
+
+// ─── AVATAR-BEREICH ────────────────────────────────────────────────────────
+.settings-avatar {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+
+  &__img {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--clr-accent);
+    @include flex-center;
+    font-size: rem(26px);
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    overflow: hidden;
+
+    img { width: 100%; height: 100%; object-fit: cover; }
+  }
+
+  &__info {
+    flex: 1;
+  }
+
+  &__name {
+    font-size: rem(16px);
+    font-weight: 700;
+    color: var(--clr-text);
+  }
+
+  &__email {
+    font-size: rem(13px);
+    color: var(--clr-text);
+    opacity: 0.5;
+  }
+}

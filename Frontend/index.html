@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="de" data-theme="sage-light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- Basis-Fallbacks — werden von SeoMeta und ThemeProvider pro Seite überschrieben -->
+    <!-- Shop-Name + Beschreibung zentral in src/config/app.ts pflegen              -->
+    <title>Concepts</title>
+    <meta name="description" content="Entdecke unsere Kollektion — handverlesene Produkte für Wohnen, Küche, Deko und mehr." />
+    <meta name="author" content="Concepts" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- theme-color: initialer Wert = sage-light Hintergrund (wird von ThemeProvider dynamisch aktualisiert) -->
+    <meta name="theme-color" content="#fbfcfb" />
+    <meta name="theme-color" content="#0f1110" media="(prefers-color-scheme: dark)" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Open Graph (Fallback) -->
+    <meta property="og:type"        content="website" />
+    <meta property="og:site_name"   content="Concepts" />
+    <meta property="og:title"       content="Concepts" />
+    <meta property="og:description" content="Entdecke unsere Kollektion — handverlesene Produkte für Wohnen, Küche, Deko und mehr." />
+    <meta property="og:image"       content="/og-image.png" />
+
+    <!-- Twitter Card (Fallback) -->
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:title"       content="Concepts" />
+    <meta name="twitter:description" content="Entdecke unsere Kollektion — handverlesene Produkte für Wohnen, Küche, Deko und mehr." />
+    <meta name="twitter:image"       content="/og-image.png" />
+
+    <!-- Preconnect für Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

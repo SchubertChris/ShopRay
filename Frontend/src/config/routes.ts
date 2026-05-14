@@ -1,0 +1,48 @@
+export const ROUTES = {
+  HOME: '/',
+
+  SHOP: {
+    PRODUCT:       '/products/:slug',
+    product:       (slug: string) => `/products/${slug}`,
+    CART:          '/cart',
+    CHECKOUT:      '/checkout',
+    ORDER_SUCCESS: '/order-success',
+    SEARCH:        '/search',
+    CATEGORIES:    '/kategorien',
+  },
+
+  AUTH: {
+    LOGIN:           '/login',
+    REGISTER:        '/register',
+    FORGOT_PASSWORD: '/forgot-password',
+  },
+
+  ACCOUNT: {
+    ROOT:         '/account',
+    DASHBOARD:    '/account/dashboard',
+    ORDERS:       '/account/orders',
+    ORDER_DETAIL: '/account/orders/:id',
+    orderDetail:  (id: string) => `/account/orders/${id}`,
+    WISHLIST:     '/account/wishlist',
+    TICKETS:      '/account/tickets',
+    TICKET_NEW:   '/account/tickets/new',
+    SETTINGS:     '/account/settings',
+    ADDRESSES:    '/account/addresses',
+    MY_DATA:      '/account/my-data',
+  },
+
+  INFO: {
+    ABOUT:      '/about',
+    CONTACT:    '/contact',
+    FAQ:        '/faq',
+    SHIPPING:   '/versand',
+    IMPRESSUM:  '/impressum',
+    PRIVACY:    '/datenschutz',
+    TERMS:      '/agb',
+  },
+
+  SUPPORT: {
+    CHAT:   '/chat',
+    PORTAL: '/support',
+  },
+} as const;

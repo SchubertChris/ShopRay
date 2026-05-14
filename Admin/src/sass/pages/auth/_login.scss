@@ -1,0 +1,200 @@
+@use '../../abstracts/mixins' as *;
+@use '../../abstracts/functions' as *;
+
+.login-shell {
+  min-height:      100dvh;
+  display:         grid;
+  grid-template-columns: 1fr;
+  background:      var(--clr-background);
+
+  @include respond-to('lg') {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+// ─── LINKE PANEL (Brand) ─────────────────────────────────────────────────────
+.login-brand {
+  display:    none;
+  background: var(--sidebar-bg);
+  padding:    3rem;
+  flex-direction: column;
+  justify-content: space-between;
+  position:   relative;
+  overflow:   hidden;
+
+  @include respond-to('lg') { display: flex; }
+
+  // Dekorativer Hintergrund-Kreis
+  &::before {
+    content:        '';
+    position:       absolute;
+    width:          500px;
+    height:         500px;
+    border-radius:  50%;
+    border:         60px solid color-mix(in srgb, var(--clr-primary) 10%, transparent);
+    bottom:         -160px;
+    right:          -120px;
+    pointer-events: none;
+  }
+
+  &__logo {
+    display:     flex;
+    align-items: center;
+    gap:         0.75rem;
+  }
+
+  &__mark {
+    width:         40px;
+    height:        40px;
+    border-radius: 10px;
+    background:    var(--clr-primary);
+    display:       flex;
+    align-items:   center;
+    justify-content: center;
+    font-size:     rem(16px);
+    font-weight:   800;
+    color:         #fff;
+  }
+
+  &__name {
+    font-size:   rem(18px);
+    font-weight: 700;
+    color:       color-mix(in srgb, var(--clr-on-dark) 90%, transparent);
+  }
+
+  &__body { position: relative; z-index: 1; }
+
+  &__headline {
+    font-size:      clamp(rem(28px), 3.5vw, rem(40px));
+    font-weight:    800;
+    letter-spacing: -0.04em;
+    line-height:    1.1;
+    color:          var(--clr-on-dark);
+    margin-bottom:  1rem;
+  }
+
+  &__sub {
+    font-size:   rem(15px);
+    color:       color-mix(in srgb, var(--clr-on-dark) 45%, transparent);
+    line-height: 1.7;
+    max-width:   340px;
+  }
+
+  &__features {
+    display:        flex;
+    flex-direction: column;
+    gap:            0.75rem;
+    position:       relative;
+    z-index:        1;
+  }
+
+  &__feature {
+    display:     flex;
+    align-items: center;
+    gap:         0.625rem;
+    font-size:   rem(13px);
+    color:       color-mix(in srgb, var(--clr-on-dark) 50%, transparent);
+
+    svg { color: var(--clr-primary); flex-shrink: 0; }
+  }
+}
+
+// ─── RECHTES PANEL (Form) ────────────────────────────────────────────────────
+.login-form-panel {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  padding:         2rem 1.5rem;
+
+  @include respond-to('md') { padding: 3rem 2.5rem; }
+}
+
+.login-form-wrap {
+  width:     100%;
+  max-width: 380px;
+}
+
+.login-form {
+  &__eyebrow {
+    font-size:      rem(11px);
+    font-weight:    700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color:          var(--clr-primary);
+    margin-bottom:  0.5rem;
+  }
+
+  &__title {
+    font-size:      rem(26px);
+    font-weight:    800;
+    letter-spacing: -0.03em;
+    color:          var(--clr-text);
+    margin-bottom:  0.375rem;
+  }
+
+  &__sub {
+    font-size:     rem(14px);
+    color:         color-mix(in srgb, var(--clr-text) 50%, transparent);
+    margin-bottom: 2rem;
+  }
+
+  &__group {
+    margin-bottom: 1rem;
+
+    label {
+      display:       block;
+      font-size:     rem(13px);
+      font-weight:   600;
+      color:         var(--clr-text);
+      margin-bottom: 0.375rem;
+    }
+
+    input {
+      width:         100%;
+      padding:       0.625rem 0.875rem;
+      background:    var(--clr-surface);
+      border:        1px solid var(--clr-secondary);
+      border-radius: 10px;
+      color:         var(--clr-text);
+      font-size:     rem(14px);
+      font-family:   inherit;
+      outline:       none;
+      @include transition(border-color, box-shadow);
+
+      &::placeholder { color: color-mix(in srgb, var(--clr-text) 30%, transparent); }
+
+      &:focus {
+        border-color: var(--clr-primary);
+        box-shadow:   0 0 0 3px color-mix(in srgb, var(--clr-primary) 12%, transparent);
+      }
+    }
+  }
+
+  &__submit {
+    width:         100%;
+    padding:       0.75rem;
+    background:    var(--clr-primary);
+    border:        none;
+    border-radius: 10px;
+    color:         #fff;
+    font-size:     rem(14px);
+    font-weight:   700;
+    cursor:        pointer;
+    margin-top:    1.5rem;
+    @include transition(opacity, transform);
+
+    &:hover   { opacity: 0.88; }
+    &:active  { transform: scale(0.98); }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+
+  &__error {
+    font-size:     rem(13px);
+    color:         var(--clr-error);
+    background:    color-mix(in srgb, var(--clr-error) 8%, transparent);
+    border:        1px solid color-mix(in srgb, var(--clr-error) 20%, transparent);
+    border-radius: 8px;
+    padding:       0.625rem 0.875rem;
+    margin-top:    1rem;
+  }
+}

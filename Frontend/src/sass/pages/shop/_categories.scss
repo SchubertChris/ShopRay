@@ -1,0 +1,303 @@
+@use '../../abstracts/mixins' as *;
+@use '../../abstracts/functions' as *;
+
+// ─── KATEGORIEN-SEITE ──────────────────────────────────────────────────────
+.cat-page {
+  padding-block: 4rem 6rem;
+}
+
+// ─── HEADER ────────────────────────────────────────────────────────────────
+.cat-header {
+  margin-bottom: 3rem;
+
+  &__eyebrow {
+    display: block;
+    font-size: rem(11px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--clr-primary);
+    margin-bottom: 0.875rem;
+  }
+
+  &__title {
+    font-size: clamp(2.75rem, 7vw, 5rem);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+    color: var(--clr-text);
+    margin-bottom: 1rem;
+  }
+
+  &__sub {
+    font-size: rem(15px);
+    color: var(--clr-text);
+    opacity: 0.45;
+    max-width: 400px;
+    line-height: 1.65;
+  }
+}
+
+// ─── BENTO GRID ────────────────────────────────────────────────────────────
+.cat-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.875rem;
+
+  @include respond-to('md') {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 360px 240px;
+  }
+}
+
+// ─── CATEGORY CARD ─────────────────────────────────────────────────────────
+.cat-card {
+  position: relative;
+  border-radius: 20px;
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  cursor: pointer;
+  border: none;
+  text-align: left;
+  overflow: hidden;
+  height: 200px;
+  // Staggered entrance
+  opacity: 0;
+  transform: translateY(24px);
+  animation: cat-reveal 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--i, 0) * 75ms + 80ms);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.35s ease;
+
+  @include respond-to('md') {
+    height: auto;
+  }
+
+  // Wohnen: 2 Spalten breit in Zeile 1
+  &--wohnen {
+    @include respond-to('md') { grid-column: span 2; }
+  }
+
+  &:hover {
+    transform: translateY(-5px) scale(1.015);
+    box-shadow: 0 24px 56px color-mix(in srgb, var(--clr-text) 14%, transparent);
+
+    .cat-card__cta {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    &::before { transform: scale(1.12) rotate(6deg); }
+  }
+
+  // ── Hintergrundbild ────────────────────────────────────────────────────
+  &__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+
+  &:hover &__img { transform: scale(1.06); }
+
+  // ── Gradient-Overlay (über Bild, unter Text) ──────────────────────────
+  &__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+      160deg,
+      transparent 30%,
+      rgba(0, 0, 0, 0.55) 100%
+    );
+    pointer-events: none;
+  }
+
+  // ── Wenn Bild vorhanden: Text weiß ────────────────────────────────────
+  &.has-image {
+    .cat-card__count   { color: #fff; opacity: 0.6; }
+    .cat-card__name    { color: #fff; }
+    .cat-card__tagline { color: rgba(255, 255, 255, 0.7); }
+    .cat-card__cta     { color: #fff; }
+  }
+
+  // ── Shared pseudo-element base ─────────────────────────────────────────
+  &::before {
+    content: '';
+    position: absolute;
+    pointer-events: none;
+    transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    pointer-events: none;
+  }
+
+  // ── Count badge ────────────────────────────────────────────────────────
+  &__count {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.5rem;
+    font-size: rem(10px);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--clr-text);
+    opacity: 0.3;
+  }
+
+  // ── Count badge & body über dem Overlay ──────────────────────────────
+  &__count { z-index: 2; }
+
+  // ── Text ───────────────────────────────────────────────────────────────
+  &__body { position: relative; z-index: 2; }
+
+  &__name {
+    font-size: clamp(rem(26px), 4.5vw, rem(40px));
+    font-weight: 900;
+    letter-spacing: -0.035em;
+    line-height: 1;
+    color: var(--clr-text);
+    margin-bottom: 0.4rem;
+  }
+
+  &__tagline {
+    font-size: rem(13px);
+    color: var(--clr-text);
+    opacity: 0.45;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  // ── Hover CTA ──────────────────────────────────────────────────────────
+  &__cta {
+    display: inline-block;
+    margin-top: 0.875rem;
+    font-size: rem(13px);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: var(--clr-primary);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.28s ease, transform 0.28s ease;
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // PER-CATEGORY STYLES
+  // ────────────────────────────────────────────────────────────────────────
+
+  // WOHNEN — zwei konzentrische Kreise, oben rechts
+  &--wohnen {
+    background: color-mix(in srgb, var(--clr-primary) 7%, var(--clr-surface));
+
+    &::before {
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      border: 2px solid color-mix(in srgb, var(--clr-primary) 16%, transparent);
+      top: -80px;
+      right: -70px;
+    }
+
+    &::after {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: 2px solid color-mix(in srgb, var(--clr-primary) 9%, transparent);
+      top: -20px;
+      right: 10px;
+    }
+  }
+
+  // KÜCHE — rotiertes Quadrat (Diamant)
+  &--kueche {
+    background: color-mix(in srgb, var(--clr-accent) 9%, var(--clr-surface));
+
+    &::before {
+      width: 130px;
+      height: 130px;
+      background: color-mix(in srgb, var(--clr-accent) 13%, transparent);
+      border-radius: 8px;
+      top: -30px;
+      right: 20px;
+      transform: rotate(45deg);
+    }
+
+    &:hover::before { transform: scale(1.12) rotate(52deg); }
+  }
+
+  // DEKO — Punktraster
+  &--deko {
+    background: color-mix(in srgb, var(--clr-primary) 11%, var(--clr-surface));
+
+    &::before {
+      inset: 0;
+      background-image: radial-gradient(
+        color-mix(in srgb, var(--clr-primary) 22%, transparent) 1.5px,
+        transparent 1.5px
+      );
+      background-size: 22px 22px;
+      opacity: 0.55;
+    }
+
+    &:hover::before { transform: scale(1.04); }
+  }
+
+  // TEXTILIEN — diagonale Streifentextur
+  &--textilien {
+    background: var(--clr-secondary);
+
+    &::before {
+      inset: -50%;
+      background: repeating-linear-gradient(
+        45deg,
+        color-mix(in srgb, var(--clr-text) 5%, transparent) 0px,
+        color-mix(in srgb, var(--clr-text) 5%, transparent) 1px,
+        transparent 1px,
+        transparent 16px
+      );
+    }
+
+    &:hover::before { transform: scale(1.03) rotate(2deg); }
+  }
+
+  // KUNST — zwei diagonale Balken
+  &--kunst {
+    background: color-mix(in srgb, var(--clr-accent) 12%, var(--clr-surface));
+
+    &::before {
+      width: 5px;
+      height: 160%;
+      background: color-mix(in srgb, var(--clr-accent) 22%, transparent);
+      border-radius: 3px;
+      top: -30%;
+      right: 56px;
+      transform: rotate(18deg);
+    }
+
+    &::after {
+      width: 5px;
+      height: 160%;
+      background: color-mix(in srgb, var(--clr-accent) 12%, transparent);
+      border-radius: 3px;
+      top: -30%;
+      right: 82px;
+      transform: rotate(18deg);
+    }
+  }
+}
+
+// ─── ENTRANCE ANIMATION ────────────────────────────────────────────────────
+@keyframes cat-reveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

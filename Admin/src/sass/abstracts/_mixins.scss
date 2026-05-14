@@ -1,0 +1,49 @@
+@use 'sass:list';
+@use 'sass:map';
+@use 'breakpoints' as bp;
+
+@mixin respond-to($name) {
+  $value: map.get(bp.$breakpoints, $name);
+  @if $value == null {
+    @warn "Breakpoint `#{$name}` nicht gefunden.";
+  } @else {
+    @media (min-width: $value) { @content; }
+  }
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-col { display: flex; flex-direction: column; }
+
+@mixin transition($props...) {
+  $result: ();
+  @each $prop in $props {
+    $result: list.append($result, $prop 0.2s cubic-bezier(0.4, 0, 0.2, 1), comma);
+  }
+  @if list.length($props) == 0 {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  } @else {
+    transition: $result;
+  }
+}
+
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin focus-ring($color: var(--clr-primary)) {
+  outline: 2px solid $color;
+  outline-offset: 2px;
+}

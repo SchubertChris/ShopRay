@@ -1,0 +1,99 @@
+@use '../abstracts/mixins' as *;
+
+html {
+  font-size: 16px; // Basis für rem()
+}
+
+body {
+  color:            var(--clr-text);
+  background-color: var(--clr-background);
+  font-family:      'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  @include transition(background-color, color);
+  // Kein versehentliches Markieren von UI-Elementen
+  -webkit-user-select: none;
+  user-select:         none;
+}
+
+// ── View Transition: Ink-Drop Theme-Wechsel ───────────────────────────────────
+// Das neue Theme expandiert als Kreis vom Klickpunkt aus
+@keyframes vt-reveal {
+  from { clip-path: circle(0 at var(--vt-x, 50vw) var(--vt-y, 50vh)); }
+  to   { clip-path: circle(200vmax at var(--vt-x, 50vw) var(--vt-y, 50vh)); }
+}
+
+@keyframes vt-fade-out {
+  to { opacity: 0; }
+}
+
+::view-transition-new(root) {
+  animation: vt-reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+::view-transition-old(root) {
+  animation: vt-fade-out 0.35s ease forwards;
+  z-index: -1;
+}
+
+// Reduced-Motion: keine Animationen
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-new(root),
+  ::view-transition-old(root) {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+// ── Text-Selektion auf Lese-Inhalten erlauben ────────────────────────────
+.legal-content,
+.post,
+.product-rich-description,
+.modal-product__desc,
+input,
+textarea,
+select,
+[contenteditable] {
+  -webkit-user-select: text;
+  user-select:         text;
+}
+
+// Bilder nicht per Drag exportierbar
+img {
+  -webkit-user-drag: none;
+}
+
+// Selektionsfarbe anpassen
+::selection {
+  background: var(--clr-primary);
+  color: #fff;
+}
+
+// Scrollbar (Webkit)
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--clr-secondary);
+  border-radius: 3px;
+
+  &:hover {
+    background: var(--clr-accent);
+  }
+}

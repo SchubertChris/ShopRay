@@ -1,0 +1,20 @@
+// ─── DARK THEME ────────────────────────────────────────────────────────────
+// Das aktive Dark-Theme ist "Sage Green Stack" (in abstracts/_variables.scss).
+// Diese Datei kann für ein komplett anderes Dark-Theme genutzt werden.
+//
+// Der automatische Hell/Dunkel-Wechsel passiert in base/_root.scss:
+// - [data-theme="dark"] → React-Toggle
+// - @media (prefers-color-scheme: dark) → System-Automatik
+//
+// Alternatives Dark-Theme aktivieren:
+//
+// [data-theme="ocean-dark"] {
+//   --clr-text:        #f8fafc;
+//   --clr-background:  #0f172a;
+//   --clr-surface:     #1e293b;
+//   --clr-primary:     #c5a059;
+//   --clr-secondary:   #334155;
+//   --clr-accent:      #94a3b8;
+//   --clr-shadow:      rgba(0, 0, 0, 0.4);
+//   --clr-glass:       rgba(15, 23, 42, 0.8);
+// }

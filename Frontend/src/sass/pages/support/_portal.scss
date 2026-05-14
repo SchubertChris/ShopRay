@@ -1,0 +1,281 @@
+@use '../../abstracts/mixins' as *;
+@use '../../abstracts/functions' as *;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 1. PAGE
+// ═══════════════════════════════════════════════════════════════════════════
+
+.portal-page {
+  min-height:     calc(100dvh - 64px);
+  display:        flex;
+  flex-direction: column;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 2. HERO / STATS HEADER
+// ═══════════════════════════════════════════════════════════════════════════
+
+.portal-hero {
+  display:     flex;
+  align-items: center;
+  flex-wrap:   wrap;
+  gap:         1.5rem 2rem;
+  padding:     2rem 5%;
+  background:  var(--clr-dark-surface);
+  border-bottom: 1px solid color-mix(in srgb, var(--clr-on-dark) 8%, transparent);
+
+  @include respond-to('lg') {
+    padding: 2.5rem 5%;
+  }
+
+  &__left {
+    display:        flex;
+    flex-direction: column;
+    gap:            0.25rem;
+    flex-shrink:    0;
+  }
+
+  &__eyebrow {
+    font-family:    monospace;
+    font-size:      0.6rem;
+    font-weight:    700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color:          var(--clr-primary);
+    display:        block;
+  }
+
+  &__title {
+    font-size:      clamp(1.5rem, 3vw, 2rem);
+    font-weight:    800;
+    letter-spacing: -0.03em;
+    color:          var(--clr-on-dark);
+    margin:         0;
+    line-height:    1;
+  }
+
+  &__stats {
+    display:  flex;
+    gap:      2rem;
+    flex:     1;
+
+    @media (max-width: 599px) {
+      gap: 1.25rem;
+    }
+  }
+
+  &__actions {
+    margin-left: auto;
+  }
+}
+
+.portal-stat {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.15rem;
+
+  &__value {
+    font-size:      1.75rem;
+    font-weight:    800;
+    letter-spacing: -0.04em;
+    color:          var(--clr-on-dark);
+    line-height:    1;
+    font-family:    monospace;
+  }
+
+  &__label {
+    font-size:   0.75rem;
+    font-weight: 600;
+    color:       color-mix(in srgb, var(--clr-on-dark) 60%, transparent);
+    line-height: 1.2;
+  }
+
+  &__sub {
+    font-size:   0.62rem;
+    color:       color-mix(in srgb, var(--clr-on-dark) 28%, transparent);
+    font-family: monospace;
+    letter-spacing: 0.04em;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 3. BODY (Sidebar + Main)
+// ═══════════════════════════════════════════════════════════════════════════
+
+.portal-body {
+  display:               grid;
+  grid-template-columns: 1fr;
+  flex:                  1;
+
+  @include respond-to('lg') {
+    grid-template-columns: 220px 1fr;
+    align-items:           start;
+  }
+}
+
+// ── Sidebar ──────────────────────────────────────────────────────────────────
+
+.portal-sidebar {
+  padding:      1.5rem;
+  border-right: 1px solid var(--clr-secondary);
+  background:   var(--clr-surface);
+
+  @media (max-width: 1023px) {
+    display:   none;
+  }
+
+  &__label {
+    font-size:      0.62rem;
+    font-weight:    700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color:          color-mix(in srgb, var(--clr-text) 35%, transparent);
+    font-family:    monospace;
+    display:        block;
+    padding:        0 0.5rem;
+    margin-bottom:  0.5rem;
+  }
+
+  &__nav {
+    display:        flex;
+    flex-direction: column;
+    gap:            0.125rem;
+  }
+
+  &__item {
+    display:       flex;
+    align-items:   center;
+    justify-content: space-between;
+    gap:           0.5rem;
+    padding:       0.6rem 0.75rem;
+    border-radius: 8px;
+    border:        none;
+    background:    none;
+    cursor:        pointer;
+    font-size:     0.85rem;
+    color:         color-mix(in srgb, var(--clr-text) 55%, transparent);
+    font-family:   inherit;
+    text-align:    left;
+    width:         100%;
+    @include transition(background, color);
+
+    &:hover {
+      background: color-mix(in srgb, var(--clr-text) 5%, transparent);
+      color:      var(--clr-text);
+    }
+
+    &.is-active {
+      background: color-mix(in srgb, var(--clr-primary) 10%, transparent);
+      color:      var(--clr-primary);
+    }
+  }
+
+  &__count {
+    font-family: monospace;
+    font-size:   0.72rem;
+    opacity:     0.5;
+  }
+}
+
+// ── Main ─────────────────────────────────────────────────────────────────────
+
+.portal-main {
+  padding:    1.5rem;
+  background: var(--clr-background);
+  min-height: 400px;
+  display:    flex;
+  flex-direction: column;
+  gap:        1.25rem;
+
+  @include respond-to('lg') {
+    padding: 2rem;
+  }
+}
+
+// ── Toolbar ──────────────────────────────────────────────────────────────────
+
+.portal-toolbar {
+  display:     flex;
+  align-items: center;
+  gap:         1rem;
+
+  &__search {
+    flex:          1;
+    padding:       0.625rem 1rem;
+    background:    var(--clr-surface);
+    border:        1px solid var(--clr-secondary);
+    border-radius: 8px;
+    color:         var(--clr-text);
+    font-size:     0.85rem;
+    font-family:   inherit;
+    outline:       none;
+    @include transition(border-color, box-shadow);
+
+    &::placeholder { color: color-mix(in srgb, var(--clr-text) 28%, transparent); }
+
+    &:focus {
+      border-color: var(--clr-primary);
+      box-shadow:   0 0 0 3px color-mix(in srgb, var(--clr-primary) 12%, transparent);
+      outline:      none;
+    }
+  }
+
+  &__count {
+    font-size:   0.75rem;
+    font-weight: 600;
+    color:       color-mix(in srgb, var(--clr-text) 38%, transparent);
+    white-space: nowrap;
+    font-family: monospace;
+  }
+}
+
+// ── Empty State ──────────────────────────────────────────────────────────────
+
+.portal-empty {
+  flex:            1;
+  display:         flex;
+  flex-direction:  column;
+  align-items:     center;
+  justify-content: center;
+  text-align:      center;
+  gap:             1rem;
+  padding:         4rem 2rem;
+
+  &__icon {
+    width:           72px;
+    height:          72px;
+    border-radius:   50%;
+    background:      color-mix(in srgb, var(--clr-primary) 8%, transparent);
+    border:          1.5px solid color-mix(in srgb, var(--clr-primary) 22%, transparent);
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    color:           color-mix(in srgb, var(--clr-primary) 60%, transparent);
+    margin-bottom:   0.5rem;
+  }
+
+  &__title {
+    font-size:      1.25rem;
+    font-weight:    800;
+    letter-spacing: -0.02em;
+    color:          var(--clr-text);
+    margin:         0;
+  }
+
+  &__body {
+    font-size:   0.88rem;
+    line-height: 1.7;
+    color:       color-mix(in srgb, var(--clr-text) 50%, transparent);
+    max-width:   380px;
+    margin:      0;
+  }
+
+  &__actions {
+    display:  flex;
+    gap:      0.625rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 0.25rem;
+  }
+}
+

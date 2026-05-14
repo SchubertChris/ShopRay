@@ -1,0 +1,85 @@
+@use '../../abstracts/mixins' as *;
+@use '../../abstracts/functions' as *;
+
+// ─── FEHLERSEITEN (404, 500 etc.) ─────────────────────────────────────────
+.error-page {
+  @include flex-col-center;
+  min-height: 80dvh;
+  text-align: center;
+  padding: 4rem 5%;
+  gap: 1.5rem;
+  @include anim-fade-in(0.5s);
+
+  &__code {
+    font-size: fluid(80px, 160px);
+    font-weight: 900;
+    color: var(--clr-secondary);
+    line-height: 1;
+    letter-spacing: -0.05em;
+    user-select: none;
+  }
+
+  &__title {
+    font-size: fluid(22px, 36px);
+    font-weight: 700;
+    color: var(--clr-text);
+    margin-top: -1rem;
+  }
+
+  &__subtitle {
+    font-size: rem(15px);
+    color: var(--clr-text);
+    opacity: 0.5;
+    max-width: 400px;
+    line-height: 1.75;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+
+  // Dekorativer Hintergrundtext
+  &__bg-text {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 40vw;
+    font-weight: 900;
+    color: var(--clr-secondary);
+    opacity: 0.3;
+    user-select: none;
+    pointer-events: none;
+    z-index: -1;
+    letter-spacing: -0.05em;
+  }
+}
+
+// ─── MAINTENANCE ───────────────────────────────────────────────────────────
+.maintenance-page {
+  @include flex-col-center;
+  min-height: 100dvh;
+  text-align: center;
+  padding: 4rem 5%;
+  gap: 1.5rem;
+
+  &__icon { font-size: 4rem; }
+
+  &__title {
+    font-size: fluid(24px, 40px);
+    font-weight: 700;
+    color: var(--clr-text);
+  }
+
+  &__text {
+    font-size: rem(15px);
+    color: var(--clr-text);
+    opacity: 0.5;
+    max-width: 400px;
+    line-height: 1.75;
+  }
+}

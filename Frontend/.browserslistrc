@@ -1,0 +1,8 @@
+# Browser-Support-Targets für ShopRay
+# color-mix() wird genutzt — daher Mindest-Versionen:
+# Chrome 111+ (März 2023), Firefox 113+ (Mai 2023), Safari 16.2+ (Dez. 2022)
+
+>= 0.3%
+last 2 years
+not dead
+not op_mini all

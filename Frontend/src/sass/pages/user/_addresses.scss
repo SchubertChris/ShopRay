@@ -1,0 +1,148 @@
+@use '../../abstracts/mixins' as *;
+@use '../../abstracts/functions' as *;
+
+// ─── ADRESSVERWALTUNG ──────────────────────────────────────────────────────
+.addresses-page {
+  padding-block: 0.5rem;
+
+  &__header {
+    @include flex-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+
+  &__title {
+    font-size: clamp(1.1rem, 2vw, 1.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+}
+
+// ─── ADRESS-FORMULAR ───────────────────────────────────────────────────────
+.address-form {
+  background: var(--clr-secondary);
+  border-radius: 16px;
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+
+  &__title {
+    font-size: rem(15px);
+    font-weight: 700;
+    color: var(--clr-text);
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--clr-background);
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+
+    @include respond-to('md') {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  &__full { grid-column: 1 / -1; }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-top: 0.25rem;
+  }
+
+  &__success {
+    font-size: rem(13px);
+    font-weight: 600;
+    color: var(--clr-success-dark);
+  }
+
+  &__error {
+    padding: 0.75rem 1rem;
+    background: color-mix(in srgb, var(--clr-error) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--clr-error) 25%, transparent);
+    border-radius: 10px;
+    font-size: rem(13px);
+    color: var(--clr-error);
+    margin-bottom: 1rem;
+  }
+}
+
+// ─── ADRESS-KARTE (für zukünftige Mehrfachadressen-Ansicht) ───────────────
+.address-card {
+  background: var(--clr-secondary);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  border: 1.5px solid transparent;
+  @include transition(border-color);
+
+  &--default { border-color: var(--clr-primary); }
+
+  &__details {
+    font-size: rem(14px);
+    color: var(--clr-text);
+    line-height: 1.65;
+    opacity: 0.75;
+  }
+
+  &__name {
+    font-weight: 600;
+    opacity: 1;
+    margin-bottom: 0.25rem;
+    font-size: rem(15px);
+  }
+
+  &__badge {
+    font-size: rem(10px);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--clr-primary);
+    background: color-mix(in srgb, var(--clr-primary) 10%, transparent);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 0.5rem;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+}
+
+// ─── AKTUELLE ADRESSE ──────────────────────────────────────────────────────
+.address-current {
+  background: var(--clr-secondary);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1.5px solid var(--clr-primary);
+  margin-bottom: 1.5rem;
+
+  &__label {
+    font-size: rem(11px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--clr-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  &__text {
+    font-size: rem(14px);
+    color: var(--clr-text);
+    line-height: 1.75;
+    opacity: 0.75;
+
+    strong { display: block; opacity: 1; font-weight: 600; font-size: rem(15px); margin-bottom: 0.125rem; }
+  }
+}

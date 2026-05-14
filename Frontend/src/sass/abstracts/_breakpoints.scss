@@ -1,0 +1,12 @@
+// Smartphone:     320px – 480px
+// Tablet:         481px – 768px
+// Desktop:        769px – 1024px
+// Large Desktop:  1025px+
+
+$breakpoints: (
+  'sm':  480px,
+  'md':  768px,
+  'lg':  1024px,
+  'xl':  1280px,
+  '2xl': 1536px,
+) !default;

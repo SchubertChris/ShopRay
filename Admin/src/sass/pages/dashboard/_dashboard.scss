@@ -1,0 +1,197 @@
+@use '../../abstracts/mixins' as *;
+@use '../../abstracts/functions' as *;
+
+// ─── STAT CARDS ──────────────────────────────────────────────────────────────
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+
+  @include respond-to('lg') {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.stat-card {
+  background:    var(--clr-surface);
+  border:        1px solid var(--clr-secondary);
+  border-radius: 14px;
+  padding:       1.25rem 1.375rem;
+
+  &__label {
+    font-size:      rem(11.5px);
+    font-weight:    600;
+    letter-spacing: 0.04em;
+    color:          color-mix(in srgb, var(--clr-text) 45%, transparent);
+    margin-bottom:  0.625rem;
+    @include truncate;
+  }
+
+  &__value {
+    font-size:      clamp(rem(22px), 3vw, rem(30px));
+    font-weight:    800;
+    letter-spacing: -0.03em;
+    color:          var(--clr-text);
+    font-variant-numeric: tabular-nums;
+    line-height:    1;
+    margin-bottom:  0.5rem;
+  }
+
+  &__delta {
+    font-size:   rem(12px);
+    font-weight: 600;
+    display:     flex;
+    align-items: center;
+    gap:         0.25rem;
+
+    &--up   { color: var(--clr-success); }
+    &--down { color: var(--clr-error);   }
+    &--flat { color: color-mix(in srgb, var(--clr-text) 40%, transparent); }
+  }
+
+  &__icon {
+    width:         36px;
+    height:        36px;
+    border-radius: 10px;
+    display:       flex;
+    align-items:   center;
+    justify-content: center;
+    margin-bottom: 0.875rem;
+    background:    color-mix(in srgb, var(--clr-primary) 10%, transparent);
+    color:         var(--clr-primary);
+  }
+}
+
+// ─── DASHBOARD GRID ──────────────────────────────────────────────────────────
+.dashboard-grid {
+  display: grid;
+  gap:     1.25rem;
+  grid-template-columns: 1fr;
+
+  @include respond-to('lg') {
+    grid-template-columns: 1fr 320px;
+  }
+}
+
+// ─── DATA CARDS ──────────────────────────────────────────────────────────────
+.data-card {
+  background:    var(--clr-surface);
+  border:        1px solid var(--clr-secondary);
+  border-radius: 14px;
+  overflow:      hidden;
+
+  &__header {
+    @include flex-between;
+    padding:       1.125rem 1.375rem;
+    border-bottom: 1px solid var(--clr-secondary);
+    gap:           0.75rem;
+  }
+
+  &__title {
+    font-size:   rem(14px);
+    font-weight: 700;
+    color:       var(--clr-text);
+    margin:      0;
+  }
+
+  &__action {
+    font-size:       rem(12.5px);
+    font-weight:     600;
+    color:           var(--clr-primary);
+    text-decoration: none;
+    @include transition(opacity);
+    &:hover { opacity: 0.7; }
+  }
+
+  &__body { padding: 0; }
+
+  &__empty {
+    padding:    3rem 1.375rem;
+    text-align: center;
+    font-size:  rem(13.5px);
+    color:      color-mix(in srgb, var(--clr-text) 40%, transparent);
+  }
+}
+
+// ─── RECENT ORDERS TABLE ─────────────────────────────────────────────────────
+.orders-table {
+  width:           100%;
+  border-collapse: collapse;
+
+  th {
+    font-size:      rem(11px);
+    font-weight:    700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color:          color-mix(in srgb, var(--clr-text) 40%, transparent);
+    padding:        0.625rem 1.375rem;
+    text-align:     left;
+    border-bottom:  1px solid var(--clr-secondary);
+    white-space:    nowrap;
+  }
+
+  td {
+    padding:       0.75rem 1.375rem;
+    font-size:     rem(13.5px);
+    color:         var(--clr-text);
+    border-bottom: 1px solid color-mix(in srgb, var(--clr-secondary) 60%, transparent);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tr:hover td { background: color-mix(in srgb, var(--clr-primary) 3%, transparent); }
+}
+
+// ─── STATUS BADGES ───────────────────────────────────────────────────────────
+.status-badge {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            0.3rem;
+  font-size:      rem(11px);
+  font-weight:    700;
+  letter-spacing: 0.04em;
+  padding:        0.2rem 0.6rem;
+  border-radius:  100px;
+
+  &::before {
+    content:       '';
+    width:         5px;
+    height:        5px;
+    border-radius: 50%;
+    background:    currentColor;
+    flex-shrink:   0;
+  }
+
+  &--new       { background: color-mix(in srgb, var(--clr-primary) 12%, transparent); color: var(--clr-primary); }
+  &--paid      { background: color-mix(in srgb, var(--clr-success) 12%, transparent); color: var(--clr-success); }
+  &--shipped   { background: color-mix(in srgb, var(--clr-warning) 12%, transparent); color: var(--clr-warning); }
+  &--delivered { background: color-mix(in srgb, var(--clr-success) 12%, transparent); color: var(--clr-success); }
+  &--cancelled { background: color-mix(in srgb, var(--clr-error)   12%, transparent); color: var(--clr-error);   }
+}
+
+// ─── QUICK-STATS LISTE ───────────────────────────────────────────────────────
+.quick-stats {
+  padding: 0.5rem 0;
+}
+
+.quick-stat {
+  @include flex-between;
+  padding:    0.75rem 1.375rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--clr-secondary) 60%, transparent);
+
+  &:last-child { border-bottom: none; }
+
+  &__label {
+    font-size:  rem(13.5px);
+    color:      color-mix(in srgb, var(--clr-text) 65%, transparent);
+  }
+
+  &__value {
+    font-size:   rem(14px);
+    font-weight: 700;
+    color:       var(--clr-text);
+    font-variant-numeric: tabular-nums;
+  }
+}

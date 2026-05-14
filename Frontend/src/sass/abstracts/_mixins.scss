@@ -1,0 +1,153 @@
+@use 'sass:list';
+@use 'sass:map';
+@use 'breakpoints' as bp;
+
+// ─── RESPONSIVE ────────────────────────────────────────────────────────────
+// Verwendung: @include respond-to('md') { ... }
+@mixin respond-to($name) {
+  $value: map.get(bp.$breakpoints, $name);
+
+  @if $value == null {
+    @warn "Breakpoint `#{$name}` nicht gefunden.";
+  } @else {
+    @media (min-width: $value) {
+      @content;
+    }
+  }
+}
+
+// ─── FLEXBOX ───────────────────────────────────────────────────────────────
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+@mixin flex-col-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+// ─── TRANSITIONS ───────────────────────────────────────────────────────────
+// Verwendung: @include transition(transform);
+@mixin transition($props...) {
+  $result: ();
+  @each $prop in $props {
+    $result: list.append($result, $prop 0.3s cubic-bezier(0.4, 0, 0.2, 1), comma);
+  }
+
+  @if list.length($props) == 0 {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  } @else {
+    transition: $result;
+  }
+}
+
+// ─── TEXT ──────────────────────────────────────────────────────────────────
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Verwendung: @include line-clamp(2);
+@mixin line-clamp($lines) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// ─── OVERLAY ───────────────────────────────────────────────────────────────
+@mixin overlay($bg: rgba(0, 0, 0, 0.5), $z: 100) {
+  position: fixed;
+  inset: 0;
+  background: $bg;
+  z-index: $z;
+}
+
+// ─── GLASS-MORPHISM ────────────────────────────────────────────────────────
+@mixin glass {
+  background: var(--clr-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+// ─── ACCESSIBILITY ─────────────────────────────────────────────────────────
+@mixin focus-ring($color: var(--clr-primary)) {
+  outline: 2px solid $color;
+  outline-offset: 3px;
+}
+
+// ─── KEYFRAME-ANIMATIONEN ──────────────────────────────────────────────────
+@keyframes fadeInBottom {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInTop {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 8px var(--clr-accent); }
+  50%       { box-shadow: 0 0 24px var(--clr-accent); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+// ─── ANIMATION-HELFER ──────────────────────────────────────────────────────
+@mixin anim-fade-in($duration: 0.4s, $delay: 0s) {
+  animation: fadeIn $duration ease-out $delay both;
+}
+
+@mixin anim-fade-in-bottom($duration: 0.5s, $delay: 0s) {
+  animation: fadeInBottom $duration ease-out $delay both;
+}
+
+@mixin anim-fade-in-top($duration: 0.5s, $delay: 0s) {
+  animation: fadeInTop $duration ease-out $delay both;
+}
+
+@mixin anim-scale-up($duration: 0.35s, $delay: 0s) {
+  animation: scaleUp $duration ease-out $delay both;
+}
+
+@mixin anim-slide-in-right($duration: 0.4s, $delay: 0s) {
+  animation: slideInRight $duration ease-out $delay both;
+}
+
+// Respektiert prefers-reduced-motion
+@mixin safe-animation($animation) {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: $animation;
+  }
+}
