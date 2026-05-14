@@ -1,6 +1,6 @@
 # ShopRay — Setup Guide
 
-**Version:** 1.2.0 | **Letzte Aktualisierung:** 2026-05-14
+**Version:** 1.3.0 | **Letzte Aktualisierung:** 2026-05-14
 
 Dieser Guide führt dich Schritt für Schritt durch die Einrichtung deines ShopRay-Templates —
 von der Installation bis zum fertigen, live geschalteten Shop.
@@ -25,6 +25,7 @@ von der Installation bis zum fertigen, live geschalteten Shop.
 14. [Admin-Bereich einrichten](#14-admin-bereich)
 15. [Deployment (Veröffentlichen)](#15-deployment)
 16. [Was gehört zu welchem Paket?](#16-pakete--was-gehört-wozu)
+17. [Technologie & Open Source](#17-technologie--open-source)
 
 ---
 
@@ -579,6 +580,81 @@ ShopRay ist modular aufgebaut. Je nach Paket kannst du Features hinzufügen oder
 | **Admin-Bereich** | ❌ | ✅ | ✅ |
 | Source Code | ❌ | ✅ | ✅ |
 | Prioritäts-Support | ❌ | ❌ | ✅ |
+
+---
+
+## 17. Technologie & Open Source
+
+ShopRay basiert fast vollständig auf Open-Source-Technologien. Du bist nicht dauerhaft an einen bestimmten Anbieter gebunden — die meisten Teile kannst du austauschen oder selbst betreiben.
+
+### Überblick: Was ist Open Source?
+
+| Technologie | Rolle | Lizenz | Selbst hostbar |
+|---|---|---|---|
+| **React** | Frontend-Framework | MIT | — |
+| **TypeScript** | Sprache | Apache 2.0 | — |
+| **Vite** | Build-Tool | MIT | — |
+| **Express.js** | Backend-Server | MIT | — |
+| **Nodemailer** | E-Mail-Versand | MIT | — |
+| **Zustand** | State Management | MIT | — |
+| **PostgreSQL** | Datenbank | PostgreSQL License | ✅ ja |
+| **Supabase** | Auth + Datenbank-Host | Apache 2.0 | ✅ ja |
+| **Stripe** | Zahlungsabwicklung | proprietär (closed) | ❌ nein |
+
+**Einzige Ausnahme: Stripe.** Stripe ist ein externer Zahlungsdienst — sein Code läuft ausschließlich auf Stripes eigenen Servern. In ShopRay wird Stripe nur über HTTP-Aufrufe angesprochen. Du hast keinen Zugriff auf Stripes Quellcode und brauchst ihn nicht.
+
+---
+
+### Supabase selbst hosten
+
+Supabase ist vollständig Open Source und kann auf einem eigenen Server betrieben werden — ohne Cloud-Abhängigkeit.
+
+**Was du brauchst:**
+- Einen VPS (z.B. Hetzner, Contabo) mit mindestens 4 GB RAM
+- Docker
+
+**Offizieller Self-Hosting Guide:**
+https://supabase.com/docs/guides/self-hosting/docker
+
+**Einzige Anpassung in ShopRay:**
+In deiner `.env`-Datei tauschst du die Supabase-URL aus:
+```env
+# Vorher (Supabase Cloud):
+VITE_SUPABASE_URL=https://xxxx.supabase.co
+
+# Nachher (selbst gehostet):
+VITE_SUPABASE_URL=https://supabase.deineserver.de
+```
+
+Die Datenbank selbst ist normales PostgreSQL — dein Schema (`database/schema.sql`) funktioniert auf jeder PostgreSQL-Installation identisch.
+
+---
+
+### Stripe-Alternativen
+
+Wenn du Stripe nicht verwenden möchtest, kannst du das Backend gegen einen anderen Anbieter tauschen. Nur die Datei `Backend/src/routes/orders.ts` und der Webhook-Handler `Backend/src/routes/stripe.ts` müssen angepasst werden.
+
+| Alternative | Besonderheit |
+|---|---|
+| **Mollie** | Beliebt in DACH, unterstützt iDEAL, SEPA |
+| **PayPal** | Breite Akzeptanz, eigener SDK |
+| **Lemon Squeezy** | Übernimmt EU-VAT, ideal für digitale Produkte |
+| **Paddle** | Ähnlich wie Lemon Squeezy, Merchant of Record |
+
+> **Empfehlung:** Für physische Produkte im DACH-Raum ist Stripe die zuverlässigste Wahl. Für digitale Produkte (Templates, Software) übernimmt Lemon Squeezy die Umsatzsteuer automatisch.
+
+---
+
+### Fazit: Kein Lock-in
+
+Du kannst ShopRay betreiben ohne einem einzigen Cloud-Anbieter dauerhaft zu vertrauen:
+
+- **Supabase** → selbst hosten mit Docker
+- **Stripe** → gegen Mollie, PayPal oder Paddle tauschen
+- **Vercel** → gegen Netlify, Hetzner oder jeden anderen Hoster tauschen
+- **Datenbank** → normales PostgreSQL, portierbar auf jeden Server
+
+Der gesamte Code bleibt bei dir. Kein Vendor hält deinen Shop als Geisel.
 
 ---
 
