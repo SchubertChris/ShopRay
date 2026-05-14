@@ -149,16 +149,35 @@ CREATE TABLE IF NOT EXISTS public.tickets (
 CREATE INDEX IF NOT EXISTS idx_tickets_user_id ON public.tickets (user_id);
 CREATE INDEX IF NOT EXISTS idx_tickets_status  ON public.tickets (status);
 
+-- ── CONTACT INQUIRIES ────────────────────────────────────────────────────────
+-- Externe Kontaktanfragen (ohne Login) — z. B. für Showcase-Seiten oder
+-- Anfragen von Interessenten. Wird nicht mit auth.users verknüpft.
+CREATE TABLE IF NOT EXISTS public.contact_inquiries (
+  id         UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name       TEXT        NOT NULL,
+  email      TEXT        NOT NULL,
+  subject    TEXT        NOT NULL DEFAULT 'Allgemeine Anfrage',
+  message    TEXT        NOT NULL,
+  consent    BOOLEAN     NOT NULL DEFAULT FALSE,
+  status     TEXT        NOT NULL DEFAULT 'new'
+                         CHECK (status IN ('new', 'read', 'replied')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_contact_inquiries_status ON public.contact_inquiries (status);
+CREATE INDEX IF NOT EXISTS idx_contact_inquiries_created ON public.contact_inquiries (created_at DESC);
+
 -- ── ROW LEVEL SECURITY (RLS) ─────────────────────────────────────────────────
 -- Jeder Nutzer sieht und bearbeitet nur seine eigenen Daten.
 -- Der Backend-Service-Key umgeht RLS (nur serverseitig verwenden!).
 
 ALTER TABLE public.profiles   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.products   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.orders     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.reviews    ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.tickets    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.products          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.orders            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.order_items       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reviews           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tickets           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.contact_inquiries ENABLE ROW LEVEL SECURITY;
 
 -- Profiles
 CREATE POLICY "Eigenes Profil lesen"    ON public.profiles FOR SELECT USING (auth.uid() = id);
@@ -184,6 +203,13 @@ CREATE POLICY "Eigene Review löschen"    ON public.reviews FOR DELETE USING (au
 -- Tickets
 CREATE POLICY "Eigene Tickets lesen"    ON public.tickets FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Ticket erstellen"        ON public.tickets FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Contact Inquiries
+-- Jeder darf einreichen (kein Login nötig) — nur wenn Consent gegeben
+-- Lesen ist nur über den Service Key möglich (Backend + Admin)
+CREATE POLICY "Kontaktanfrage einreichen" ON public.contact_inquiries
+  FOR INSERT WITH CHECK (consent = TRUE);
+-- Keine SELECT-Policy für angemeldete Nutzer → nur Service Key kann lesen
 
 -- ── UPDATED_AT TRIGGER ────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.set_updated_at()

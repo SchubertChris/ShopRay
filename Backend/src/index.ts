@@ -8,6 +8,7 @@ import stripeRouter    from './routes/stripe';
 import ordersRouter    from './routes/orders';
 import productsRouter  from './routes/products';
 import customersRouter from './routes/customers';
+import contactRouter   from './routes/contact';
 
 const app  = express();
 const PORT = process.env.PORT ?? 5000;
@@ -27,6 +28,7 @@ app.use('/api/webhook',   stripeRouter);
 app.use('/api/orders',    ordersRouter);
 app.use('/api/products',  productsRouter);
 app.use('/api/customers', customersRouter);
+app.use('/api/contact',   contactRouter);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 app.use((_req, res) => {

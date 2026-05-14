@@ -26,14 +26,15 @@ const SUBJECTS = [
 // ── PAGE ──────────────────────────────────────────────────────────────────────
 
 export default function ContactPage() {
-  const [form, setForm]       = useState({ name: '', email: '', subject: SUBJECTS[0], message: '' });
+  const [form, setForm]       = useState({ name: '', email: '', subject: SUBJECTS[0], message: '', consent: false });
   const [sending, setSending] = useState(false);
   const [sent, setSent]       = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
-    const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value }));
+    const { name, value, type } = e.target;
+    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+    setForm(f => ({ ...f, [name]: val }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -131,7 +132,7 @@ export default function ContactPage() {
                 </p>
                 <button
                   className="btn btn--ghost"
-                  onClick={() => { setSent(false); setApiError(null); setForm({ name: '', email: '', subject: SUBJECTS[0], message: '' }); }}
+                  onClick={() => { setSent(false); setApiError(null); setForm({ name: '', email: '', subject: SUBJECTS[0], message: '', consent: false }); }}
                 >
                   Weitere Nachricht senden
                 </button>
@@ -200,19 +201,33 @@ export default function ContactPage() {
                   />
                 </div>
 
+                <div className="contact-form__consent">
+                  <label className="contact-consent">
+                    <input
+                      type="checkbox"
+                      name="consent"
+                      className="contact-consent__checkbox"
+                      checked={form.consent}
+                      onChange={handleChange}
+                      required
+                    />
+                    <span className="contact-consent__label">
+                      Ich habe die{' '}
+                      <Link to={ROUTES.INFO.PRIVACY}>Datenschutzerklärung</Link>{' '}
+                      gelesen und stimme zu, dass meine Daten zur Bearbeitung dieser Anfrage
+                      gespeichert werden. (Pflichtfeld)
+                    </span>
+                  </label>
+                </div>
+
                 <div className="contact-form__footer">
                   <button
                     className={`btn btn--primary btn--lg contact-form__submit${sending ? ' is-sending' : ''}`}
                     type="submit"
-                    disabled={sending}
+                    disabled={sending || !form.consent}
                   >
                     {sending ? 'Wird gesendet …' : 'Nachricht senden'}
                   </button>
-                  <p className="contact-form__privacy">
-                    Deine Daten werden ausschließlich zur Bearbeitung deiner Anfrage genutzt.
-                    Mehr in unserer{' '}
-                    <Link to={ROUTES.INFO.PRIVACY}>Datenschutzerklärung</Link>.
-                  </p>
                 </div>
               </form>
             )}

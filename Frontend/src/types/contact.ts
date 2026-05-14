@@ -4,6 +4,7 @@ export interface ContactFormPayload {
   email:   string;
   subject: string;
   message: string;
+  consent: boolean;
 }
 
 /** Backend-Antwort nach Kontaktformular-Absenden */

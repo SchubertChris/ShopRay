@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, ShoppingCart, Users,
-  MessageSquare, Settings, LogOut, ChevronRight,
+  MessageSquare, Settings, LogOut, ChevronRight, Mail,
 } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import { ROUTES } from '@config/routes';
@@ -42,6 +42,7 @@ const NAV: NavGroup[] = [
     section: 'Support',
     items: [
       { to: ROUTES.SUPPORT.TICKETS,  icon: MessageSquare,   label: 'Tickets',      badge: 5 },
+      { to: ROUTES.INQUIRIES,        icon: Mail,            label: 'Anfragen'                },
     ],
   },
   {

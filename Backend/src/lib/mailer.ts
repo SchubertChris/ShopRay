@@ -72,3 +72,44 @@ export function orderConfirmationHtml(params: {
     </div>
   `;
 }
+
+export function contactNotificationHtml(params: {
+  name:    string;
+  email:   string;
+  subject: string;
+  message: string;
+  date:    string;
+}): string {
+  return `
+    <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#111">
+      <h2 style="font-size:20px;margin-bottom:4px">Neue Kontaktanfrage</h2>
+      <p style="color:#555;margin-top:0;font-size:14px">${params.date}</p>
+
+      <table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px">
+        <tr>
+          <td style="padding:8px 12px;background:#f5f5f5;font-weight:600;width:100px;border-radius:4px 0 0 0">Name</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #eee">${params.name}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;background:#f5f5f5;font-weight:600">E-Mail</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #eee">
+            <a href="mailto:${params.email}" style="color:#0066cc">${params.email}</a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;background:#f5f5f5;font-weight:600">Betreff</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #eee">${params.subject}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;background:#f5f5f5;font-weight:600;vertical-align:top;border-radius:0 0 0 4px">Nachricht</td>
+          <td style="padding:8px 12px;white-space:pre-wrap">${params.message}</td>
+        </tr>
+      </table>
+
+      <p style="color:#888;font-size:12px;margin-top:24px">
+        Diese Nachricht wurde automatisch über das Kontaktformular gesendet.<br>
+        Consent: erteilt · Gespeichert in Supabase contact_inquiries.
+      </p>
+    </div>
+  `;
+}

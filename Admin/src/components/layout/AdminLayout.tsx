@@ -4,12 +4,13 @@ import { Sidebar } from './Sidebar';
 import { TopBar }  from './TopBar';
 
 const PAGE_TITLES: Record<string, string> = {
-  '/':          'Dashboard',
-  '/products':  'Produkte',
-  '/orders':    'Bestellungen',
-  '/customers': 'Kunden',
-  '/support':   'Support',
-  '/settings':  'Einstellungen',
+  '/':           'Dashboard',
+  '/products':   'Produkte',
+  '/orders':     'Bestellungen',
+  '/customers':  'Kunden',
+  '/support':    'Support',
+  '/inquiries':  'Anfragen',
+  '/settings':   'Einstellungen',
 };
 
 export function AdminLayout() {

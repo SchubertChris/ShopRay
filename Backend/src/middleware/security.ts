@@ -35,3 +35,12 @@ export const checkoutRateLimit = rateLimit({
   legacyHeaders:   false,
   message:         { error: 'Zu viele Checkout-Versuche. Bitte versuche es später.' },
 });
+
+// ── Kontaktformular Rate-Limit — 5 Anfragen / Stunde pro IP ──────────────────
+export const contactRateLimit = rateLimit({
+  windowMs:        60 * 60 * 1000,
+  max:             5,
+  standardHeaders: true,
+  legacyHeaders:   false,
+  message:         { error: 'Zu viele Kontaktanfragen. Bitte versuche es in einer Stunde erneut.' },
+});

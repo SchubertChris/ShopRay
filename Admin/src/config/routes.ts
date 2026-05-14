@@ -19,5 +19,6 @@ export const ROUTES = {
   SUPPORT: {
     TICKETS: '/support',
   },
-  SETTINGS: '/settings',
+  INQUIRIES: '/inquiries',
+  SETTINGS:  '/settings',
 } as const;
