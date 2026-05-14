@@ -1,1 +1,3 @@
-// Komponenten werden hier geforwarded wenn sie angelegt werden
+@forward 'tables';
+@forward 'filters';
+@forward 'forms';

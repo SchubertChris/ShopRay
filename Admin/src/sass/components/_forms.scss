@@ -1,0 +1,252 @@
+@use '../abstracts/mixins' as *;
+@use '../abstracts/functions' as *;
+
+// ─── SHARED FORM ELEMENTS ────────────────────────────────────────────────────
+.form-input,
+.form-select,
+.form-textarea {
+  width:         100%;
+  padding:       0.5625rem 0.875rem;
+  background:    var(--clr-surface);
+  border:        1px solid var(--clr-secondary);
+  border-radius: 10px;
+  font-size:     rem(13.5px);
+  color:         var(--clr-text);
+  font-family:   inherit;
+  @include transition(border-color, box-shadow);
+
+  &::placeholder { color: color-mix(in srgb, var(--clr-text) 35%, transparent); }
+
+  &:focus {
+    outline:      none;
+    border-color: var(--clr-primary);
+    box-shadow:   0 0 0 3px color-mix(in srgb, var(--clr-primary) 12%, transparent);
+  }
+
+  &--mono { font-family: 'Roboto Mono', monospace; font-size: rem(13px); }
+  &--sm   { padding: 0.375rem 0.625rem; font-size: rem(12.5px); }
+}
+
+.form-select {
+  appearance:       none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:   no-repeat;
+  background-position: right 0.75rem center;
+  padding-right:       2.25rem;
+  cursor:              pointer;
+}
+
+.form-textarea { resize: vertical; min-height: 100px; }
+
+// ─── FORM LAYOUT ─────────────────────────────────────────────────────────────
+.form-grid {
+  display:               grid;
+  gap:                   1.25rem;
+  grid-template-columns: 1fr;
+
+  @include respond-to('lg') {
+    grid-template-columns: 1fr 340px;
+  }
+}
+
+.form-col {
+  display:        flex;
+  flex-direction: column;
+  gap:            1.25rem;
+
+  &--side {}
+}
+
+.form-section {
+  background:    var(--clr-surface);
+  border:        1px solid var(--clr-secondary);
+  border-radius: 14px;
+  padding:       1.375rem;
+
+  &__title {
+    font-size:   rem(14px);
+    font-weight: 700;
+    color:       var(--clr-text);
+    margin:      0 0 1.125rem;
+    padding-bottom: 0.875rem;
+    border-bottom:  1px solid var(--clr-secondary);
+  }
+
+  &__head {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom:  1px solid var(--clr-secondary);
+
+    .form-section__title { margin: 0 0 0.25rem; padding: 0; border: none; }
+  }
+
+  &__desc {
+    font-size: rem(13px);
+    color:     color-mix(in srgb, var(--clr-text) 50%, transparent);
+    margin:    0;
+  }
+
+  &__info {
+    font-size:    rem(12.5px);
+    color:        color-mix(in srgb, var(--clr-text) 50%, transparent);
+    background:   color-mix(in srgb, var(--clr-primary) 7%, transparent);
+    border-radius: 8px;
+    padding:      0.75rem 1rem;
+    margin-top:   1rem;
+    border:       1px solid color-mix(in srgb, var(--clr-primary) 15%, transparent);
+  }
+
+  &__warn {
+    font-size:    rem(13px);
+    color:        var(--clr-warning);
+    background:   color-mix(in srgb, var(--clr-warning) 8%, transparent);
+    border-radius: 8px;
+    padding:      0.875rem 1rem;
+    margin-bottom: 1.25rem;
+    border:       1px solid color-mix(in srgb, var(--clr-warning) 20%, transparent);
+
+    code {
+      font-family: monospace;
+      font-size:   0.9em;
+    }
+  }
+
+  &--info {
+    background:   color-mix(in srgb, var(--clr-primary) 5%, transparent);
+    border-color: color-mix(in srgb, var(--clr-primary) 15%, transparent);
+
+    .form-section__title {
+      border-color: color-mix(in srgb, var(--clr-primary) 20%, transparent);
+    }
+  }
+}
+
+.form-field {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.375rem;
+}
+
+.form-row {
+  display: grid;
+  gap:     0.875rem;
+
+  @include respond-to('md') { grid-template-columns: 1fr 1fr; }
+}
+
+.form-label {
+  font-size:   rem(12.5px);
+  font-weight: 600;
+  color:       color-mix(in srgb, var(--clr-text) 70%, transparent);
+}
+
+.form-hint {
+  font-size: rem(12px);
+  color:     color-mix(in srgb, var(--clr-text) 40%, transparent);
+  margin:    0;
+}
+
+.form-actions {
+  display:      flex;
+  align-items:  center;
+  gap:          0.625rem;
+  justify-content: flex-end;
+  margin-top:   1.25rem;
+  padding-top:  1rem;
+  border-top:   1px solid var(--clr-secondary);
+}
+
+.form-info-text {
+  font-size:   rem(13px);
+  color:       color-mix(in srgb, var(--clr-text) 55%, transparent);
+  line-height: 1.6;
+  margin:      0;
+}
+
+// ─── IMAGE UPLOAD ────────────────────────────────────────────────────────────
+.image-upload {
+  display:        flex;
+  flex-direction: column;
+  gap:            1rem;
+
+  &__preview {
+    width:         100%;
+    aspect-ratio:  1;
+    border-radius: 10px;
+    background:    var(--clr-secondary);
+    overflow:      hidden;
+    display:       flex;
+    align-items:   center;
+    justify-content: center;
+
+    img {
+      width:      100%;
+      height:     100%;
+      object-fit: cover;
+    }
+  }
+
+  &__empty {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            0.5rem;
+    color:          color-mix(in srgb, var(--clr-text) 30%, transparent);
+    font-size:      rem(13px);
+  }
+}
+
+// ─── BUTTONS ─────────────────────────────────────────────────────────────────
+.btn-primary {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           0.4rem;
+  padding:       0.5rem 1.125rem;
+  background:    var(--clr-primary);
+  color:         #fff;
+  font-size:     rem(13.5px);
+  font-weight:   600;
+  border:        none;
+  border-radius: 10px;
+  cursor:        pointer;
+  text-decoration: none;
+  @include transition(opacity);
+
+  &:hover { opacity: 0.88; }
+}
+
+.btn-secondary {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           0.4rem;
+  padding:       0.5rem 1.125rem;
+  background:    var(--clr-surface);
+  color:         var(--clr-text);
+  font-size:     rem(13.5px);
+  font-weight:   600;
+  border:        1px solid var(--clr-secondary);
+  border-radius: 10px;
+  cursor:        pointer;
+  text-decoration: none;
+  @include transition(background, border-color);
+
+  &:hover { background: var(--clr-secondary); border-color: transparent; }
+}
+
+// ─── BACK BUTTON ─────────────────────────────────────────────────────────────
+.back-btn {
+  display:      flex;
+  align-items:  center;
+  gap:          0.375rem;
+  background:   none;
+  border:       none;
+  cursor:       pointer;
+  font-size:    rem(12.5px);
+  font-weight:  600;
+  color:        color-mix(in srgb, var(--clr-text) 50%, transparent);
+  margin-bottom: 0.375rem;
+  padding:      0;
+  @include transition(color);
+
+  &:hover { color: var(--clr-text); }
+}

@@ -1,0 +1,175 @@
+@use '../../abstracts/mixins' as *;
+@use '../../abstracts/functions' as *;
+
+// ─── TICKET SPLIT VIEW ───────────────────────────────────────────────────────
+.ticket-split {
+  display:               grid;
+  grid-template-columns: 1fr;
+  gap:                   1.25rem;
+
+  &.has-detail {
+    @include respond-to('lg') {
+      grid-template-columns: 1fr 400px;
+    }
+  }
+}
+
+// ─── TICKET LIST ─────────────────────────────────────────────────────────────
+.ticket-list {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.5rem;
+}
+
+// ─── TICKET CARD ─────────────────────────────────────────────────────────────
+.ticket-card {
+  display:       block;
+  width:         100%;
+  text-align:    left;
+  background:    var(--clr-surface);
+  border:        1px solid var(--clr-secondary);
+  border-radius: 12px;
+  padding:       1rem 1.25rem;
+  cursor:        pointer;
+  @include transition(border-color, box-shadow, background);
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--clr-primary) 40%, transparent);
+    background:   color-mix(in srgb, var(--clr-primary) 2%, transparent);
+  }
+
+  &.is-active {
+    border-color: var(--clr-primary);
+    background:   color-mix(in srgb, var(--clr-primary) 4%, transparent);
+    box-shadow:   0 0 0 3px color-mix(in srgb, var(--clr-primary) 12%, transparent);
+  }
+
+  &--open        { border-left: 3px solid var(--clr-error); }
+  &--in_progress { border-left: 3px solid var(--clr-warning); }
+  &--closed      { border-left: 3px solid var(--clr-success); }
+
+  &__top {
+    display:     flex;
+    align-items: center;
+    gap:         0.5rem;
+    margin-bottom: 0.5rem;
+    flex-wrap:   wrap;
+  }
+
+  &__status {
+    font-size:      rem(10.5px);
+    font-weight:    700;
+    letter-spacing: 0.04em;
+    padding:        0.15rem 0.5rem;
+    border-radius:  4px;
+
+    &--open        { background: color-mix(in srgb, var(--clr-error)   10%, transparent); color: var(--clr-error);   }
+    &--in_progress { background: color-mix(in srgb, var(--clr-warning) 10%, transparent); color: var(--clr-warning); }
+    &--closed      { background: color-mix(in srgb, var(--clr-success) 10%, transparent); color: var(--clr-success); }
+  }
+
+  &__cat {
+    font-size:  rem(12px);
+    font-weight: 500;
+    color:      color-mix(in srgb, var(--clr-text) 45%, transparent);
+  }
+
+  &__date {
+    margin-left: auto;
+    font-size:   rem(12px);
+    color:       color-mix(in srgb, var(--clr-text) 40%, transparent);
+  }
+
+  &__subject {
+    font-size:   rem(13.5px);
+    font-weight: 600;
+    color:       var(--clr-text);
+    margin:      0 0 0.25rem;
+    @include truncate;
+  }
+
+  &__customer {
+    font-size: rem(12.5px);
+    color:     color-mix(in srgb, var(--clr-text) 45%, transparent);
+    margin:    0;
+  }
+}
+
+// ─── TICKET DETAIL ───────────────────────────────────────────────────────────
+.ticket-detail {
+  background:    var(--clr-surface);
+  border:        1px solid var(--clr-secondary);
+  border-radius: 14px;
+  overflow:      hidden;
+  height:        fit-content;
+  position:      sticky;
+  top:           calc(var(--topbar-height) + 1.5rem);
+
+  &__header {
+    padding:       1.25rem;
+    border-bottom: 1px solid var(--clr-secondary);
+    background:    color-mix(in srgb, var(--clr-primary) 4%, transparent);
+  }
+
+  &__id {
+    font-size:      rem(11px);
+    font-weight:    700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color:          var(--clr-primary);
+    margin:         0 0 0.25rem;
+  }
+
+  &__subject {
+    font-size:   rem(15px);
+    font-weight: 700;
+    color:       var(--clr-text);
+    margin:      0 0 0.25rem;
+    line-height: 1.35;
+  }
+
+  &__meta {
+    font-size: rem(12.5px);
+    color:     color-mix(in srgb, var(--clr-text) 45%, transparent);
+    margin:    0;
+  }
+
+  &__message {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--clr-secondary);
+
+    &-label {
+      font-size:      rem(11px);
+      font-weight:    700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color:          color-mix(in srgb, var(--clr-text) 40%, transparent);
+      margin:         0 0 0.625rem;
+    }
+
+    &-text {
+      font-size:   rem(13.5px);
+      color:       var(--clr-text);
+      line-height: 1.6;
+      margin:      0;
+    }
+  }
+
+  &__reply {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+
+    .form-textarea { min-height: 120px; }
+  }
+
+  &__actions {
+    display:     flex;
+    align-items: center;
+    gap:         0.625rem;
+
+    .form-select--sm { flex: 1; }
+    .btn-primary     { white-space: nowrap; }
+  }
+}

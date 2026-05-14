@@ -1,0 +1,145 @@
+@use '../abstracts/mixins' as *;
+@use '../abstracts/functions' as *;
+
+// ─── FILTER BAR ──────────────────────────────────────────────────────────────
+.filter-bar {
+  display:     flex;
+  align-items: center;
+  gap:         0.75rem;
+  margin-bottom: 1.25rem;
+  flex-wrap:   wrap;
+
+  &__search {
+    position:    relative;
+    flex:        1;
+    min-width:   200px;
+    max-width:   360px;
+  }
+
+  &__search-icon {
+    position:  absolute;
+    left:      0.875rem;
+    top:       50%;
+    transform: translateY(-50%);
+    color:     color-mix(in srgb, var(--clr-text) 35%, transparent);
+    pointer-events: none;
+  }
+
+  &__input {
+    width:         100%;
+    padding:       0.5625rem 0.875rem 0.5625rem 2.375rem;
+    background:    var(--clr-surface);
+    border:        1px solid var(--clr-secondary);
+    border-radius: 10px;
+    font-size:     rem(13.5px);
+    color:         var(--clr-text);
+    @include transition(border-color, box-shadow);
+
+    &::placeholder { color: color-mix(in srgb, var(--clr-text) 35%, transparent); }
+
+    &:focus {
+      outline:      none;
+      border-color: var(--clr-primary);
+      box-shadow:   0 0 0 3px color-mix(in srgb, var(--clr-primary) 12%, transparent);
+    }
+  }
+
+  &__tabs {
+    display:  flex;
+    gap:      0.25rem;
+    flex-wrap: wrap;
+  }
+
+  &__tab {
+    padding:       0.4375rem 0.875rem;
+    border-radius: 8px;
+    border:        1px solid var(--clr-secondary);
+    background:    var(--clr-surface);
+    font-size:     rem(12.5px);
+    font-weight:   600;
+    color:         color-mix(in srgb, var(--clr-text) 65%, transparent);
+    cursor:        pointer;
+    @include transition(background, border-color, color);
+
+    &:hover {
+      background:    var(--clr-secondary);
+      color:         var(--clr-text);
+      border-color:  transparent;
+    }
+
+    &.is-active {
+      background:   color-mix(in srgb, var(--clr-primary) 12%, transparent);
+      color:        var(--clr-primary);
+      border-color: color-mix(in srgb, var(--clr-primary) 30%, transparent);
+    }
+  }
+
+  &__hint {
+    font-size:  rem(12px);
+    color:      color-mix(in srgb, var(--clr-text) 40%, transparent);
+    margin-left: auto;
+  }
+}
+
+// ─── TAB NAV ─────────────────────────────────────────────────────────────────
+.tab-nav {
+  display:       flex;
+  align-items:   center;
+  gap:           0.25rem;
+  border-bottom: 1px solid var(--clr-secondary);
+  margin-bottom: 1.5rem;
+  flex-wrap:     wrap;
+  padding-bottom: 0;
+
+  &__item {
+    display:     flex;
+    align-items: center;
+    gap:         0.375rem;
+    padding:     0.625rem 0.875rem;
+    border:      none;
+    background:  none;
+    font-size:   rem(13px);
+    font-weight: 600;
+    color:       color-mix(in srgb, var(--clr-text) 50%, transparent);
+    cursor:      pointer;
+    position:    relative;
+    @include transition(color);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+
+    &:hover { color: var(--clr-text); }
+
+    &.is-active {
+      color:        var(--clr-text);
+      border-color: var(--clr-primary);
+    }
+  }
+
+  &__count {
+    font-size:     rem(10.5px);
+    font-weight:   700;
+    padding:       0.1rem 0.45rem;
+    border-radius: 100px;
+    background:    var(--clr-secondary);
+    color:         color-mix(in srgb, var(--clr-text) 65%, transparent);
+
+    &.is-active {
+      background: color-mix(in srgb, var(--clr-primary) 15%, transparent);
+      color:      var(--clr-primary);
+    }
+  }
+
+  &__spacer { flex: 1; }
+
+  &__filter {
+    padding:       0.375rem 0.75rem;
+    border-radius: 8px;
+    border:        1px solid var(--clr-secondary);
+    background:    var(--clr-surface);
+    font-size:     rem(12.5px);
+    font-weight:   600;
+    color:         var(--clr-text);
+    cursor:        pointer;
+    margin-bottom: 4px;
+  }
+}
