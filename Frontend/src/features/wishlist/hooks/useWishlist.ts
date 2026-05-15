@@ -6,13 +6,13 @@ export const useWishlist = create<WishlistStore>()(
   persist(
     (set, get) => ({
       ids: [],
-      toggle: (id: number) =>
+      toggle: (id: string) =>
         set(state => ({
           ids: state.ids.includes(id)
             ? state.ids.filter(i => i !== id)
             : [...state.ids, id],
         })),
-      has: (id: number) => get().ids.includes(id),
+      has: (id: string) => get().ids.includes(id),
       clear: () => set({ ids: [] }),
     }),
     { name: 'sr-wishlist' }

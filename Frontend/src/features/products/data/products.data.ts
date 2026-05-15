@@ -3,7 +3,7 @@ import type { Product } from '../types/product.types';
 export const PRODUCTS: Product[] = [
   // ── Produkt 1 — vollständige Detail-Daten als Vorlage ──────────────────────
   {
-    id:       1,
+    id:       '1',
     slug:     'sage-candle-set',
     name:     'Sage Candle Set',
     price:    '24.00',
@@ -35,6 +35,8 @@ export const PRODUCTS: Product[] = [
       <p>Der Docht besteht aus unbehandelter Baumwolle ohne Metallkern. Das Glas ist nach Gebrauch spülmaschinenfest und eignet sich hervorragend als Aufbewahrungsglas oder Blumentopf.</p>
     `,
 
+    imageUrl: null,
+    taxRate:  19,
     certifications: ['Vegan', 'Handmade', 'Plastikfrei', 'CO₂-neutral versandt'],
 
     lmiv: {
@@ -67,7 +69,7 @@ export const PRODUCTS: Product[] = [
 
   // ── Produkt 2 — vollständige Detail-Daten ─────────────────────────────────
   {
-    id:       2,
+    id:       '2',
     slug:     'ceramic-vase-no-4',
     name:     'Ceramic Vase No. 4',
     price:    '45.00',
@@ -100,6 +102,8 @@ export const PRODUCTS: Product[] = [
       <p>Die natürliche Farbvariation zwischen Sandbeige und warmem Grauton ist kein Fehler, sondern das Merkmal echter Handarbeit. Kleine Einschlüsse oder Fingerabdrücke in der Tonmasse unterstreichen den handwerklichen Charakter.</p>
     `,
 
+    imageUrl: null,
+    taxRate:  19,
     certifications: ['Handmade', 'Made in Germany', 'Bleifreiglasiert'],
 
     dealerLinks: [
@@ -117,7 +121,7 @@ export const PRODUCTS: Product[] = [
 
   // ── Produkt 3 — vollständige Detail-Daten ─────────────────────────────────
   {
-    id:       3,
+    id:       '3',
     slug:     'stone-bowl-set',
     name:     'Stone Bowl Set',
     price:    '32.00',
@@ -149,6 +153,8 @@ export const PRODUCTS: Product[] = [
       <p>Marmor reagiert empfindlich auf Säuren — bei intensiver Nutzung mit sauren Lebensmitteln empfehlen wir, die Schalen nach Gebrauch mit einem milden Spülmittel zu reinigen und gründlich zu trocknen.</p>
     `,
 
+    imageUrl: null,
+    taxRate:  19,
     certifications: ['Naturmaterial', 'Lebensmittelecht versiegelt', 'Spülmaschinenfest'],
 
     lmiv: {
@@ -170,11 +176,11 @@ export const PRODUCTS: Product[] = [
   },
 
   // ── Produkte 4–8 — Basis-Daten (Detail-Content folgt je nach Bedarf) ──────
-  { id:4, slug:'studio-art-print',   name:'Studio Art Print',   price:'15.00', oldPrice:'22.00', badge:'Sale', discount:'-32%', rating:4.7, reviews:218, category:'Kunst',     description:'Archivfester Giclée-Druck auf 300 g Büttenkarton, 40 × 50 cm.' },
-  { id:5, slug:'linen-throw',        name:'Linen Throw',        price:'68.00', oldPrice:null,    badge:null,   discount:null,   rating:4.9, reviews: 95, category:'Textilien', description:'Gewebte Überwurfdecke aus reinem belgischem Leinen.' },
-  { id:6, slug:'bamboo-tray',        name:'Bamboo Tray',        price:'38.00', oldPrice:'48.00', badge:'Sale', discount:'-21%', rating:4.5, reviews: 67, category:'Küche',     description:'Servierplatte aus nachhaltigem Bambus mit Griffmulden.' },
-  { id:7, slug:'scented-diffuser',   name:'Scented Diffuser',   price:'52.00', oldPrice:null,    badge:'Neu',  discount:null,   rating:4.8, reviews: 34, category:'Wohnen',    description:'Diffuser aus satiniertem Glas mit 8 Rattan-Stäben.' },
-  { id:8, slug:'marble-coaster-set', name:'Marble Coaster Set', price:'28.00', oldPrice:null,    badge:null,   discount:null,   rating:4.7, reviews:108, category:'Wohnen',    description:'Vier handpolierte Untersetzer aus echtem Carrara-Marmor.' },
+  { id:'4', slug:'studio-art-print',   name:'Studio Art Print',   price:'15.00', oldPrice:'22.00', badge:'Sale', discount:'-32%', rating:4.7, reviews:218, category:'Kunst',     description:'Archivfester Giclée-Druck auf 300 g Büttenkarton, 40 × 50 cm.',  imageUrl: null, taxRate: 19 },
+  { id:'5', slug:'linen-throw',        name:'Linen Throw',        price:'68.00', oldPrice:null,    badge:null,   discount:null,   rating:4.9, reviews: 95, category:'Textilien', description:'Gewebte Überwurfdecke aus reinem belgischem Leinen.',             imageUrl: null, taxRate: 19 },
+  { id:'6', slug:'bamboo-tray',        name:'Bamboo Tray',        price:'38.00', oldPrice:'48.00', badge:'Sale', discount:'-21%', rating:4.5, reviews: 67, category:'Küche',     description:'Servierplatte aus nachhaltigem Bambus mit Griffmulden.',          imageUrl: null, taxRate: 19 },
+  { id:'7', slug:'scented-diffuser',   name:'Scented Diffuser',   price:'52.00', oldPrice:null,    badge:'Neu',  discount:null,   rating:4.8, reviews: 34, category:'Wohnen',    description:'Diffuser aus satiniertem Glas mit 8 Rattan-Stäben.',              imageUrl: null, taxRate: 19 },
+  { id:'8', slug:'marble-coaster-set', name:'Marble Coaster Set', price:'28.00', oldPrice:null,    badge:null,   discount:null,   rating:4.7, reviews:108, category:'Wohnen',    description:'Vier handpolierte Untersetzer aus echtem Carrara-Marmor.',        imageUrl: null, taxRate: 19 },
 ];
 
 export const CATEGORIES = ['Wohnen', 'Deko', 'Küche', 'Textilien', 'Kunst'] as const;

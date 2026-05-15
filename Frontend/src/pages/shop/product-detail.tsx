@@ -43,16 +43,16 @@ type Tab = 'details' | 'lmiv' | 'reviews';
 
 export default function ProductDetailPage() {
   const { slug = '' } = useParams();
-  const product        = useProductBySlug(slug);
+  const { data: product, loading: productLoading } = useProductBySlug(slug);
   const { addItem }    = useCart();
   const notify         = useNotifications(s => s.notify);
-  const isInWishlist   = useWishlist(state => state.ids.includes(product?.id ?? -1));
+  const isInWishlist   = useWishlist(state => state.ids.includes(product?.id ?? ''));
   const toggle         = useWishlist(state => state.toggle);
   const { isAuthenticated } = useAuth();
   const [qty,       setQty]       = useState(1);
   const [activeTab, setActiveTab] = useState<Tab>('details');
 
-  const { data: reviews, loading: reviewsLoading, refetch: refetchReviews } = useReviews(product?.id ?? 0);
+  const { data: reviews, loading: reviewsLoading, refetch: refetchReviews } = useReviews(product?.id ?? '');
 
   const [reviewRating,  setReviewRating]  = useState(0);
   const [reviewTitle,   setReviewTitle]   = useState('');
@@ -78,6 +78,16 @@ export default function ProductDetailPage() {
     } finally {
       setReviewLoading(false);
     }
+  }
+
+  if (productLoading) {
+    return (
+      <section className="section">
+        <div className="container">
+          <div className="page-loader page-loader--inline"><span className="spinner" /></div>
+        </div>
+      </section>
+    );
   }
 
   if (!product) {
@@ -168,6 +178,10 @@ export default function ProductDetailPage() {
                     <span className="badge badge--danger">{product.discount}</span>
                   )}
                 </div>
+                <p className="product-info__tax-hint">
+                  inkl. {product.taxRate}% MwSt. ·{' '}
+                  <Link to={ROUTES.INFO.SHIPPING} className="product-info__tax-link">zzgl. Versandkosten</Link>
+                </p>
 
                 <p className="product-info__description">{product.description}</p>
 

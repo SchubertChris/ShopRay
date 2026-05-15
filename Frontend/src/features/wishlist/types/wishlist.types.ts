@@ -1,6 +1,6 @@
 export interface WishlistStore {
-  ids:    number[];
-  toggle: (id: number) => void;
-  has:    (id: number) => boolean;
+  ids:    string[];
+  toggle: (id: string) => void;
+  has:    (id: string) => boolean;
   clear:  () => void;
 }

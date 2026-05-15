@@ -9,7 +9,7 @@ export default function DashboardPage() {
   const { user }                   = useAuth();
   const { ids }                    = useWishlist();
   const { data, loading }          = useOrders();
-  const orders                     = data?.data ?? [];
+  const orders                     = data ?? [];
   const recentOrders               = orders.slice(0, 3);
   const firstName                  = user?.firstName ?? 'zurück';
   const initial                    = user?.firstName?.[0]?.toUpperCase() ?? '?';

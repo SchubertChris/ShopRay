@@ -40,7 +40,7 @@ export default function SearchPage() {
   const isNew  = sortBy === 'newest';
 
   const category       = activeIdx === 0 ? null : CATEGORY_FILTERS[activeIdx] as string;
-  const results        = useProductSearch(query, category, sortBy);
+  const { data: results } = useProductSearch(query, category, sortBy);
   const displayResults = isSale ? results.filter(p => p.discount !== null) : results;
 
   useEffect(() => {
@@ -192,7 +192,7 @@ export default function SearchPage() {
             <div className="modal__body">
               <div className="modal-product">
                 <div className="modal-product__thumb">
-                  <ProductImage id={quickView.id} />
+                  <ProductImage product={quickView} />
                 </div>
                 <div className="modal-product__body">
                   <span className="product-card__badge">{quickView.category}</span>

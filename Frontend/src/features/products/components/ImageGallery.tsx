@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { getProductGallery } from '@config/images';
 
 interface ImageGalleryProps {
-  productId:   number;
+  productId:   string | number;
   productName: string;
 }
 

@@ -1,31 +1,65 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, AlertCircle, Loader2 } from 'lucide-react';
 import { ROUTES } from '@config/routes';
-import type { Product, ProductCategory } from '../../types/index';
+import { deleteProduct } from '../../api/adminApi';
+import type { AdminProduct } from '../../api/adminApi';
+import type { ProductCategory } from '../../types/index';
 
-const MOCK_PRODUCTS: Product[] = [
-  { id: 1,  name: 'Kerzentablett Marmor',    slug: 'kerzentablett-marmor',    description: '', price: '39,90', oldPrice: '49,90', discount: '-20%', badge: 'SALE',  category: 'Wohnen',   rating: 4.7, reviews: 84,  stock: 12, imageUrl: null,                              createdAt: '2026-01-10' },
-  { id: 2,  name: 'Leinen Kissenhülle 50×50', slug: 'leinen-kissenhuelle',     description: '', price: '24,90', oldPrice: null,    discount: null,    badge: null,    category: 'Textilien',rating: 4.4, reviews: 121, stock: 38, imageUrl: null,                              createdAt: '2026-01-14' },
-  { id: 3,  name: 'Holzschale Eiche',         slug: 'holzschale-eiche',        description: '', price: '59,00', oldPrice: null,    discount: null,    badge: 'NEU',   category: 'Deko',    rating: 4.9, reviews: 33,  stock: 5,  imageUrl: null,                              createdAt: '2026-02-01' },
-  { id: 4,  name: 'Gusseisen-Pfanne 28 cm',   slug: 'gusseisen-pfanne-28',     description: '', price: '79,90', oldPrice: '99,00', discount: '-19%', badge: 'SALE',  category: 'Küche',   rating: 4.6, reviews: 58,  stock: 0,  imageUrl: null,                              createdAt: '2026-02-05' },
-  { id: 5,  name: 'Aquarell-Print A3',         slug: 'aquarell-print-a3',       description: '', price: '29,90', oldPrice: null,    discount: null,    badge: null,    category: 'Kunst',   rating: 4.5, reviews: 17,  stock: 99, imageUrl: null,                              createdAt: '2026-02-20' },
-  { id: 6,  name: 'Wolldecke Anthrazit',       slug: 'wolldecke-anthrazit',     description: '', price: '89,00', oldPrice: null,    discount: null,    badge: null,    category: 'Textilien',rating: 4.8, reviews: 76,  stock: 7,  imageUrl: null,                              createdAt: '2026-03-01' },
-  { id: 7,  name: 'Duftkerze Zedernholz',     slug: 'duftkerze-zedernholz',    description: '', price: '18,90', oldPrice: '22,00', discount: '-14%', badge: null,    category: 'Deko',    rating: 4.3, reviews: 209, stock: 55, imageUrl: null,                              createdAt: '2026-03-10' },
-  { id: 8,  name: 'Emaille-Topf Set 3-tlg.',  slug: 'emaille-topf-set',        description: '', price: '129,00',oldPrice: null,    discount: null,    badge: 'NEU',   category: 'Küche',   rating: 4.7, reviews: 12,  stock: 3,  imageUrl: null,                              createdAt: '2026-04-15' },
-];
+const API_URL = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:5000';
 
 const CATEGORIES: Array<'Alle' | ProductCategory> = ['Alle', 'Wohnen', 'Deko', 'Küche', 'Textilien', 'Kunst'];
 
 export default function ProductsPage() {
-  const [search,   setSearch]   = useState('');
-  const [category, setCategory] = useState<'Alle' | ProductCategory>('Alle');
+  const [products, setProducts]         = useState<AdminProduct[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState<string | null>(null);
+  const [search, setSearch]             = useState('');
+  const [category, setCategory]         = useState<'Alle' | ProductCategory>('Alle');
+  const [deletingId, setDeletingId]     = useState<string | null>(null);
 
-  const filtered = MOCK_PRODUCTS.filter(p => {
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/api/products`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: AdminProduct[] = await res.json();
+      setProducts(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+
+  const handleDelete = async (product: AdminProduct) => {
+    const confirmed = window.confirm(
+      `Produkt „${product.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingId(product.id);
+    try {
+      await deleteProduct(product.id);
+      setProducts(prev => prev.filter(p => p.id !== product.id));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Löschen fehlgeschlagen');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const filtered = products.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
     const matchCat    = category === 'Alle' || p.category === category;
     return matchSearch && matchCat;
   });
+
+  const formatPrice = (value: number) =>
+    value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
     <>
@@ -33,7 +67,9 @@ export default function ProductsPage() {
         <div className="page-header__left">
           <span className="page-header__eyebrow">Shop</span>
           <h1 className="page-header__title">Produkte</h1>
-          <p className="page-header__sub">{MOCK_PRODUCTS.length} Produkte insgesamt</p>
+          <p className="page-header__sub">
+            {loading ? 'Lädt…' : `${products.length} Produkte insgesamt`}
+          </p>
         </div>
         <div className="page-header__actions">
           <Link to={ROUTES.PRODUCTS.NEW} className="btn-primary">
@@ -68,80 +104,139 @@ export default function ProductsPage() {
         </div>
       </div>
 
+      {/* Error State */}
+      {error && (
+        <div className="data-card data-card--error">
+          <div className="data-card__body">
+            <div className="admin-table__empty">
+              <AlertCircle size={18} strokeWidth={1.5} />
+              Fehler beim Laden: {error}
+              <button className="btn-secondary" onClick={fetchProducts} style={{ marginLeft: '1rem' }}>
+                Erneut versuchen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
-      <div className="data-card">
-        <div className="data-card__body">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th style={{ width: 48 }}>#</th>
-                <th>Produkt</th>
-                <th>Kategorie</th>
-                <th>Preis</th>
-                <th>Lager</th>
-                <th>Badge</th>
-                <th style={{ width: 80 }}>Aktionen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
+      {!error && (
+        <div className="data-card">
+          <div className="data-card__body">
+            <table className="admin-table">
+              <thead>
                 <tr>
-                  <td colSpan={7} className="admin-table__empty">
-                    <AlertCircle size={18} strokeWidth={1.5} />
-                    Keine Produkte gefunden
-                  </td>
+                  <th style={{ width: 48 }}>#</th>
+                  <th>Produkt</th>
+                  <th>Kategorie</th>
+                  <th>Preis</th>
+                  <th>Lager</th>
+                  <th>Status</th>
+                  <th>Badge</th>
+                  <th style={{ width: 80 }}>Aktionen</th>
                 </tr>
-              ) : (
-                filtered.map(p => (
-                  <tr key={p.id}>
-                    <td className="admin-table__muted">{p.id}</td>
-                    <td>
-                      <div className="product-thumb">
-                        <div className="product-thumb__img">
-                          {p.imageUrl
-                            ? <img src={p.imageUrl} alt={p.name} onContextMenu={e => e.preventDefault()} />
-                            : <span className="product-thumb__placeholder">{p.name[0]}</span>
-                          }
+              </thead>
+              <tbody>
+                {loading ? (
+                  /* Loading skeleton */
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="admin-table__skeleton-row">
+                      <td><span className="skeleton skeleton--sm" /></td>
+                      <td>
+                        <div className="product-thumb">
+                          <div className="product-thumb__img skeleton" />
+                          <div>
+                            <span className="skeleton skeleton--md" />
+                            <span className="skeleton skeleton--sm" />
+                          </div>
                         </div>
-                        <div>
-                          <p className="product-thumb__name">{p.name}</p>
-                          <p className="product-thumb__slug">{p.slug}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td><span className="cat-badge">{p.category}</span></td>
-                    <td>
-                      <span className="admin-table__price">€ {p.price}</span>
-                      {p.oldPrice && <span className="admin-table__old-price">€ {p.oldPrice}</span>}
-                    </td>
-                    <td>
-                      <span className={`stock-badge${p.stock === 0 ? ' stock-badge--out' : p.stock <= 5 ? ' stock-badge--low' : ''}`}>
-                        {p.stock === 0 ? 'Ausverkauft' : `${p.stock} Stk.`}
-                      </span>
-                    </td>
-                    <td>
-                      {p.badge
-                        ? <span className="product-badge">{p.badge}</span>
-                        : <span className="admin-table__muted">—</span>
-                      }
-                    </td>
-                    <td>
-                      <div className="table-actions">
-                        <Link to={ROUTES.PRODUCTS.edit(p.id)} className="table-action" title="Bearbeiten">
-                          <Edit2 size={13} strokeWidth={2} />
-                        </Link>
-                        <button className="table-action table-action--danger" title="Löschen">
-                          <Trash2 size={13} strokeWidth={2} />
-                        </button>
-                      </div>
+                      </td>
+                      <td><span className="skeleton skeleton--sm" /></td>
+                      <td><span className="skeleton skeleton--sm" /></td>
+                      <td><span className="skeleton skeleton--sm" /></td>
+                      <td><span className="skeleton skeleton--sm" /></td>
+                      <td><span className="skeleton skeleton--sm" /></td>
+                      <td><span className="skeleton skeleton--xs" /></td>
+                    </tr>
+                  ))
+                ) : filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="admin-table__empty">
+                      <AlertCircle size={18} strokeWidth={1.5} />
+                      Keine Produkte gefunden
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filtered.map(p => (
+                    <tr key={p.id} className={deletingId === p.id ? 'admin-table__row--deleting' : ''}>
+                      <td className="admin-table__muted">{p.id}</td>
+                      <td>
+                        <div className="product-thumb">
+                          <div className="product-thumb__img">
+                            {p.image_url
+                              ? <img src={p.image_url} alt={p.name} onContextMenu={e => e.preventDefault()} />
+                              : <span className="product-thumb__placeholder">{p.name[0]}</span>
+                            }
+                          </div>
+                          <div>
+                            <p className="product-thumb__name">{p.name}</p>
+                            <p className="product-thumb__slug">{p.slug}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td><span className="cat-badge">{p.category}</span></td>
+                      <td>
+                        <span className="admin-table__price">€ {formatPrice(p.price)}</span>
+                        {p.old_price != null && (
+                          <span className="admin-table__old-price">€ {formatPrice(p.old_price)}</span>
+                        )}
+                      </td>
+                      <td>
+                        <span className={`stock-badge${p.stock === 0 ? ' stock-badge--out' : p.stock <= 5 ? ' stock-badge--low' : ''}`}>
+                          {p.stock === 0 ? 'Ausverkauft' : `${p.stock} Stk.`}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${p.active ? 'status-badge--active' : 'status-badge--inactive'}`}>
+                          {p.active ? 'Aktiv' : 'Inaktiv'}
+                        </span>
+                      </td>
+                      <td>
+                        {p.badge
+                          ? <span className="product-badge">{p.badge}</span>
+                          : <span className="admin-table__muted">—</span>
+                        }
+                      </td>
+                      <td>
+                        <div className="table-actions">
+                          <Link
+                            to={ROUTES.PRODUCTS.edit(p.id)}
+                            className="table-action"
+                            title="Bearbeiten"
+                          >
+                            <Edit2 size={13} strokeWidth={2} />
+                          </Link>
+                          <button
+                            className="table-action table-action--danger"
+                            title="Löschen"
+                            onClick={() => handleDelete(p)}
+                            disabled={deletingId === p.id}
+                          >
+                            {deletingId === p.id
+                              ? <Loader2 size={13} strokeWidth={2} className="spin" />
+                              : <Trash2 size={13} strokeWidth={2} />
+                            }
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }

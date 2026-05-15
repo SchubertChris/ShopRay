@@ -85,7 +85,7 @@ export default function DashboardPage() {
                         {STATUS_LABELS[o.status]}
                       </span>
                     </td>
-                    <td style={{ color: 'color-mix(in srgb, var(--clr-text) 45%, transparent)' }}>
+                    <td className="admin-table__muted">
                       {o.date}
                     </td>
                   </tr>

@@ -9,7 +9,7 @@ const PAGE_SIZE = 10;
 export default function OrdersPage() {
   const { data, loading, error } = useOrders();
   const [page, setPage]          = useState(1);
-  const orders                   = data?.data ?? [];
+  const orders                   = data ?? [];
   const totalPages               = Math.ceil(orders.length / PAGE_SIZE);
   const visibleOrders            = orders.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 

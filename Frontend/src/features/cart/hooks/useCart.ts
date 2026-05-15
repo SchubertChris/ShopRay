@@ -20,10 +20,10 @@ export const useCart = create<CartStore>()(
         return { items: [...state.items, { ...product, quantity: 1 }] };
       }),
 
-      removeItem: (id: number) =>
+      removeItem: (id: string) =>
         set(state => ({ items: state.items.filter(i => i.id !== id) })),
 
-      updateQuantity: (id: number, delta: number) =>
+      updateQuantity: (id: string, delta: number) =>
         set(state => ({
           items: state.items
             .map(i => i.id === id ? { ...i, quantity: i.quantity + delta } : i)

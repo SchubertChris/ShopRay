@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '@features/cart';
 import { useNotifications } from '@features/notifications';
 import { useWishlist } from '@features/wishlist';
-import { PRODUCTS } from '@features/products';
+import { useProducts } from '@features/products';
 import type { Product } from '@features/products';
 import { ProductCard, Stars, ProductImage, SeoMeta, JsonLd } from '@components/ui';
 import { ROUTES } from '@config/routes';
@@ -55,6 +55,7 @@ interface ToastState { visible: boolean; message: string; type: 'success' | 'err
 // ── SEITE ─────────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
+  const { data: products } = useProducts();
   const { palette, mode, setPalette, toggleMode } = useTheme();
   const { addItem, items, total, removeItem, count } = useCart();
   const notify = useNotifications(s => s.notify);
@@ -95,7 +96,7 @@ export default function HomePage() {
     notify({ type: 'success', title: 'In den Warenkorb gelegt', message: p.name, action: { label: 'Zum Warenkorb', href: '/cart' } });
   }
 
-  function handleToggleWishlist(id: number) {
+  function handleToggleWishlist(id: string) {
     const wasIn = wishlistIds.includes(id);
     toggle(id);
     showToast(wasIn ? 'Von der Wunschliste entfernt' : 'Zur Wunschliste hinzugefügt', wasIn ? 'warning' : 'success');
@@ -287,7 +288,7 @@ export default function HomePage() {
             <Link className="products-head__link" to={ROUTES.SHOP.SEARCH}>Alle anzeigen →</Link>
           </div>
           <div className="products-grid">
-            {PRODUCTS.slice(0, 4).map((p, idx) => (
+            {products.slice(0, 4).map((p, idx) => (
               <ProductCard key={p.id} product={p} skeleton={skeletons} revealDelay={idx + 1} onQuickView={setQuickView} />
             ))}
           </div>
@@ -358,7 +359,7 @@ export default function HomePage() {
             <Link className="products-head__link" to={ROUTES.SHOP.SEARCH}>Neuheiten →</Link>
           </div>
           <div className="products-grid">
-            {PRODUCTS.slice(4, 8).map((p, idx) => (
+            {products.slice(4, 8).map((p, idx) => (
               <ProductCard key={p.id} product={p} skeleton={skeletons} revealDelay={idx + 1} onQuickView={setQuickView} />
             ))}
           </div>
@@ -468,7 +469,7 @@ export default function HomePage() {
             </div>
             <div className="modal__body">
               <div className="modal-product">
-                <div className="modal-product__thumb"><ProductImage id={quickView.id} /></div>
+                <div className="modal-product__thumb"><ProductImage product={quickView} /></div>
                 <div className="modal-product__body">
                   <span className="product-card__badge">{quickView.category}</span>
                   <div className="modal-product__rating">
@@ -481,6 +482,10 @@ export default function HomePage() {
                     {quickView.oldPrice && <span className="product-card__price-old">{quickView.oldPrice} €</span>}
                     {quickView.discount && <span className="badge badge--danger">{quickView.discount}</span>}
                   </div>
+                  <p className="product-card__tax-hint">
+                    inkl. {quickView.taxRate}% MwSt. ·{' '}
+                    <a href="/versand" className="product-card__tax-link">zzgl. Versandkosten</a>
+                  </p>
                   <div className="modal-product__actions">
                     <button
                       className="btn btn--primary btn--full"
@@ -531,7 +536,7 @@ export default function HomePage() {
                 <div className="list-feed drawer__items">
                   {items.map(item => (
                     <div key={item.id} className="order-card">
-                      <div className="order-card__thumb"><ProductImage id={item.id} /></div>
+                      <div className="order-card__thumb"><ProductImage product={item} /></div>
                       <div className="order-card__info">
                         <div className="order-card__name">{item.name}</div>
                         <div className="order-card__meta">{item.category} · {item.quantity} Stück</div>
@@ -552,6 +557,9 @@ export default function HomePage() {
                     Noch <strong>{(50 - parseFloat(cartTotal)).toFixed(2)} €</strong> bis kostenlosen Versand.
                   </div>
                 )}
+                <p className="drawer__tax-hint">
+                  inkl. MwSt. · <a href="/versand" className="drawer__tax-link">zzgl. Versandkosten</a>
+                </p>
                 <div className="drawer__subtotal">
                   <span>Zwischensumme</span>
                   <span className="drawer__subtotal-price">{cartTotal} €</span>

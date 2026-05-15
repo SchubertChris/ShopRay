@@ -170,6 +170,7 @@
   gap:            1rem;
 
   &__preview {
+    position:      relative;
     width:         100%;
     aspect-ratio:  1;
     border-radius: 10px;
@@ -184,6 +185,59 @@
       height:     100%;
       object-fit: cover;
     }
+  }
+
+  &__remove {
+    position:      absolute;
+    top:           8px;
+    right:         8px;
+    width:         28px;
+    height:        28px;
+    border-radius: 50%;
+    background:    rgba(0, 0, 0, 0.55);
+    border:        none;
+    cursor:        pointer;
+    color:         #fff;
+    display:       flex;
+    align-items:   center;
+    justify-content: center;
+    @include transition(background);
+
+    &:hover { background: rgba(0, 0, 0, 0.8); }
+  }
+
+  &__dropzone {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    justify-content: center;
+    gap:            0.5rem;
+    padding:        2rem 1rem;
+    border:         2px dashed var(--clr-secondary);
+    border-radius:  12px;
+    cursor:         pointer;
+    color:          color-mix(in srgb, var(--clr-text) 40%, transparent);
+    font-size:      rem(13px);
+    text-align:     center;
+    @include transition(border-color, background, color);
+
+    &:hover,
+    &.is-dragging {
+      border-color: var(--clr-primary);
+      background:   color-mix(in srgb, var(--clr-primary) 5%, transparent);
+      color:        var(--clr-primary);
+    }
+
+    &.is-uploading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+  }
+
+  &__hint {
+    font-size: rem(11.5px);
+    opacity:   0.6;
+    margin:    0;
   }
 
   &__empty {
@@ -231,6 +285,113 @@
   @include transition(background, border-color);
 
   &:hover { background: var(--clr-secondary); border-color: transparent; }
+}
+
+// ─── PAGE STATES ─────────────────────────────────────────────────────────────
+.page-loading,
+.page-error {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  justify-content: center;
+  gap:            0.75rem;
+  padding:        4rem 2rem;
+  color:          color-mix(in srgb, var(--clr-text) 50%, transparent);
+  font-size:      rem(14px);
+}
+
+.page-error {
+  p { margin: 0; }
+}
+
+// ─── FORM ERROR BANNER ────────────────────────────────────────────────────────
+.form-error-banner {
+  display:       flex;
+  align-items:   center;
+  justify-content: space-between;
+  gap:           0.75rem;
+  padding:       0.75rem 1rem;
+  background:    color-mix(in srgb, var(--clr-error) 8%, transparent);
+  border:        1px solid color-mix(in srgb, var(--clr-error) 22%, transparent);
+  border-radius: 10px;
+  color:         var(--clr-error);
+  font-size:     rem(13.5px);
+  margin-bottom: 1rem;
+
+  &__close {
+    flex-shrink:   0;
+    background:    none;
+    border:        none;
+    cursor:        pointer;
+    color:         inherit;
+    opacity:       0.6;
+    padding:       0.25rem;
+    line-height:   1;
+    @include transition(opacity);
+
+    &:hover { opacity: 1; }
+  }
+}
+
+.form-error {
+  font-size: rem(12.5px);
+  color:     var(--clr-error);
+  margin:    0;
+}
+
+// ─── TOGGLE SWITCH ────────────────────────────────────────────────────────────
+.form-toggle {
+  display:     flex;
+  align-items: center;
+  gap:         0.75rem;
+  cursor:      pointer;
+
+  &__input {
+    position: absolute;
+    width:    1px;
+    height:   1px;
+    opacity:  0;
+    pointer-events: none;
+  }
+
+  &__track {
+    position:      relative;
+    width:         40px;
+    height:        22px;
+    border-radius: 100px;
+    background:    var(--clr-secondary);
+    flex-shrink:   0;
+    @include transition(background);
+
+    &::after {
+      content:       '';
+      position:      absolute;
+      top:           3px;
+      left:          3px;
+      width:         16px;
+      height:        16px;
+      border-radius: 50%;
+      background:    var(--clr-text);
+      opacity:       0.4;
+      @include transition(transform, background, opacity);
+    }
+  }
+
+  &__input:checked + &__track {
+    background: var(--clr-primary);
+
+    &::after {
+      transform: translateX(18px);
+      background: #fff;
+      opacity:   1;
+    }
+  }
+
+  &__label {
+    font-size:   rem(13.5px);
+    color:       var(--clr-text);
+    font-weight: 500;
+  }
 }
 
 // ─── BACK BUTTON ─────────────────────────────────────────────────────────────

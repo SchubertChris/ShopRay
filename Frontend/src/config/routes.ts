@@ -2,12 +2,12 @@ export const ROUTES = {
   HOME: '/',
 
   SHOP: {
-    PRODUCT:       '/products/:slug',
-    product:       (slug: string) => `/products/${slug}`,
+    PRODUCT:       '/produkt/:slug',
+    product:       (slug: string) => `/produkt/${slug}`,
     CART:          '/cart',
     CHECKOUT:      '/checkout',
     ORDER_SUCCESS: '/order-success',
-    SEARCH:        '/search',
+    SEARCH:        '/suche',
     CATEGORIES:    '/kategorien',
   },
 
@@ -32,13 +32,14 @@ export const ROUTES = {
   },
 
   INFO: {
-    ABOUT:      '/about',
-    CONTACT:    '/contact',
-    FAQ:        '/faq',
-    SHIPPING:   '/versand',
-    IMPRESSUM:  '/impressum',
-    PRIVACY:    '/datenschutz',
-    TERMS:      '/agb',
+    ABOUT:     '/about',
+    CONTACT:   '/contact',
+    FAQ:       '/faq',
+    SHIPPING:  '/versand',
+    IMPRESSUM: '/impressum',
+    PRIVACY:   '/datenschutz',
+    TERMS:     '/agb',
+    WIDERRUF:  '/widerruf',
   },
 
   SUPPORT: {

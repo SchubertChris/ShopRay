@@ -19,30 +19,32 @@ const MOCK_ORDERS: MockOrder[] = [
   { id: '1', orderNumber: '#1042', customerName: 'Laura Meier',    customerEmail: 'l.meier@mail.de',   total: '€ 89,00',   status: 'paid',      items: 2, date: '14.05.2026' },
   { id: '2', orderNumber: '#1041', customerName: 'Jonas Braun',    customerEmail: 'j.braun@mail.de',   total: '€ 124,50',  status: 'shipped',   items: 3, date: '13.05.2026' },
   { id: '3', orderNumber: '#1040', customerName: 'Sara König',     customerEmail: 's.koenig@mail.de',  total: '€ 56,00',   status: 'delivered', items: 1, date: '13.05.2026' },
-  { id: '4', orderNumber: '#1039', customerName: 'Max Müller',     customerEmail: 'm.mueller@mail.de', total: '€ 210,00',  status: 'new',       items: 4, date: '12.05.2026' },
+  { id: '4', orderNumber: '#1039', customerName: 'Max Müller',     customerEmail: 'm.mueller@mail.de', total: '€ 210,00',  status: 'pending',       items: 4, date: '12.05.2026' },
   { id: '5', orderNumber: '#1038', customerName: 'Anna Schmidt',   customerEmail: 'a.schmidt@mail.de', total: '€ 38,00',   status: 'cancelled', items: 1, date: '11.05.2026' },
   { id: '6', orderNumber: '#1037', customerName: 'Felix Wagner',   customerEmail: 'f.wagner@mail.de',  total: '€ 67,50',   status: 'delivered', items: 2, date: '10.05.2026' },
   { id: '7', orderNumber: '#1036', customerName: 'Mia Becker',     customerEmail: 'm.becker@mail.de',  total: '€ 159,00',  status: 'shipped',   items: 3, date: '09.05.2026' },
   { id: '8', orderNumber: '#1035', customerName: 'Lukas Hoffmann', customerEmail: 'l.hoffmann@web.de', total: '€ 44,90',   status: 'paid',      items: 2, date: '08.05.2026' },
   { id: '9', orderNumber: '#1034', customerName: 'Sophie Fischer', customerEmail: 's.fischer@web.de',  total: '€ 319,00',  status: 'delivered', items: 5, date: '07.05.2026' },
-  { id: '10',orderNumber: '#1033', customerName: 'Tim Schulz',     customerEmail: 't.schulz@web.de',   total: '€ 79,90',   status: 'new',       items: 1, date: '06.05.2026' },
+  { id: '10',orderNumber: '#1033', customerName: 'Tim Schulz',     customerEmail: 't.schulz@web.de',   total: '€ 79,90',   status: 'pending',       items: 1, date: '06.05.2026' },
 ];
 
 const STATUS_TABS: Array<{ key: OrderStatus | 'all'; label: string }> = [
-  { key: 'all',       label: 'Alle'        },
-  { key: 'new',       label: 'Neu'         },
-  { key: 'paid',      label: 'Bezahlt'     },
-  { key: 'shipped',   label: 'Versendet'   },
-  { key: 'delivered', label: 'Zugestellt'  },
-  { key: 'cancelled', label: 'Storniert'   },
+  { key: 'all',           label: 'Alle'        },
+  { key: 'pending',       label: 'Ausstehend'  },
+  { key: 'paid',          label: 'Bezahlt'     },
+  { key: 'shipped',       label: 'Versendet'   },
+  { key: 'delivered',     label: 'Zugestellt'  },
+  { key: 'cancelled',     label: 'Storniert'   },
 ];
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
-  new:       'Neu',
-  paid:      'Bezahlt',
-  shipped:   'Versendet',
-  delivered: 'Zugestellt',
-  cancelled: 'Storniert',
+  pending:        'Ausstehend',
+  paid:           'Bezahlt',
+  shipped:        'Versendet',
+  delivered:      'Zugestellt',
+  cancelled:      'Storniert',
+  payment_failed: 'Zahlung fehlgeschlagen',
+  refunded:       'Erstattet',
 };
 
 export default function OrdersPage() {

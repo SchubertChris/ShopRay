@@ -1,4 +1,5 @@
 import { SeoMeta, LegalPage } from '@components/ui';
+import { APP_COMPANY, APP_CONTACT } from '@config/app';
 
 const TOC = [
   { id: 'verantwortlicher',    label: '1. Verantwortlicher'          },
@@ -20,9 +21,9 @@ export default function PrivacyPage() {
 
         <h2 id="verantwortlicher">1. Verantwortlicher</h2>
         <p>
-          Max Mustermann<br />
-          Musterstraße 1, 12345 Musterstadt<br />
-          E-Mail: hallo@Concepts.de
+          {APP_COMPANY.owner}<br />
+          {APP_COMPANY.street}, {APP_COMPANY.zip} {APP_COMPANY.city}<br />
+          E-Mail: {APP_CONTACT.email}
         </p>
 
         <h2 id="erhebung">2. Erhebung und Verarbeitung personenbezogener Daten</h2>
@@ -117,7 +118,7 @@ export default function PrivacyPage() {
         <h2 id="rechte">7. Deine Rechte</h2>
         <p>
           Du hast jederzeit das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der
-          Verarbeitung sowie Datenübertragbarkeit. Wende dich dafür an hallo@Concepts.de.
+          Verarbeitung sowie Datenübertragbarkeit. Wende dich dafür an {APP_CONTACT.email}.
         </p>
 
         <h2 id="speicherdauer">8. Speicherdauer</h2>

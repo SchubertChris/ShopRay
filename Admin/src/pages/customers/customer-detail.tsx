@@ -24,11 +24,13 @@ const MOCK_CUSTOMER = {
 };
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
-  new:       'Neu',
-  paid:      'Bezahlt',
-  shipped:   'Versendet',
-  delivered: 'Zugestellt',
-  cancelled: 'Storniert',
+  pending:        'Ausstehend',
+  paid:           'Bezahlt',
+  shipped:        'Versendet',
+  delivered:      'Zugestellt',
+  cancelled:      'Storniert',
+  payment_failed: 'Zahlung fehlgeschlagen',
+  refunded:       'Erstattet',
 };
 
 export default function CustomerDetailPage() {

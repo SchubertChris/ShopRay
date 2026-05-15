@@ -30,10 +30,11 @@ const COLUMNS: { title: string; links: FooterLink[] }[] = [
   {
     title: 'Rechtliches',
     links: [
-      { label: 'Impressum',   to: ROUTES.INFO.IMPRESSUM },
-      { label: 'Datenschutz', to: ROUTES.INFO.PRIVACY   },
-      { label: 'AGB',         to: ROUTES.INFO.TERMS     },
-      { label: 'Cookies',     action: 'consent'         },
+      { label: 'Impressum',        to: ROUTES.INFO.IMPRESSUM },
+      { label: 'Datenschutz',      to: ROUTES.INFO.PRIVACY   },
+      { label: 'AGB',              to: ROUTES.INFO.TERMS     },
+      { label: 'Widerrufsbelehrung', to: ROUTES.INFO.WIDERRUF },
+      { label: 'Cookies',          action: 'consent'         },
     ],
   },
 ];
@@ -91,6 +92,7 @@ export function Footer() {
             <Link to={ROUTES.INFO.IMPRESSUM} className="footer__legal-link">Impressum</Link>
             <Link to={ROUTES.INFO.PRIVACY}   className="footer__legal-link">Datenschutz</Link>
             <Link to={ROUTES.INFO.TERMS}     className="footer__legal-link">AGB</Link>
+            <Link to={ROUTES.INFO.WIDERRUF}  className="footer__legal-link">Widerruf</Link>
             <button className="footer__legal-link footer__legal-btn" onClick={openConsent}>
               Cookie-Einstellungen
             </button>

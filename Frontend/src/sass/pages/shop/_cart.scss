@@ -184,6 +184,21 @@
     opacity: 0.5;
   }
 
+  // PAngV: MwSt.-Hinweis
+  &__tax-hint {
+    font-size:   rem(11.5px);
+    color:       var(--clr-text);
+    opacity:     0.4;
+    margin:      0.5rem 0 0;
+    line-height: 1.4;
+  }
+
+  &__tax-link {
+    color:           inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
   // CTA-Bereich unten
   &__cta {
     margin-top: 1.5rem;

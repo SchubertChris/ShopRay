@@ -2,6 +2,7 @@ import { Router, Response, NextFunction } from 'express';
 import { supabase } from '../lib/supabase';
 import { stripe }  from '../lib/stripe';
 import { requireAuth, AuthRequest } from '../middleware/auth';
+import { checkoutRateLimit } from '../middleware/security';
 
 const router = Router();
 
@@ -43,10 +44,10 @@ router.get('/:id', requireAuth, async (req: AuthRequest, res: Response, next: Ne
 });
 
 // POST /api/orders/checkout — Stripe Checkout Session erstellen
-router.post('/checkout', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+router.post('/checkout', requireAuth, checkoutRateLimit, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { items, shippingAddress } = req.body as {
-      items: Array<{ productId: string; name: string; price: number; quantity: number; imageUrl?: string }>;
+      items: Array<{ productId: string; quantity: number }>;
       shippingAddress?: Record<string, string>;
     };
 
@@ -55,9 +56,56 @@ router.post('/checkout', requireAuth, async (req: AuthRequest, res: Response, ne
       return;
     }
 
+    // Mengen validieren
+    for (const item of items) {
+      if (!item.productId || typeof item.productId !== 'string') {
+        res.status(400).json({ error: 'Ungültige Produkt-ID' });
+        return;
+      }
+      const qty = Number(item.quantity);
+      if (!Number.isInteger(qty) || qty < 1 || qty > 100) {
+        res.status(400).json({ error: 'Ungültige Menge' });
+        return;
+      }
+    }
+
+    // Preise IMMER aus der Datenbank laden — niemals vom Client übernehmen
+    const productIds = [...new Set(items.map(i => i.productId))];
+    const { data: dbProducts, error: dbErr } = await supabase
+      .from('products')
+      .select('id, name, price, image_url, tax_rate')
+      .in('id', productIds)
+      .eq('active', true);
+
+    if (dbErr || !dbProducts?.length) {
+      res.status(400).json({ error: 'Produkte nicht gefunden oder nicht verfügbar.' });
+      return;
+    }
+
+    const productMap = new Map(dbProducts.map(p => [p.id, p]));
+
+    // Sicherstellen, dass alle angeforderten Produkte in der DB sind
+    for (const item of items) {
+      if (!productMap.has(item.productId)) {
+        res.status(400).json({ error: `Produkt ${item.productId} nicht gefunden.` });
+        return;
+      }
+    }
+
+    // Gesamtsumme aus DB-Preisen berechnen (in Cent für Stripe)
+    const lineItems = items.map(item => {
+      const product = productMap.get(item.productId)!;
+      return {
+        product,
+        quantity: item.quantity,
+        unitAmountCents: Math.round(Number(product.price) * 100),
+      };
+    });
+
+    const totalCents = lineItems.reduce((sum, i) => sum + i.unitAmountCents * i.quantity, 0);
+
     // Order in DB anlegen (Status: pending)
     const orderNumber = `#${Date.now().toString().slice(-6)}`;
-    const total       = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
     const { data: order, error: orderErr } = await supabase
       .from('orders')
@@ -65,7 +113,7 @@ router.post('/checkout', requireAuth, async (req: AuthRequest, res: Response, ne
         user_id:          req.userId,
         order_number:     orderNumber,
         status:           'pending',
-        total:            (total / 100).toFixed(2),
+        total:            (totalCents / 100).toFixed(2),
         shipping_address: shippingAddress ?? null,
       })
       .select()
@@ -75,29 +123,29 @@ router.post('/checkout', requireAuth, async (req: AuthRequest, res: Response, ne
 
     // Order-Items speichern
     await supabase.from('order_items').insert(
-      items.map(i => ({
+      lineItems.map(({ product, quantity, unitAmountCents }) => ({
         order_id:     order.id,
-        product_id:   i.productId,
-        product_name: i.name,
-        quantity:     i.quantity,
-        price:        (i.price / 100).toFixed(2),
+        product_id:   product.id,
+        product_name: product.name,
+        quantity,
+        price:        (unitAmountCents / 100).toFixed(2),
       })),
     );
 
-    // Stripe Checkout Session
+    // Stripe Checkout Session — Preise aus DB
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode:                 'payment',
-      line_items: items.map(i => ({
+      line_items: lineItems.map(({ product, quantity, unitAmountCents }) => ({
         price_data: {
           currency:     'eur',
           product_data: {
-            name:   i.name,
-            images: i.imageUrl ? [i.imageUrl] : [],
+            name:   product.name,
+            images: product.image_url ? [product.image_url] : [],
           },
-          unit_amount: i.price, // in Cent
+          unit_amount: unitAmountCents,
         },
-        quantity: i.quantity,
+        quantity,
       })),
       metadata:    { orderId: order.id },
       success_url: `${process.env.CLIENT_URL}/bestellung-erfolgreich?order=${order.id}`,

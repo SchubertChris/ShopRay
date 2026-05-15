@@ -6,17 +6,19 @@ import type { OrderStatus } from '@/types/order';
 
 const TIMELINE_STEPS: { status: OrderStatus; label: string }[] = [
   { status: 'pending',   label: 'Bestellung eingegangen' },
-  { status: 'confirmed', label: 'Bestätigt' },
+  { status: 'paid',      label: 'Bezahlt' },
   { status: 'shipped',   label: 'Versandt' },
   { status: 'delivered', label: 'Geliefert' },
 ];
 
 const STATUS_ORDER: Record<OrderStatus, number> = {
-  pending:   0,
-  confirmed: 1,
-  shipped:   2,
-  delivered: 3,
-  cancelled: -1,
+  pending:        0,
+  paid:           1,
+  shipped:        2,
+  delivered:      3,
+  cancelled:      -1,
+  payment_failed: -1,
+  refunded:       -1,
 };
 
 export default function OrderDetailPage() {
@@ -44,6 +46,8 @@ export default function OrderDetailPage() {
     );
   }
 
+  const subtotal     = order.items.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
+  const shippingCost = Math.max(0, order.total - subtotal);
   const currentStep  = STATUS_ORDER[order.status] ?? -1;
   const isCancelled  = order.status === 'cancelled';
   const formattedDate = new Date(order.createdAt).toLocaleDateString('de-DE', {
@@ -117,7 +121,7 @@ export default function OrderDetailPage() {
                   <div key={i} className="order-item">
                     <div className="order-item__thumb" />
                     <div className="order-item__info">
-                      <div className="order-item__name">{item.name}</div>
+                      <div className="order-item__name">{item.productName}</div>
                       <div className="order-item__qty">Menge: {item.quantity}</div>
                     </div>
                     <div className="order-item__price">
@@ -146,12 +150,12 @@ export default function OrderDetailPage() {
                 </div>
                 <div className="order-summary__row">
                   <span className="order-summary__label">Zwischensumme</span>
-                  <span className="order-summary__value">{order.subtotal.toFixed(2)} €</span>
+                  <span className="order-summary__value">{subtotal.toFixed(2)} €</span>
                 </div>
                 <div className="order-summary__row">
                   <span className="order-summary__label">Versand</span>
                   <span className="order-summary__value">
-                    {order.shippingCost === 0 ? 'Kostenlos' : `${order.shippingCost.toFixed(2)} €`}
+                    {shippingCost === 0 ? 'Kostenlos' : `${shippingCost.toFixed(2)} €`}
                   </span>
                 </div>
                 <div className="order-summary__row order-summary__row--total">
@@ -165,10 +169,10 @@ export default function OrderDetailPage() {
             <div className="detail-card">
               <div className="detail-card__title">Lieferadresse</div>
               <div className="shipping-address">
-                <strong>{order.shipping.firstName} {order.shipping.lastName}</strong>
-                {order.shipping.street}<br />
-                {order.shipping.zip} {order.shipping.city}<br />
-                {order.shipping.country}
+                <strong>{order.shippingAddress?.firstName} {order.shippingAddress?.lastName}</strong>
+                {order.shippingAddress?.street}<br />
+                {order.shippingAddress?.zip} {order.shippingAddress?.city}<br />
+                {order.shippingAddress?.country}
               </div>
             </div>
 

@@ -149,9 +149,18 @@ export const IMAGES = {
   ],
 } as const;
 
+/** Mappt eine UUID-String-ID oder numerische ID auf einen stabilen 1-basierten Index. */
+export function toImageIndex(id: number | string): number {
+  if (typeof id === 'number') return id;
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return (h % IMAGES.products.length) + 1;
+}
+
 /** Produkt-Hauptbild nach ID (leer = Gradient-Fallback) */
-export function getProductImage(id: number): string {
-  const idx = (id - 1) % IMAGES.products.length;
+export function getProductImage(id: number | string): string {
+  const n   = toImageIndex(id);
+  const idx = (n - 1) % IMAGES.products.length;
   return IMAGES.products[idx] ?? '';
 }
 
@@ -159,8 +168,9 @@ export function getProductImage(id: number): string {
  * Alle Galeriebilder eines Produkts nach ID.
  * Fallback: Array mit dem Hauptbild, damit immer mindestens ein Bild da ist.
  */
-export function getProductGallery(id: number): string[] {
-  const gallery = IMAGES.productGalleries[id - 1];
+export function getProductGallery(id: number | string): string[] {
+  const n       = toImageIndex(id);
+  const gallery = IMAGES.productGalleries[n - 1];
   if (!gallery || gallery.length === 0) return [getProductImage(id)];
   return [...gallery];
 }

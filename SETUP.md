@@ -247,6 +247,8 @@ Der Webhook wird in Schritt 7 nach dem Backend-Deployment eingerichtet.
 
 ## 7. Backend & Webhook einrichten
 
+> **Hinweis zu Rate-Limiting:** Das Backend hat eingebautes Rate-Limiting (100 Anfragen / 15 Minuten global, strengere Limits für Login und Checkout). Diese Limits werden im Arbeitsspeicher des Servers gespeichert. Bei einem Serverneustart werden sie zurückgesetzt. Für Production-Betrieb mit mehreren Server-Instanzen (z.B. Vercel Serverless Functions) empfiehlt sich ein Redis-basiertes Rate-Limiting — für einen einzelnen Server ist der Standard ausreichend.
+
 Das Backend ist für Stripe-Zahlungen, Bestellverarbeitung und E-Mails zuständig.
 Es läuft als separates Vercel-Projekt.
 
@@ -338,18 +340,41 @@ Der Shop sendet automatisch E-Mails für:
 
 ---
 
-## 8. Shop-Name & Basiseinstellungen
+## 8. Shop-Name & Firmendaten einrichten
 
-### Shop-Name ändern
+Alle Shop- und Firmendaten sind **zentral** in einer einzigen Datei konfiguriert:
+[Frontend/src/config/app.ts](Frontend/src/config/app.ts)
 
-Öffne [Frontend/src/config/app.ts](Frontend/src/config/app.ts):
+Änderungen dort werden automatisch in **Header, Footer, Impressum, Datenschutzerklärung und Widerrufsbelehrung** übernommen — du musst nichts doppelt eintragen.
+
+### Was du eintragen musst
 
 ```ts
-export const APP_NAME     = 'Dein Shop Name';   // ← hier ändern
-export const APP_VERSION  = '1.0.0';
-export const APP_LOCALE   = 'de-DE';            // Sprache
-export const APP_CURRENCY = 'EUR';              // Währung
+// Shop-Basisdaten
+export const APP_NAME    = 'Dein Shop Name';
+export const APP_URL     = 'https://deine-domain.de';
+export const APP_TAGLINE = 'Kurzer Slogan für den Footer';
+
+// Firmendaten — erscheinen in allen rechtlichen Seiten
+export const APP_COMPANY = {
+  owner:   'Max Mustermann',          // Vollständiger Name des Inhabers / GF
+  street:  'Musterstraße 1',          // Straße und Hausnummer
+  zip:     '12345',                   // Postleitzahl
+  city:    'Musterstadt',             // Ort
+  country: 'Deutschland',             // Land
+  ustId:   'DE 123 456 789',          // Umsatzsteuer-ID (leer lassen wenn keine)
+  hrb:     '',                        // Handelsregisternummer (leer lassen wenn keine)
+};
+
+// Kontaktdaten — erscheinen in Footer und Impressum
+export const APP_CONTACT = {
+  email:   'hello@deine-domain.de',
+  phone:   '+49 30 000 000 00',
+  address: 'Musterstraße 1, 12345 Musterstadt',
+};
 ```
+
+> **Wichtig:** Trage hier deine echten Daten ein — die Platzhalter (`Max Mustermann`, `Musterstraße 1` etc.) sind nicht für den Live-Betrieb geeignet. Falsche Impressumsangaben sind abmahnfähig.
 
 ### Versandkosten & Freikauf-Grenze
 
@@ -448,27 +473,34 @@ export const PRODUCTS: Product[] = [
 
 > **Wichtig:** Die rechtlichen Texte im Template sind **Platzhalter**. Du musst sie vor dem Launch anpassen — am besten mit einem Anwalt oder einem Dienst wie eRecht24 oder Trusted Shops.
 
-### Was du unbedingt anpassen musst
+### Schritt 1 — Firmendaten zentral eintragen (reicht für 3 Seiten)
 
-| Seite | Datei | Was ändern |
+Trage deine Daten einmalig in [Frontend/src/config/app.ts](Frontend/src/config/app.ts) unter `APP_COMPANY` und `APP_CONTACT` ein (siehe Abschnitt 8).
+
+Folgende Seiten übernehmen die Daten **automatisch**:
+- `/impressum` — Name, Adresse, USt-ID, Kontakt
+- `/datenschutz` — Name des Verantwortlichen, Kontakt-E-Mail
+- `/widerruf` — Unternehmensanschrift im Widerrufsformular
+
+### Schritt 2 — Restliche Texte manuell prüfen
+
+| Seite | Datei | Was anpassen |
 |---|---|---|
-| **Impressum** | `src/pages/info/impressum.tsx` | Name, Adresse, Telefon, E-Mail, Handelsregisternummer (UG) |
-| **Datenschutz** | `src/pages/info/privacy.tsx` | Deinen Namen als Verantwortlichen, Datenschutz-E-Mail, konkrete Auftragsverarbeiter (Supabase-URL, Stripe-URL) |
-| **AGB** | `src/pages/info/terms.tsx` | Shop-Name, Zahlungsarten, Lieferzeiten, produktspezifische Klauseln |
+| **AGB** | `src/pages/info/terms.tsx` | Zahlungsarten, Lieferzeiten, produktspezifische Klauseln |
+| **Datenschutz** | `src/pages/info/privacy.tsx` | Abschnitt „Auftragsverarbeiter" — echte Dienstleister eintragen |
+| **Widerruf** | `src/pages/info/widerruf.tsx` | Prüfen, ob Muster-Widerrufsformular für dein Angebot passt |
+
+> **Hinweis:** Das Muster-Widerrufsformular entspricht der gesetzlichen Vorlage (Art. 246a Anl. 2 EGBGB). Es darf nicht beliebig verändert werden.
+
+### Newsletter — wichtiger Hinweis
+
+Das Template enthält **kein Double-Opt-In** für den Newsletter-Versand. Nach § 7 Abs. 2 Nr. 3 UWG ist ein bestätigter Opt-In für Werbemails in Deutschland Pflicht. Wenn du einen Newsletter anbieten möchtest, musst du vor dem Launch einen externen Anbieter (z.B. Mailchimp, Brevo, Klaviyo) integrieren, der das Double-Opt-In automatisch übernimmt.
 
 ### Für Nahrungsergänzungsmittel zusätzlich
 
 - **BfR-Meldung** vor dem ersten Verkauf (Bundesamt für Risikobewertung)
 - **LMIV-Angaben** auf jeder Produktseite vollständig ausfüllen (Zutaten, Nährwerte, Allergene)
 - **Health Claims** prüfen: Nur EU-zugelassene Aussagen über Wirkungen verwenden
-
-### Datenschutz-E-Mail eintragen
-
-In `src/pages/user/my-data.tsx` und `src/pages/info/privacy.tsx` an allen Stellen ersetzen:
-
-```
-datenschutz@Concepts.de  →  datenschutz@deinedomain.de
-```
 
 ---
 
@@ -487,19 +519,37 @@ Der Admin-Bereich ist ein **separates Projekt** (`Admin/`) und läuft unabhängi
 | **Support** | Eingehende Tickets beantworten |
 | **Einstellungen** | Shop-Name, Theme, Versandkosten, SMTP |
 
-### Standard-Login (unbedingt ändern!)
+### Admin-Login einrichten
 
-> **Wichtig:** Diese Zugangsdaten sind nur für die erste Einrichtung. Vor dem Launch durch echte Zugangsdaten über Supabase Auth ersetzen.
+Der Admin-Bereich ist mit **Passwort + JWT-Session** gesichert — kein E-Mail-Login, kein Supabase-Auth.
 
+**Schritt 1 — Sicheres Passwort wählen und hashen:**
+
+```bash
+cd Backend
+node -e "const b = require('bcrypt'); b.hash('DEIN-NEUES-PASSWORT', 12).then(h => console.log(h));"
 ```
-E-Mail:   admin@shop.de
-Passwort: admin123
+
+Den ausgegebenen Hash (`$2b$12$...`) in `Backend/.env` eintragen:
+
+```env
+ADMIN_PASSWORD_HASH=$2b$12$...hier-deinen-hash-eintragen...
 ```
 
-So änderst du die Zugangsdaten dauerhaft:
-- Öffne `Admin/src/stores/authStore.ts`
-- Die `login`-Funktion enthält den Platzhalter-Check
-- Ersetze ihn durch echte Supabase Auth (Anleitung folgt in Abschnitt 5)
+**Schritt 2 — JWT Secret setzen:**
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'));"
+```
+
+Den Wert in `Backend/.env` als `JWT_SECRET` eintragen.
+
+**Schritt 3 — Login testen:**
+
+Admin-Panel öffnen → dein Passwort eingeben → Dashboard sollte erscheinen.
+
+> **Wichtig:** Das Passwort wird **nirgendwo** im Klartext gespeichert — nur als bcrypt-Hash.
+> Das Standard-Passwort aus dem Template muss vor dem Launch geändert werden!
 
 ### Admin lokal starten
 

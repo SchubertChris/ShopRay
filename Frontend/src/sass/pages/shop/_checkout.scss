@@ -115,6 +115,21 @@
   font-weight: 600;
 }
 
+// ─── MwSt.-HINWEIS (PAngV) ─────────────────────────────────────────────────
+.checkout-overview__tax-hint {
+  font-size:   rem(11.5px);
+  color:       var(--clr-text);
+  opacity:     0.4;
+  margin:      0.5rem 0 0;
+  line-height: 1.4;
+}
+
+.checkout-overview__tax-link {
+  color:                 inherit;
+  text-decoration:       underline;
+  text-underline-offset: 2px;
+}
+
 // ─── CTA-BEREICH ───────────────────────────────────────────────────────────
 .checkout-overview__cta {
   margin-top: 1.5rem;

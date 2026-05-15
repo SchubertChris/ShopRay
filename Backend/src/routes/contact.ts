@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { supabase } from '../lib/supabase';
 import { sendMail, contactNotificationHtml } from '../lib/mailer';
 import { contactRateLimit } from '../middleware/security';
+import { requireAdmin }     from '../middleware/adminAuth';
 
 const router = Router();
 
@@ -74,16 +75,9 @@ router.post('/', contactRateLimit, async (req: Request, res: Response, next: Nex
   }
 });
 
-// GET /api/contact — Alle Anfragen lesen (nur mit Service Key, kein öffentlicher Endpunkt)
-// Wird nur vom Admin-Panel via Backend genutzt
-router.get('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+// GET /api/contact — Alle Anfragen lesen (Admin-Session erforderlich)
+router.get('/', requireAdmin, async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const apiKey = req.headers['x-admin-key'];
-    if (!apiKey || apiKey !== process.env.ADMIN_API_KEY) {
-      res.status(403).json({ error: 'Nicht autorisiert.' });
-      return;
-    }
-
     const { data, error } = await supabase
       .from('contact_inquiries')
       .select('*')
@@ -96,12 +90,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
   }
 });
 
-// PATCH /api/contact/:id — Status ändern (gelesen / beantwortet)
-router.patch('/:id', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// PATCH /api/contact/:id — Status ändern (Admin-Session erforderlich)
+router.patch('/:id', requireAdmin, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const apiKey = req.headers['x-admin-key'];
-    if (!apiKey || apiKey !== process.env.ADMIN_API_KEY) {
-      res.status(403).json({ error: 'Nicht autorisiert.' });
+    if (!UUID_REGEX.test(String(req.params.id))) {
+      res.status(400).json({ error: 'Ungültige ID.' });
       return;
     }
 

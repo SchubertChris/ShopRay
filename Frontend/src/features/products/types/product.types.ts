@@ -36,7 +36,7 @@ export interface ProductDocument {
 
 /** Ein einzelnes Produkt im Shop */
 export interface Product {
-  id:          number;
+  id:          string;
   slug:        string;
   name:        string;
   price:       string;
@@ -49,6 +49,10 @@ export interface Product {
   /** Kurzbeschreibung — für Karten, Suche und Meta-Tags */
   description: string;
   stock?:      number;
+  /** Produktbild-URL aus Supabase Storage (null = Platzhalter) */
+  imageUrl:    string | null;
+  /** MwSt.-Satz in Prozent (z.B. 19, 7, 0) — pro Produkt konfigurierbar */
+  taxRate:     number;
   lmiv?:       LmivInfo;
 
   // ── Detail-Felder (nur auf der Produktdetailseite genutzt) ────────────────

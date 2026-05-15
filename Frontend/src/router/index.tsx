@@ -23,6 +23,7 @@ import ShippingPage      from '../pages/info/shipping';
 import ImpressumPage     from '../pages/info/impressum';
 import PrivacyPage       from '../pages/info/privacy';
 import TermsPage         from '../pages/info/terms';
+import WiderrufPage      from '../pages/info/widerruf';
 import NotFoundPage      from '../pages/system/not-found';
 import ChatPage          from '../pages/support/chat';
 import SupportPortalPage from '../pages/support/portal';
@@ -60,8 +61,9 @@ export const router = createBrowserRouter([
       { path: ROUTES.INFO.FAQ,           element: <FaqPage /> },
       { path: ROUTES.INFO.SHIPPING,     element: <ShippingPage /> },
       { path: ROUTES.INFO.IMPRESSUM,     element: <ImpressumPage /> },
-      { path: ROUTES.INFO.PRIVACY,       element: <PrivacyPage /> },
-      { path: ROUTES.INFO.TERMS,         element: <TermsPage /> },
+      { path: ROUTES.INFO.PRIVACY,   element: <PrivacyPage /> },
+      { path: ROUTES.INFO.TERMS,     element: <TermsPage /> },
+      { path: ROUTES.INFO.WIDERRUF,  element: <WiderrufPage /> },
       { path: ROUTES.SUPPORT.CHAT,       element: <ChatPage /> },
       { path: ROUTES.SUPPORT.PORTAL,     element: <SupportPortalPage /> },
 

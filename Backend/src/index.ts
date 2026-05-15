@@ -1,14 +1,17 @@
 import 'dotenv/config';
 import express         from 'express';
+import cookieParser    from 'cookie-parser';
 import { corsMiddleware }                          from './middleware/cors';
 import { errorHandler }                           from './middleware/errorHandler';
 import { helmetMiddleware, globalRateLimit }       from './middleware/security';
-import healthRouter    from './routes/health';
-import stripeRouter    from './routes/stripe';
-import ordersRouter    from './routes/orders';
-import productsRouter  from './routes/products';
-import customersRouter from './routes/customers';
-import contactRouter   from './routes/contact';
+import healthRouter       from './routes/health';
+import stripeRouter       from './routes/stripe';
+import ordersRouter       from './routes/orders';
+import productsRouter     from './routes/products';
+import customersRouter    from './routes/customers';
+import contactRouter      from './routes/contact';
+import adminAuthRouter    from './routes/admin-auth';
+import adminProductsRouter from './routes/admin-products';
 
 const app  = express();
 const PORT = process.env.PORT ?? 5000;
@@ -20,15 +23,20 @@ app.use('/api/webhook/stripe', express.raw({ type: 'application/json' }));
 app.use(helmetMiddleware);
 app.use(corsMiddleware);
 app.use(globalRateLimit);
-app.use(express.json({ limit: '10kb' })); // Request-Body auf 10KB limitieren
+app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
 
-// ── Routes ───────────────────────────────────────────────────────────────────
+// ── Öffentliche Routes ────────────────────────────────────────────────────────
 app.use('/api/health',    healthRouter);
 app.use('/api/webhook',   stripeRouter);
 app.use('/api/orders',    ordersRouter);
 app.use('/api/products',  productsRouter);
 app.use('/api/customers', customersRouter);
 app.use('/api/contact',   contactRouter);
+
+// ── Admin Routes (JWT HttpOnly Cookie erforderlich) ───────────────────────────
+app.use('/api/admin',          adminAuthRouter);
+app.use('/api/admin/products', adminProductsRouter);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 app.use((_req, res) => {

@@ -3,6 +3,24 @@ import { supabase } from '../lib/supabase';
 
 const router = Router();
 
+// GET /api/categories — eindeutige Kategorien aus aktiven Produkten (public)
+router.get('/categories', async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('category')
+      .eq('active', true)
+      .not('category', 'is', null);
+
+    if (error) throw error;
+
+    const categories = [...new Set((data ?? []).map(r => r.category as string).filter(Boolean))].sort();
+    res.json(categories);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/products — alle Produkte (public)
 router.get('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {

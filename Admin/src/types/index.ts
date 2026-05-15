@@ -1,14 +1,6 @@
-// ─── Auth ─────────────────────────────────────────────────────────────────────
-export interface AdminUser {
-  id:    string;
-  email: string;
-  name:  string;
-  role:  'admin' | 'editor';
-}
-
 // ─── Produkte ────────────────────────────────────────────────────────────────
 export interface Product {
-  id:          number;
+  id:          string;
   name:        string;
   slug:        string;
   description: string;
@@ -21,32 +13,45 @@ export interface Product {
   reviews:     number;
   stock:       number;
   imageUrl:    string | null;
+  taxRate:     number;
+  active:      boolean;
   createdAt:   string;
 }
 
-export type ProductCategory = 'Wohnen' | 'Deko' | 'Küche' | 'Textilien' | 'Kunst';
+export type ProductCategory = string;
 
 // ─── Bestellungen ────────────────────────────────────────────────────────────
-export type OrderStatus = 'new' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
+/** Spiegelt DB-CHECK-Constraint exakt */
+export type OrderStatus =
+  | 'pending'
+  | 'paid'
+  | 'shipped'
+  | 'delivered'
+  | 'cancelled'
+  | 'payment_failed'
+  | 'refunded';
 
 export interface OrderItem {
-  productId:   number;
+  id:          string;
+  productId:   string;
   productName: string;
   quantity:    number;
   price:       string;
 }
 
 export interface Order {
-  id:           string;
-  orderNumber:  string;
-  customerId:   string;
-  customerName: string;
-  customerEmail: string;
-  items:        OrderItem[];
-  total:        string;
-  status:       OrderStatus;
-  createdAt:    string;
-  shippedAt:    string | null;
+  id:              string;
+  orderNumber:     string;
+  customerId:      string;
+  customerName:    string;
+  customerEmail:   string;
+  items:           OrderItem[];
+  total:           string;
+  status:          OrderStatus;
+  shippingAddress: Record<string, string> | null;
+  createdAt:       string;
+  paidAt:          string | null;
+  shippedAt:       string | null;
 }
 
 // ─── Kunden ──────────────────────────────────────────────────────────────────
@@ -65,14 +70,14 @@ export type TicketStatus   = 'open' | 'in_progress' | 'closed';
 export type TicketCategory = 'order' | 'product' | 'payment' | 'other';
 
 export interface Ticket {
-  id:         string;
-  subject:    string;
-  message:    string;
-  status:     TicketStatus;
-  category:   TicketCategory;
-  customerId: string;
+  id:           string;
+  subject:      string;
+  message:      string;
+  status:       TicketStatus;
+  category:     TicketCategory;
+  customerId:   string;
   customerName: string;
-  createdAt:  string;
+  createdAt:    string;
 }
 
 // ─── Analytics ───────────────────────────────────────────────────────────────

@@ -1,34 +1,37 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import type { AdminUser } from '../types';
+import { adminLogin, adminLogout, adminCheck } from '../api/adminApi';
 
 interface AuthState {
-  user:     AdminUser | null;
-  isAuthed: boolean;
-  login:    (email: string, password: string) => Promise<void>;
-  logout:   () => void;
+  isAuthed:  boolean;
+  checking:  boolean;
+  login:     (password: string) => Promise<void>;
+  logout:    () => Promise<void>;
+  checkAuth: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user:     null,
-      isAuthed: false,
+export const useAuthStore = create<AuthState>()((set) => ({
+  isAuthed: false,
+  checking: true,
 
-      login: async (email, password) => {
-        // Platzhalter — wird durch Supabase Auth ersetzt
-        if (email === 'admin@shop.de' && password === 'admin123') {
-          set({
-            isAuthed: true,
-            user: { id: '1', email, name: 'Admin', role: 'admin' },
-          });
-        } else {
-          throw new Error('Ungültige Zugangsdaten');
-        }
-      },
+  login: async (password: string) => {
+    await adminLogin(password);
+    set({ isAuthed: true });
+  },
 
-      logout: () => set({ user: null, isAuthed: false }),
-    }),
-    { name: 'admin-auth' },
-  ),
-);
+  logout: async () => {
+    await adminLogout().catch(() => null);
+    set({ isAuthed: false });
+  },
+
+  checkAuth: async () => {
+    set({ checking: true });
+    try {
+      await adminCheck();
+      set({ isAuthed: true });
+    } catch {
+      set({ isAuthed: false });
+    } finally {
+      set({ checking: false });
+    }
+  },
+}));

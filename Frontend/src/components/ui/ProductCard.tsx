@@ -63,7 +63,7 @@ export function ProductCard({ product: p, skeleton, revealDelay, onQuickView }: 
           </button>
         )}
         <Link to={ROUTES.SHOP.product(p.slug)} aria-label={p.name}>
-          <ProductImage id={p.id} />
+          <ProductImage product={p} />
         </Link>
       </div>
 
@@ -82,6 +82,10 @@ export function ProductCard({ product: p, skeleton, revealDelay, onQuickView }: 
           <span className="product-card__price">{p.price} €</span>
           {p.oldPrice && <span className="product-card__price-old">{p.oldPrice} €</span>}
         </div>
+        <p className="product-card__tax-hint">
+          inkl. {p.taxRate}% MwSt. ·{' '}
+          <a href="/versand" className="product-card__tax-link">zzgl. Versandkosten</a>
+        </p>
 
         <div className="product-card__actions">
           <button className="btn btn--primary" onClick={() => { addItem(p); notify({ type: 'success', title: 'In den Warenkorb gelegt', message: p.name, action: { label: 'Zum Warenkorb', href: '/cart' } }); }}>

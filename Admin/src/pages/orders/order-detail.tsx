@@ -9,7 +9,7 @@ const MOCK_ORDER = {
   id:            '4',
   orderNumber:   '#1039',
   createdAt:     '12.05.2026 14:32',
-  status:        'new' as OrderStatus,
+  status:        'pending' as OrderStatus,
   customerName:  'Max Müller',
   customerEmail: 'm.mueller@mail.de',
   customerPhone: '+49 160 5551234',
@@ -31,24 +31,28 @@ const MOCK_ORDER = {
   total:    '210,00',
   note:     'Bitte als Geschenk verpacken.',
   timeline: [
-    { status: 'new',  label: 'Bestellung eingegangen', date: '12.05.2026 14:32' },
+    { status: 'pending' as OrderStatus,  label: 'Bestellung eingegangen', date: '12.05.2026 14:32' },
   ],
 };
 
 const STATUS_OPTIONS: Array<{ value: OrderStatus; label: string }> = [
-  { value: 'new',       label: 'Neu'         },
-  { value: 'paid',      label: 'Bezahlt'     },
-  { value: 'shipped',   label: 'Versendet'   },
-  { value: 'delivered', label: 'Zugestellt'  },
-  { value: 'cancelled', label: 'Storniert'   },
+  { value: 'pending',       label: 'Ausstehend'              },
+  { value: 'paid',          label: 'Bezahlt'                 },
+  { value: 'shipped',       label: 'Versendet'               },
+  { value: 'delivered',     label: 'Zugestellt'              },
+  { value: 'cancelled',     label: 'Storniert'               },
+  { value: 'payment_failed',label: 'Zahlung fehlgeschlagen'  },
+  { value: 'refunded',      label: 'Erstattet'               },
 ];
 
 const STATUS_TIMELINE: Record<OrderStatus, string> = {
-  new:       'Bestellung eingegangen',
-  paid:      'Zahlung bestätigt',
-  shipped:   'Paket versendet',
-  delivered: 'Zugestellt',
-  cancelled: 'Storniert',
+  pending:        'Bestellung eingegangen',
+  paid:           'Zahlung bestätigt',
+  shipped:        'Paket versendet',
+  delivered:      'Zugestellt',
+  cancelled:      'Storniert',
+  payment_failed: 'Zahlung fehlgeschlagen',
+  refunded:       'Erstattet',
 };
 
 export default function OrderDetailPage() {

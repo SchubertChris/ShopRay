@@ -10,7 +10,7 @@ const DEMO_REVIEWS: Review[] = [
 ];
 
 /** Bewertungen für ein Produkt — Demo-Daten bis Backend angebunden ist */
-export function useReviews(_productId: number) {
+export function useReviews(_productId: string) {
   const data = useMemo(() => DEMO_REVIEWS, []);
   return { data, loading: false, error: null, refetch: () => {} };
 }

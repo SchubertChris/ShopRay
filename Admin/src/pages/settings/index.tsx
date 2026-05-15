@@ -190,33 +190,26 @@ function SecuritySettings() {
         <h2 className="form-section__title">Sicherheit</h2>
         <p className="form-section__desc">Admin-Zugangsdaten ändern. Vor dem Go-Live unbedingt aktualisieren!</p>
       </div>
-      <div className="form-section__warn">
-        ⚠️ Die Standard-Zugangsdaten (<code>admin@shop.de / admin123</code>) sind nur für die
-        Entwicklungsphase. Vor dem Launch durch echte Supabase Auth ersetzen — siehe SETUP.md Schritt 5.
+      <div className="form-section__info">
+        Das Admin-Passwort wird als bcrypt-Hash in der <code>Backend/.env</code> gespeichert.
+        Zum Ändern: <code>ADMIN_PASSWORD=neuesPasswort</code> temporär eintragen, Migrate-Script ausführen,
+        den neuen <code>ADMIN_PASSWORD_HASH</code> übernehmen und <code>ADMIN_PASSWORD</code> wieder entfernen.
+        Siehe SETUP.md für Details.
       </div>
       <div className="form-field">
-        <label className="form-label">Neue E-Mail-Adresse</label>
-        <input type="email" className="form-input" placeholder="admin@deinshop.de" />
-      </div>
-      <div className="form-field">
-        <label className="form-label">Aktuelles Passwort</label>
-        <input type="password" className="form-input" placeholder="••••••••" />
-      </div>
-      <div className="form-row">
-        <div className="form-field">
-          <label className="form-label">Neues Passwort</label>
-          <input type="password" className="form-input" placeholder="••••••••" />
-        </div>
-        <div className="form-field">
-          <label className="form-label">Passwort bestätigen</label>
-          <input type="password" className="form-input" placeholder="••••••••" />
-        </div>
+        <label className="form-label">Aktueller Passwort-Hash (nur lesbar)</label>
+        <input type="text" className="form-input form-input--mono" readOnly placeholder="$2b$12$…" />
+        <p className="form-hint">Wert aus Backend/.env — ADMIN_PASSWORD_HASH</p>
       </div>
       <div className="form-actions">
-        <button className="btn-primary">
-          <Save size={14} strokeWidth={2} />
-          Zugangsdaten ändern
-        </button>
+        <a
+          href="https://github.com/SchubertChris/ShopRay"
+          className="btn-secondary"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          SETUP.md öffnen
+        </a>
       </div>
     </div>
   );

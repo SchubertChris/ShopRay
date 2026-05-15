@@ -36,7 +36,7 @@ export default function CartPage() {
                 {items.map(item => (
                   <div key={item.id} className="cart-item">
                     <div className="cart-item__thumb">
-                      <ProductImage id={item.id} />
+                      <ProductImage product={item} />
                     </div>
                     <div className="cart-item__info">
                       <div className="cart-item__name">{item.name}</div>
@@ -89,6 +89,9 @@ export default function CartPage() {
                   <span>Gesamt</span>
                   <span>{(subtotal + shipping).toFixed(2)} €</span>
                 </div>
+                <p className="cart-summary__tax-hint">
+                  inkl. MwSt. · <Link to={ROUTES.INFO.SHIPPING} className="cart-summary__tax-link">zzgl. Versandkosten</Link>
+                </p>
                 <div className="cart-summary__cta">
                   <Link to={ROUTES.SHOP.CHECKOUT} className="btn btn--primary btn--full">
                     Zur Kasse

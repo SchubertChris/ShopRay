@@ -1,29 +1,55 @@
-import { useMemo } from 'react';
-import { PRODUCTS } from '../data/products.data';
+import { useState, useEffect, useMemo } from 'react';
+import { getProducts, getProductBySlug } from '../api/productService';
 import type { Product, SortBy } from '../types/product.types';
 
 export function useProducts() {
-  return PRODUCTS;
+  const [data, setData]       = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState<string | null>(null);
+
+  useEffect(() => {
+    getProducts()
+      .then(setData)
+      .catch(e => setError(e instanceof Error ? e.message : 'Fehler'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return { data, loading, error };
 }
 
-export function useProductBySlug(slug: string): Product | undefined {
-  return useMemo(() => PRODUCTS.find(p => p.slug === slug), [slug]);
+export function useProductBySlug(slug: string) {
+  const [data, setData]       = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!slug) { setLoading(false); return; }
+    setLoading(true);
+    getProductBySlug(slug)
+      .then(setData)
+      .catch(() => setData(null))
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  return { data, loading };
 }
 
-export function useProductsByCategory(category: string | null): Product[] {
-  return useMemo(
-    () => category ? PRODUCTS.filter(p => p.category === category) : PRODUCTS,
-    [category]
+export function useProductsByCategory(category: string | null) {
+  const { data: all, loading } = useProducts();
+  const data = useMemo(
+    () => category ? all.filter(p => p.category === category) : all,
+    [all, category]
   );
+  return { data, loading };
 }
 
 export function useProductSearch(
   query: string,
   category: string | null,
   sortBy: SortBy = 'popularity',
-): Product[] {
-  return useMemo(() => {
-    let results = PRODUCTS;
+) {
+  const { data: all, loading } = useProducts();
+  const data = useMemo(() => {
+    let results = all;
     if (category) results = results.filter(p => p.category === category);
     if (query.trim()) {
       const q = query.toLowerCase();
@@ -37,9 +63,10 @@ export function useProductSearch(
     switch (sortBy) {
       case 'price-asc':  sorted.sort((a, b) => parseFloat(a.price) - parseFloat(b.price)); break;
       case 'price-desc': sorted.sort((a, b) => parseFloat(b.price) - parseFloat(a.price)); break;
-      case 'newest':     sorted.sort((a, b) => b.id - a.id); break;
+      case 'newest':     sorted.sort((a, b) => b.id.localeCompare(a.id)); break;
       default:           sorted.sort((a, b) => b.rating - a.rating || b.reviews - a.reviews);
     }
     return sorted;
-  }, [query, category, sortBy]);
+  }, [all, query, category, sortBy]);
+  return { data, loading };
 }

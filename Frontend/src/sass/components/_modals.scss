@@ -100,9 +100,82 @@
     border: none;
     cursor: pointer;
     color: var(--clr-text);
+    font-size: rem(20px);
     @include transition(background);
 
     &:hover { background: var(--clr-accent); }
+  }
+
+  &__items {
+    display:        flex;
+    flex-direction: column;
+    gap:            0.75rem;
+    margin-bottom:  1.5rem;
+    max-height:     50vh;
+    overflow-y:     auto;
+  }
+
+  &__shipping-hint {
+    font-size:     rem(12.5px);
+    color:         var(--clr-text);
+    opacity:       0.55;
+    text-align:    center;
+    padding:       0.625rem 0.875rem;
+    background:    color-mix(in srgb, var(--clr-primary) 6%, transparent);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+
+  &__tax-hint {
+    font-size:   rem(11.5px);
+    color:       var(--clr-text);
+    opacity:     0.38;
+    margin:      0 0 0.75rem;
+    line-height: 1.4;
+  }
+
+  &__tax-link {
+    color:           inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  &__subtotal {
+    @include flex-between;
+    font-size:     rem(14px);
+    font-weight:   600;
+    color:         var(--clr-text);
+    padding:       0.875rem 0;
+    border-top:    1px solid var(--clr-secondary);
+    margin-bottom: 1rem;
+  }
+
+  &__subtotal-price {
+    font-size:   rem(18px);
+    font-weight: 800;
+    color:       var(--clr-primary);
+  }
+
+  &__continue {
+    margin-top: 0.5rem;
+    font-size:  rem(13px);
+    opacity:    0.5;
+
+    &:hover { opacity: 0.8; }
+  }
+
+  &__remove-btn {
+    background: none;
+    border:     none;
+    cursor:     pointer;
+    color:      var(--clr-text);
+    opacity:    0.3;
+    font-size:  rem(18px);
+    padding:    0.25rem;
+    flex-shrink: 0;
+    @include transition(opacity, color);
+
+    &:hover { opacity: 1; color: var(--clr-error); }
   }
 }
 

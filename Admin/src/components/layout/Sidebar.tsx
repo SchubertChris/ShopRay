@@ -54,15 +54,10 @@ const NAV: NavGroup[] = [
 ];
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const { user, logout } = useAuthStore();
-  const navigate         = useNavigate();
+  const { logout } = useAuthStore();
+  const navigate   = useNavigate();
 
-  const initials = user?.name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2) ?? 'A';
+  const initials = 'AD';
 
   const handleLogout = () => {
     logout();
@@ -114,8 +109,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="admin-sidebar__footer">
           <div className="admin-sidebar__avatar">{initials}</div>
           <div className="admin-sidebar__user-info">
-            <p className="admin-sidebar__user-name">{user?.name ?? 'Admin'}</p>
-            <p className="admin-sidebar__user-role">{user?.role === 'admin' ? 'Administrator' : 'Editor'}</p>
+            <p className="admin-sidebar__user-name">Admin</p>
+            <p className="admin-sidebar__user-role">Administrator</p>
           </div>
           <button className="admin-sidebar__logout" onClick={handleLogout} title="Abmelden">
             <LogOut size={15} strokeWidth={1.75} />

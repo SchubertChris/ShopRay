@@ -1,69 +1,69 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SeoMeta } from '@components/ui';
-import { PRODUCTS, CATEGORIES, type ProductCategory } from '@features/products';
+import { useProducts } from '@features/products';
 import { ROUTES } from '@config/routes';
 import { getCategoryImage } from '@config/images';
 
-interface CategoryDef {
-  name:    ProductCategory;
-  tagline: string;
-  mod:     string;
-  count:   number;
-}
+const TAGLINES: Record<string, string> = {
+  'Wohnen':    'Räume zum Leben gestalten',
+  'Küche':     'Kochen mit Stil & Anspruch',
+  'Deko':      'Details, die den Raum machen',
+  'Textilien': 'Wärme für jeden Raum',
+  'Kunst':     'Ausdruck für deine Wände',
+  'Sport':     'Ausrüstung für jede Aktivität',
+  'Outdoor':   'Natur pur erleben',
+  'Technik':   'Smarte Produkte für den Alltag',
+};
 
-const CATEGORY_META: Omit<CategoryDef, 'count'>[] = [
-  { name: 'Wohnen',    tagline: 'Räume zum Leben gestalten',     mod: 'wohnen'    },
-  { name: 'Küche',     tagline: 'Kochen mit Stil & Anspruch',    mod: 'kueche'    },
-  { name: 'Deko',      tagline: 'Details, die den Raum machen',  mod: 'deko'      },
-  { name: 'Textilien', tagline: 'Wärme für jeden Raum',          mod: 'textilien' },
-  { name: 'Kunst',     tagline: 'Ausdruck für deine Wände',      mod: 'kunst'     },
-];
+function slugify(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
 
 export default function CategoriesPage() {
   const navigate = useNavigate();
+  const { data: products } = useProducts();
 
-  const categories = useMemo<CategoryDef[]>(() =>
-    CATEGORY_META.map(c => ({
-      ...c,
-      count: PRODUCTS.filter(p => p.category === c.name).length,
-    })),
-    []
-  );
+  const categories = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const p of products) {
+      if (p.category) map.set(p.category, (map.get(p.category) ?? 0) + 1);
+    }
+    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [products]);
 
-  const go = (name: ProductCategory) =>
+  const go = (name: string) =>
     navigate(`${ROUTES.SHOP.SEARCH}?category=${encodeURIComponent(name)}`);
 
   return (
     <>
       <SeoMeta
         title="Kollektionen"
-        description="Entdecke unsere fünf Kollektionen — Wohnen, Küche, Deko, Textilien und Kunst. Handverlesene Produkte für jeden Geschmack."
+        description="Entdecke unsere Kollektionen — handverlesene Produkte für jeden Geschmack."
       />
 
       <div className="cat-page">
         <div className="container">
 
-          {/* ── Header ───────────────────────────────────────────────────── */}
           <header className="cat-header">
             <span className="cat-header__eyebrow">Sommer 2026</span>
             <h1 className="cat-header__title">Kollektionen</h1>
             <p className="cat-header__sub">
-              Handverlesene Produkte in {CATEGORIES.length} Welten — such dir deine aus.
+              Handverlesene Produkte in {categories.length} Welten — such dir deine aus.
             </p>
           </header>
 
-          {/* ── Bento-Grid ───────────────────────────────────────────────── */}
           <div className="cat-grid">
-            {categories.map((cat, i) => {
+            {categories.map(([name, count], i) => {
               const img = getCategoryImage(i);
+              const mod = slugify(name);
               return (
                 <button
-                  key={cat.name}
-                  className={`cat-card cat-card--${cat.mod}${img ? ' has-image' : ''}`}
+                  key={name}
+                  className={`cat-card cat-card--${mod}${img ? ' has-image' : ''}`}
                   style={{ '--i': i } as React.CSSProperties}
-                  onClick={() => go(cat.name)}
-                  aria-label={`${cat.name} entdecken — ${cat.count} Produkte`}
+                  onClick={() => go(name)}
+                  aria-label={`${name} entdecken — ${count} Produkte`}
                 >
                   {img && (
                     <img
@@ -75,10 +75,12 @@ export default function CategoriesPage() {
                     />
                   )}
                   {img && <div className="cat-card__overlay" />}
-                  <span className="cat-card__count">{cat.count} Produkte</span>
+                  <span className="cat-card__count">{count} Produkte</span>
                   <div className="cat-card__body">
-                    <h2 className="cat-card__name">{cat.name}</h2>
-                    <p className="cat-card__tagline">{cat.tagline}</p>
+                    <h2 className="cat-card__name">{name}</h2>
+                    <p className="cat-card__tagline">
+                      {TAGLINES[name] ?? 'Jetzt entdecken'}
+                    </p>
                     <span className="cat-card__cta" aria-hidden="true">Entdecken →</span>
                   </div>
                 </button>

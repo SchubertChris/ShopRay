@@ -1,12 +1,13 @@
 import { Heart } from 'lucide-react';
 import { useWishlist } from '@features/wishlist';
-import { PRODUCTS } from '@features/products';
+import { useProducts } from '@features/products';
 import { ProductCard, SeoMeta } from '@components/ui';
 
 export default function WishlistPage() {
   const ids = useWishlist(s => s.ids);
+  const { data: products } = useProducts();
 
-  const wishlistProducts = PRODUCTS.filter(p => ids.includes(p.id));
+  const wishlistProducts = products.filter(p => ids.includes(p.id));
 
   return (
     <>

@@ -257,7 +257,7 @@ export default function CheckoutPage() {
                 {items.map(item => (
                   <div key={item.id} className="checkout-overview__item">
                     <div className="checkout-overview__item-thumb">
-                      <ProductImage id={item.id} />
+                      <ProductImage product={item} />
                       <span className="checkout-overview__item-thumb-qty">{item.quantity}</span>
                     </div>
                     <span className="checkout-overview__item-name">{item.name}</span>
@@ -283,6 +283,9 @@ export default function CheckoutPage() {
                   <span>Gesamt</span>
                   <span>{grandTotal} €</span>
                 </div>
+                <p className="checkout-overview__tax-hint">
+                  inkl. MwSt. · <Link to={ROUTES.INFO.SHIPPING} className="checkout-overview__tax-link">zzgl. Versandkosten</Link>
+                </p>
               </div>
 
               <div className="checkout-overview__cta">

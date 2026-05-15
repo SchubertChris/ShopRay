@@ -1,11 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Shield, Zap } from 'lucide-react';
+import { Shield, Zap, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import { ROUTES } from '@config/routes';
 
 export default function LoginPage() {
-  const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [error,    setError]    = useState('');
   const [loading,  setLoading]  = useState(false);
@@ -15,13 +14,14 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!password) { setError('Bitte Passwort eingeben.'); return; }
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      await login(password);
       navigate(ROUTES.DASHBOARD);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Anmeldung fehlgeschlagen');
+      setError(err instanceof Error ? err.message : 'Anmeldung fehlgeschlagen.');
     } finally {
       setLoading(false);
     }
@@ -71,20 +71,7 @@ export default function LoginPage() {
             <p className="login-form__sub">Nur autorisierte Nutzer haben Zugriff.</p>
 
             <div className="login-form__group">
-              <label htmlFor="email">E-Mail</label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="admin@shop.de"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="login-form__group">
-              <label htmlFor="password">Passwort</label>
+              <label htmlFor="password">Admin-Passwort</label>
               <input
                 id="password"
                 type="password"
@@ -93,6 +80,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
+                autoFocus
               />
             </div>
 

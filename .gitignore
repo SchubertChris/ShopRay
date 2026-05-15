@@ -45,3 +45,6 @@ Thumbs.db
 
 # ── Sonstiges ─────────────────────────────────────────────────────────────────
 nul
+
+# ── Private Zugangsdaten (lokal, nicht committen!) ────────────────────────────
+CREDENTIALS_PRIVATE.txt

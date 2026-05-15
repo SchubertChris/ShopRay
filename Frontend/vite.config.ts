@@ -6,6 +6,7 @@ import path from "path"; // Importieren für die Pfad-Auflösung
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), babel({ presets: [reactCompilerPreset()] })],
+  appType: 'spa',
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

@@ -1,31 +1,44 @@
-import type { Address } from './user';
+/** Lieferadresse — gespeichert als JSONB, Felder aus Checkout-Formular */
+export interface ShippingAddress {
+  firstName?: string;
+  lastName?:  string;
+  street?:    string;
+  zip?:       string;
+  city?:      string;
+  country?:   string;
+}
 
+/** Alle möglichen Bestellstatus — spiegelt DB-CHECK-Constraint exakt */
 export type OrderStatus =
   | 'pending'
-  | 'confirmed'
+  | 'paid'
   | 'shipped'
   | 'delivered'
-  | 'cancelled';
+  | 'cancelled'
+  | 'payment_failed'
+  | 'refunded';
 
 /** Ein Artikel innerhalb einer Bestellung */
 export interface OrderItem {
-  productId: number;
-  slug:      string;
-  name:      string;
-  price:     string;
-  quantity:  number;
+  id:          string;
+  productId:   string;
+  productName: string;
+  price:       string;
+  quantity:    number;
 }
 
 /** Vollständige Bestellung */
 export interface Order {
-  id:           string;
-  orderNumber:  string;
-  status:       OrderStatus;
-  items:        OrderItem[];
-  shipping:     Address;
-  subtotal:     number;
-  shippingCost: number;
-  total:        number;
-  createdAt:    string;
-  updatedAt:    string;
+  id:               string;
+  orderNumber:      string;
+  status:           OrderStatus;
+  items:            OrderItem[];
+  shippingAddress:  ShippingAddress | null;
+  total:            number;
+  paidAt?:          string | null;
+  shippedAt?:       string | null;
+  customerNote?:    string | null;
+  stripeSessionId?: string | null;
+  createdAt:        string;
+  updatedAt:        string;
 }

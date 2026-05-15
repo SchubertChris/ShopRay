@@ -104,6 +104,11 @@
     &:hover { opacity: 0.7; }
   }
 
+  &--error {
+    border-color: color-mix(in srgb, var(--clr-error) 25%, transparent);
+    background:   color-mix(in srgb, var(--clr-error) 4%, transparent);
+  }
+
   &__body { padding: 0; }
 
   &__empty {
@@ -169,6 +174,8 @@
   &--shipped   { background: color-mix(in srgb, var(--clr-warning) 12%, transparent); color: var(--clr-warning); }
   &--delivered { background: color-mix(in srgb, var(--clr-success) 12%, transparent); color: var(--clr-success); }
   &--cancelled { background: color-mix(in srgb, var(--clr-error)   12%, transparent); color: var(--clr-error);   }
+  &--active    { background: color-mix(in srgb, var(--clr-success) 12%, transparent); color: var(--clr-success); }
+  &--inactive  { background: color-mix(in srgb, var(--clr-text)    8%,  transparent); color: color-mix(in srgb, var(--clr-text) 45%, transparent); }
 }
 
 // ─── QUICK-STATS LISTE ───────────────────────────────────────────────────────

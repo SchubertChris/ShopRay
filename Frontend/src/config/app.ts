@@ -30,8 +30,29 @@ export const APP_TAGLINE =
 /** Pfad zum OG-Bild (in /public ablegen) — wird auf Social Media angezeigt */
 export const APP_OG_IMAGE = '/og-image.png';
 
+// ── FIRMA / RECHTSDATEN ──────────────────────────────────────────────────────
+// Werden automatisch in Impressum, Datenschutz und Widerrufsbelehrung eingesetzt.
+// Hier einmal ausfüllen — überall aktuell.
+
+export const APP_COMPANY = {
+  /** Vollständiger Name des Inhabers oder Geschäftsführers */
+  owner:   'Max Mustermann',
+  /** Straße und Hausnummer */
+  street:  'Musterstraße 1',
+  /** Postleitzahl */
+  zip:     '12345',
+  /** Ort */
+  city:    'Musterstadt',
+  /** Land */
+  country: 'Deutschland',
+  /** Umsatzsteuer-ID gemäß §27a UStG (leer lassen wenn nicht vorhanden) */
+  ustId:   'DE 123 456 789',
+  /** Handelsregisternummer (leer lassen wenn nicht vorhanden) */
+  hrb:     '',
+} as const;
+
 // ── KONTAKT-DATEN ────────────────────────────────────────────────────────────
-// Erscheinen in Footer, Impressum und Kontaktseite
+// Erscheinen in Footer, Impressum, Datenschutz und Kontaktseite.
 
 export const APP_CONTACT = {
   email:   'hello@deine-domain.de',
