@@ -1,6 +1,6 @@
 # ShopRay — Setup Guide
 
-**Version:** 1.3.0 | **Letzte Aktualisierung:** 2026-05-14
+**Version:** 1.4.0 | **Letzte Aktualisierung:** 2026-05-16
 
 Dieser Guide führt dich Schritt für Schritt durch die Einrichtung deines ShopRay-Templates —
 von der Installation bis zum fertigen, live geschalteten Shop.
@@ -12,17 +12,17 @@ von der Installation bis zum fertigen, live geschalteten Shop.
 1. [Voraussetzungen](#1-voraussetzungen)
 2. [Installation](#2-installation)
 3. [Umgebungsvariablen einrichten](#3-umgebungsvariablen-einrichten)
-4. [Datenbank einrichten (Supabase Schema)](#4-datenbank-einrichten)
-5. [Supabase anbinden (Auth & API)](#5-supabase-anbinden)
-6. [Stripe anbinden (Zahlungen)](#6-stripe-anbinden)
+4. [Datenbank einrichten](#4-datenbank-einrichten)
+5. [Supabase anbinden](#5-supabase-anbinden)
+6. [Stripe anbinden](#6-stripe-anbinden)
 7. [Backend starten & Webhook einrichten](#7-backend--webhook)
 8. [E-Mail-Versand einrichten](#8-e-mail-versand-einrichten)
 9. [Theme wählen](#9-theme-wählen)
-10. [Shop-Name & Basiseinstellungen](#10-shop-name--basiseinstellungen)
+10. [Shop-Name & Firmendaten einrichten](#10-shop-name--firmendaten-einrichten)
 11. [Features aktivieren oder deaktivieren](#11-features-aktivieren-oder-deaktivieren)
 12. [Produkte befüllen](#12-produkte-befüllen)
 13. [Rechtliche Texte anpassen](#13-rechtliche-texte-anpassen)
-14. [Admin-Bereich einrichten](#14-admin-bereich)
+14. [Admin-Bereich einrichten](#14-admin-bereich-einrichten)
 15. [Deployment (Veröffentlichen)](#15-deployment)
 16. [Was gehört zu welchem Paket?](#16-pakete--was-gehört-wozu)
 17. [Technologie & Open Source](#17-technologie--open-source)
@@ -42,87 +42,111 @@ Bevor du anfängst, stelle sicher dass folgende Programme installiert sind:
 Außerdem benötigst du Accounts bei:
 - **Supabase** (kostenlos) — https://supabase.com
 - **Stripe** (kostenlos, Gebühren nur pro Transaktion) — https://stripe.com
+- **Vercel** (kostenlos) — https://vercel.com
 
 ---
 
 ## 2. Installation
 
-Öffne dein Terminal (Windows: PowerShell, Mac: Terminal) und führe folgende Befehle aus:
+ShopRay besteht aus drei separaten Projekten in einem Repository: **Frontend**, **Backend** und **Admin**.
+
+### Schritt 1 — Abhängigkeiten installieren
+
+Öffne dein Terminal und führe folgende Befehle aus:
 
 ```bash
-# 1. In den Frontend-Ordner wechseln
-cd ShopRay/Frontend
+# Frontend
+cd ShopRay/Frontend && npm install
 
-# 2. Alle Abhängigkeiten installieren (dauert ca. 1–2 Minuten)
-npm install
+# Backend
+cd ../Backend && npm install
 
-# 3. Umgebungsvariablen vorbereiten
-cp ../.env.example ../.env
+# Admin
+cd ../Admin && npm install
 ```
 
-Jetzt `.env`-Datei öffnen und befüllen (nächster Abschnitt erklärt jeden Wert).
+### Schritt 2 — Umgebungsvariablen vorbereiten
+
+Jedes Projekt hat eine eigene `.env`-Datei:
 
 ```bash
-# 4. Entwicklungsserver starten
-npm run dev
+# Frontend
+cp ShopRay/Frontend/.env.example ShopRay/Frontend/.env
+
+# Backend
+cp ShopRay/Backend/.env.example ShopRay/Backend/.env
+
+# Admin
+cp ShopRay/Admin/.env.example ShopRay/Admin/.env
 ```
 
-Der Shop öffnet sich unter **http://localhost:5173**
+### Schritt 3 — Entwicklungsserver starten
+
+```bash
+# Terminal 1 — Frontend
+cd ShopRay/Frontend && npm run dev
+# → http://localhost:5173
+
+# Terminal 2 — Backend
+cd ShopRay/Backend && npm run dev
+# → http://localhost:5000
+
+# Terminal 3 — Admin
+cd ShopRay/Admin && npm run dev
+# → http://localhost:5174
+```
 
 ---
 
 ## 3. Umgebungsvariablen einrichten
 
-Die Datei `.env` im Hauptordner enthält alle geheimen Zugangsdaten.
+> **Wichtig:** `.env`-Dateien dürfen **niemals** in Git hochgeladen werden. Sie sind bereits in `.gitignore` eingetragen.
 
-> **Wichtig:** Die `.env`-Datei darf **niemals** in Git hochgeladen werden. Sie ist bereits in `.gitignore` eingetragen.
-
-### Alle Variablen im Überblick
+### Frontend/.env
 
 ```env
-# ── Dein Backend ──────────────────────────────────────────────────────────────
-# Wenn du ein eigenes Backend betreibst (z.B. Node.js API):
-VITE_API_URL=https://api.deinshop.de
-# Lokal entwickeln:
-# VITE_API_URL=http://localhost:3000
+VITE_API_URL=https://api.deinshop.de         # URL deines Backends
+VITE_SUPABASE_URL=https://xxxx.supabase.co   # Supabase Projekt-URL
+VITE_SUPABASE_ANON_KEY=eyJ...                # Supabase anon Key (public)
+VITE_STRIPE_PUBLIC_KEY=pk_live_xxxx          # Stripe publishable Key
+```
 
-# ── Supabase (Datenbank & Login) ──────────────────────────────────────────────
-VITE_SUPABASE_URL=https://xxxx.supabase.co        # Deine Supabase-Projekt-URL
-VITE_SUPABASE_ANON_KEY=eyJ...                      # Dein öffentlicher API-Key
+### Backend/.env
 
-# ── Stripe (Zahlungen) ────────────────────────────────────────────────────────
-VITE_STRIPE_PUBLIC_KEY=pk_live_xxxx               # NUR der öffentliche Key!
+```env
+SUPABASE_URL=https://xxxx.supabase.co        # Supabase Projekt-URL
+SUPABASE_SERVICE_ROLE_KEY=eyJ...             # Supabase service_role Key (geheim!)
+STRIPE_SECRET_KEY=sk_live_xxxx              # Stripe Secret Key (geheim!)
+STRIPE_WEBHOOK_SECRET=whsec_xxxx            # Stripe Webhook Signing Secret
+JWT_SECRET=ein-sehr-langer-zufaelliger-string
+ADMIN_PASSWORD_HASH=$2b$12$...              # bcrypt-Hash deines Admin-Passworts
+SMTP_HOST=smtp.resend.com
+SMTP_PORT=587
+SMTP_USER=resend
+SMTP_PASS=re_xxxx
+SMTP_FROM_EMAIL=bestellung@deinshop.de
+ADMIN_URL=https://admin.deinshop.de
+NODE_ENV=production
+```
 
-# ── E-Mail ────────────────────────────────────────────────────────────────────
-VITE_SMTP_FROM=bestellung@deinshop.de             # Absender-Adresse
+### Admin/.env
 
-# ── Shop-Daten ────────────────────────────────────────────────────────────────
-VITE_SHOP_NAME=Mein Shop Name
-VITE_SHOP_URL=https://meinshop.de
-VITE_SHOP_CURRENCY=EUR
-VITE_SHOP_LOCALE=de-DE
-
-# ── Features ein/aus ──────────────────────────────────────────────────────────
-VITE_FEATURE_REVIEWS=true       # Produktbewertungen
-VITE_FEATURE_WISHLIST=true      # Wunschliste
-VITE_FEATURE_LIVE_CHAT=false    # Live-Chat (erst aktivieren wenn Anbieter konfiguriert)
+```env
+VITE_API_URL=https://api.deinshop.de         # URL deines Backends
 ```
 
 ---
 
 ## 4. Datenbank einrichten
 
-Bevor du Supabase verbindest, musst du das Datenbankschema einmalig anlegen.
-Das Schema erstellt alle nötigen Tabellen und Sicherheitsregeln automatisch.
+Alle Datenbankänderungen liegen als SQL-Dateien im Ordner `database/`. Sie müssen einmalig im Supabase SQL-Editor ausgeführt werden.
 
-### Schritt 1 — Schema ausführen
+### Schritt 1 — Schema anlegen
 
 1. Gehe zu **supabase.com → Dein Projekt → SQL Editor**
-2. Öffne die Datei `database/schema.sql` aus deinem ShopRay-Ordner
-3. Kopiere den gesamten Inhalt in den SQL Editor
-4. Klicke **"Run"**
+2. Öffne `database/schema.sql`, kopiere den Inhalt und klicke **"Run"**
 
-Das war's. Folgende Tabellen werden angelegt:
+Das legt folgende Tabellen an:
 
 | Tabelle | Inhalt |
 |---|---|
@@ -133,6 +157,19 @@ Das war's. Folgende Tabellen werden angelegt:
 | `reviews` | Produktbewertungen |
 | `tickets` | Support-Tickets |
 
+### Schritt 2 — Migrationen ausführen
+
+Führe die Migrationen **der Reihe nach** aus — jede als eigene Query im SQL Editor:
+
+| Datei | Was sie macht |
+|---|---|
+| `database/migration_002_admin_login_log.sql` | Login-Protokoll für den Admin-Bereich |
+| `database/migration_003_product_images.sql` | Supabase Storage Bucket für Produktbilder |
+| `database/migration_004_grants.sql` | Berechtigungen für alle Tabellen |
+| `database/migration_005_shipping_settings.sql` | Versandkosten-Konfiguration |
+
+> **Reihenfolge wichtig:** Führe die Migrationen immer in der Reihenfolge 002 → 003 → 004 → 005 aus.
+
 ### Was passiert automatisch
 
 - Wenn sich ein Nutzer registriert → Profil wird automatisch angelegt
@@ -142,49 +179,6 @@ Das war's. Folgende Tabellen werden angelegt:
 ---
 
 ## 5. Supabase anbinden
-
-ShopRay kommt mit **4 Farbpaletten**, jede verfügbar in **Dark und Light Mode** — macht 8 Themes gesamt.
-
-### Überblick der Paletten
-
-| Palette | Charakter | Geeignet für |
-|---|---|---|
-| **sage** | Naturgrün, beruhigend | Nahrungsergänzung, Bio, Wellness, Gesundheit |
-| **navy** | Dunkelblau, professionell | Premium, B2B, Elektronik, Versicherungen |
-| **terra** | Erdtöne, warm | Mode, Lifestyle, Wohnen, Handwerk |
-| **electric** | Leuchtendes Blau, modern | Streetwear, Gaming, Tech, Jugendliche |
-
-### Standard-Theme ändern
-
-Öffne die Datei [Frontend/src/providers/ThemeProvider.tsx](Frontend/src/providers/ThemeProvider.tsx).
-
-Suche nach diesen zwei Zeilen (ca. Zeile 28–31):
-
-```tsx
-const [palette, setPaletteState] = useState<Palette>(
-  () => (localStorage.getItem('sr-palette') as Palette) ?? 'sage'
-```
-
-Ersetze `'sage'` durch deine gewünschte Palette:
-
-```tsx
-  () => (localStorage.getItem('sr-palette') as Palette) ?? 'navy'   // ← hier ändern
-```
-
-Und für den Standard-Mode (hell oder dunkel), direkt darunter:
-
-```tsx
-const [mode, setModeState] = useState<ThemeMode>(
-  () => (localStorage.getItem('sr-mode') as ThemeMode) ?? 'light'   // 'light' oder 'dark'
-```
-
-> **Hinweis:** Der Benutzer kann das Theme auch selbst über den Theme-Umschalter im Shop ändern. Deine Einstellung hier gilt nur als Standard für Neu-Besucher.
-
----
-
-## 5. Supabase anbinden
-
-Supabase ist die Datenbank und übernimmt das Benutzer-Login.
 
 ### Schritt 1 — Projekt erstellen
 
@@ -197,60 +191,63 @@ Supabase ist die Datenbank und übernimmt das Benutzer-Login.
 ### Schritt 2 — API-Keys kopieren
 
 1. In deinem Supabase-Projekt: **Settings → API**
-2. Kopiere **"Project URL"** → in `.env` als `VITE_SUPABASE_URL`
-3. Kopiere **"anon public"** Key → in `.env` als `VITE_SUPABASE_ANON_KEY`
+2. Kopiere **"Project URL"** → in beide `.env`-Dateien als `VITE_SUPABASE_URL` (Frontend) und `SUPABASE_URL` (Backend)
+3. Kopiere **"anon public"** Key → in `Frontend/.env` als `VITE_SUPABASE_ANON_KEY`
+4. Kopiere **"service_role"** Key → in `Backend/.env` als `SUPABASE_SERVICE_ROLE_KEY`
 
-> **Nicht verwechseln:** Kopiere den `anon`-Key, **nicht** den `service_role`-Key. Der `service_role`-Key darf nie ins Frontend.
+> **Nicht verwechseln:** Der `anon`-Key kommt ins Frontend, der `service_role`-Key nur ins Backend. Der `service_role`-Key hat vollen Datenbankzugriff — er darf nie öffentlich werden.
 
-### Schritt 3 — Datenbank-Schema einrichten
+### Schritt 3 — Authentifizierung konfigurieren
 
-Das SQL-Schema liegt unter `Backend/database/schema.sql`. Führe es in Supabase aus:
+1. In Supabase: **Authentication → URL Configuration**
+2. **Site URL** setzen: deine Shop-Domain (z.B. `https://meinshop.de`)
+3. Unter **Redirect URLs** folgende Einträge hinzufügen:
+   ```
+   https://meinshop.de/auth/reset-password
+   http://localhost:5173/auth/reset-password
+   ```
+   Diese URL wird für den Passwort-Zurücksetzen-Link in der E-Mail benötigt.
 
-1. In Supabase: **SQL Editor → New Query**
-2. Inhalt von `schema.sql` hineinkopieren
-3. Auf **"Run"** klicken
+### Schritt 4 — 2-Faktor-Authentifizierung aktivieren (empfohlen)
 
-Danach sind alle nötigen Tabellen (users, orders, products, tickets, reviews) angelegt.
+ShopRay unterstützt TOTP-basierte 2FA (Google Authenticator, Authy etc.) für Kundenkonten.
 
-### Schritt 4 — Authentifizierung konfigurieren
+1. In Supabase: **Authentication → Sign In / Up**
+2. Unter **Multi-Factor Authentication** → **TOTP** auf **Enabled** setzen
 
-1. In Supabase: **Authentication → Settings**
-2. **Site URL** setzen: deine Domain (z.B. `https://meinshop.de`)
-3. Unter **Email** → Confirm Email: je nach Bedarf aktivieren
-4. Optional: **Redirect URLs** für Passwort-Zurücksetzen eintragen
+Kunden können 2FA danach selbst in ihren Kontoeinstellungen aktivieren.
+
+### Schritt 5 — E-Mail-Templates anpassen (optional)
+
+1. In Supabase: **Authentication → Email Templates**
+2. Passe die Vorlagen für "Confirm signup", "Reset Password" und "Magic Link" mit deinem Shop-Namen und deiner Marke an
 
 ---
 
 ## 6. Stripe anbinden
 
-Stripe übernimmt die Zahlungsabwicklung (Kreditkarte, SEPA, Apple Pay etc.).
-
 ### Schritt 1 — Konto und Keys
 
 1. Gehe zu https://stripe.com und melde dich an
 2. Im Dashboard: **Developers → API Keys**
-3. Kopiere den **"Publishable key"** (beginnt mit `pk_live_`) → in `.env` als `VITE_STRIPE_PUBLIC_KEY`
+3. Kopiere den **"Publishable key"** (beginnt mit `pk_live_`) → `Frontend/.env` als `VITE_STRIPE_PUBLIC_KEY`
+4. Kopiere den **"Secret key"** (beginnt mit `sk_live_`) → `Backend/.env` als `STRIPE_SECRET_KEY`
 
-> **Wichtig:** Den **"Secret key"** (`sk_live_...`) **niemals** ins Frontend — nur ins Backend!
+> **Wichtig:** Den Secret Key niemals ins Frontend — nur ins Backend!
 
 ### Schritt 2 — Testmodus
 
-Während der Entwicklung arbeite mit Test-Keys (`pk_test_...`). So kannst du Zahlungen simulieren ohne echtes Geld zu bewegen.
+Während der Entwicklung arbeite mit Test-Keys (`pk_test_...`, `sk_test_...`). Testkarte die immer funktioniert: `4242 4242 4242 4242`, Ablaufdatum: beliebig in der Zukunft, CVC: beliebig.
 
-Testkarte die immer funktioniert: `4242 4242 4242 4242`, Ablaufdatum: beliebig in der Zukunft, CVC: beliebig.
+### Schritt 3 — Webhook einrichten
 
-### Schritt 3 — Webhook einrichten (für Bestellbestätigungen)
-
-Der Webhook wird in Schritt 7 nach dem Backend-Deployment eingerichtet.
+Der Webhook wird nach dem Backend-Deployment eingerichtet (siehe Schritt 7).
 
 ---
 
-## 7. Backend & Webhook einrichten
+## 7. Backend & Webhook
 
-> **Hinweis zu Rate-Limiting:** Das Backend hat eingebautes Rate-Limiting (100 Anfragen / 15 Minuten global, strengere Limits für Login und Checkout). Diese Limits werden im Arbeitsspeicher des Servers gespeichert. Bei einem Serverneustart werden sie zurückgesetzt. Für Production-Betrieb mit mehreren Server-Instanzen (z.B. Vercel Serverless Functions) empfiehlt sich ein Redis-basiertes Rate-Limiting — für einen einzelnen Server ist der Standard ausreichend.
-
-Das Backend ist für Stripe-Zahlungen, Bestellverarbeitung und E-Mails zuständig.
-Es läuft als separates Vercel-Projekt.
+> **Hinweis:** Das Backend hat eingebautes Rate-Limiting (100 Anfragen / 15 Minuten global, strengere Limits für Login und Checkout). Bei einem Serverneustart werden die Limits zurückgesetzt.
 
 ### Schritt 1 — Backend lokal starten
 
@@ -258,7 +255,6 @@ Es läuft als separates Vercel-Projekt.
 cd Backend
 npm install
 npm run dev
-# → http://localhost:5000
 # Test: http://localhost:5000/api/health → {"status":"ok"}
 ```
 
@@ -273,17 +269,9 @@ stripe listen --forward-to localhost:5000/api/webhook/stripe
 
 Die CLI zeigt einen **Webhook Signing Secret** (`whsec_...`) — trage ihn in `Backend/.env` als `STRIPE_WEBHOOK_SECRET` ein.
 
-Testzahlung auslösen:
-```bash
-stripe trigger checkout.session.completed
-```
-
 ### Schritt 3 — Backend deployen (Vercel)
 
-1. Vercel → **"Add New Project"**
-2. Repository auswählen → Root Directory: **`Backend`**
-3. Alle Variablen aus `Backend/.env` eintragen
-4. Deploy
+Sieh Abschnitt 15 für die vollständige Deployment-Anleitung mit Vercel.
 
 ### Schritt 4 — Stripe Webhook in Produktion
 
@@ -291,13 +279,10 @@ Nach dem Deployment:
 
 1. Stripe Dashboard → **Developers → Webhooks → Add endpoint**
 2. URL: `https://DEINE-BACKEND-URL.vercel.app/api/webhook/stripe`
-3. Events auswählen:
-   - `checkout.session.completed`
-   - `payment_intent.payment_failed`
-   - `charge.refunded`
+3. Events: `checkout.session.completed`, `payment_intent.payment_failed`, `charge.refunded`
 4. **Signing Secret** kopieren → in Vercel Backend-Projekt als `STRIPE_WEBHOOK_SECRET`
 
-### Backend-Endpoints Übersicht
+### Backend-Endpunkte Übersicht
 
 | Methode | Route | Beschreibung |
 |---|---|---|
@@ -305,20 +290,23 @@ Nach dem Deployment:
 | POST | `/api/webhook/stripe` | Stripe-Events (intern) |
 | GET | `/api/products` | Alle aktiven Produkte |
 | GET | `/api/products/:slug` | Einzelnes Produkt |
+| GET | `/api/products/categories` | Alle Kategorien |
+| GET | `/api/settings/shipping` | Versandkosten-Einstellungen (öffentlich) |
 | POST | `/api/orders/checkout` | Stripe Checkout starten |
 | GET | `/api/orders` | Eigene Bestellungen (Auth) |
 | GET | `/api/customers/me` | Eigenes Profil (Auth) |
 | GET | `/api/customers/me/export` | DSGVO-Datenexport (Auth) |
 | DELETE | `/api/customers/me` | Konto löschen (DSGVO Art. 17) |
+| POST | `/api/contact` | Kontaktanfrage senden |
+| POST | `/api/admin/login` | Admin-Login |
+| GET | `/api/admin/products` | Alle Produkte (Admin) |
+| PUT | `/api/admin/settings/shipping` | Versandkosten speichern (Admin) |
 
 ---
 
 ## 8. E-Mail-Versand einrichten
 
-Der Shop sendet automatisch E-Mails für:
-- Bestellbestätigungen
-- Passwort vergessen
-- Ticket-Antworten
+Der Shop sendet automatisch E-Mails für Bestellbestätigungen, Passwort-Reset und Ticket-Antworten.
 
 ### Empfohlene Anbieter
 
@@ -333,40 +321,68 @@ Der Shop sendet automatisch E-Mails für:
 1. Account erstellen auf https://resend.com
 2. Domain verifizieren (DNS-Einträge setzen — Resend erklärt das Schritt für Schritt)
 3. **API Key** erstellen
-4. Den Key als Umgebungsvariable im Backend setzen: `SMTP_API_KEY=re_xxxx`
-5. In `.env` die Absender-Adresse setzen: `VITE_SMTP_FROM=bestellung@deinedomain.de`
+4. In `Backend/.env` eintragen:
+   ```env
+   SMTP_HOST=smtp.resend.com
+   SMTP_PORT=587
+   SMTP_USER=resend
+   SMTP_PASS=re_xxxx
+   SMTP_FROM_EMAIL=bestellung@deinshop.de
+   ```
 
 > **Hinweis:** SMTP wird nur im Backend genutzt — kein API-Key kommt ins Frontend.
 
 ---
 
-## 8. Shop-Name & Firmendaten einrichten
+## 9. Theme wählen
 
-Alle Shop- und Firmendaten sind **zentral** in einer einzigen Datei konfiguriert:
+ShopRay kommt mit **4 Farbpaletten**, jede in **Dark und Light Mode** — macht 8 Themes gesamt.
+
+| Palette | Charakter | Geeignet für |
+|---|---|---|
+| **sage** | Naturgrün, beruhigend | Bio, Wellness, Gesundheit |
+| **navy** | Dunkelblau, professionell | Premium, B2B, Elektronik |
+| **terra** | Erdtöne, warm | Mode, Lifestyle, Wohnen |
+| **electric** | Leuchtendes Blau, modern | Streetwear, Gaming, Tech |
+
+### Standard-Theme ändern
+
+Öffne [Frontend/src/providers/ThemeProvider.tsx](Frontend/src/providers/ThemeProvider.tsx) und ändere den Standardwert:
+
+```tsx
+// Palette: 'sage' | 'navy' | 'terra' | 'electric'
+() => (localStorage.getItem('sr-palette') as Palette) ?? 'sage'
+
+// Mode: 'light' | 'dark'
+() => (localStorage.getItem('sr-mode') as ThemeMode) ?? 'light'
+```
+
+> Der Benutzer kann das Theme selbst über den Theme-Umschalter im Shop ändern. Deine Einstellung gilt nur als Standard für Neu-Besucher.
+
+---
+
+## 10. Shop-Name & Firmendaten einrichten
+
+Alle Shop- und Firmendaten sind zentral in einer Datei konfiguriert:
 [Frontend/src/config/app.ts](Frontend/src/config/app.ts)
 
-Änderungen dort werden automatisch in **Header, Footer, Impressum, Datenschutzerklärung und Widerrufsbelehrung** übernommen — du musst nichts doppelt eintragen.
-
-### Was du eintragen musst
+Änderungen dort werden automatisch in Header, Footer, Impressum, Datenschutz und Widerrufsbelehrung übernommen.
 
 ```ts
-// Shop-Basisdaten
 export const APP_NAME    = 'Dein Shop Name';
 export const APP_URL     = 'https://deine-domain.de';
 export const APP_TAGLINE = 'Kurzer Slogan für den Footer';
 
-// Firmendaten — erscheinen in allen rechtlichen Seiten
 export const APP_COMPANY = {
-  owner:   'Max Mustermann',          // Vollständiger Name des Inhabers / GF
-  street:  'Musterstraße 1',          // Straße und Hausnummer
-  zip:     '12345',                   // Postleitzahl
-  city:    'Musterstadt',             // Ort
-  country: 'Deutschland',             // Land
-  ustId:   'DE 123 456 789',          // Umsatzsteuer-ID (leer lassen wenn keine)
-  hrb:     '',                        // Handelsregisternummer (leer lassen wenn keine)
+  owner:   'Max Mustermann',
+  street:  'Musterstraße 1',
+  zip:     '12345',
+  city:    'Musterstadt',
+  country: 'Deutschland',
+  ustId:   'DE 123 456 789',
+  hrb:     '',
 };
 
-// Kontaktdaten — erscheinen in Footer und Impressum
 export const APP_CONTACT = {
   email:   'hello@deine-domain.de',
   phone:   '+49 30 000 000 00',
@@ -374,169 +390,122 @@ export const APP_CONTACT = {
 };
 ```
 
-> **Wichtig:** Trage hier deine echten Daten ein — die Platzhalter (`Max Mustermann`, `Musterstraße 1` etc.) sind nicht für den Live-Betrieb geeignet. Falsche Impressumsangaben sind abmahnfähig.
-
-### Versandkosten & Freikauf-Grenze
-
-Öffne [Frontend/src/config/constants.ts](Frontend/src/config/constants.ts):
-
-```ts
-export const FREE_SHIPPING_THRESHOLD = 50;    // Ab welchem Betrag kostenloser Versand (€)
-export const SHIPPING_COST           = 4.95;  // Versandkosten (€)
-```
+> **Wichtig:** Trage echte Daten ein — Platzhalter sind nicht für den Live-Betrieb geeignet. Falsche Impressumsangaben sind abmahnfähig.
 
 ---
 
-## 9. Features aktivieren oder deaktivieren
+## 11. Features aktivieren oder deaktivieren
 
-### Schnell per .env (Feature Flags)
+Ändere in `Frontend/src/config/features.ts` die Werte:
 
-Ändere in der `.env`-Datei den Wert auf `true` oder `false`:
-
-```env
-VITE_FEATURE_REVIEWS=true      # Produktbewertungen anzeigen
-VITE_FEATURE_WISHLIST=true     # Wunschliste aktivieren
-VITE_FEATURE_LIVE_CHAT=false   # Live-Chat (z.B. Intercom, Tidio)
+```ts
+export const FEATURES = {
+  reviews:  true,   // Produktbewertungen
+  wishlist: true,   // Wunschliste
+  tickets:  true,   // Support-Tickets
+  chat:     false,  // Live-Chat
+};
 ```
 
-### Features vollständig entfernen (für das Lite-Paket)
-
-Wenn du ein bestimmtes Feature komplett herausnehmen möchtest, entferne folgende Dateien und Verweise:
+### Features vollständig entfernen
 
 | Feature | Zu entfernen |
 |---|---|
 | **Bewertungen** | `src/features/reviews/` + Tab in `product-detail.tsx` |
-| **Wunschliste** | `src/features/wishlist/` + `wishlist.tsx` + Herz-Buttons in Karten |
-| **Support-Tickets** | `src/features/tickets/` + `tickets.tsx` + `ticket-new.tsx` + Nav-Eintrag |
+| **Wunschliste** | `src/features/wishlist/` + `wishlist.tsx` + Herz-Buttons |
+| **Support-Tickets** | `src/features/tickets/` + `tickets.tsx` + `ticket-new.tsx` |
 | **Live-Chat** | `src/pages/support/chat.tsx` + Route in `router/index.tsx` |
-| **Support-Portal** | `src/pages/support/portal.tsx` + Route in `router/index.tsx` |
-| **Cookie-Consent** | `src/features/consent/` + Einbindung in `MainLayout.tsx` |
 
 Nach jeder Änderung: `npx tsc --noEmit` ausführen um TypeScript-Fehler zu prüfen.
 
 ---
 
-## 10. Produkte befüllen
+## 12. Produkte befüllen
 
-### Aktueller Stand (Mock-Daten)
+Produkte werden über den **Admin-Bereich** angelegt (empfohlen) oder direkt per SQL in die Datenbank eingefügt.
 
-Im Template sind Beispiel-Produkte hinterlegt unter:
-`Frontend/src/features/products/data/products.data.ts`
+### Option A — Admin-Bereich (empfohlen)
 
-Diese Daten sind nur für die Vorschau gedacht und müssen durch echte Daten ersetzt werden.
+1. Admin-Panel öffnen → **Produkte → Neues Produkt**
+2. Alle Felder ausfüllen: Name, Preis, Beschreibung, Bilder, Kategorie
+3. Auf **"Speichern"** klicken — das Produkt ist sofort im Shop sichtbar
 
-### Option A — Backend-API (empfohlen)
+### Option B — Seed-Daten (für Tests)
 
-Die API-Funktionen sind bereits vorbereitet in `src/features/products/api/productService.ts`.
-Verbinde dein Backend und die Produktdaten kommen automatisch aus der Datenbank.
-
-### Option B — Statische Daten anpassen
-
-Öffne `products.data.ts` und passe das Array direkt an:
-
-```ts
-export const PRODUCTS: Product[] = [
-  {
-    id:          1,
-    slug:        'mein-produkt',        // URL-freundlicher Name
-    name:        'Mein Produkt',
-    price:       '29.99',
-    oldPrice:    '39.99',               // null wenn kein Rabatt
-    badge:       'NEU',                 // null wenn kein Badge
-    discount:    '-25%',                // null wenn kein Rabatt
-    rating:      4.7,
-    reviews:     128,
-    category:    'Vitamine',
-    description: 'Produktbeschreibung hier…',
-    stock:       50,
-    // LMIV-Pflichtangaben (für Nahrungsergänzungsmittel):
-    lmiv: {
-      ingredients:  'Vitamin C (L-Ascorbinsäure), Füllstoff Mikrokristalline Cellulose',
-      allergens:    [],
-      servingSize:  '1 Kapsel',
-      netContent:   '60 Kapseln',
-      nutrients: [
-        { name: 'Vitamin C', per100g: '1.000 mg', perServing: '1.000 mg', nrv: '1.250 %' },
-      ],
-      usage:        '1 Kapsel täglich zu einer Mahlzeit',
-      storageHint:  'Kühl und trocken lagern. Außer Reichweite von Kindern',
-      warnings:     ['Die empfohlene tägliche Verzehrmenge nicht überschreiten'],
-      manufacturer: 'Hersteller GmbH, Musterstraße 1, 12345 Musterstadt',
-    },
-  },
-];
-```
+Im Ordner `database/seed.sql` liegt eine Datei mit Beispielprodukten. Diese kannst du einmalig im SQL Editor ausführen um den Shop mit Testdaten zu befüllen.
 
 ---
 
-## 11. Rechtliche Texte anpassen
+## 13. Rechtliche Texte anpassen
 
-> **Wichtig:** Die rechtlichen Texte im Template sind **Platzhalter**. Du musst sie vor dem Launch anpassen — am besten mit einem Anwalt oder einem Dienst wie eRecht24 oder Trusted Shops.
+> **Wichtig:** Die rechtlichen Texte im Template sind Platzhalter. Vor dem Launch anpassen — am besten mit einem Anwalt oder einem Dienst wie eRecht24 oder Trusted Shops.
 
-### Schritt 1 — Firmendaten zentral eintragen (reicht für 3 Seiten)
+### Firmendaten — werden automatisch übernommen
 
-Trage deine Daten einmalig in [Frontend/src/config/app.ts](Frontend/src/config/app.ts) unter `APP_COMPANY` und `APP_CONTACT` ein (siehe Abschnitt 8).
-
-Folgende Seiten übernehmen die Daten **automatisch**:
+Wenn du deine Daten in `Frontend/src/config/app.ts` einträgst (Abschnitt 10), werden sie automatisch in folgende Seiten übernommen:
 - `/impressum` — Name, Adresse, USt-ID, Kontakt
 - `/datenschutz` — Name des Verantwortlichen, Kontakt-E-Mail
 - `/widerruf` — Unternehmensanschrift im Widerrufsformular
 
-### Schritt 2 — Restliche Texte manuell prüfen
+### Restliche Texte manuell prüfen
 
 | Seite | Datei | Was anpassen |
 |---|---|---|
-| **AGB** | `src/pages/info/terms.tsx` | Zahlungsarten, Lieferzeiten, produktspezifische Klauseln |
-| **Datenschutz** | `src/pages/info/privacy.tsx` | Abschnitt „Auftragsverarbeiter" — echte Dienstleister eintragen |
-| **Widerruf** | `src/pages/info/widerruf.tsx` | Prüfen, ob Muster-Widerrufsformular für dein Angebot passt |
-
-> **Hinweis:** Das Muster-Widerrufsformular entspricht der gesetzlichen Vorlage (Art. 246a Anl. 2 EGBGB). Es darf nicht beliebig verändert werden.
+| **AGB** | `src/pages/info/terms.tsx` | Zahlungsarten, Lieferzeiten |
+| **Datenschutz** | `src/pages/info/privacy.tsx` | Auftragsverarbeiter eintragen |
+| **Widerruf** | `src/pages/info/widerruf.tsx` | Prüfen ob Muster passt |
+| **Versand** | Automatisch aus Admin-Panel | Kein manueller Eingriff nötig |
 
 ### Newsletter — wichtiger Hinweis
 
-Das Template enthält **kein Double-Opt-In** für den Newsletter-Versand. Nach § 7 Abs. 2 Nr. 3 UWG ist ein bestätigter Opt-In für Werbemails in Deutschland Pflicht. Wenn du einen Newsletter anbieten möchtest, musst du vor dem Launch einen externen Anbieter (z.B. Mailchimp, Brevo, Klaviyo) integrieren, der das Double-Opt-In automatisch übernimmt.
+Das Template enthält kein Double-Opt-In. Nach § 7 Abs. 2 Nr. 3 UWG ist ein bestätigter Opt-In für Werbemails Pflicht. Wenn du einen Newsletter anbietest, musst du einen externen Anbieter (Mailchimp, Brevo, Klaviyo) integrieren.
 
 ### Für Nahrungsergänzungsmittel zusätzlich
 
-- **BfR-Meldung** vor dem ersten Verkauf (Bundesamt für Risikobewertung)
-- **LMIV-Angaben** auf jeder Produktseite vollständig ausfüllen (Zutaten, Nährwerte, Allergene)
-- **Health Claims** prüfen: Nur EU-zugelassene Aussagen über Wirkungen verwenden
+- **BfR-Meldung** vor dem ersten Verkauf
+- **LMIV-Angaben** auf jeder Produktseite vollständig ausfüllen
+- **Health Claims** prüfen: Nur EU-zugelassene Aussagen verwenden
 
 ---
 
-## 12. Admin-Bereich
+## 14. Admin-Bereich einrichten
 
-Der Admin-Bereich ist ein **separates Projekt** (`Admin/`) und läuft unabhängig vom Shop-Frontend. Er ist für den Shop-Betreiber gedacht — nicht für Kunden.
+Der Admin-Bereich ist ein separates Projekt (`Admin/`) und läuft unabhängig vom Shop-Frontend.
 
 ### Was der Admin-Bereich kann
 
 | Bereich | Funktion |
 |---|---|
 | **Dashboard** | Umsatz, Bestellungen, Kunden auf einen Blick |
-| **Produkte** | Produkte anlegen, bearbeiten, Bilder hochladen |
+| **Produkte** | Anlegen, bearbeiten (Doppelklick auf Zeile), Bilder hochladen |
 | **Bestellungen** | Status verwalten (Neu → Bezahlt → Versendet → Zugestellt) |
 | **Kunden** | Kundenliste, Bestellhistorie, DSGVO-Export und -Löschung |
-| **Support** | Eingehende Tickets beantworten |
-| **Einstellungen** | Shop-Name, Theme, Versandkosten, SMTP |
+| **Support** | Eingehende Kontaktanfragen und Tickets beantworten |
+| **Einstellungen → Versand** | Versandkosten, Gratisversand-Grenze, Lieferzeit live konfigurieren |
+| **Einstellungen → Sicherheit** | Login-Protokoll — jeder Admin-Login wird aufgezeichnet |
+
+### Versandkosten konfigurieren
+
+Die Versandkosten werden **ausschließlich im Admin-Panel** eingestellt — keine Codeänderung nötig:
+
+1. Admin-Panel → **Einstellungen → Versand**
+2. Standardversand, Expressversand, Gratisversand-Grenze und Lieferzeit einstellen
+3. Auf **"Speichern"** klicken
+
+Änderungen werden sofort im Checkout und auf der Versand-Infoseite des Shops sichtbar.
 
 ### Admin-Login einrichten
 
-Der Admin-Bereich ist mit **Passwort + JWT-Session** gesichert — kein E-Mail-Login, kein Supabase-Auth.
-
-**Schritt 1 — Sicheres Passwort wählen und hashen:**
+**Schritt 1 — Sicheres Passwort hashen:**
 
 ```bash
 cd Backend
-node -e "const b = require('bcrypt'); b.hash('DEIN-NEUES-PASSWORT', 12).then(h => console.log(h));"
+node -e "const b = require('bcrypt'); b.hash('DEIN-PASSWORT', 12).then(h => console.log(h));"
 ```
 
-Den ausgegebenen Hash (`$2b$12$...`) in `Backend/.env` eintragen:
+Den Hash (`$2b$12$...`) in `Backend/.env` als `ADMIN_PASSWORD_HASH` eintragen.
 
-```env
-ADMIN_PASSWORD_HASH=$2b$12$...hier-deinen-hash-eintragen...
-```
-
-**Schritt 2 — JWT Secret setzen:**
+**Schritt 2 — JWT Secret generieren:**
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'));"
@@ -544,77 +513,75 @@ node -e "console.log(require('crypto').randomBytes(48).toString('hex'));"
 
 Den Wert in `Backend/.env` als `JWT_SECRET` eintragen.
 
-**Schritt 3 — Login testen:**
-
-Admin-Panel öffnen → dein Passwort eingeben → Dashboard sollte erscheinen.
-
-> **Wichtig:** Das Passwort wird **nirgendwo** im Klartext gespeichert — nur als bcrypt-Hash.
-> Das Standard-Passwort aus dem Template muss vor dem Launch geändert werden!
+> **Wichtig:** Das Standard-Passwort aus dem Template muss vor dem Launch geändert werden!
 
 ### Admin lokal starten
 
 ```bash
-cd Admin
-npm install
-npm run dev
-# läuft auf http://localhost:5174
+cd Admin && npm install && npm run dev
+# → http://localhost:5174
 ```
-
-### Admin deployen (Vercel)
-
-Der Admin wird als **eigenes Vercel-Projekt** deployed — getrennt vom Shop:
-
-1. Gehe zu https://vercel.com → **"Add New Project"**
-2. Wähle dasselbe Repository
-3. **Root Directory** setzen auf: `Admin`
-4. Auf **"Deploy"** klicken
-5. Eigene Domain vergeben, z. B. `admin.deinshop.de` (unter **Settings → Domains**)
-
-> Der Admin sollte nie auf einer öffentlich bekannten URL liegen. Eigene Domain mit Passwortschutz ist empfohlen.
-
-### Admin-URL im Überblick
-
-| Umgebung | URL |
-|---|---|
-| Lokal | `http://localhost:5174` |
-| Vercel (Beispiel) | `https://shopray-admin.vercel.app` |
-| Produktiv (empfohlen) | `https://admin.deinshop.de` |
 
 ---
 
-## 13. Deployment
+## 15. Deployment
 
-### Empfohlen: Vercel (einfachste Option)
+ShopRay besteht aus drei separaten Vercel-Projekten im gleichen GitHub-Repository (**Monorepo**).
 
-1. Gehe zu https://vercel.com und melde dich mit GitHub an
-2. Klicke auf **"Add New Project"**
-3. Wähle dein ShopRay-Repository
-4. **Root Directory** setzen auf: `Frontend`
-5. Alle Umgebungsvariablen aus deiner `.env`-Datei in Vercel eintragen (unter **Settings → Environment Variables**)
-6. Auf **"Deploy"** klicken
+### Schritt 1 — GitHub Repository einrichten
 
-Der Shop ist danach unter einer `*.vercel.app`-Adresse erreichbar. Für deine eigene Domain: **Settings → Domains**.
-
-### Andere Optionen
-
-| Anbieter | Hinweis |
-|---|---|
-| **Netlify** | Ähnlich wie Vercel, ebenfalls kostenlos |
-| **GitHub Pages** | Nur für statische Seiten, eingeschränkt |
-| **Hetzner / VPS** | Für volle Kontrolle — braucht mehr technisches Wissen |
-
-### Build-Befehl für alle Anbieter
+1. Erstelle ein neues **privates** Repository auf https://github.com/new
+2. Kein README, kein .gitignore anhaken
+3. In deinem ShopRay-Ordner:
 
 ```bash
-cd Frontend && npm run build
-# Output-Ordner: Frontend/dist
+git remote add origin git@github.com:DEIN-USERNAME/ShopRay.git
+git push -u origin main
 ```
+
+### Schritt 2 — Drei Vercel-Projekte anlegen
+
+Für **Frontend**, **Backend** und **Admin** je ein eigenes Vercel-Projekt:
+
+1. https://vercel.com → **"Add New Project"**
+2. GitHub-Repository auswählen
+3. **Root Directory** setzen — das ist entscheidend:
+
+| Vercel-Projekt | Root Directory | Framework |
+|---|---|---|
+| shopray (Frontend) | `Frontend` | Vite |
+| shopray-backend | `Backend` | Node.js |
+| shopray-admin | `Admin` | Vite |
+
+4. Alle Umgebungsvariablen aus der jeweiligen `.env`-Datei in Vercel eintragen (**Settings → Environment Variables**)
+5. Deployen
+
+### Schritt 3 — GitHub mit bestehenden Vercel-Projekten verbinden
+
+Falls du bereits Vercel-Projekte hast und nachträglich GitHub verbindest:
+
+1. Vercel → Dein Projekt → **Settings → Git**
+2. **"Connect Git Repository"** → GitHub → dein Repo auswählen
+3. Vercel → **Settings → Build and Deployment → Root Directory** → passenden Ordner eintragen
+4. **Save** klicken
+
+Ab jetzt deployed Vercel automatisch bei jedem `git push`.
+
+### Schritt 4 — Eigene Domain (empfohlen)
+
+| Projekt | Empfohlene Domain |
+|---|---|
+| Frontend | `deinshop.de` |
+| Backend | `api.deinshop.de` |
+| Admin | `admin.deinshop.de` |
+
+In Vercel: **Settings → Domains → Add** → Domain eintragen → DNS-Einträge wie angegeben setzen.
+
+> Der Admin sollte nie auf einer öffentlich bekannten URL liegen. Eigene Domain mit Passwortschutz empfohlen.
 
 ---
 
-## 14. Pakete — Was gehört wozu
-
-ShopRay ist modular aufgebaut. Je nach Paket kannst du Features hinzufügen oder weglassen:
+## 16. Pakete — Was gehört wozu
 
 | Feature | Lite | Pro | Enterprise |
 |---|---|---|---|
@@ -622,12 +589,14 @@ ShopRay ist modular aufgebaut. Je nach Paket kannst du Features hinzufügen oder
 | 4 Themes (Dark + Light) | ✅ | ✅ | ✅ |
 | DSGVO-Paket (Consent, Meine Daten) | ✅ | ✅ | ✅ |
 | Kundenkonto + Bestellhistorie | ✅ | ✅ | ✅ |
+| 2-Faktor-Authentifizierung (TOTP) | ✅ | ✅ | ✅ |
 | Wunschliste | ❌ | ✅ | ✅ |
 | Produktbewertungen | ❌ | ✅ | ✅ |
 | Support-Tickets | ❌ | ✅ | ✅ |
 | Live-Chat Integration | ❌ | ❌ | ✅ |
 | LMIV-Nährwerttabelle | ❌ | ✅ | ✅ |
 | **Admin-Bereich** | ❌ | ✅ | ✅ |
+| **Admin: Versandkosten konfigurieren** | ❌ | ✅ | ✅ |
 | Source Code | ❌ | ✅ | ✅ |
 | Prioritäts-Support | ❌ | ❌ | ✅ |
 
@@ -635,9 +604,7 @@ ShopRay ist modular aufgebaut. Je nach Paket kannst du Features hinzufügen oder
 
 ## 17. Technologie & Open Source
 
-ShopRay basiert fast vollständig auf Open-Source-Technologien. Du bist nicht dauerhaft an einen bestimmten Anbieter gebunden — die meisten Teile kannst du austauschen oder selbst betreiben.
-
-### Überblick: Was ist Open Source?
+ShopRay basiert fast vollständig auf Open-Source-Technologien.
 
 | Technologie | Rolle | Lizenz | Selbst hostbar |
 |---|---|---|---|
@@ -645,73 +612,42 @@ ShopRay basiert fast vollständig auf Open-Source-Technologien. Du bist nicht da
 | **TypeScript** | Sprache | Apache 2.0 | — |
 | **Vite** | Build-Tool | MIT | — |
 | **Express.js** | Backend-Server | MIT | — |
+| **Zod** | Input-Validierung | MIT | — |
 | **Nodemailer** | E-Mail-Versand | MIT | — |
 | **Zustand** | State Management | MIT | — |
 | **PostgreSQL** | Datenbank | PostgreSQL License | ✅ ja |
 | **Supabase** | Auth + Datenbank-Host | Apache 2.0 | ✅ ja |
-| **Stripe** | Zahlungsabwicklung | proprietär (closed) | ❌ nein |
-
-**Einzige Ausnahme: Stripe.** Stripe ist ein externer Zahlungsdienst — sein Code läuft ausschließlich auf Stripes eigenen Servern. In ShopRay wird Stripe nur über HTTP-Aufrufe angesprochen. Du hast keinen Zugriff auf Stripes Quellcode und brauchst ihn nicht.
-
----
+| **Stripe** | Zahlungsabwicklung | proprietär | ❌ nein |
 
 ### Supabase selbst hosten
 
-Supabase ist vollständig Open Source und kann auf einem eigenen Server betrieben werden — ohne Cloud-Abhängigkeit.
+Supabase ist vollständig Open Source und kann auf einem eigenen Server betrieben werden:
 
-**Was du brauchst:**
-- Einen VPS (z.B. Hetzner, Contabo) mit mindestens 4 GB RAM
+- VPS mit mindestens 4 GB RAM (z.B. Hetzner, Contabo)
 - Docker
+- Offizieller Guide: https://supabase.com/docs/guides/self-hosting/docker
 
-**Offizieller Self-Hosting Guide:**
-https://supabase.com/docs/guides/self-hosting/docker
-
-**Einzige Anpassung in ShopRay:**
-In deiner `.env`-Datei tauschst du die Supabase-URL aus:
+In der `.env` einfach die URL tauschen:
 ```env
-# Vorher (Supabase Cloud):
-VITE_SUPABASE_URL=https://xxxx.supabase.co
-
-# Nachher (selbst gehostet):
 VITE_SUPABASE_URL=https://supabase.deineserver.de
+SUPABASE_URL=https://supabase.deineserver.de
 ```
 
-Die Datenbank selbst ist normales PostgreSQL — dein Schema (`database/schema.sql`) funktioniert auf jeder PostgreSQL-Installation identisch.
-
----
-
 ### Stripe-Alternativen
-
-Wenn du Stripe nicht verwenden möchtest, kannst du das Backend gegen einen anderen Anbieter tauschen. Nur die Datei `Backend/src/routes/orders.ts` und der Webhook-Handler `Backend/src/routes/stripe.ts` müssen angepasst werden.
 
 | Alternative | Besonderheit |
 |---|---|
 | **Mollie** | Beliebt in DACH, unterstützt iDEAL, SEPA |
-| **PayPal** | Breite Akzeptanz, eigener SDK |
+| **PayPal** | Breite Akzeptanz |
 | **Lemon Squeezy** | Übernimmt EU-VAT, ideal für digitale Produkte |
-| **Paddle** | Ähnlich wie Lemon Squeezy, Merchant of Record |
-
-> **Empfehlung:** Für physische Produkte im DACH-Raum ist Stripe die zuverlässigste Wahl. Für digitale Produkte (Templates, Software) übernimmt Lemon Squeezy die Umsatzsteuer automatisch.
-
----
-
-### Fazit: Kein Lock-in
-
-Du kannst ShopRay betreiben ohne einem einzigen Cloud-Anbieter dauerhaft zu vertrauen:
-
-- **Supabase** → selbst hosten mit Docker
-- **Stripe** → gegen Mollie, PayPal oder Paddle tauschen
-- **Vercel** → gegen Netlify, Hetzner oder jeden anderen Hoster tauschen
-- **Datenbank** → normales PostgreSQL, portierbar auf jeden Server
-
-Der gesamte Code bleibt bei dir. Kein Vendor hält deinen Shop als Geisel.
+| **Paddle** | Merchant of Record, automatische Steuerabwicklung |
 
 ---
 
 ## Hilfe & Support
 
 Bei Fragen zum Template:
-- GitHub Issues: [Link zu deinem Repo]
+- GitHub Issues: https://github.com/SchubertChris/ShopRay/issues
 - E-Mail: [deine Support-Adresse]
 
 Bei Fragen zu externen Diensten:
