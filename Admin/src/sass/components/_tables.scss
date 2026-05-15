@@ -111,6 +111,10 @@
 
   &__row--clickable { cursor: pointer; }
 
+  tr.is-selected td {
+    background: color-mix(in srgb, var(--clr-primary) 6%, transparent);
+  }
+
   // Kompaktere Zeilenabstände
   &--compact {
     th { padding: 0.45rem 1rem; }

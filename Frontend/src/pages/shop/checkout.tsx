@@ -29,11 +29,55 @@ interface ShippingConfig { standard: number; free_above: number; }
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
-const PAYMENT_METHODS: Array<{ value: PaymentMethod; label: string; sub: string }> = [
-  { value: 'card',          label: 'Kreditkarte',       sub: 'Visa, Mastercard, Amex' },
-  { value: 'paypal',        label: 'PayPal',            sub: 'Schnell & sicher' },
-  { value: 'klarna',        label: 'Klarna',            sub: 'Kauf auf Rechnung' },
-  { value: 'bank-transfer', label: 'Sofortüberweisung', sub: 'Online-Banking' },
+const PAYMENT_METHODS: Array<{ value: PaymentMethod; label: string; sub: string; logo: React.ReactNode }> = [
+  {
+    value: 'card',
+    label: 'Kreditkarte',
+    sub: 'Visa · Mastercard · Amex',
+    logo: (
+      <svg width="48" height="30" viewBox="0 0 48 30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="48" height="30" rx="4" fill="#1A1F71" />
+        <text x="7" y="20" fontFamily="Arial,sans-serif" fontSize="11" fontWeight="700" fill="#FFFFFF" letterSpacing="-0.5">VISA</text>
+        <circle cx="32" cy="15" r="7" fill="#EB001B" />
+        <circle cx="39" cy="15" r="7" fill="#F79E1B" />
+        <path d="M35.5 9.68A7 7 0 0 1 35.5 20.32A7 7 0 0 1 35.5 9.68Z" fill="#FF5F00" />
+      </svg>
+    ),
+  },
+  {
+    value: 'paypal',
+    label: 'PayPal',
+    sub: 'Schnell & sicher',
+    logo: (
+      <svg width="48" height="30" viewBox="0 0 48 30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="48" height="30" rx="4" fill="#003087" />
+        <text x="7" y="20" fontFamily="Arial,sans-serif" fontSize="11" fontWeight="700" fill="#009CDE" letterSpacing="-0.3">Pay</text>
+        <text x="25" y="20" fontFamily="Arial,sans-serif" fontSize="11" fontWeight="700" fill="#FFFFFF" letterSpacing="-0.3">Pal</text>
+      </svg>
+    ),
+  },
+  {
+    value: 'klarna',
+    label: 'Klarna',
+    sub: 'Kauf auf Rechnung',
+    logo: (
+      <svg width="48" height="30" viewBox="0 0 48 30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="48" height="30" rx="4" fill="#FFB3C7" />
+        <text x="8" y="21" fontFamily="Arial,sans-serif" fontSize="13" fontWeight="900" fill="#17120E" letterSpacing="-0.5">klarna</text>
+      </svg>
+    ),
+  },
+  {
+    value: 'bank-transfer',
+    label: 'Sofortüberweisung',
+    sub: 'Online-Banking',
+    logo: (
+      <svg width="48" height="30" viewBox="0 0 48 30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="48" height="30" rx="4" fill="#EF3340" />
+        <text x="5" y="21" fontFamily="Arial,sans-serif" fontSize="11" fontWeight="700" fill="#FFFFFF" letterSpacing="-0.3">SOFORT</text>
+      </svg>
+    ),
+  },
 ];
 
 const INITIAL_FORM: ShippingForm = {
@@ -248,17 +292,27 @@ export default function CheckoutPage() {
                       key={m.value}
                       className={`payment-option${form.paymentMethod === m.value ? ' payment-option--selected' : ''}`}
                     >
-                      <span>
-                        <span className="payment-option__label">{m.label}</span>
-                        <span className="payment-option__sub">{m.sub}</span>
-                      </span>
                       <input
                         type="radio"
                         name="paymentMethod"
                         value={m.value}
                         checked={form.paymentMethod === m.value}
                         onChange={handleChange}
+                        className="payment-option__radio"
                       />
+                      <div className="payment-option__logo">{m.logo}</div>
+                      <div className="payment-option__text">
+                        <span className="payment-option__label">{m.label}</span>
+                        <span className="payment-option__sub">{m.sub}</span>
+                      </div>
+                      {form.paymentMethod === m.value && (
+                        <div className="payment-option__check" aria-hidden="true">
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <circle cx="7" cy="7" r="7" fill="currentColor" />
+                            <path d="M4 7l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
+                      )}
                     </label>
                   ))}
                 </div>
