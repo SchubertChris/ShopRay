@@ -51,6 +51,8 @@ export interface Product {
   stock?:      number;
   /** Produktbild-URL aus Supabase Storage (null = Platzhalter) */
   imageUrl:    string | null;
+  /** Alle Produktbilder (erstes Bild = Hauptbild, max. 8) */
+  images?:     string[];
   /** MwSt.-Satz in Prozent (z.B. 19, 7, 0) — pro Produkt konfigurierbar */
   taxRate:     number;
   lmiv?:       LmivInfo;

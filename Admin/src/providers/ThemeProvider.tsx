@@ -17,7 +17,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     (localStorage.getItem('admin-palette') as Palette) ?? 'sage'
   );
   const [mode, setMode] = useState<Mode>(() =>
-    (localStorage.getItem('admin-mode') as Mode) ?? 'light'
+    (localStorage.getItem('admin-mode') as Mode) ??
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
   );
 
   useEffect(() => {

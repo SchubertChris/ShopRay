@@ -1,9 +1,11 @@
-# Concepts — Setup-Anleitung für Käufer
+# ShopRay Frontend — Anpassungs-Guide für Käufer
 
-> Letzte Aktualisierung: 2026-05-14
+> Letzte Aktualisierung: 2026-05-16
 
-Willkommen! Diese Anleitung erklärt Schritt für Schritt, wie du das Template auf deinen eigenen Shop anpasst.  
+Willkommen! Diese Anleitung erklärt, wie du das ShopRay-Frontend auf deinen eigenen Shop anpasst.  
 Du brauchst keine tiefen Programmierkenntnisse — alle wichtigen Einstellungen sind an einer zentralen Stelle gebündelt.
+
+> **Hinweis:** Die vollständige Einrichtungsanleitung (Supabase, Stripe, Backend, Vercel) findest du in `SETUP.md` im Hauptverzeichnis des Projekts.
 
 ---
 
@@ -28,13 +30,13 @@ Du musst ihn nur an **einer einzigen Stelle** ändern:
 **Datei:** `src/config/app.ts`
 
 ```ts
-export const APP_NAME = 'Concepts'; // ← Hier deinen Shop-Namen eintragen
+export const APP_NAME = 'ShopRay'; // ← Hier deinen Shop-Namen eintragen
 ```
 
 **So gehst du vor:**
 
 1. Öffne die Datei `src/config/app.ts`
-2. Ersetze `'Concepts'` durch deinen gewünschten Shop-Namen (z.B. `'Mein Shop'`)
+2. Ersetze `'ShopRay'` durch deinen gewünschten Shop-Namen (z.B. `'Mein Shop'`)
 3. Speichern — fertig. Der Name erscheint sofort überall.
 
 ---
@@ -136,28 +138,71 @@ Wenn du ein Feld leer lässt (`''`), greift automatisch ein **Farbgradient** aus
 
 ## 4. Farben und Theme anpassen
 
-*(Folgt in Kürze)*
+Das Frontend kommt mit 4 vorgefertigten Farbpaletten (Sage, Navy, Terra, Electric) in je einem Light- und Dark-Mode.
+
+**Datei:** `src/config/theme.ts`
+
+```ts
+export const DEFAULT_PALETTE = 'sage';  // ← Standardpalette beim ersten Laden
+export const DEFAULT_MODE    = 'light'; // ← 'light' oder 'dark'
+```
+
+Die Farben selbst sind in `src/sass/abstracts/_variables.scss` definiert — dort kannst du Hex-Werte anpassen. Alle Farbnamen beginnen mit `--clr-`.
+
+Der Besucher kann im Shop das Theme selbst wechseln (Theme-Dock auf der Startseite). Willst du das deaktivieren, entferne den Theme-Dock-Block aus `src/pages/home/home.tsx`.
 
 ---
 
 ## 5. Supabase einbinden
 
-*(Folgt in Kürze)*
+Vollständige Anleitung: **SETUP.md Abschnitte 4–6** im Hauptverzeichnis.
+
+Kurzfassung für das Frontend:
+
+**Datei:** `Frontend/.env`
+
+```env
+VITE_SUPABASE_URL=https://dein-projekt.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbG...
+```
+
+Diese Werte findest du in deinem Supabase-Projekt unter **Settings → API**.
 
 ---
 
 ## 6. Stripe einbinden
 
-*(Folgt in Kürze)*
+Vollständige Anleitung: **SETUP.md Abschnitt 7** im Hauptverzeichnis.
+
+Kurzfassung für das Frontend:
+
+**Datei:** `Frontend/.env`
+
+```env
+VITE_STRIPE_PUBLIC_KEY=pk_live_...
+```
+
+Der Publishable Key kommt aus dem Stripe Dashboard unter **Developers → API Keys**.  
+Das eigentliche Bezahlen läuft über das Backend — das Frontend leitet nur weiter.
 
 ---
 
 ## 7. SMTP einbinden
 
-*(Folgt in Kürze)*
+Das Frontend selbst sendet keine E-Mails — das erledigt das Backend.  
+Vollständige Anleitung: **SETUP.md Abschnitt 8** im Hauptverzeichnis.
 
 ---
 
 ## 8. Deployment auf Vercel
 
-*(Folgt in Kürze)*
+Das Frontend ist ein eigenes Vercel-Projekt mit Root Directory `Frontend`.
+
+Vollständige Schritt-für-Schritt-Anleitung: **SETUP.md Abschnitt 15** im Hauptverzeichnis.
+
+| Umgebungsvariable | Wert |
+|---|---|
+| `VITE_API_URL` | URL deines Backend-Projekts (z.B. `https://shopray-backend.vercel.app`) |
+| `VITE_SUPABASE_URL` | Supabase Project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon Key |
+| `VITE_STRIPE_PUBLIC_KEY` | Stripe Publishable Key |

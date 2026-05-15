@@ -4,10 +4,12 @@ import { getProductGallery } from '@config/images';
 interface ImageGalleryProps {
   productId:   string | number;
   productName: string;
+  /** Bilder aus der DB (erstes = Hauptbild). Fehlen sie, greift der Config-Fallback. */
+  images?:     string[];
 }
 
-export function ImageGallery({ productId, productName }: ImageGalleryProps) {
-  const images = getProductGallery(productId);
+export function ImageGallery({ productId, productName, images }: ImageGalleryProps) {
+  const gallery = (images && images.length > 0) ? images : getProductGallery(productId);
   const [active, setActive] = useState(0);
 
   return (
@@ -15,15 +17,15 @@ export function ImageGallery({ productId, productName }: ImageGalleryProps) {
       <div className="product-gallery__main">
         <img
           key={active}
-          src={images[active]}
+          src={gallery[active]}
           alt={`${productName} — Bild ${active + 1}`}
           className="product-gallery__img"
         />
       </div>
 
-      {images.length > 1 && (
+      {gallery.length > 1 && (
         <div className="product-gallery__thumbs">
-          {images.map((src, i) => (
+          {gallery.map((src, i) => (
             <button
               key={i}
               className={`product-gallery__thumb${i === active ? ' is-active' : ''}`}

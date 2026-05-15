@@ -187,3 +187,14 @@
 | 2026-05-14 | `product-detail.tsx`: komplett überarbeitet — `ImageGallery`, Highlights-Checklist, Cert-Badges, `richDescription` HTML-Tab, Händler-Links, Dokumente-Sektion |
 | 2026-05-14 | `_product-detail.scss`: alle neuen CSS-Klassen ergänzt (pd-img-fade Keyframe, product-highlights, cert-badge, product-rich-description, pd-section, dealer-link, product-document) |
 | 2026-05-14 | TypeScript-Check final bestanden: `npx tsc --noEmit` ohne Fehler; Build + Vercel-Prod-Deploy erfolgt |
+| 2026-05-15 | `src/config/routes.ts`: `AUTH.RESET_PASSWORD` (`/auth/reset-password`) hinzugefügt |
+| 2026-05-15 | `src/router/index.tsx`: `ResetPasswordPage` in AuthLayout registriert |
+| 2026-05-15 | `src/pages/info/shipping.tsx`: Komplett umgeschrieben — Versandinfos dynamisch aus `/api/settings/shipping` (kein Hardcode mehr), Fallback-Defaults bleiben |
+| 2026-05-15 | `src/pages/shop/checkout.tsx`: Versandkosten-Berechnung dynamisch — fetcht `/api/settings/shipping` on mount, Threshold + Preis aus DB |
+| 2026-05-15 | `src/features/products/api/productService.ts`: Backend-ready API-Service aktualisiert |
+| 2026-05-15 | `src/features/products/types/product.types.ts`: Typen für erweiterte Admin-Produktfelder synchronisiert |
+| 2026-05-15 | `src/features/products/components/ImageGallery.tsx`: Galerie-Komponente für mehrere Produkt-Bilder (Supabase Storage) |
+| 2026-05-15 | `src/pages/shop/product-detail.tsx`: Unterstützt jetzt mehrere Produkt-Bilder via `images[]` Array |
+| 2026-05-15 | `src/providers/ThemeProvider.tsx`: ThemeProvider-Update |
+| 2026-05-15 | `src/sass/pages/shop/_search-results.scss`: Styling-Updates |
+| 2026-05-16 | `Frontend/SETUP.md`: Shop-Name von `Concepts` auf `ShopRay` korrigiert, alle "(Folgt in Kürze)"-Abschnitte ausgefüllt |

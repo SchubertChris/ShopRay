@@ -52,6 +52,13 @@ Dieses Dokument erklärt dir, wo du welchen Code ablegst. Ziel ist es, dass dein
 
 ---
 
+## 🆕 Neue Dateien (Stand 2026-05-15/16)
+
+- **`src/pages/auth/reset-password.tsx`**: Passwort-Zurücksetzen-Seite (Supabase `PASSWORD_RECOVERY` Event).
+- **`src/pages/info/shipping.tsx`**: Versand- & Rückgabe-Seite — Infos kommen jetzt dynamisch aus der Backend-API.
+- **`src/pages/shop/checkout.tsx`**: Versandkosten-Berechnung jetzt dynamisch (kein Hardcode).
+- **`src/features/products/components/ImageGallery.tsx`**: Galerie-Komponente für mehrere Produkt-Bilder.
+
 ## 🆕 Neue Ordner (Stand 2026-05-14)
 
 - **`features/products/components/`**: UI-Komponenten für das Produkt-Feature (aktuell: `ImageGallery.tsx` — Galerie mit Thumbnail-Leiste, Fade-Animation beim Wechsel).

@@ -144,6 +144,13 @@
   }
 }
 
+// ─── TH-MODIFIER ─────────────────────────────────────────────────────────────
+.admin-table__th--narrow { width: 48px; }
+.admin-table__th--action { width: 56px; }
+
+// ─── BTN MODIFIER ────────────────────────────────────────────────────────────
+.btn-secondary--ml { margin-left: 1rem; }
+
 // ─── TABLE HINT ──────────────────────────────────────────────────────────────
 .table-hint {
   font-size:  rem(11.5px);

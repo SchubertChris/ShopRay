@@ -6,6 +6,9 @@
   display:               grid;
   grid-template-columns: 1fr;
   gap:                   1.25rem;
+  min-width:             0;
+
+  > * { min-width: 0; }
 
   &.has-detail {
     @include respond-to('lg') {

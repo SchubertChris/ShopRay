@@ -15,7 +15,7 @@
 
 .stat-card {
   background:    var(--clr-surface);
-  border:        1px solid var(--clr-secondary);
+  border:        1.5px solid var(--clr-secondary);
   border-radius: 14px;
   padding:       1.25rem 1.375rem;
 
@@ -68,6 +68,9 @@
   display: grid;
   gap:     1.25rem;
   grid-template-columns: 1fr;
+  min-width: 0;
+
+  > * { min-width: 0; }
 
   @include respond-to('lg') {
     grid-template-columns: 1fr 320px;
@@ -77,9 +80,10 @@
 // ─── DATA CARDS ──────────────────────────────────────────────────────────────
 .data-card {
   background:    var(--clr-surface);
-  border:        1px solid var(--clr-secondary);
+  border:        1.5px solid var(--clr-secondary);
   border-radius: 14px;
   overflow:      hidden;
+  min-width:     0;
 
   &__header {
     @include flex-between;
@@ -169,13 +173,15 @@
     flex-shrink:   0;
   }
 
-  &--new       { background: color-mix(in srgb, var(--clr-primary) 12%, transparent); color: var(--clr-primary); }
-  &--paid      { background: color-mix(in srgb, var(--clr-success) 12%, transparent); color: var(--clr-success); }
-  &--shipped   { background: color-mix(in srgb, var(--clr-warning) 12%, transparent); color: var(--clr-warning); }
-  &--delivered { background: color-mix(in srgb, var(--clr-success) 12%, transparent); color: var(--clr-success); }
-  &--cancelled { background: color-mix(in srgb, var(--clr-error)   12%, transparent); color: var(--clr-error);   }
-  &--active    { background: color-mix(in srgb, var(--clr-success) 12%, transparent); color: var(--clr-success); }
-  &--inactive  { background: color-mix(in srgb, var(--clr-text)    8%,  transparent); color: color-mix(in srgb, var(--clr-text) 45%, transparent); }
+  &--pending        { background: color-mix(in srgb, var(--clr-primary) 12%, transparent); color: var(--clr-primary); }
+  &--paid           { background: color-mix(in srgb, var(--clr-success) 12%, transparent); color: var(--clr-success); }
+  &--shipped        { background: color-mix(in srgb, var(--clr-warning) 12%, transparent); color: var(--clr-warning); }
+  &--delivered      { background: color-mix(in srgb, var(--clr-success) 12%, transparent); color: var(--clr-success); }
+  &--cancelled      { background: color-mix(in srgb, var(--clr-error)   12%, transparent); color: var(--clr-error);   }
+  &--payment_failed { background: color-mix(in srgb, var(--clr-error)   12%, transparent); color: var(--clr-error);   }
+  &--refunded       { background: color-mix(in srgb, var(--clr-warning) 10%, transparent); color: var(--clr-warning); }
+  &--active         { background: color-mix(in srgb, var(--clr-success) 12%, transparent); color: var(--clr-success); }
+  &--inactive       { background: color-mix(in srgb, var(--clr-text)    8%,  transparent); color: color-mix(in srgb, var(--clr-text) 45%, transparent); }
 }
 
 // ─── QUICK-STATS LISTE ───────────────────────────────────────────────────────

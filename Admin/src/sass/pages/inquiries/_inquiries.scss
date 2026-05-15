@@ -58,7 +58,7 @@
     border-radius: 8px;
     color:         var(--clr-text);
     @include transition(border-color, box-shadow);
-    font-family:   monospace;
+    font-family:   'DM Mono', monospace;
 
     &:focus {
       outline:      none;
@@ -109,6 +109,9 @@
   grid-template-columns: 1fr;
   gap:                   1.25rem;
   align-items:           start;
+  min-width:             0;
+
+  > * { min-width: 0; }
 
   &.has-detail {
     @include respond-to('lg') {

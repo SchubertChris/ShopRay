@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { Search, ChevronLeft, Heart, CheckCircle2, Check, ExternalLink, FileText } from 'lucide-react';
 import { useProductBySlug } from '@features/products';
 import type { LmivInfo } from '@features/products';
@@ -155,7 +156,7 @@ export default function ProductDetailPage() {
 
               {/* Galerie */}
               <div className="product-detail__gallery-col">
-                <ImageGallery productId={product.id} productName={product.name} />
+                <ImageGallery productId={product.id} productName={product.name} images={product.images} />
               </div>
 
               {/* Info-Panel */}
@@ -213,7 +214,7 @@ export default function ProductDetailPage() {
                       onClick={() => toggle(product.id)}
                       aria-label={isInWishlist ? 'Von Wunschliste entfernen' : 'Zur Wunschliste'}
                     >
-                      <Heart size={18} strokeWidth={1.75} fill={isInWishlist ? 'currentColor' : 'none'} color={isInWishlist ? '#e11d48' : undefined} />
+                      <Heart size={18} strokeWidth={1.75} fill={isInWishlist ? 'currentColor' : 'none'} />
                     </button>
                   )}
                 </div>
@@ -262,7 +263,10 @@ export default function ProductDetailPage() {
                   {product.richDescription ? (
                     <div
                       className="product-rich-description"
-                      dangerouslySetInnerHTML={{ __html: product.richDescription }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.richDescription, {
+                        ALLOWED_TAGS: ['p','h4','h5','ul','ol','li','strong','em','br','span','a'],
+                        ALLOWED_ATTR: ['href','target','rel'],
+                      }) }}
                     />
                   ) : (
                     <p className="product-tabs__description">{product.description}</p>

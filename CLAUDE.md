@@ -1,5 +1,21 @@
 # Shop — Claude Anweisungen
 
+## Session-Start (PFLICHT)
+
+**Zu Beginn jeder Session `CLAUDE_SESSION.md` lesen** — dort steht der aktuelle Implementierungsstand, offene Aufgaben und wichtige Architektur-Entscheidungen.
+
+### `CLAUDE_SESSION.md` updaten — wann?
+
+| Trigger | Aktion |
+|---|---|
+| Feature abgeschlossen | Implementierungsstand updaten, Task aus "Offen" streichen |
+| Neue Architektur-Entscheidung getroffen | Unter "Wichtige Entscheidungen" ergänzen |
+| Neue offene Aufgabe entdeckt | Unter "Offene Aufgaben" ergänzen |
+| Vor einem Commit | Kurzer Check: ist alles aktuell? |
+| Kontext wird voll / Compacting droht | Sofort updaten, bevor Details verloren gehen |
+
+Befehl: `/project:session`
+
 ## Sprache
 Immer auf **Deutsch** kommunizieren.
 
@@ -193,3 +209,5 @@ Verfügbar über `/project:<name>` in Claude Code:
 | `/project:refactor` | Code aufräumen | explorer → review → refactor → review |
 | `/project:docu` | Entwickler-Doku synchronisieren | docu-agent aktualisiert PROJECT_DOCUMENTS.md + PROJECT_STRUCTURE.md |
 | `/project:buyer-docs` | Käufer-Doku aktualisieren | buyer-docu-agent aktualisiert SETUP.md nach Code-Änderungen |
+| `/project:session` | Session-State sichern | CLAUDE_SESSION.md mit aktuellem Stand updaten |
+| `/project:launch` | Pre-Launch-Check | legal-agent + code-review-agent + Doku-Check vor Verkauf |

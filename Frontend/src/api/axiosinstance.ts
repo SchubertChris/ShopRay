@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { supabase } from '@/lib/supabase';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api',
@@ -9,28 +10,28 @@ const api = axios.create({
   timeout: 10_000,
 });
 
-// Hängt den JWT-Token aus dem Auth-Store an jeden Request
-api.interceptors.request.use((config) => {
+// Hängt den frischen Supabase-JWT an jeden Request (auto-refresh durch Supabase-Client)
+api.interceptors.request.use(async (config) => {
   try {
-    const raw   = localStorage.getItem('sr-auth');
-    const token = raw ? (JSON.parse(raw)?.state?.token as string | null) : null;
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      config.headers.Authorization = `Bearer ${session.access_token}`;
+    }
   } catch {
-    // localStorage nicht verfügbar (SSR/Private-Mode) — ignorieren
+    // Supabase nicht verfügbar — ignorieren
   }
   return config;
 });
 
-// Response-Interceptor: 401 → Auth löschen und zur Login-Seite
+// Response-Interceptor: 401 → Supabase-Session löschen und zur Login-Seite
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     const status = error.response?.status;
     if (status === 401) {
-      localStorage.removeItem('sr-auth');
+      await supabase.auth.signOut();
       window.location.href = '/login';
     }
-    // Alle anderen Fehler werden an den Aufrufer weitergereicht
     return Promise.reject(error);
   },
 );

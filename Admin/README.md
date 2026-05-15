@@ -1,73 +1,74 @@
-# React + TypeScript + Vite
+# ShopRay Admin Panel
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Das Admin-Panel ist das Backend-Interface für Shop-Betreiber. Es läuft als eigene Vite/React-App auf Port `5174` (lokal) und ist über Vercel als separates Projekt deployed.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Zugang
 
-## React Compiler
+Der Admin-Bereich verwendet **kein Supabase-Login** — stattdessen gibt es ein einzelnes Admin-Passwort, das als bcrypt-Hash in `Backend/.env` gespeichert ist. Eine Session-Cookie-basierte Authentifizierung (HttpOnly) sichert alle Admin-Requests gegen das Backend ab.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+URL (lokal):  http://localhost:5174
+URL (live):   https://shopray-admin.vercel.app  (oder deine eigene Domain)
+Login:        Passwort aus Backend/.env — ADMIN_PASSWORD_HASH
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Anleitung zum Setzen des Passworts: SETUP.md Abschnitt 9.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Features
+
+| Bereich | Was du dort tust |
+|---|---|
+| **Produkte** | Produkte anlegen, bearbeiten, deaktivieren, Bilder hochladen |
+| **Bestellungen** | Bestellstatus einsehen |
+| **Kunden** | Kundenprofile einsehen |
+| **Anfragen** | Kontaktanfragen lesen, Status setzen (neu/gelesen/beantwortet) |
+| **Einstellungen → Versand** | Versandkosten und Lieferzeiten konfigurieren (wirkt sofort im Shop) |
+| **Einstellungen → Sicherheit** | Login-Protokoll der letzten 50 Admin-Logins einsehen |
+
+---
+
+## Produkte verwalten
+
+- **Doppelklick auf eine Zeile** → Produkt bearbeiten
+- **Klick auf das Status-Badge** → Produkt aktiv/inaktiv schalten (sofort)
+- **Dichte-Button** in der Filterleiste → kompakte oder normale Tabellenansicht
+- Bilder werden via Supabase Storage hochgeladen (Drag & Drop im Produkt-Formular)
+
+---
+
+## Lokaler Start
+
+```bash
+cd Admin
+npm install
+npm run dev
+# → http://localhost:5174
 ```
+
+Das Backend muss gleichzeitig laufen (`cd Backend && npm run dev`).
+
+---
+
+## Deployment (Vercel)
+
+Das Admin-Panel ist ein eigenes Vercel-Projekt mit Root Directory `Admin`.  
+Umgebungsvariablen (aus `Admin/.env`):
+
+| Variable | Wert |
+|---|---|
+| `VITE_API_URL` | URL deines Backend-Vercel-Projekts (z.B. `https://shopray-backend.vercel.app`) |
+
+Vollständige Deployment-Anleitung: SETUP.md Abschnitt 15.
+
+---
+
+## Tech Stack
+
+- React 19 + TypeScript + Vite
+- SCSS 7-1 BEM (kein CSS-Framework)
+- Lucide React (Icons)
+- JWT HttpOnly Cookie Auth (via Backend)

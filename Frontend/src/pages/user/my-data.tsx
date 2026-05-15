@@ -4,43 +4,38 @@ import { SeoMeta } from '@components/ui';
 import { useAuth } from '@features/auth';
 import { ROUTES } from '@config/routes';
 import { getErrorMessage } from '@/utils/errorMessage';
+import { supabase } from '@/lib/supabase';
 import api from '@/api/axiosinstance';
 
 const DATA_CATEGORIES = [
   {
-    icon: '◻',
     label: 'Kontodaten',
-    desc: 'Vorname, Nachname, E-Mail-Adresse, verschlüsseltes Passwort',
+    desc:  'Vorname, Nachname, E-Mail-Adresse, verschlüsseltes Passwort',
     basis: 'Art. 6 Abs. 1 lit. b DSGVO',
   },
   {
-    icon: '◻',
     label: 'Lieferadresse',
-    desc: 'Straße, Hausnummer, PLZ, Ort, Land — nur wenn von dir hinterlegt',
+    desc:  'Straße, Hausnummer, PLZ, Ort, Land — nur wenn von dir hinterlegt',
     basis: 'Art. 6 Abs. 1 lit. b DSGVO',
   },
   {
-    icon: '◻',
     label: 'Bestellhistorie',
-    desc: 'Bestellnummern, Artikel, Preise, Zeitstempel, Zahlungsstatus, Lieferstatus',
+    desc:  'Bestellnummern, Artikel, Preise, Zeitstempel, Zahlungsstatus, Lieferstatus',
     basis: 'Art. 6 Abs. 1 lit. c DSGVO + § 257 HGB',
   },
   {
-    icon: '◻',
     label: 'Support-Tickets',
-    desc: 'Ticketinhalt, Kategorie, Priorität, Kommunikationsverlauf',
+    desc:  'Ticketinhalt, Kategorie, Kommunikationsverlauf',
     basis: 'Art. 6 Abs. 1 lit. b DSGVO',
   },
   {
-    icon: '◻',
     label: 'Technische Daten',
-    desc: 'Session-Token (localStorage), Cookie-Einwilligungen (TTDSG § 25)',
+    desc:  'Session-Token (localStorage), Cookie-Einwilligungen (TTDSG § 25)',
     basis: 'Art. 6 Abs. 1 lit. b DSGVO',
   },
   {
-    icon: '◻',
     label: 'Wunschliste',
-    desc: 'Gespeicherte Produkt-IDs — lokal im Browser, nicht auf unseren Servern',
+    desc:  'Gespeicherte Produkt-IDs — lokal im Browser, nicht auf unseren Servern',
     basis: 'Nur lokal, kein Upload',
   },
 ];
@@ -95,10 +90,52 @@ export default function MyDataPage() {
     setError(null);
     try {
       if (type === 'export') {
-        await api.post('/users/me/data-export');
+        // Alle Daten des Users direkt aus Supabase laden und als JSON downloaden
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser) throw new Error('Nicht eingeloggt');
+
+        const [profileRes, ordersRes, reviewsRes, ticketsRes] = await Promise.all([
+          supabase.from('profiles').select('*').eq('id', authUser.id).single(),
+          supabase.from('orders').select('*, order_items(*)').eq('user_id', authUser.id),
+          supabase.from('reviews').select('*').eq('user_id', authUser.id),
+          supabase.from('tickets').select('*').eq('user_id', authUser.id),
+        ]);
+
+        const exportData = {
+          exportedAt:  new Date().toISOString(),
+          gdprVersion: 'Art. 20 DSGVO',
+          account: {
+            id:    authUser.id,
+            email: authUser.email,
+            createdAt: authUser.created_at,
+          },
+          profile:  profileRes.data,
+          orders:   ordersRes.data  ?? [],
+          reviews:  reviewsRes.data ?? [],
+          tickets:  ticketsRes.data ?? [],
+        };
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `meine-daten-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
       } else {
-        await api.post('/users/me/data-request');
+        // Auskunftsanfrage per Kontaktformular an den Datenschutzbeauftragten
+        await api.post('/contact', {
+          name:    `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim(),
+          email:   user?.email ?? '',
+          subject: 'DSGVO Art. 15 Auskunftsanfrage',
+          message: `Hiermit beantrage ich gemäß Art. 15 DSGVO vollständige Auskunft über alle zu meiner Person gespeicherten personenbezogenen Daten.\n\nKonto-ID: ${user?.id}\nE-Mail: ${user?.email}`,
+          consent: true,
+        });
       }
+
       setSent(prev => ({ ...prev, [type]: true }));
     } catch (err) {
       setError(getErrorMessage(err));
@@ -167,7 +204,7 @@ export default function MyDataPage() {
                   </Link>
                 ) : sent[r.type] ? (
                   <span className="rights-card__sent">
-                    Anfrage gesendet — wir melden uns per E-Mail
+                    {r.type === 'export' ? 'Download gestartet' : 'Anfrage gesendet — wir melden uns per E-Mail'}
                   </span>
                 ) : (
                   <button
@@ -175,7 +212,7 @@ export default function MyDataPage() {
                     disabled={!!loading}
                     onClick={() => handleAction(r.type as 'auskunft' | 'export')}
                   >
-                    {loading === r.type ? 'Wird gesendet…' : r.action}
+                    {loading === r.type ? 'Wird verarbeitet…' : r.action}
                   </button>
                 )}
               </div>

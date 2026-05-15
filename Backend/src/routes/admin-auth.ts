@@ -48,6 +48,11 @@ router.post('/login', authRateLimit, validate(LoginSchema), async (req: Request,
 
   const valid = await bcrypt.compare(password, hash);
   if (!valid) {
+    void supabase.from('admin_login_log').insert({
+      ip_address: getClientIp(req),
+      user_agent: (req.headers['user-agent'] ?? '').slice(0, 500),
+      success: false,
+    });
     // Bewusst generische Fehlermeldung — kein Hinweis ob User oder Passwort falsch
     res.status(401).json({ error: 'Ungültige Anmeldedaten.' });
     return;

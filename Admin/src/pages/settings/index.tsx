@@ -107,7 +107,7 @@ function SmtpSettings() {
           <label className="form-label">SMTP-Host</label>
           <input type="text" className="form-input form-input--mono" placeholder="smtp.resend.com" />
         </div>
-        <div className="form-field" style={{ maxWidth: 120 }}>
+        <div className="form-field form-field--narrow">
           <label className="form-label">Port</label>
           <input type="number" className="form-input" placeholder="587" />
         </div>
@@ -297,7 +297,7 @@ function SecuritySettings() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+    <div className="security-panel">
 
       {/* Passwort-Info */}
       <div className="form-section">

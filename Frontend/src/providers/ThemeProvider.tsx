@@ -29,7 +29,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     () => (localStorage.getItem('sr-palette') as Palette) ?? 'sage'
   );
   const [mode, setMode] = useState<ThemeMode>(
-    () => (localStorage.getItem('sr-mode') as ThemeMode) ?? 'light'
+    () => (localStorage.getItem('sr-mode') as ThemeMode) ??
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
   );
 
   // useLayoutEffect: läuft synchron im Commit-Phase (vor Paint) — damit data-theme

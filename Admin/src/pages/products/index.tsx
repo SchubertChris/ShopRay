@@ -153,7 +153,7 @@ export default function ProductsPage() {
             <div className="admin-table__empty">
               <AlertCircle size={18} strokeWidth={1.5} />
               Fehler beim Laden: {error}
-              <button className="btn-secondary" onClick={fetchProducts} style={{ marginLeft: '1rem' }}>
+              <button className="btn-secondary btn-secondary--ml" onClick={fetchProducts}>
                 Erneut versuchen
               </button>
             </div>
@@ -168,14 +168,14 @@ export default function ProductsPage() {
             <table className={`admin-table${density === 'compact' ? ' admin-table--compact' : ''}`}>
               <thead>
                 <tr>
-                  <th style={{ width: 48 }}>#</th>
+                  <th className="admin-table__th--narrow">#</th>
                   <th>Produkt</th>
                   <th>Kategorie</th>
                   <th>Preis</th>
                   <th>Lager</th>
                   <th>Status</th>
                   <th>Badge</th>
-                  <th style={{ width: 56 }}>Löschen</th>
+                  <th className="admin-table__th--action">Löschen</th>
                 </tr>
               </thead>
               <tbody>

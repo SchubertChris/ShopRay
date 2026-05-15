@@ -1,76 +1,92 @@
-# React + TypeScript + Vite
+# ShopRay Frontend — Entwickler-Einstieg
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Diese Datei richtet sich an Entwickler, die an der Frontend-Codebase arbeiten.  
+Käufer-Dokumentation: `Frontend/SETUP.md` und `SETUP.md` (Root).
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Lokaler Start
 
-## React Compiler
-
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd Frontend
+npm install
+npm run dev
+# → http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
+
+## Tech Stack
+
+| Bereich | Technologie |
+|---|---|
+| Framework | React 19 + Vite |
+| Sprache | TypeScript (strict) |
+| Styling | SCSS 7-1 BEM (keine CSS-Frameworks) |
+| State | Zustand + persist |
+| Auth | Supabase (`onAuthStateChange`, TOTP MFA) |
+| Routing | React Router v7 |
+| HTTP | Axios mit Token-Interceptor |
+| SEO | React 19 native hoisting (kein Helmet) |
+| Validierung | Zod (Formulare + API-Responses) |
+
+---
+
+## Wichtige Befehle
+
+```bash
+# TypeScript-Check (kein Build, nur Typen)
+npx tsc --noEmit
+
+# Produktions-Build
+npm run build
+
+# Build lokal vorschauen
+npm run preview
+```
+
+---
+
+## Import-Aliase
+
+```ts
+@/           → src/
+@components  → src/components
+@features    → src/features
+@config      → src/config
+@providers   → src/providers
+@stores      → src/stores
+@types       → src/types
+@utils       → src/utils
+```
+
+---
+
+## Code-Regeln (Kurzversion)
+
+- Keine Inline-Styles — alles via SCSS-Klassen
+- Keine Hex-Werte — nur CSS-Variablen (`--clr-*`)
+- Feature-Types gehören in das jeweilige `features/<name>/types/` Verzeichnis
+- Neue Features → `src/features/<name>/` mit `api/`, `components/`, `hooks/`, `types/`, `index.ts`
+- SCSS 7-1 Architektur strikt einhalten
+
+Vollständige Regeln: CLAUDE.md im Root-Verzeichnis.
+
+---
+
+## ESLint (Type-Aware Lint Rules aktivieren)
 
 ```js
 // eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+import tseslint from 'typescript-eslint'
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
+export default tseslint.config({
+  extends: [tseslint.configs.recommendedTypeChecked],
+  languageOptions: {
+    parserOptions: {
+      project: ['./tsconfig.node.json', './tsconfig.app.json'],
+      tsconfigRootDir: import.meta.dirname,
     },
   },
-])
+})
 ```
- find . -not -path '*/.*' -not -path '*/node_modules*' -not -path '*/dist*'

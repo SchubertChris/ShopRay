@@ -6,6 +6,9 @@
   display:               grid;
   grid-template-columns: 1fr;
   gap:                   1.25rem;
+  min-width:             0;
+
+  > * { min-width: 0; }
 
   @include respond-to('lg') {
     grid-template-columns: 200px 1fr;
@@ -68,4 +71,11 @@
 // ─── SETTINGS CONTENT ────────────────────────────────────────────────────────
 .settings-content {
   min-width: 0;
+}
+
+// ─── SECURITY PANEL ──────────────────────────────────────────────────────────
+.security-panel {
+  display:        flex;
+  flex-direction: column;
+  gap:            1.25rem;
 }

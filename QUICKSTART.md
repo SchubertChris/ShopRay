@@ -13,12 +13,16 @@ Ausführlichere Erklärungen findest du in SETUP.md / SETUP.en.md.
 
 ---
 
-## Schritt 1 — Supabase einrichten (3 Min)
+## Schritt 1 — Supabase einrichten (5 Min)
 
 1. Neues Projekt erstellen (Region: Frankfurt für DSGVO)
 2. Warten bis Projekt bereit ist (~2 Min)
 3. **SQL Editor** öffnen → Inhalt von `database/schema.sql` einfügen → **Run**
-4. **Settings → API** öffnen und notieren:
+4. Migrations der Reihe nach ausführen — jeweils **New query** → Inhalt einfügen → **Run**:
+   - `database/migration_002_admin_login_log.sql`
+   - `database/migration_003_product_images.sql`
+   - `database/migration_005_shipping_settings.sql`
+5. **Settings → API** öffnen und notieren:
    - Project URL
    - `anon` Key
    - `service_role` Key
@@ -62,7 +66,7 @@ cd Frontend && npm install && npm run dev
 ```bash
 cd Admin && npm install && npm run dev
 # → http://localhost:5174
-# Login: admin@shop.de / admin123  ← vor Launch ändern!
+# Login: Passwort aus Backend/.env (ADMIN_PASSWORD_HASH) — siehe SETUP.md Abschnitt 9
 ```
 
 **Terminal 3 — Backend:**

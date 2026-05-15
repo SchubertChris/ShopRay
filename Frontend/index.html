@@ -2,6 +2,14 @@
 <html lang="de" data-theme="sage-light">
   <head>
     <meta charset="UTF-8" />
+    <!-- Theme-Blocker: läuft synchron vor dem ersten Paint — verhindert weißes Aufblitzen -->
+    <script>
+      (function(){
+        var p = localStorage.getItem('sr-palette') || 'sage';
+        var m = localStorage.getItem('sr-mode') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', p + '-' + m);
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!-- Basis-Fallbacks — werden von SeoMeta und ThemeProvider pro Seite überschrieben -->

@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Download, Trash2, ShoppingBag, Mail, Phone, Calendar } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import type { OrderStatus } from '../../types/index';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 
 // Mock — wird durch echten API-Call ersetzt
 const MOCK_CUSTOMER = {
@@ -34,14 +36,16 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
 };
 
 export default function CustomerDetailPage() {
-  const { id }   = useParams();
+  const { id }   = useParams<{ id: string }>();
   const navigate = useNavigate();
   const customer = MOCK_CUSTOMER; // TODO: fetch by id
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting]                   = useState(false);
 
   const initials = customer.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
   const handleExport = () => {
-    // DSGVO-Export: erzeugt JSON mit allen Kundendaten
     const data = JSON.stringify(customer, null, 2);
     const blob  = new Blob([data], { type: 'application/json' });
     const url   = URL.createObjectURL(blob);
@@ -52,11 +56,12 @@ export default function CustomerDetailPage() {
     URL.revokeObjectURL(url);
   };
 
-  const handleDelete = () => {
-    if (window.confirm(`Kundenkonto von ${customer.name} unwiderruflich löschen?\n\nAlle Daten werden gemäß DSGVO Art. 17 entfernt.`)) {
-      // API call to delete customer
-      navigate(ROUTES.CUSTOMERS.LIST);
-    }
+  const handleDeleteConfirm = async () => {
+    setDeleting(true);
+    // TODO: API call to delete customer
+    await new Promise(r => setTimeout(r, 500));
+    setDeleting(false);
+    navigate(ROUTES.CUSTOMERS.LIST);
   };
 
   return (
@@ -76,7 +81,7 @@ export default function CustomerDetailPage() {
             <Download size={14} strokeWidth={2} />
             Daten exportieren
           </button>
-          <button className="btn-danger" onClick={handleDelete} title="Konto löschen (DSGVO Art. 17)">
+          <button className="btn-danger" onClick={() => setShowDeleteConfirm(true)} title="Konto löschen (DSGVO Art. 17)">
             <Trash2 size={14} strokeWidth={2} />
             Konto löschen
           </button>
@@ -189,7 +194,7 @@ export default function CustomerDetailPage() {
                     Bestelldaten werden anonymisiert (Pflicht für Buchführung).
                   </p>
                 </div>
-                <button className="btn-danger" onClick={handleDelete}>
+                <button className="btn-danger" onClick={() => setShowDeleteConfirm(true)}>
                   <Trash2 size={13} strokeWidth={2} />
                   Löschen
                 </button>
@@ -198,6 +203,17 @@ export default function CustomerDetailPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Kundenkonto löschen?"
+        description={`Das Konto von ${customer.name} wird unwiderruflich gelöscht. Alle personenbezogenen Daten werden gemäß DSGVO Art. 17 entfernt. Bestelldaten werden anonymisiert.`}
+        confirmLabel="Konto löschen"
+        variant="danger"
+        loading={deleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </>
   );
 }

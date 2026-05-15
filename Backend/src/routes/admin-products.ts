@@ -160,14 +160,18 @@ router.delete('/:id', validate(UUIDParam, 'params'), async (req: Request, res: R
     const { id } = req.params;
 
     const { data: product } = await supabase
-      .from('products').select('image_url').eq('id', id).single();
+      .from('products').select('image_url, images').eq('id', id).single();
 
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) throw error;
 
-    if (product?.image_url) {
-      const filename = (product.image_url as string).split('/').pop();
-      if (filename) await supabase.storage.from('product-images').remove([filename]);
+    const allUrls = [
+      product?.image_url,
+      ...((product?.images as string[] | null) ?? []),
+    ].filter(Boolean) as string[];
+    const filenames = allUrls.map(u => u.split('/').pop()).filter(Boolean) as string[];
+    if (filenames.length) {
+      await supabase.storage.from('product-images').remove(filenames);
     }
 
     res.json({ success: true });
