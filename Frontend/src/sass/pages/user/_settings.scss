@@ -127,6 +127,175 @@
   }
 }
 
+// ─── 2FA SECTION ───────────────────────────────────────────────────────────
+.twofa-header {
+  display:         flex;
+  align-items:     flex-start;
+  justify-content: space-between;
+  gap:             1rem;
+  margin-bottom:   1.5rem;
+  padding-bottom:  1rem;
+  border-bottom:   1px solid var(--clr-background);
+}
+
+.twofa-badge {
+  display:         inline-flex;
+  align-items:     center;
+  gap:             0.375rem;
+  font-size:       rem(11px);
+  font-weight:     700;
+  text-transform:  uppercase;
+  letter-spacing:  0.06em;
+  padding:         0.3rem 0.75rem;
+  border-radius:   99px;
+  flex-shrink:     0;
+  white-space:     nowrap;
+
+  &--on {
+    background: color-mix(in srgb, var(--clr-success-dark) 12%, transparent);
+    color:      var(--clr-success-dark);
+    border:     1px solid color-mix(in srgb, var(--clr-success-dark) 25%, transparent);
+
+    &::before { content: '●'; font-size: 0.45rem; }
+  }
+
+  &--off {
+    background: color-mix(in srgb, var(--clr-text) 7%, transparent);
+    color:      var(--clr-text);
+    opacity:    0.55;
+    border:     1px solid color-mix(in srgb, var(--clr-text) 14%, transparent);
+  }
+}
+
+.twofa-idle {
+  display:        flex;
+  flex-direction: column;
+  gap:            1.25rem;
+
+  &__text {
+    font-size:   rem(14px);
+    color:       var(--clr-text);
+    opacity:     0.6;
+    line-height: 1.65;
+    max-width:   520px;
+    margin:      0;
+  }
+}
+
+.twofa-enroll {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            1.5rem;
+  padding-top:    0.5rem;
+
+  &__instruction {
+    font-size:   rem(14px);
+    color:       var(--clr-text);
+    opacity:     0.7;
+    text-align:  center;
+    margin:      0;
+    line-height: 1.6;
+  }
+
+  &__actions {
+    display:   flex;
+    gap:       0.75rem;
+    flex-wrap: wrap;
+  }
+}
+
+.twofa-qr {
+  width:         180px;
+  height:        180px;
+  border-radius: 14px;
+  border:        1.5px solid var(--clr-secondary);
+  padding:       0.625rem;
+  background:    #fff;
+}
+
+.twofa-manual {
+  text-align: center;
+
+  &__label {
+    font-size:     rem(12px);
+    color:         var(--clr-text);
+    opacity:       0.45;
+    margin-bottom: 0.5rem;
+  }
+
+  &__code {
+    display:        inline-block;
+    font-family:    'Courier New', 'SF Mono', monospace;
+    font-size:      rem(13px);
+    font-weight:    600;
+    color:          var(--clr-text);
+    background:     var(--clr-background);
+    padding:        0.375rem 1rem;
+    border-radius:  8px;
+    letter-spacing: 0.12em;
+    word-break:     break-all;
+    border:         1px solid var(--clr-secondary);
+  }
+}
+
+.twofa-verify {
+  width:          100%;
+  max-width:      360px;
+  display:        flex;
+  flex-direction: column;
+  gap:            1.25rem;
+  padding-top:    0.25rem;
+
+  &__instruction {
+    font-size:   rem(14px);
+    color:       var(--clr-text);
+    opacity:     0.65;
+    line-height: 1.6;
+    margin:      0;
+  }
+
+  &__actions {
+    display:   flex;
+    gap:       0.75rem;
+    flex-wrap: wrap;
+  }
+}
+
+.twofa-code-input {
+  font-family:    'Courier New', 'SF Mono', monospace;
+  font-size:      rem(28px);
+  font-weight:    700;
+  text-align:     center;
+  letter-spacing: 0.5em;
+  padding:        0.75rem 1rem;
+  border-radius:  12px;
+  border:         2px solid var(--clr-secondary);
+  background:     var(--clr-background);
+  color:          var(--clr-text);
+  width:          100%;
+  transition:     border-color 0.2s ease;
+
+  &:focus {
+    outline:      none;
+    border-color: var(--clr-primary);
+  }
+
+  &::placeholder { opacity: 0.2; }
+  &:disabled { opacity: 0.5; }
+}
+
+.twofa-success {
+  padding:       0.75rem 1rem;
+  background:    color-mix(in srgb, var(--clr-success-dark) 8%, transparent);
+  border:        1px solid color-mix(in srgb, var(--clr-success-dark) 22%, transparent);
+  border-radius: 10px;
+  font-size:     rem(13px);
+  font-weight:   500;
+  color:         var(--clr-success-dark);
+  margin-bottom: 1rem;
+}
+
 // ─── AVATAR-BEREICH ────────────────────────────────────────────────────────
 .settings-avatar {
   display: flex;

@@ -3,22 +3,21 @@ import { Link } from 'react-router-dom';
 import { SeoMeta } from '@components/ui';
 import { ROUTES } from '@config/routes';
 import { APP_NAME } from '@config/app';
-import api from '@/api/axiosinstance';
+import { supabase } from '@/lib/supabase';
 
 export default function ForgotPasswordPage() {
   const [email,   setEmail]   = useState('');
   const [loading, setLoading] = useState(false);
   const [sent,    setSent]    = useState(false);
-  const [error,   setError]   = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError(null);
     try {
-      await api.post('/auth/forgot-password', { email });
-    } catch {
       // Aus Sicherheitsgründen immer Erfolg zeigen (verhindert E-Mail-Enumeration)
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
     } finally {
       setSent(true);
       setLoading(false);
@@ -49,8 +48,6 @@ export default function ForgotPasswordPage() {
         </div>
       ) : (
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
-          {error && <p className="auth-form__error">{error}</p>}
-
           <div className="form-group">
             <label className="form-label" htmlFor="fp-email">E-Mail-Adresse</label>
             <input

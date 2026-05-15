@@ -81,6 +81,32 @@
   }
 }
 
+// ─── DENSITY TOGGLE ──────────────────────────────────────────────────────────
+.density-btn {
+  margin-left:   auto;
+  padding:       0.4375rem 0.75rem;
+  border-radius: 8px;
+  border:        1px solid var(--clr-secondary);
+  background:    var(--clr-surface);
+  font-size:     rem(12px);
+  font-weight:   600;
+  color:         color-mix(in srgb, var(--clr-text) 45%, transparent);
+  cursor:        pointer;
+  @include transition(background, border-color, color);
+
+  &:hover {
+    background:   var(--clr-secondary);
+    color:        var(--clr-text);
+    border-color: transparent;
+  }
+
+  &.is-active {
+    background:   color-mix(in srgb, var(--clr-primary) 10%, transparent);
+    color:        var(--clr-primary);
+    border-color: color-mix(in srgb, var(--clr-primary) 25%, transparent);
+  }
+}
+
 // ─── TAB NAV ─────────────────────────────────────────────────────────────────
 .tab-nav {
   display:       flex;

@@ -42,6 +42,36 @@ export const adminCheck  = () =>
 
 // ── Produkte ──────────────────────────────────────────────────────────────────
 
+export interface NutrientRow {
+  name:        string;
+  per100g:     string;
+  perServing?: string;
+  nrv?:        string;
+}
+
+export interface LmivInfo {
+  ingredients?:  string;
+  allergens?:    string[];
+  servingSize?:  string;
+  netContent?:   string;
+  nutrients?:    NutrientRow[];
+  storageHint?:  string;
+  usage?:        string;
+  warnings?:     string[];
+  manufacturer?: string;
+}
+
+export interface DealerLink {
+  label: string;
+  href:  string;
+}
+
+export interface ProductDocument {
+  label: string;
+  href:  string;
+  type:  'pdf' | 'external';
+}
+
 export interface AdminProduct {
   id:               string;
   name:             string;
@@ -55,6 +85,7 @@ export interface AdminProduct {
   stock:            number;
   active:           boolean;
   image_url:        string | null;
+  images:           string[];
   tax_rate:         number;
   rating:           number;
   reviews:          number;
@@ -62,6 +93,9 @@ export interface AdminProduct {
   rich_description: string | null;
   highlights:       string[];
   certifications:   string[];
+  lmiv:             LmivInfo | null;
+  dealer_links:     DealerLink[];
+  documents:        ProductDocument[];
 }
 
 export const getAdminProduct   = (id: string) =>
@@ -76,12 +110,28 @@ export const updateProduct     = (id: string, data: Partial<Omit<AdminProduct, '
 export const deleteProduct     = (id: string) =>
   apiFetch<{ success: boolean }>(`/api/admin/products/${id}`, 'DELETE');
 
+export const toggleProductActive = (id: string, active: boolean) =>
+  apiFetch<AdminProduct>(`/api/admin/products/${id}`, 'PUT', { active });
+
 export const uploadProductImage = async (file: File): Promise<string> => {
   const fd = new FormData();
   fd.append('image', file);
-  const { url } = await apiFetch<{ url: string }>('/api/admin/upload', 'POST', fd);
+  const { url } = await apiFetch<{ url: string }>('/api/admin/products/upload', 'POST', fd);
   return url;
 };
+
+// ── Sicherheit / Login-Protokoll ─────────────────────────────────────────────
+
+export interface LoginLogEntry {
+  id:         string;
+  created_at: string;
+  ip_address: string;
+  user_agent: string | null;
+  success:    boolean;
+}
+
+export const getLoginLog = () =>
+  apiFetch<LoginLogEntry[]>('/api/admin/login-log');
 
 // ── Kontaktanfragen ───────────────────────────────────────────────────────────
 

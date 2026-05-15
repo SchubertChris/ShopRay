@@ -76,7 +76,7 @@ export default function DashboardPage() {
             <Link key={o.id} to={ROUTES.ACCOUNT.orderDetail(o.id)} className="order-card order-card--clickable">
               <div className="order-card__thumb order-card__thumb--placeholder" />
               <div className="order-card__info">
-                <div className="order-card__name">Bestellung #{o.id}</div>
+                <div className="order-card__name">Bestellung {o.orderNumber}</div>
                 <div className="order-card__meta">{new Date(o.createdAt).toLocaleDateString('de-DE')}</div>
               </div>
               <span className={`order-status order-status--${o.status}`}>{orderStatusLabel(o.status)}</span>

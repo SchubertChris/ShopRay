@@ -1,22 +1,41 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, AlertCircle, Loader2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus, Search, Trash2, AlertCircle, Loader2 } from 'lucide-react';
 import { ROUTES } from '@config/routes';
-import { deleteProduct } from '../../api/adminApi';
+import { deleteProduct, toggleProductActive } from '../../api/adminApi';
 import type { AdminProduct } from '../../api/adminApi';
 import type { ProductCategory } from '../../types/index';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 
-const API_URL = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:5000';
+type Density = 'compact' | 'normal';
 
+const API_URL    = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:5000';
 const CATEGORIES: Array<'Alle' | ProductCategory> = ['Alle', 'Wohnen', 'Deko', 'Küche', 'Textilien', 'Kunst'];
+const DENSITY_KEY = 'admin-product-density';
 
 export default function ProductsPage() {
-  const [products, setProducts]         = useState<AdminProduct[]>([]);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState<string | null>(null);
-  const [search, setSearch]             = useState('');
-  const [category, setCategory]         = useState<'Alle' | ProductCategory>('Alle');
-  const [deletingId, setDeletingId]     = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  const [products, setProducts]             = useState<AdminProduct[]>([]);
+  const [loading, setLoading]               = useState(true);
+  const [error, setError]                   = useState<string | null>(null);
+  const [search, setSearch]                 = useState('');
+  const [category, setCategory]             = useState<'Alle' | ProductCategory>('Alle');
+  const [deletingId, setDeletingId]         = useState<string | null>(null);
+  const [togglingId, setTogglingId]         = useState<string | null>(null);
+  const [confirmProduct, setConfirmProduct] = useState<AdminProduct | null>(null);
+  const [deleteError, setDeleteError]       = useState<string | null>(null);
+  const [density, setDensity]               = useState<Density>(
+    () => (localStorage.getItem(DENSITY_KEY) as Density | null) ?? 'normal',
+  );
+
+  const toggleDensity = () => {
+    setDensity(prev => {
+      const next: Density = prev === 'normal' ? 'compact' : 'normal';
+      localStorage.setItem(DENSITY_KEY, next);
+      return next;
+    });
+  };
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -35,18 +54,34 @@ export default function ProductsPage() {
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
-  const handleDelete = async (product: AdminProduct) => {
-    const confirmed = window.confirm(
-      `Produkt „${product.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
-    );
-    if (!confirmed) return;
+  const handleRowDoubleClick = (id: string) => {
+    navigate(ROUTES.PRODUCTS.edit(id));
+  };
 
-    setDeletingId(product.id);
+  const handleToggleActive = async (e: React.MouseEvent, product: AdminProduct) => {
+    e.stopPropagation();
+    if (togglingId === product.id) return;
+    setTogglingId(product.id);
+    setProducts(prev => prev.map(p => p.id === product.id ? { ...p, active: !p.active } : p));
     try {
-      await deleteProduct(product.id);
-      setProducts(prev => prev.filter(p => p.id !== product.id));
+      await toggleProductActive(product.id, !product.active);
+    } catch {
+      setProducts(prev => prev.map(p => p.id === product.id ? { ...p, active: product.active } : p));
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!confirmProduct) return;
+    setDeletingId(confirmProduct.id);
+    setDeleteError(null);
+    try {
+      await deleteProduct(confirmProduct.id);
+      setProducts(prev => prev.filter(p => p.id !== confirmProduct.id));
+      setConfirmProduct(null);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Löschen fehlgeschlagen');
+      setDeleteError(err instanceof Error ? err.message : 'Löschen fehlgeschlagen');
     } finally {
       setDeletingId(null);
     }
@@ -102,6 +137,13 @@ export default function ProductsPage() {
             </button>
           ))}
         </div>
+        <button
+          className={`density-btn${density === 'compact' ? ' is-active' : ''}`}
+          onClick={toggleDensity}
+          title={density === 'compact' ? 'Zurück zur normalen Ansicht' : 'Kompaktere Ansicht'}
+        >
+          Kompakt
+        </button>
       </div>
 
       {/* Error State */}
@@ -123,7 +165,7 @@ export default function ProductsPage() {
       {!error && (
         <div className="data-card">
           <div className="data-card__body">
-            <table className="admin-table">
+            <table className={`admin-table${density === 'compact' ? ' admin-table--compact' : ''}`}>
               <thead>
                 <tr>
                   <th style={{ width: 48 }}>#</th>
@@ -133,12 +175,11 @@ export default function ProductsPage() {
                   <th>Lager</th>
                   <th>Status</th>
                   <th>Badge</th>
-                  <th style={{ width: 80 }}>Aktionen</th>
+                  <th style={{ width: 56 }}>Löschen</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  /* Loading skeleton */
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="admin-table__skeleton-row">
                       <td><span className="skeleton skeleton--sm" /></td>
@@ -168,8 +209,15 @@ export default function ProductsPage() {
                   </tr>
                 ) : (
                   filtered.map(p => (
-                    <tr key={p.id} className={deletingId === p.id ? 'admin-table__row--deleting' : ''}>
-                      <td className="admin-table__muted">{p.id}</td>
+                    <tr
+                      key={p.id}
+                      className={[
+                        'admin-table__row--clickable',
+                        deletingId === p.id ? 'admin-table__row--deleting' : '',
+                      ].filter(Boolean).join(' ')}
+                      onDoubleClick={() => handleRowDoubleClick(p.id)}
+                    >
+                      <td className="admin-table__muted">{p.id.slice(0, 6)}</td>
                       <td>
                         <div className="product-thumb">
                           <div className="product-thumb__img">
@@ -197,9 +245,18 @@ export default function ProductsPage() {
                         </span>
                       </td>
                       <td>
-                        <span className={`status-badge ${p.active ? 'status-badge--active' : 'status-badge--inactive'}`}>
-                          {p.active ? 'Aktiv' : 'Inaktiv'}
-                        </span>
+                        <button
+                          className={`status-badge status-badge--toggle ${p.active ? 'status-badge--active' : 'status-badge--inactive'}`}
+                          onClick={e => handleToggleActive(e, p)}
+                          onDoubleClick={e => e.stopPropagation()}
+                          disabled={togglingId === p.id}
+                          title={p.active ? 'Klicken um zu deaktivieren' : 'Klicken um zu aktivieren'}
+                        >
+                          {togglingId === p.id
+                            ? <Loader2 size={10} strokeWidth={2} className="spin" />
+                            : (p.active ? 'Aktiv' : 'Inaktiv')
+                          }
+                        </button>
                       </td>
                       <td>
                         {p.badge
@@ -209,17 +266,11 @@ export default function ProductsPage() {
                       </td>
                       <td>
                         <div className="table-actions">
-                          <Link
-                            to={ROUTES.PRODUCTS.edit(p.id)}
-                            className="table-action"
-                            title="Bearbeiten"
-                          >
-                            <Edit2 size={13} strokeWidth={2} />
-                          </Link>
                           <button
                             className="table-action table-action--danger"
                             title="Löschen"
-                            onClick={() => handleDelete(p)}
+                            onClick={e => { e.stopPropagation(); setConfirmProduct(p); }}
+                            onDoubleClick={e => e.stopPropagation()}
                             disabled={deletingId === p.id}
                           >
                             {deletingId === p.id
@@ -237,6 +288,32 @@ export default function ProductsPage() {
           </div>
         </div>
       )}
+
+      {!loading && !error && filtered.length > 0 && (
+        <p className="table-hint">Doppelklick zum Bearbeiten · Klick auf Status zum Umschalten</p>
+      )}
+
+      <ConfirmDialog
+        isOpen={!!confirmProduct}
+        title="Produkt löschen?"
+        description={`„${confirmProduct?.name}" wird unwiderruflich gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden.`}
+        confirmLabel="Löschen"
+        variant="danger"
+        loading={!!deletingId}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => { setConfirmProduct(null); setDeleteError(null); }}
+      />
+
+      <ConfirmDialog
+        isOpen={!!deleteError}
+        title="Fehler beim Löschen"
+        description={deleteError ?? ''}
+        confirmLabel="OK"
+        cancelLabel=""
+        variant="warning"
+        onConfirm={() => setDeleteError(null)}
+        onCancel={() => setDeleteError(null)}
+      />
     </>
   );
 }

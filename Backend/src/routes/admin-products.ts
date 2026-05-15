@@ -1,23 +1,22 @@
+import { z } from 'zod';
 import { Router, Request, Response, NextFunction } from 'express';
 import multer  from 'multer';
 import crypto  from 'crypto';
 import { supabase }    from '../lib/supabase';
 import { requireAdmin } from '../middleware/adminAuth';
+import { validate, UUIDParam } from '../lib/validate';
 
 const router = Router();
 
-// ── Multer: Bild-Upload (in-memory, dann weiter zu Supabase Storage) ──────────
+// ── Multer: Bild-Upload ───────────────────────────────────────────────────────
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'] as const;
 const EXT_MAP: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png':  'png',
-  'image/webp': 'webp',
-  'image/avif': 'avif',
+  'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/avif': 'avif',
 };
 
 const upload = multer({
   storage:    multer.memoryStorage(),
-  limits:     { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  limits:     { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (ALLOWED_TYPES.includes(file.mimetype as typeof ALLOWED_TYPES[number])) {
       cb(null, true);
@@ -27,17 +26,53 @@ const upload = multer({
   },
 });
 
+// ── Schemas ───────────────────────────────────────────────────────────────────
+const DealerLinkSchema = z.object({
+  name: z.string().trim().max(100),
+  url:  z.string().url('Ungültige URL in dealer_links').max(2000),
+});
+
+const DocumentSchema = z.object({
+  name: z.string().trim().max(100),
+  url:  z.string().url('Ungültige URL in documents').max(2000),
+});
+
+const ProductBodySchema = z.object({
+  name:             z.string().trim().min(1, 'Name ist erforderlich').max(200),
+  slug:             z.string().trim().min(1).max(200).regex(/^[a-z0-9-]+$/, 'Slug: nur a–z, 0–9 und Bindestriche erlaubt'),
+  description:      z.string().trim().min(1, 'Beschreibung ist erforderlich').max(2000),
+  price:            z.number({ invalid_type_error: 'Preis muss eine Zahl sein' }).min(0).max(999_999),
+  old_price:        z.number().min(0).max(999_999).nullable().optional(),
+  badge:            z.string().trim().max(50).nullable().optional(),
+  discount:         z.string().trim().max(20).nullable().optional(),
+  category:         z.string().trim().min(1).max(100),
+  stock:            z.number().int().min(0).max(999_999).optional().default(0),
+  active:           z.boolean().optional().default(true),
+  image_url:        z.string().url('Ungültige Bild-URL').max(2000).nullable().optional(),
+  images:           z.array(z.string().url('Ungültige URL in images').max(2000)).max(20).optional().default([]),
+  tax_rate:         z.number().min(0).max(100),
+  rich_description: z.string().max(50_000).nullable().optional(),
+  highlights:       z.array(z.string().trim().max(200)).max(20).optional().default([]),
+  certifications:   z.array(z.string().trim().max(200)).max(20).optional().default([]),
+  lmiv:             z.record(z.unknown()).nullable().optional(),
+  dealer_links:     z.array(DealerLinkSchema).max(20).optional().default([]),
+  documents:        z.array(DocumentSchema).max(20).optional().default([]),
+});
+
+// PUT erlaubt partielle Updates
+const UpdateProductSchema = ProductBodySchema.partial();
+
+type ProductBody  = z.infer<typeof ProductBodySchema>;
+type UpdateBody   = z.infer<typeof UpdateProductSchema>;
+
 // Alle Routen erfordern Admin-Session
 router.use(requireAdmin);
 
-// ── POST /api/admin/upload — Bild hochladen ───────────────────────────────────
+// POST /api/admin/products/upload — Bild hochladen
 router.post('/upload', upload.single('image'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const file = req.file;
-    if (!file) {
-      res.status(400).json({ error: 'Keine Datei empfangen.' });
-      return;
-    }
+    if (!file) { res.status(400).json({ error: 'Keine Datei empfangen.' }); return; }
 
     const ext      = EXT_MAP[file.mimetype] ?? 'jpg';
     const filename = `${crypto.randomUUID()}.${ext}`;
@@ -55,67 +90,34 @@ router.post('/upload', upload.single('image'), async (req: Request, res: Respons
   }
 });
 
-// ── GET /api/admin/products/:id — Einzelprodukt für Edit-Modus ───────────────
-router.get('/:id', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+// GET /api/admin/products/:id — Einzelprodukt
+router.get('/:id', validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('id', req.params.id)
-      .single();
+      .from('products').select('*').eq('id', req.params.id).single();
 
-    if (error || !data) {
-      res.status(404).json({ error: 'Produkt nicht gefunden.' });
-      return;
-    }
+    if (error || !data) { res.status(404).json({ error: 'Produkt nicht gefunden.' }); return; }
     res.json(data);
   } catch (err) {
     next(err);
   }
 });
 
-// ── POST /api/admin/products — Produkt anlegen ────────────────────────────────
-router.post('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+// POST /api/admin/products — Produkt anlegen
+router.post('/', validate(ProductBodySchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const body = req.body as Record<string, unknown>;
+    const body = req.body as ProductBody;
 
-    const { name, slug, description, price, category, tax_rate } = body;
-    if (!name || !slug || !description || price === undefined || !category || tax_rate === undefined) {
-      res.status(400).json({ error: 'Pflichtfelder fehlen: name, slug, description, price, category, tax_rate.' });
-      return;
-    }
-
-    // Slug-Konflikt prüfen
-    const { data: existing } = await supabase.from('products').select('id').eq('slug', slug).maybeSingle();
+    const { data: existing } = await supabase
+      .from('products').select('id').eq('slug', body.slug).maybeSingle();
     if (existing) {
-      res.status(409).json({ error: `Slug "${slug}" ist bereits vergeben.` });
+      res.status(409).json({ error: `Slug "${body.slug}" ist bereits vergeben.` });
       return;
     }
 
     const { data, error } = await supabase
       .from('products')
-      .insert({
-        name:             String(name).slice(0, 200),
-        slug:             String(slug).slice(0, 200),
-        description:      String(description).slice(0, 2000),
-        price:            Number(price),
-        old_price:        body.old_price        != null ? Number(body.old_price)                          : null,
-        badge:            body.badge            != null ? String(body.badge).slice(0, 50)                 : null,
-        discount:         body.discount         != null ? String(body.discount).slice(0, 20)              : null,
-        category:         String(category).slice(0, 100),
-        stock:            Number(body.stock ?? 0),
-        active:           body.active !== false,
-        image_url:        body.image_url        != null ? String(body.image_url)                          : null,
-        tax_rate:         Number(tax_rate),
-        rich_description: body.rich_description != null ? String(body.rich_description).slice(0, 50000)  : null,
-        highlights:       Array.isArray(body.highlights)     ? body.highlights     : [],
-        certifications:   Array.isArray(body.certifications) ? body.certifications : [],
-        lmiv:             body.lmiv             != null ? body.lmiv                                       : null,
-        dealer_links:     Array.isArray(body.dealer_links)   ? body.dealer_links   : [],
-        documents:        Array.isArray(body.documents)      ? body.documents      : [],
-        rating:           0,
-        reviews:          0,
-      })
+      .insert({ ...body, rating: 0, reviews: 0 })
       .select()
       .single();
 
@@ -126,13 +128,12 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
   }
 });
 
-// ── PUT /api/admin/products/:id — Produkt bearbeiten ─────────────────────────
-router.put('/:id', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+// PUT /api/admin/products/:id — Produkt bearbeiten
+router.put('/:id', validate(UUIDParam, 'params'), validate(UpdateProductSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const body = req.body as Record<string, unknown>;
+    const body = req.body as UpdateBody;
     const { id } = req.params;
 
-    // Slug-Konflikt prüfen (falls slug geändert)
     if (body.slug) {
       const { data: existing } = await supabase
         .from('products').select('id').eq('slug', body.slug).neq('id', id).maybeSingle();
@@ -142,32 +143,8 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction): Prom
       }
     }
 
-    const update: Record<string, unknown> = {};
-    if (body.name        !== undefined) update.name        = String(body.name).slice(0, 200);
-    if (body.slug        !== undefined) update.slug        = String(body.slug).slice(0, 200);
-    if (body.description !== undefined) update.description = String(body.description).slice(0, 2000);
-    if (body.price       !== undefined) update.price       = Number(body.price);
-    if (body.old_price   !== undefined) update.old_price   = body.old_price != null ? Number(body.old_price) : null;
-    if (body.badge       !== undefined) update.badge       = body.badge     != null ? String(body.badge).slice(0, 50) : null;
-    if (body.discount    !== undefined) update.discount    = body.discount  != null ? String(body.discount).slice(0, 20) : null;
-    if (body.category    !== undefined) update.category    = String(body.category).slice(0, 100);
-    if (body.stock       !== undefined) update.stock       = Number(body.stock);
-    if (body.active      !== undefined) update.active      = Boolean(body.active);
-    if (body.image_url        !== undefined) update.image_url        = body.image_url != null ? String(body.image_url) : null;
-    if (body.tax_rate         !== undefined) update.tax_rate         = Number(body.tax_rate);
-    if (body.rich_description !== undefined) update.rich_description = body.rich_description != null ? String(body.rich_description).slice(0, 50000) : null;
-    if (body.highlights       !== undefined) update.highlights       = Array.isArray(body.highlights)     ? body.highlights     : [];
-    if (body.certifications   !== undefined) update.certifications   = Array.isArray(body.certifications) ? body.certifications : [];
-    if (body.lmiv             !== undefined) update.lmiv             = body.lmiv != null ? body.lmiv : null;
-    if (body.dealer_links     !== undefined) update.dealer_links     = Array.isArray(body.dealer_links)   ? body.dealer_links   : [];
-    if (body.documents        !== undefined) update.documents        = Array.isArray(body.documents)      ? body.documents      : [];
-
     const { data, error } = await supabase
-      .from('products')
-      .update(update)
-      .eq('id', id)
-      .select()
-      .single();
+      .from('products').update(body).eq('id', id).select().single();
 
     if (error) throw error;
     if (!data) { res.status(404).json({ error: 'Produkt nicht gefunden.' }); return; }
@@ -177,25 +154,20 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction): Prom
   }
 });
 
-// ── DELETE /api/admin/products/:id — Produkt löschen ─────────────────────────
-router.delete('/:id', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+// DELETE /api/admin/products/:id — Produkt löschen
+router.delete('/:id', validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
 
-    // Bild-URL holen um ggf. Storage zu bereinigen
     const { data: product } = await supabase
       .from('products').select('image_url').eq('id', id).single();
 
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) throw error;
 
-    // Supabase-Storage-Datei löschen wenn vorhanden
     if (product?.image_url) {
-      const url      = product.image_url as string;
-      const filename = url.split('/').pop();
-      if (filename) {
-        await supabase.storage.from('product-images').remove([filename]);
-      }
+      const filename = (product.image_url as string).split('/').pop();
+      if (filename) await supabase.storage.from('product-images').remove([filename]);
     }
 
     res.json({ success: true });

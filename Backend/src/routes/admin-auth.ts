@@ -1,8 +1,23 @@
+import { z } from 'zod';
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt    from 'jsonwebtoken';
 import { authRateLimit } from '../middleware/security';
 import { requireAdmin }  from '../middleware/adminAuth';
+import { supabase }      from '../lib/supabase';
+import { sendMail, adminLoginAlertHtml } from '../lib/mailer';
+import { validate } from '../lib/validate';
+
+// ── Schema ────────────────────────────────────────────────────────────────────
+const LoginSchema = z.object({
+  password: z.string().min(1, 'Passwort fehlt.').max(200),
+});
+
+function getClientIp(req: Request): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') return forwarded.split(',')[0].trim();
+  return req.ip ?? 'unbekannt';
+}
 
 const router = Router();
 
@@ -22,13 +37,8 @@ function setAdminCookie(res: Response, token: string): void {
 }
 
 // POST /api/admin/login
-router.post('/login', authRateLimit, async (req: Request, res: Response): Promise<void> => {
-  const { password } = req.body as { password?: string };
-
-  if (!password || typeof password !== 'string') {
-    res.status(400).json({ error: 'Passwort fehlt.' });
-    return;
-  }
+router.post('/login', authRateLimit, validate(LoginSchema), async (req: Request, res: Response): Promise<void> => {
+  const { password } = req.body as z.infer<typeof LoginSchema>;
 
   const hash = process.env.ADMIN_PASSWORD_HASH;
   if (!hash) {
@@ -51,6 +61,24 @@ router.post('/login', authRateLimit, async (req: Request, res: Response): Promis
 
   const token = jwt.sign({ role: 'admin' }, secret, { expiresIn: '24h' });
   setAdminCookie(res, token);
+
+  // ── Login loggen + E-Mail-Alarm (fire-and-forget) ────────────────────────
+  const ip        = getClientIp(req);
+  const userAgent = (req.headers['user-agent'] ?? '').slice(0, 500);
+  const date      = new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });
+
+  void supabase.from('admin_login_log').insert({ ip_address: ip, user_agent: userAgent, success: true });
+
+  const ownerEmail = process.env.SMTP_FROM_EMAIL;
+  const adminUrl   = process.env.ADMIN_URL ?? 'https://shopray-admin.vercel.app';
+  if (ownerEmail) {
+    void sendMail({
+      to:      ownerEmail,
+      subject: `⚠️ Admin-Login bei ShopRay — ${date}`,
+      html:    adminLoginAlertHtml({ ip, userAgent, date, adminUrl }),
+    }).catch(() => null);
+  }
+
   res.json({ ok: true });
 });
 
@@ -69,6 +97,22 @@ router.post('/logout', (_req: Request, res: Response): void => {
 // GET /api/admin/check — prüft ob Sitzung noch gültig ist
 router.get('/check', requireAdmin, (_req: Request, res: Response): void => {
   res.json({ ok: true });
+});
+
+// GET /api/admin/login-log — letzte 50 Login-Einträge (Admin-Session erforderlich)
+router.get('/login-log', requireAdmin, async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const { data, error } = await supabase
+      .from('admin_login_log')
+      .select('id, created_at, ip_address, user_agent, success')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) throw error;
+    res.json(data ?? []);
+  } catch {
+    res.status(500).json({ error: 'Protokoll konnte nicht geladen werden.' });
+  }
 });
 
 export default router;

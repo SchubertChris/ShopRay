@@ -1,8 +1,22 @@
+import { z } from 'zod';
 import { Router, Response, NextFunction } from 'express';
 import { supabase } from '../lib/supabase';
 import { requireAuth, AuthRequest } from '../middleware/auth';
+import { validate } from '../lib/validate';
 
 const router = Router();
+
+// ── Schemas ──────────────────────────────────────────────────────────────────
+const PatchProfileSchema = z.object({
+  name:            z.string().trim().min(1).max(100).optional(),
+  phone:           z.string().trim().max(30).nullable().optional(),
+  address_street:  z.string().trim().max(200).nullable().optional(),
+  address_zip:     z.string().trim().max(10).nullable().optional(),
+  address_city:    z.string().trim().max(100).nullable().optional(),
+  address_country: z.string().trim().max(100).nullable().optional(),
+}).strict(); // Keine unbekannten Felder
+
+type PatchProfile = z.infer<typeof PatchProfileSchema>;
 
 // GET /api/customers/me — eigenes Profil
 router.get('/me', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
@@ -17,7 +31,6 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response, next: Nex
       res.status(404).json({ error: 'Profil nicht gefunden' });
       return;
     }
-
     res.json(data);
   } catch (err) {
     next(err);
@@ -25,13 +38,14 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response, next: Nex
 });
 
 // PATCH /api/customers/me — Profil aktualisieren
-router.patch('/me', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+router.patch('/me', requireAuth, validate(PatchProfileSchema), async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const allowed = ['name', 'phone', 'address_street', 'address_zip', 'address_city', 'address_country'];
-    const updates: Record<string, unknown> = {};
+    const updates = req.body as PatchProfile;
 
-    for (const key of allowed) {
-      if (key in req.body) updates[key] = req.body[key];
+    // Leere Updates ablehnen
+    if (Object.keys(updates).length === 0) {
+      res.status(400).json({ error: 'Keine Felder zum Aktualisieren übergeben.' });
+      return;
     }
 
     const { data, error } = await supabase
@@ -75,22 +89,14 @@ router.get('/me/export', requireAuth, async (req: AuthRequest, res: Response, ne
 // DELETE /api/customers/me — DSGVO Art. 17: Recht auf Löschung
 router.delete('/me', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    // Bestelldaten anonymisieren (Pflicht für Buchführung § 147 AO)
+    // Bestelldaten anonymisieren (§ 147 AO — Aufbewahrungspflicht)
     await supabase
       .from('orders')
-      .update({
-        user_id:       null,
-        customer_note: '[gelöscht]',
-      })
+      .update({ user_id: null, customer_note: '[gelöscht]' })
       .eq('user_id', req.userId!);
 
-    // Tickets löschen
     await supabase.from('tickets').delete().eq('user_id', req.userId!);
-
-    // Profil löschen
     await supabase.from('profiles').delete().eq('id', req.userId!);
-
-    // Supabase Auth-Account löschen
     await supabase.auth.admin.deleteUser(req.userId!);
 
     res.json({ deleted: true });

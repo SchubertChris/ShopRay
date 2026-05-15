@@ -30,6 +30,7 @@ import SupportPortalPage from '../pages/support/portal';
 import TicketsPage       from '../pages/user/tickets';
 import TicketNewPage         from '../pages/user/ticket-new';
 import ForgotPasswordPage   from '../pages/auth/forgot-password';
+import ResetPasswordPage    from '../pages/auth/reset-password';
 import SettingsPage         from '../pages/user/settings';
 import AddressesPage        from '../pages/user/addresses';
 import OrderDetailPage      from '../pages/user/order-detail';
@@ -103,6 +104,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.AUTH.LOGIN,           element: <LoginPage /> },
       { path: ROUTES.AUTH.REGISTER,        element: <RegisterPage /> },
       { path: ROUTES.AUTH.FORGOT_PASSWORD, element: <ForgotPasswordPage /> },
+      { path: ROUTES.AUTH.RESET_PASSWORD,  element: <ResetPasswordPage /> },
     ],
   },
 
