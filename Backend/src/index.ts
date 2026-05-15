@@ -12,6 +12,7 @@ import customersRouter    from './routes/customers';
 import contactRouter      from './routes/contact';
 import adminAuthRouter    from './routes/admin-auth';
 import adminProductsRouter from './routes/admin-products';
+import settingsRouter      from './routes/settings';
 
 const app  = express();
 const PORT = process.env.PORT ?? 5000;
@@ -34,9 +35,13 @@ app.use('/api/products',  productsRouter);
 app.use('/api/customers', customersRouter);
 app.use('/api/contact',   contactRouter);
 
+// ── Öffentliche Settings-Route ────────────────────────────────────────────────
+app.use('/api/settings', settingsRouter);
+
 // ── Admin Routes (JWT HttpOnly Cookie erforderlich) ───────────────────────────
 app.use('/api/admin',          adminAuthRouter);
 app.use('/api/admin/products', adminProductsRouter);
+app.use('/api/admin/settings', settingsRouter);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 app.use((_req, res) => {

@@ -1,15 +1,40 @@
+import { useState, useEffect } from 'react';
 import { SeoMeta, LegalPage } from '@components/ui';
 
+interface ShippingSettings {
+  standard:   number;
+  express:    number;
+  free_above: number;
+  delivery:   string;
+}
+
+const API_URL = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:5000';
+
+const DEFAULTS: ShippingSettings = { standard: 4.90, express: 9.90, free_above: 50, delivery: '2–4 Werktage' };
+
 const TOC = [
-  { id: 'versandkosten',  label: 'Versandkosten'          },
-  { id: 'lieferzeiten',   label: 'Lieferzeiten'           },
-  { id: 'versandpartner', label: 'Versandpartner'         },
-  { id: 'rueckgabe',      label: 'Rückgabe & Widerruf'   },
-  { id: 'ausnahmen',      label: 'Ausnahmen'              },
-  { id: 'beschaedigt',    label: 'Beschädigte Ware'       },
+  { id: 'versandkosten',  label: 'Versandkosten'        },
+  { id: 'lieferzeiten',   label: 'Lieferzeiten'         },
+  { id: 'versandpartner', label: 'Versandpartner'       },
+  { id: 'rueckgabe',      label: 'Rückgabe & Widerruf' },
+  { id: 'ausnahmen',      label: 'Ausnahmen'            },
+  { id: 'beschaedigt',    label: 'Beschädigte Ware'     },
 ];
 
+function fmt(n: number) {
+  return n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export default function ShippingPage() {
+  const [s, setS] = useState<ShippingSettings>(DEFAULTS);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/settings/shipping`)
+      .then(r => r.ok ? r.json() : null)
+      .then((data: ShippingSettings | null) => { if (data) setS(data); })
+      .catch(() => { /* Fallback-Werte bleiben */ });
+  }, []);
+
   return (
     <>
       <SeoMeta title="Versand & Rückgabe" noIndex />
@@ -17,14 +42,18 @@ export default function ShippingPage() {
 
         <h2 id="versandkosten">Versandkosten</h2>
         <p>
-          Wir versenden innerhalb Deutschlands. Ab einem Bestellwert von <strong>50 €</strong> ist
-          der Versand kostenlos. Darunter berechnen wir eine Versandpauschale von <strong>4,90 €</strong>.
+          Wir versenden innerhalb Deutschlands.{' '}
+          {s.free_above > 0
+            ? <>Ab einem Bestellwert von <strong>{fmt(s.free_above)} €</strong> ist der Versand kostenlos.
+              Darunter berechnen wir eine Versandpauschale von <strong>{fmt(s.standard)} €</strong>.</>
+            : <>Der Versand ist für alle Bestellungen kostenlos.</>
+          }
         </p>
 
         <h2 id="lieferzeiten">Lieferzeiten</h2>
         <p>
-          Bestellungen werden werktags (Mo–Fr) bearbeitet. Die Lieferzeit beträgt in der Regel
-          <strong> 2–4 Werktage</strong> nach Zahlungseingang. Du erhältst eine
+          Bestellungen werden werktags (Mo–Fr) bearbeitet. Die Lieferzeit beträgt in der Regel{' '}
+          <strong>{s.delivery}</strong> nach Zahlungseingang. Du erhältst eine
           Versandbestätigung mit Tracking-Link per E-Mail.
         </p>
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '@features/cart';
 import { createOrder } from '@features/checkout';
@@ -20,6 +20,12 @@ interface ShippingForm {
 }
 
 type FormErrors = Partial<Record<keyof ShippingForm, string>>;
+
+// ── SHIPPING SETTINGS ─────────────────────────────────────────────────────────
+
+const API_URL = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:5000';
+
+interface ShippingConfig { standard: number; free_above: number; }
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
@@ -53,13 +59,23 @@ export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
   const navigate = useNavigate();
 
-  const [form,     setForm]     = useState<ShippingForm>(INITIAL_FORM);
-  const [errors,   setErrors]   = useState<FormErrors>({});
-  const [loading,  setLoading]  = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [form,           setForm]           = useState<ShippingForm>(INITIAL_FORM);
+  const [errors,         setErrors]         = useState<FormErrors>({});
+  const [loading,        setLoading]        = useState(false);
+  const [apiError,       setApiError]       = useState<string | null>(null);
+  const [shippingConfig, setShippingConfig] = useState<ShippingConfig>({ standard: 4.90, free_above: 50 });
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/settings/shipping`)
+      .then(r => r.ok ? r.json() : null)
+      .then((data: ShippingConfig | null) => {
+        if (data) setShippingConfig({ standard: data.standard, free_above: data.free_above });
+      })
+      .catch(() => { /* Fallback-Werte bleiben */ });
+  }, []);
 
   const cartTotal  = total().toFixed(2);
-  const shipping   = parseFloat(cartTotal) >= 50 ? 0 : 4.99;
+  const shipping   = shippingConfig.free_above > 0 && parseFloat(cartTotal) >= shippingConfig.free_above ? 0 : shippingConfig.standard;
   const grandTotal = (parseFloat(cartTotal) + shipping).toFixed(2);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {

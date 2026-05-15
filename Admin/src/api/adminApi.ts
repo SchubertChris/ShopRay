@@ -120,6 +120,22 @@ export const uploadProductImage = async (file: File): Promise<string> => {
   return url;
 };
 
+// ── Versandeinstellungen ──────────────────────────────────────────────────────
+
+export interface ShippingSettings {
+  standard:   number;
+  express:    number;
+  free_above: number;
+  delivery:   string;
+  updated_at: string;
+}
+
+export const getShippingSettings = () =>
+  apiFetch<ShippingSettings>('/api/settings/shipping');
+
+export const updateShippingSettings = (data: Omit<ShippingSettings, 'updated_at'>) =>
+  apiFetch<ShippingSettings>('/api/admin/settings/shipping', 'PUT', data);
+
 // ── Sicherheit / Login-Protokoll ─────────────────────────────────────────────
 
 export interface LoginLogEntry {
