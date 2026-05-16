@@ -162,14 +162,53 @@ export interface AdminCustomer {
   updated_at: string | null;
 }
 
+export interface AdminCustomerOrderItem {
+  product_name: string;
+  quantity:     number;
+  price:        number;
+}
+
+export interface AdminCustomerOrder {
+  id:               string;
+  order_number:     string;
+  status:           string;
+  total:            string;
+  shipping_address: Record<string, string> | null;
+  customer_note:    string | null;
+  paid_at:          string | null;
+  shipped_at:       string | null;
+  created_at:       string;
+  order_items:      AdminCustomerOrderItem[];
+}
+
+export interface AdminCustomerTicket {
+  id:          string;
+  subject:     string;
+  category:    string;
+  status:      string;
+  message:     string;
+  reply:       string | null;
+  replied_at:  string | null;
+  created_at:  string;
+  updated_at:  string | null;
+}
+
+export interface AdminCustomerReview {
+  id:         string;
+  product_id: string;
+  rating:     number;
+  title:      string | null;
+  body:       string | null;
+  verified:   boolean;
+  created_at: string;
+}
+
 export interface AdminCustomerDetail extends AdminCustomer {
-  orders: Array<{
-    id:           string;
-    order_number: string;
-    status:       string;
-    total:        string;
-    created_at:   string;
-  }>;
+  orders:      AdminCustomerOrder[];
+  tickets:     AdminCustomerTicket[];
+  reviews:     AdminCustomerReview[];
+  exportedAt:  string;
+  gdprVersion: string;
 }
 
 export const getAdminCustomers = (page = 1, limit = 50) =>

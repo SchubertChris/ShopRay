@@ -35,7 +35,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
   }
 });
 
-// GET /api/admin/customers/:id — einzelner Kunde mit Bestellungen
+// GET /api/admin/customers/:id — vollständiges Kundenprofil (inkl. DSGVO-Export)
 router.get('/:id', validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { data: profile, error: pErr } = await supabase
@@ -49,14 +49,31 @@ router.get('/:id', validate(UUIDParam, 'params'), async (req: Request, res: Resp
       return;
     }
 
-    const { data: orders } = await supabase
-      .from('orders')
-      .select('id, order_number, status, total, created_at')
-      .eq('user_id', req.params.id)
-      .order('created_at', { ascending: false })
-      .limit(20);
+    const [ordersRes, ticketsRes, reviewsRes] = await Promise.all([
+      supabase
+        .from('orders')
+        .select('id, order_number, status, total, shipping_address, customer_note, paid_at, shipped_at, created_at, order_items(product_name, quantity, price)')
+        .eq('user_id', req.params.id)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('tickets')
+        .select('id, subject, category, status, message, reply, replied_at, created_at, updated_at')
+        .eq('user_id', req.params.id)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('reviews')
+        .select('id, product_id, rating, title, body, verified, created_at')
+        .eq('user_id', req.params.id),
+    ]);
 
-    res.json({ ...profile, orders: orders ?? [] });
+    res.json({
+      ...profile,
+      orders:  ordersRes.data  ?? [],
+      tickets: ticketsRes.data ?? [],
+      reviews: reviewsRes.data ?? [],
+      exportedAt:  new Date().toISOString(),
+      gdprVersion: 'Art. 20 DSGVO',
+    });
   } catch (err) {
     next(err);
   }
