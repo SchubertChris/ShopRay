@@ -26,7 +26,7 @@ export default function WishlistPage() {
         </div>
       ) : (
         <div className="wishlist-grid">
-          {wishlistProducts.map((p, idx) => (
+          {wishlistProducts.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}
         </div>
