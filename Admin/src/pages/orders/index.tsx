@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Eye, X, Package, User, Mail, CreditCard, Truck, CheckCircle, XCircle, AlertTriangle, Clock, RotateCcw } from 'lucide-react';
+import { Eye, X, Package, User, Mail, CreditCard } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import type { OrderStatus } from '../../types/index';
 
@@ -48,16 +48,6 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   cancelled:      'Storniert',
   payment_failed: 'Zahlung fehlgeschlagen',
   refunded:       'Erstattet',
-};
-
-const STATUS_ICONS: Record<OrderStatus, React.ComponentType<{ size?: number; strokeWidth?: number }>> = {
-  pending:        Clock,
-  paid:           CreditCard,
-  shipped:        Truck,
-  delivered:      CheckCircle,
-  cancelled:      XCircle,
-  payment_failed: AlertTriangle,
-  refunded:       RotateCcw,
 };
 
 export default function OrdersPage() {
