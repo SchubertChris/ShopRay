@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, X, Package, User, Mail, CreditCard } from 'lucide-react';
 import { ROUTES } from '@config/routes';
@@ -54,6 +54,36 @@ export default function OrdersPage() {
   const [activeTab, setActiveTab]   = useState<OrderStatus | 'all'>('all');
   const [activeId, setActiveId]     = useState<string | null>(null);
   const [status, setStatus]         = useState<Record<string, OrderStatus>>({});
+  const panelRef    = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef(-1);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (panelRef.current && panelRef.current.scrollTop === 0)
+      touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartY.current < 0 || !panelRef.current) return;
+    const dy = e.touches[0].clientY - touchStartY.current;
+    if (dy > 0) {
+      panelRef.current.style.transition = 'none';
+      panelRef.current.style.transform  = `translateY(${dy}px)`;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current < 0 || !panelRef.current) return;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    touchStartY.current = -1;
+    if (dy > 100) {
+      panelRef.current.style.transition = 'transform 0.22s ease';
+      panelRef.current.style.transform  = 'translateY(100%)';
+      setTimeout(() => setActiveId(null), 220);
+    } else {
+      panelRef.current.style.transition = 'transform 0.25s cubic-bezier(0.32,0.72,0,1)';
+      panelRef.current.style.transform  = '';
+    }
+  };
 
   const getStatus = (o: MockOrder): OrderStatus => status[o.id] ?? o.status;
 
@@ -156,7 +186,13 @@ export default function OrdersPage() {
 
         {/* Detail Panel */}
         {activeOrder && activeStatus && (
-          <div className="order-detail">
+          <div
+            className="order-detail"
+            ref={panelRef}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <div className="order-detail__header">
               <div className="order-detail__header-top">
                 <p className="order-detail__number">{activeOrder.orderNumber}</p>
