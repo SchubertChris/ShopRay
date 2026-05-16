@@ -1,6 +1,6 @@
 # ShopRay — Setup Guide
 
-**Version:** 1.4.0 | **Letzte Aktualisierung:** 2026-05-16
+**Version:** 1.5.0 | **Letzte Aktualisierung:** 2026-05-16
 
 Dieser Guide führt dich Schritt für Schritt durch die Einrichtung deines ShopRay-Templates —
 von der Installation bis zum fertigen, live geschalteten Shop.
@@ -167,8 +167,9 @@ Führe die Migrationen **der Reihe nach** aus — jede als eigene Query im SQL E
 | `database/migration_003_product_images.sql` | Supabase Storage Bucket für Produktbilder |
 | `database/migration_004_grants.sql` | Berechtigungen für alle Tabellen |
 | `database/migration_005_shipping_settings.sql` | Versandkosten-Konfiguration |
+| `database/migration_006_admin_totp.sql` | Admin-2FA Tabelle (TOTP) |
 
-> **Reihenfolge wichtig:** Führe die Migrationen immer in der Reihenfolge 002 → 003 → 004 → 005 aus.
+> **Reihenfolge wichtig:** Führe die Migrationen immer in der Reihenfolge 002 → 003 → 004 → 005 → 006 aus.
 
 ### Was passiert automatisch
 
@@ -208,7 +209,17 @@ Führe die Migrationen **der Reihe nach** aus — jede als eigene Query im SQL E
    ```
    Diese URL wird für den Passwort-Zurücksetzen-Link in der E-Mail benötigt.
 
-### Schritt 4 — 2-Faktor-Authentifizierung aktivieren (empfohlen)
+### Schritt 4 — E-Mail-Bestätigung deaktivieren
+
+Standardmäßig schickt Supabase nach der Registrierung eine Bestätigungs-E-Mail. Bis du einen eigenen SMTP-Server eingerichtet hast, solltest du das deaktivieren:
+
+1. In Supabase: **Authentication → Sign In / Providers → Email**
+2. Den Toggle **"Confirm email"** ausschalten
+3. **Save** klicken
+
+> Wenn du später einen eigenen SMTP-Anbieter einrichtest (Abschnitt 8), kannst du dies wieder aktivieren.
+
+### Schritt 5 — 2-Faktor-Authentifizierung aktivieren (empfohlen)
 
 ShopRay unterstützt TOTP-basierte 2FA (Google Authenticator, Authy etc.) für Kundenkonten.
 
@@ -217,7 +228,34 @@ ShopRay unterstützt TOTP-basierte 2FA (Google Authenticator, Authy etc.) für K
 
 Kunden können 2FA danach selbst in ihren Kontoeinstellungen aktivieren.
 
-### Schritt 5 — E-Mail-Templates anpassen (optional)
+### Schritt 6 — Google-Login einrichten (optional)
+
+ShopRay unterstützt Login und Registrierung mit einem Google-Konto. Dafür brauchst du eine Google Cloud-App.
+
+**Google Cloud Console:**
+
+1. Gehe zu https://console.cloud.google.com
+2. Neues Projekt anlegen (oder ein bestehendes verwenden)
+3. **APIs & Dienste → OAuth-Zustimmungsbildschirm** → "Extern" auswählen → App-Name + E-Mail ausfüllen
+4. **APIs & Dienste → Anmeldedaten → Anmeldedaten erstellen → OAuth 2.0-Client-ID**
+5. Anwendungstyp: **Webanwendung**
+6. Autorisierte Weiterleitungs-URIs hinzufügen:
+   ```
+   https://DEINE-SUPABASE-URL.supabase.co/auth/v1/callback
+   ```
+   (Die URL findest du in Supabase unter Settings → API → Project URL)
+7. **Client-ID** und **Client-Secret** kopieren
+
+**In Supabase:**
+
+1. **Authentication → Sign In / Providers → Google**
+2. Toggle **"Enable"** einschalten
+3. **Client ID** und **Client Secret** aus Google eintragen
+4. **Save**
+
+Nach diesem Schritt funktionieren die "Mit Google anmelden" und "Mit Google registrieren" Buttons im Shop automatisch.
+
+### Schritt 8 — E-Mail-Templates anpassen (optional)
 
 1. In Supabase: **Authentication → Email Templates**
 2. Passe die Vorlagen für "Confirm signup", "Reset Password" und "Magic Link" mit deinem Shop-Namen und deiner Marke an
@@ -477,7 +515,7 @@ Der Admin-Bereich ist ein separates Projekt (`Admin/`) und läuft unabhängig vo
 | Bereich | Funktion |
 |---|---|
 | **Dashboard** | Umsatz, Bestellungen, Kunden auf einen Blick |
-| **Produkte** | Anlegen, bearbeiten (Doppelklick auf Zeile), Bilder hochladen |
+| **Produkte** | Anlegen, bearbeiten (Stift-Icon oder Doppelklick), Bilder hochladen |
 | **Bestellungen** | Status verwalten (Neu → Bezahlt → Versendet → Zugestellt) |
 | **Kunden** | Kundenliste, Bestellhistorie, DSGVO-Export und -Löschung |
 | **Support** | Eingehende Kontaktanfragen und Tickets beantworten |
@@ -578,6 +616,20 @@ Ab jetzt deployed Vercel automatisch bei jedem `git push`.
 In Vercel: **Settings → Domains → Add** → Domain eintragen → DNS-Einträge wie angegeben setzen.
 
 > Der Admin sollte nie auf einer öffentlich bekannten URL liegen. Eigene Domain mit Passwortschutz empfohlen.
+
+### Schritt 5 — Nach dem Deployment prüfen
+
+Öffne diese URLs und prüfe ob alles funktioniert:
+
+| URL | Erwartetes Ergebnis |
+|---|---|
+| `https://BACKEND-URL/api/health` | `{"status":"ok"}` |
+| `https://SHOP-URL` | Shop-Startseite lädt |
+| `https://ADMIN-URL` | Login-Seite erscheint |
+| `https://SHOP-URL/register` | Registrierung funktioniert |
+| `https://SHOP-URL/login` | Login funktioniert |
+
+Wenn `/api/health` nicht `{"status":"ok"}` zurückgibt, prüfe die Umgebungsvariablen im Vercel Backend-Projekt.
 
 ---
 
