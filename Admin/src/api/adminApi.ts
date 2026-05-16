@@ -2,13 +2,13 @@
 // Lokal: VITE_API_URL=http://localhost:5000
 export const API_URL = (import.meta.env.VITE_API_URL as string) ?? '';
 
-// ── Session-Token (localStorage) ──────────────────────────────────────────────
+// ── Session-Token (sessionStorage) ──────────────────────────────────────────────
 // Primäre Auth-Methode: Authorization: Bearer <token>
 // Cookie bleibt als Fallback für Desktop-Browser gesetzt
 const TOKEN_KEY = 'adminToken';
-export const getAdminToken  = ()              => localStorage.getItem(TOKEN_KEY);
-export const setAdminToken  = (t: string)     => localStorage.setItem(TOKEN_KEY, t);
-export const clearAdminToken = ()             => localStorage.removeItem(TOKEN_KEY);
+export const getAdminToken  = ()              => sessionStorage.getItem(TOKEN_KEY);
+export const setAdminToken  = (t: string)     => sessionStorage.setItem(TOKEN_KEY, t);
+export const clearAdminToken = ()             => sessionStorage.removeItem(TOKEN_KEY);
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
