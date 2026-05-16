@@ -1,4 +1,6 @@
-export const API_URL = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:5000';
+// Produktion: leerer String → relative /api/* Calls → Vercel Rewrite → Backend (same-origin, Cookie-safe)
+// Lokal: VITE_API_URL=http://localhost:5000
+export const API_URL = (import.meta.env.VITE_API_URL as string) ?? '';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
