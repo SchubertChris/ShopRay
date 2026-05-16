@@ -1,4 +1,4 @@
-@use '../../abstracts/mixins' as *;
+﻿@use '../../abstracts/mixins' as *;
 @use '../../abstracts/functions' as *;
 
 // Breakpoints (alle min-width = mobile-first):
@@ -7,7 +7,7 @@
 // respond-to('lg')  = 1024px+ (Desktop)
 // respond-to('xl')  = 1280px+ (breiter Desktop)
 
-// ─── KEYFRAMES ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ KEYFRAMES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @keyframes marquee {
   from { transform: translateX(0); }
@@ -24,7 +24,7 @@
   50%       { opacity: 0.9; transform: scaleY(1); }
 }
 
-// ─── SCROLL REVEAL ─────────────────────────────────────────────────────────
+// â”€â”€â”€ SCROLL REVEAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 [data-reveal] {
   opacity:    0;
@@ -35,7 +35,7 @@
   &.is-visible { opacity: 1; transform: translateY(0); }
 }
 
-// ─── DARK BLOCK ────────────────────────────────────────────────────────────
+// â”€â”€â”€ DARK BLOCK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .dark-block {
   background: var(--clr-dark-surface);
@@ -55,7 +55,7 @@
   }
 }
 
-// ─── EDITORIAL HERO ────────────────────────────────────────────────────────
+// â”€â”€â”€ EDITORIAL HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .editorial-hero {
   position:    relative;
@@ -157,7 +157,7 @@
 
   &__ctas { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 
-  // Right: numbered feature list — hidden on mobile
+  // Right: numbered feature list â€” hidden on mobile
   &__list {
     display: none;
 
@@ -199,7 +199,7 @@
     min-width:      24px;
   }
 
-  // Scroll indicator — zentriert unter dem Content
+  // Scroll indicator â€” zentriert unter dem Content
   &__scroll {
     position:        absolute;
     bottom:          2.5rem;
@@ -231,15 +231,15 @@
   }
 }
 
-// ─── HERO SLOT — Endloser Kategorien-Karussell ─────────────────────────────
+// â”€â”€â”€ HERO SLOT â€” Endloser Kategorien-Karussell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
-// Vertikaler Ticker: 6 Kategorien × 3 Duplikate = 18 Einträge im DOM.
-// CSS-Animation scrollt exakt eine Liste (6 × 64px = 384px) dann nahtloser Loop.
+// Vertikaler Ticker: 6 Kategorien Ã— 3 Duplikate = 18 EintrÃ¤ge im DOM.
+// CSS-Animation scrollt exakt eine Liste (6 Ã— 64px = 384px) dann nahtloser Loop.
 // Die mittlere Position (3. von oben) wird durch den Pfeil-Zeiger markiert.
 
 $slot-item-h: 64px;
 $slot-items:  6;   // CATEGORIES.length
-$slot-vis:    5;   // sichtbare Einträge
+$slot-vis:    5;   // sichtbare EintrÃ¤ge
 
 @keyframes hero-slot-scroll {
   from { transform: translateY(0); }
@@ -255,7 +255,7 @@ $slot-vis:    5;   // sichtbare Einträge
     gap:         1rem;
   }
 
-  // ── Rail (linke Spalte mit Label + Pfeil) ─────────────────────────────────
+  // â”€â”€ Rail (linke Spalte mit Label + Pfeil) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   &__rail {
     position:       relative;
@@ -286,7 +286,7 @@ $slot-vis:    5;   // sichtbare Einträge
     display:   flex;
     align-items: center;
 
-    // Linie (fade from left → primary)
+    // Linie (fade from left â†’ primary)
     &::before {
       content:    '';
       display:    block;
@@ -309,14 +309,14 @@ $slot-vis:    5;   // sichtbare Einträge
     }
   }
 
-  // ── Sichtfenster (rechte Spalte) ──────────────────────────────────────────
+  // â”€â”€ Sichtfenster (rechte Spalte) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   &__window {
     flex:        1;
     height:      #{$slot-vis * $slot-item-h};
     overflow:    hidden;
 
-    // Spotlight auf mittleres Item — äußere Items gedimmt, Ränder ausgeblendet
+    // Spotlight auf mittleres Item â€” Ã¤uÃŸere Items gedimmt, RÃ¤nder ausgeblendet
     mask-image: linear-gradient(
       to bottom,
       transparent 0%,
@@ -330,14 +330,14 @@ $slot-vis:    5;   // sichtbare Einträge
     );
   }
 
-  // ── Scrollender Track ─────────────────────────────────────────────────────
+  // â”€â”€ Scrollender Track â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   &__track {
     animation:   hero-slot-scroll #{$slot-items * 2s} steps(#{$slot-items}, start) infinite;
     will-change: transform;
   }
 
-  // ── Einzelnes Item ────────────────────────────────────────────────────────
+  // â”€â”€ Einzelnes Item â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   &__item {
     height:      #{$slot-item-h};
@@ -375,7 +375,7 @@ $slot-vis:    5;   // sichtbare Einträge
   }
 }
 
-// Light-Mode-Override für hero-slot
+// Light-Mode-Override fÃ¼r hero-slot
 [data-theme$="-light"] .hero-slot {
   &__name  { color: var(--clr-text); }
   &__num   { color: var(--clr-primary); }
@@ -442,7 +442,7 @@ $slot-vis:    5;   // sichtbare Einträge
   }
 }
 
-// ─── TRUST BAR ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ TRUST BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .trust-bar {
   overflow:      hidden;
@@ -463,12 +463,12 @@ $slot-vis:    5;   // sichtbare Einträge
     font-size:      0.78rem;
     font-weight:    600;
     letter-spacing: 0.05em;
-    color:          color-mix(in srgb, var(--clr-text) 45%, transparent);
+    color:          color-mix(in srgb, var(--clr-text) 68%, transparent);
     border-right:   1px solid var(--clr-secondary);
   }
 }
 
-// ─── EDITORIAL INTRO ───────────────────────────────────────────────────────
+// â”€â”€â”€ EDITORIAL INTRO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .editorial-intro {
   padding: 4rem 0 2rem;
@@ -488,19 +488,19 @@ $slot-vis:    5;   // sichtbare Einträge
     display:     block;
     font-size:   clamp(0.95rem, 2vw, 1.35rem);
     font-weight: 400;
-    color:       color-mix(in srgb, var(--clr-text) 42%, transparent);
+    color:       color-mix(in srgb, var(--clr-text) 68%, transparent);
     margin-top:  0.5rem;
   }
 }
 
-// ─── KATEGORIE BENTO ───────────────────────────────────────────────────────
+// â”€â”€â”€ KATEGORIE BENTO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
 // Mobile  (default):  1 Spalte, gestapelt
 // Tablet  (md 768px): 2 Spalten, Item 1 oben voll breit
 // Desktop (lg 1024px): Asymmetrisches 3-Spalten-Bento:
-//   Spalte 1 (2fr)    Item 1 — dominierende Hochkarte (alle 3 Zeilen, ~580px)
-//   Spalte 2 (1.75fr) Item 2 — große Karte (2 Zeilen) + Item 3 (1 Zeile)
-//   Spalte 3 (1.25fr) Items 4, 5, 6 — drei kleine Karten gestapelt
+//   Spalte 1 (2fr)    Item 1 â€” dominierende Hochkarte (alle 3 Zeilen, ~580px)
+//   Spalte 2 (1.75fr) Item 2 â€” groÃŸe Karte (2 Zeilen) + Item 3 (1 Zeile)
+//   Spalte 3 (1.25fr) Items 4, 5, 6 â€” drei kleine Karten gestapelt
 
 .cat-bento {
   display:               grid;
@@ -517,7 +517,7 @@ $slot-vis:    5;   // sichtbare Einträge
     &__item:nth-child(6) { grid-column: 1 / 3; }
   }
 
-  // Desktop — echtes asymmetrisches Bento
+  // Desktop â€” echtes asymmetrisches Bento
   @include respond-to('lg') {
     grid-template-columns: 2fr 1.75fr 1.25fr;
     grid-template-rows:    repeat(3, 190px);
@@ -583,7 +583,7 @@ $slot-vis:    5;   // sichtbare Einträge
     }
   }
 
-  // Echtes Bild (URL-Modus) — liegt unter dem Text
+  // Echtes Bild (URL-Modus) â€” liegt unter dem Text
   &__img {
     position:   absolute;
     inset:      0;
@@ -593,13 +593,13 @@ $slot-vis:    5;   // sichtbare Einträge
     display:    block;
   }
 
-  // Gradient-Overlay: legt Theme-Palette als Tint über das Foto
+  // Gradient-Overlay: legt Theme-Palette als Tint Ã¼ber das Foto
   &__img-overlay {
     position:       absolute;
     inset:          0;
     pointer-events: none;
   }
-  // Jede Karte behält ihre individuelle Gradient-Farbe als Overlay
+  // Jede Karte behÃ¤lt ihre individuelle Gradient-Farbe als Overlay
   &__item:nth-child(1) &__img-overlay { background: linear-gradient(155deg, var(--clr-primary), var(--clr-accent)); mix-blend-mode: multiply; opacity: 0.55; }
   &__item:nth-child(2) &__img-overlay { background: linear-gradient(190deg, color-mix(in srgb, var(--clr-accent) 55%, var(--clr-primary)), var(--clr-primary)); mix-blend-mode: multiply; opacity: 0.55; }
   &__item:nth-child(3) &__img-overlay { background: linear-gradient(130deg, var(--clr-accent), color-mix(in srgb, var(--clr-primary) 65%, var(--clr-accent))); mix-blend-mode: multiply; opacity: 0.55; }
@@ -607,7 +607,7 @@ $slot-vis:    5;   // sichtbare Einträge
   &__item:nth-child(5) &__img-overlay { background: linear-gradient(160deg, var(--clr-accent), var(--clr-primary)); mix-blend-mode: multiply; opacity: 0.55; }
   &__item:nth-child(6) &__img-overlay { background: linear-gradient(135deg, color-mix(in srgb, var(--clr-primary) 45%, var(--clr-accent)), color-mix(in srgb, var(--clr-primary) 88%, #000)); mix-blend-mode: multiply; opacity: 0.55; }
 
-  // Text über dem Bild (z-index nötig wenn Bild gesetzt)
+  // Text Ã¼ber dem Bild (z-index nÃ¶tig wenn Bild gesetzt)
   &__num, &__body, &__arrow { position: relative; z-index: 1; }
 
   &__num {
@@ -620,7 +620,7 @@ $slot-vis:    5;   // sichtbare Einträge
     pointer-events:    none;
     font-variant-numeric: tabular-nums;
 
-    // Größere Nummer für die dominante Karte (Item 1 auf Desktop)
+    // GrÃ¶ÃŸere Nummer fÃ¼r die dominante Karte (Item 1 auf Desktop)
     @include respond-to('lg') {
       .cat-bento__item:nth-child(1) & { font-size: clamp(4rem, 9vw, 7rem); }
     }
@@ -650,7 +650,7 @@ $slot-vis:    5;   // sichtbare Einträge
   }
 }
 
-// ─── PRODUCTS HEAD ─────────────────────────────────────────────────────────
+// â”€â”€â”€ PRODUCTS HEAD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .products-head {
   display:         flex;
@@ -688,7 +688,7 @@ $slot-vis:    5;   // sichtbare Einträge
   }
 }
 
-// ─── PRODUCTS GRID (ersetzt horizontal strip) ──────────────────────────────
+// â”€â”€â”€ PRODUCTS GRID (ersetzt horizontal strip) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .products-grid {
   display:               grid;
@@ -701,7 +701,7 @@ $slot-vis:    5;   // sichtbare Einträge
   }
 }
 
-// ─── BRAND SPLIT ───────────────────────────────────────────────────────────
+// â”€â”€â”€ BRAND SPLIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .brand-split {
   display:                grid;
@@ -813,14 +813,14 @@ $slot-vis:    5;   // sichtbare Einträge
 
   &__lbl {
     font-size:      0.72rem;
-    color:          color-mix(in srgb, var(--clr-text) 48%, transparent);
+    color:          color-mix(in srgb, var(--clr-text) 70%, transparent);
     margin-top:     0.2rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
 }
 
-// ─── USP GRID ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ USP GRID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
 // Mobile  (default):  1 Spalte
 // Tablet  (md):       2 Spalten, die 2 "large"-Karten voll breit
@@ -828,7 +828,7 @@ $slot-vis:    5;   // sichtbare Einträge
 //   Zeile 1: [  100 % Bio (cols 1-2)  ] [ 0 g ] [ 24 h ]
 //   Zeile 2: [ 30 Tage ] [ SSL ]       [   < 2 h (cols 3-4)   ]
 //
-// Large-Karten: primäre Hintergrundfarbe, riesige Metrik
+// Large-Karten: primÃ¤re Hintergrundfarbe, riesige Metrik
 // Small-Karten: dezenter Rahmen, kleinere Metrik
 
 .usp-grid {
@@ -849,7 +849,7 @@ $slot-vis:    5;   // sichtbare Einträge
     grid-template-columns: repeat(4, 1fr);
     grid-template-rows:    220px 180px;
 
-    // Explizite Platzierung: diagonal versetzt für maximalen Kontrast
+    // Explizite Platzierung: diagonal versetzt fÃ¼r maximalen Kontrast
     .usp-card:nth-child(1) { grid-column: 1 / 3; grid-row: 1; }
     .usp-card:nth-child(2) { grid-column: 3;     grid-row: 1; }
     .usp-card:nth-child(3) { grid-column: 4;     grid-row: 1; }
@@ -859,7 +859,7 @@ $slot-vis:    5;   // sichtbare Einträge
   }
 }
 
-// ── USP-Karte Base ──────────────────────────────────────────────────────────
+// â”€â”€ USP-Karte Base â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .usp-card {
   border-radius:  16px;
@@ -881,7 +881,7 @@ $slot-vis:    5;   // sichtbare Einträge
     border-color: color-mix(in srgb, var(--clr-primary) 40%, transparent);
   }
 
-  // Large-Karte: primäre Akzentfarbe, Hintergrundgradient
+  // Large-Karte: primÃ¤re Akzentfarbe, Hintergrundgradient
   &:nth-child(1),
   &:nth-child(6) {
     background:  linear-gradient(135deg, var(--clr-primary) 0%, var(--clr-accent) 100%);
@@ -916,7 +916,7 @@ $slot-vis:    5;   // sichtbare Einträge
     color:                var(--clr-primary);
     font-variant-numeric: tabular-nums;
 
-    // Größere Metrik in den large-Karten auf Desktop
+    // GrÃ¶ÃŸere Metrik in den large-Karten auf Desktop
     @include respond-to('lg') {
       .usp-card:nth-child(1) & { font-size: clamp(3rem, 6vw, 4.5rem); }
       .usp-card:nth-child(6) & { font-size: clamp(3rem, 6vw, 4.5rem); }
@@ -940,7 +940,7 @@ $slot-vis:    5;   // sichtbare Einträge
   }
 }
 
-// ─── TESTIMONIALS ──────────────────────────────────────────────────────────
+// â”€â”€â”€ TESTIMONIALS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .testimonials-head {
   display:         flex;
@@ -1025,7 +1025,7 @@ $slot-vis:    5;   // sichtbare Einträge
   flex-shrink:    0;
 }
 
-// ─── FAQ SPLIT ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ FAQ SPLIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .faq-split {
   display:               grid;
@@ -1062,7 +1062,7 @@ $slot-vis:    5;   // sichtbare Einträge
   &__sub {
     font-size:   0.9rem;
     line-height: 1.6;
-    color:       color-mix(in srgb, var(--clr-text) 52%, transparent);
+    color:       color-mix(in srgb, var(--clr-text) 70%, transparent);
     margin:      0;
   }
 
@@ -1103,7 +1103,7 @@ $slot-vis:    5;   // sichtbare Einträge
   }
 }
 
-// ─── NEWSLETTER DARK ───────────────────────────────────────────────────────
+// â”€â”€â”€ NEWSLETTER DARK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .newsletter-dark {
   position:   relative;
@@ -1214,7 +1214,7 @@ $slot-vis:    5;   // sichtbare Einträge
   &__disclaimer { font-size: 0.72rem; color: color-mix(in srgb, var(--clr-on-dark) 28%, transparent); margin: 0; }
 }
 
-// ─── THEME DOCK ────────────────────────────────────────────────────────────
+// â”€â”€â”€ THEME DOCK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .theme-dock {
   position:  fixed;
@@ -1253,7 +1253,7 @@ $slot-vis:    5;   // sichtbare Einträge
     font-weight:    700;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color:          color-mix(in srgb, var(--clr-text) 48%, transparent);
+    color:          color-mix(in srgb, var(--clr-text) 70%, transparent);
     writing-mode:   vertical-rl;
   }
 }
@@ -1276,7 +1276,7 @@ $slot-vis:    5;   // sichtbare Einträge
     font-weight:    700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color:          color-mix(in srgb, var(--clr-text) 42%, transparent);
+    color:          color-mix(in srgb, var(--clr-text) 68%, transparent);
     margin:         0 0 0.75rem;
   }
 
@@ -1327,7 +1327,7 @@ $slot-vis:    5;   // sichtbare Einträge
   }
 }
 
-// ─── TOAST ERWEITERUNG ─────────────────────────────────────────────────────
+// â”€â”€â”€ TOAST ERWEITERUNG â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .toast {
   display:     flex;
@@ -1349,11 +1349,11 @@ $slot-vis:    5;   // sichtbare Einträge
   &__msg { font-size: 0.875rem; font-weight: 500; line-height: 1.4; }
 }
 
-// ─── HERO — LIGHT-MODE ANPASSUNG ───────────────────────────────────────────
+// â”€â”€â”€ HERO â€” LIGHT-MODE ANPASSUNG â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
-// Im Light-Mode wirkt `--clr-dark-surface` (nahezu schwarz) zu dunkel für den Hero.
-// Stattdessen: heller Surface-Hintergrund + zwei große Farbblobs aus der Palette
-// als Corner-Wash — oben-rechts (Primary) und unten-links (Accent).
+// Im Light-Mode wirkt `--clr-dark-surface` (nahezu schwarz) zu dunkel fÃ¼r den Hero.
+// Stattdessen: heller Surface-Hintergrund + zwei groÃŸe Farbblobs aus der Palette
+// als Corner-Wash â€” oben-rechts (Primary) und unten-links (Accent).
 // Der `[data-theme$="-light"]`-Selektor trifft alle 4 Light-Themes gleichzeitig.
 
 [data-theme$="-light"] {
@@ -1361,7 +1361,7 @@ $slot-vis:    5;   // sichtbare Einträge
     background: var(--clr-surface);
     color:      var(--clr-text);
 
-    // Farbblobs + heller Scrim via ::after — background-image (Foto) bleibt erhalten
+    // Farbblobs + heller Scrim via ::after â€” background-image (Foto) bleibt erhalten
     &__bg::after {
       background:
         radial-gradient(
@@ -1380,7 +1380,7 @@ $slot-vis:    5;   // sichtbare Einträge
     // Pill: dunkle Variante statt helle auf Dunkel
     &__pill {
       border-color: color-mix(in srgb, var(--clr-text) 16%, transparent);
-      color:        color-mix(in srgb, var(--clr-text) 50%, transparent);
+      color:        color-mix(in srgb, var(--clr-text) 70%, transparent);
 
       &::before { background: var(--clr-primary); }
     }
@@ -1392,7 +1392,7 @@ $slot-vis:    5;   // sichtbare Einträge
       em { color: var(--clr-primary); }
     }
 
-    &__sub { color: color-mix(in srgb, var(--clr-text) 55%, transparent); }
+    &__sub { color: color-mix(in srgb, var(--clr-text) 72%, transparent); }
 
     // Rechte Liste
     &__list-label {
@@ -1431,11 +1431,11 @@ $slot-vis:    5;   // sichtbare Einträge
 
   // Social-Text: lesbar auf hellem Hintergrund
   .hero-social-text span {
-    color: color-mix(in srgb, var(--clr-text) 48%, transparent);
+    color: color-mix(in srgb, var(--clr-text) 70%, transparent);
   }
 }
 
-// ─── MODAL PRODUCT (Quick View) ────────────────────────────────────────────
+// â”€â”€â”€ MODAL PRODUCT (Quick View) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .modal-product {
   display: grid;

@@ -7,6 +7,18 @@ import path from "path"; // Importieren für die Pfad-Auflösung
 export default defineConfig({
   plugins: [react(), babel({ presets: [reactCompilerPreset()] })],
   appType: 'spa',
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) return 'vendor';
+            if (id.includes('zustand')) return 'store';
+          }
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

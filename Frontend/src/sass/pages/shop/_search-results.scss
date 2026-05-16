@@ -1,11 +1,11 @@
-@use '../../abstracts/mixins' as *;
+﻿@use '../../abstracts/mixins' as *;
 @use '../../abstracts/functions' as *;
 
 // Breakpoints (alle min-width = mobile-first):
 // respond-to('md')  = 768px+
 // respond-to('lg')  = 1024px+
 
-// ─── COLLECTION HERO ────────────────────────────────────────────────────────
+// â”€â”€â”€ COLLECTION HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .collection-hero {
   background: var(--clr-dark-surface);
@@ -60,7 +60,7 @@
   }
 }
 
-// ─── SUCHFELD ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ SUCHFELD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .collection-search {
   position: relative;
@@ -118,7 +118,7 @@
   }
 }
 
-// ─── STICKY FILTER BAR ──────────────────────────────────────────────────────
+// â”€â”€â”€ STICKY FILTER BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .collection-filter {
   position:              sticky;
@@ -148,7 +148,7 @@
     border-radius:  100px;
     border:         1px solid var(--clr-secondary);
     background:     none;
-    color:          color-mix(in srgb, var(--clr-text) 52%, transparent);
+    color:          color-mix(in srgb, var(--clr-text) 70%, transparent);
     font-size:      0.76rem;
     font-weight:    600;
     cursor:         pointer;
@@ -183,7 +183,7 @@
   }
 }
 
-// ─── BODY ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ BODY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .collection-body {
   padding: 1.75rem 0 6rem;
@@ -192,7 +192,7 @@
 
   &__count {
     font-size:      0.74rem;
-    color:          color-mix(in srgb, var(--clr-text) 40%, transparent);
+    color:          color-mix(in srgb, var(--clr-text) 68%, transparent);
     margin-bottom:  1.25rem;
     letter-spacing: 0.02em;
 
@@ -201,7 +201,7 @@
   }
 }
 
-// ─── EMPTY STATE ────────────────────────────────────────────────────────────
+// â”€â”€â”€ EMPTY STATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .collection-empty {
   padding:        6rem 0;
@@ -230,22 +230,22 @@
 
   &__text {
     font-size: 0.875rem;
-    color:     color-mix(in srgb, var(--clr-text) 50%, transparent);
+    color:     color-mix(in srgb, var(--clr-text) 70%, transparent);
     margin:    0 0 0.5rem;
   }
 }
 
-// ─── SIGNATURE COLLECTION GRID ──────────────────────────────────────────────
+// â”€â”€â”€ SIGNATURE COLLECTION GRID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
-// Markenzeichen-Raster — 5er-Muster:
+// Markenzeichen-Raster â€” 5er-Muster:
 //
-//   [HERO 2×2  ] [  2  ]
+//   [HERO 2Ã—2  ] [  2  ]
 //   [           ] [  3  ]
-//   [  4  ] [WIDE 2×1  ]
+//   [  4  ] [WIDE 2Ã—1  ]
 //
-// → Diagonal: Hero oben-links, Wide unten-rechts — wiederholt
-// → Auf Tablet: 2-spaltig, Feature-Karte (5n+1) voll breit
-// → Auf Mobile: einspaltig, alle Karten gleich
+// â†’ Diagonal: Hero oben-links, Wide unten-rechts â€” wiederholt
+// â†’ Auf Tablet: 2-spaltig, Feature-Karte (5n+1) voll breit
+// â†’ Auf Mobile: einspaltig, alle Karten gleich
 
 .collection-grid {
   display:               grid;
@@ -272,7 +272,7 @@
   }
 }
 
-// Alle Cards ab Tablet: Flex-Spalte — Bild wächst in verfügbaren Raum
+// Alle Cards ab Tablet: Flex-Spalte â€” Bild wÃ¤chst in verfÃ¼gbaren Raum
 @include respond-to('md') {
   .collection-grid .product-card {
     display:        flex;
@@ -289,9 +289,9 @@
   }
 }
 
-// ── HERO-CARD (5n+1) — Glass-Panel-Overlay auf Desktop ─────────────────────
+// â”€â”€ HERO-CARD (5n+1) â€” Glass-Panel-Overlay auf Desktop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
-// Bild füllt die gesamte 2×2-Karte (740px+ groß).
+// Bild fÃ¼llt die gesamte 2Ã—2-Karte (740px+ groÃŸ).
 // Body-Bereich als Frosted-Glass-Panel am unteren Rand overlay.
 
 @include respond-to('lg') {
@@ -320,9 +320,9 @@
   }
 }
 
-// ── WIDE-CARD (5n) — Horizontales Layout auf Desktop ───────────────────────
+// â”€â”€ WIDE-CARD (5n) â€” Horizontales Layout auf Desktop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
-// 2 Spalten × 1 Zeile: Bild links (44%), Content rechts (56%).
+// 2 Spalten Ã— 1 Zeile: Bild links (44%), Content rechts (56%).
 
 @include respond-to('lg') {
   .collection-grid .product-card:nth-child(5n) {
@@ -347,14 +347,14 @@
   }
 }
 
-// ─── QUICK-VIEW PREIS (Legacy) ──────────────────────────────────────────────
+// â”€â”€â”€ QUICK-VIEW PREIS (Legacy) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 .qv-price {
   margin-top:  1rem;
   font-weight: 700;
   color:       var(--clr-primary);
 }
 
-// ─── NEUHEITEN HERO ─────────────────────────────────────────────────────────
+// â”€â”€â”€ NEUHEITEN HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 .collection-hero--new {
   background: var(--clr-primary);
   position:   relative;
@@ -423,7 +423,30 @@
   50%       { opacity: 0.3; transform: scale(0.65); }
 }
 
-// ─── SALE HERO ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ LOAD MORE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.collection-load-more {
+  display:         flex;
+  justify-content: center;
+  padding:         2.5rem 0 1rem;
+
+  &__btn {
+    display:     inline-flex;
+    align-items: center;
+    gap:         0.5rem;
+    min-width:   180px;
+    @include transition(opacity, transform);
+
+    &:hover { transform: translateY(-1px); }
+  }
+
+  &__hint {
+    font-size:   rem(12px);
+    font-weight: 400;
+    opacity:     0.6;
+  }
+}
+
+// â”€â”€â”€ SALE HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 .collection-hero--sale {
   background: var(--clr-dark-surface);
   position:   relative;

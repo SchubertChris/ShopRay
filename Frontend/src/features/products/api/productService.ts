@@ -34,7 +34,8 @@ export async function getProducts(): Promise<Product[]> {
     .from('products')
     .select('*')
     .eq('active', true)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(100);
   if (error) throw error;
   return (data as Record<string, unknown>[]).map(mapProduct);
 }

@@ -1,7 +1,7 @@
-@use '../abstracts/mixins' as *;
+﻿@use '../abstracts/mixins' as *;
 @use '../abstracts/functions' as *;
 
-// ─── COOKIE-CONSENT BANNER ────────────────────────────────────────────────────
+// â”€â”€â”€ COOKIE-CONSENT BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Position: Fixed am unteren Bildschirmrand
 // DSGVO: Alle 3 Aktionen immer sichtbar (Ablehnen, Anpassen, Akzeptieren)
 
@@ -11,7 +11,7 @@
   left:       50%;
   transform:  translateX(-50%);
   width:      min(720px, calc(100vw - 2rem));
-  z-index:    900; // unter Modals (1000), über allem anderen
+  z-index:    900; // unter Modals (1000), Ã¼ber allem anderen
   background: var(--clr-surface);
   border:     1px solid color-mix(in srgb, var(--clr-primary) 20%, transparent);
   border-radius: 20px;
@@ -71,7 +71,7 @@
   &:hover { opacity: 0.8; }
 }
 
-// ── Detaillierte Einstellungen ────────────────────────────────────────────────
+// â”€â”€ Detaillierte Einstellungen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .consent-banner__details {
   display:       flex;
@@ -82,7 +82,7 @@
   overflow:      hidden;
 }
 
-// ── Action-Leiste ─────────────────────────────────────────────────────────────
+// â”€â”€ Action-Leiste â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .consent-banner__actions {
   display:         flex;
@@ -106,7 +106,7 @@
   }
 }
 
-// ─── CONSENT TOGGLE ROW ───────────────────────────────────────────────────────
+// â”€â”€â”€ CONSENT TOGGLE ROW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .consent-toggle {
   display:         flex;
@@ -136,7 +136,7 @@
 .consent-toggle__required {
   font-weight: 400;
   font-size:   0.8rem;
-  color:       color-mix(in srgb, var(--clr-text) 50%, transparent);
+  color:       color-mix(in srgb, var(--clr-text) 70%, transparent);
 }
 
 .consent-toggle__desc {
@@ -146,7 +146,7 @@
   line-height: 1.5;
 }
 
-// ── Toggle-Switch ─────────────────────────────────────────────────────────────
+// â”€â”€ Toggle-Switch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .consent-toggle__switch {
   flex-shrink:   0;

@@ -20,6 +20,8 @@ export function ImageGallery({ productId, productName, images }: ImageGalleryPro
           src={gallery[active]}
           alt={`${productName} — Bild ${active + 1}`}
           className="product-gallery__img"
+          fetchPriority="high"
+          decoding="async"
         />
       </div>
 
@@ -33,7 +35,7 @@ export function ImageGallery({ productId, productName, images }: ImageGalleryPro
               aria-label={`Bild ${i + 1} anzeigen`}
               aria-pressed={i === active}
             >
-              <img src={src} alt="" aria-hidden="true" />
+              <img src={src} alt="" aria-hidden="true" loading="lazy" decoding="async" />
             </button>
           ))}
         </div>

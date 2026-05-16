@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useCart } from '@features/cart';
 import { createOrder } from '@features/checkout';
 import { ProductImage, SeoMeta } from '@components/ui';
@@ -101,7 +101,7 @@ function validate(form: ShippingForm): FormErrors {
 
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
-  const navigate = useNavigate();
+
 
   const [form,           setForm]           = useState<ShippingForm>(INITIAL_FORM);
   const [errors,         setErrors]         = useState<FormErrors>({});

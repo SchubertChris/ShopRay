@@ -1,4 +1,4 @@
-@use '../../abstracts/mixins' as *;
+﻿@use '../../abstracts/mixins' as *;
 @use '../../abstracts/functions' as *;
 
 // Breakpoints (min-width / mobile-first):
@@ -7,9 +7,9 @@
 // respond-to('lg')  = 1024px+
 // respond-to('xl')  = 1280px+
 
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // KEYFRAMES
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 @keyframes ag-float {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
@@ -43,10 +43,10 @@
   to   { opacity: 1; filter: blur(0);    transform: translateY(0)   scale(1); }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ANIMATED GRAPHIC (ag) — CSS-Art Platzhalter
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ANIMATED GRAPHIC (ag) â€” CSS-Art Platzhalter
 // Drop-in-Replace: ersetze .ag durch ein <img> oder <lottie-player>
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 .ag {
   position:        relative;
@@ -137,7 +137,7 @@
   }
 }
 
-// Farbvarianten — jede Chapter / Value / Prozess-Grafik anders
+// Farbvarianten â€” jede Chapter / Value / Prozess-Grafik anders
 .ag--c1, .ag--v1, .ag--p1, .ag--t1 {
   .ag__blob { background: linear-gradient(135deg, var(--clr-primary) 0%, var(--clr-accent) 100%); }
 }
@@ -161,7 +161,7 @@
   }
 }
 
-// Größenanpassungen
+// GrÃ¶ÃŸenanpassungen
 .ag--hero .ag__blob { width: 55%; height: 55%; }
 .ag--chapter {
   .ag__blob { width: 70%; height: 70%; }
@@ -169,8 +169,8 @@
 }
 .ag--team .ag__blob { width: 80%; height: 80%; opacity: 0.75; }
 
-// ─── FOTO-ERSATZ (Drop-in für .ag — echtes Bild mit Theme-Overlay) ──────────
-// Füllt den Parent-Container vollständig aus (position: relative erwartet)
+// â”€â”€â”€ FOTO-ERSATZ (Drop-in fÃ¼r .ag â€” echtes Bild mit Theme-Overlay) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// FÃ¼llt den Parent-Container vollstÃ¤ndig aus (position: relative erwartet)
 .about-photo {
   position: relative;
   width:    100%;
@@ -200,28 +200,28 @@
     border-radius: 24px;
   }
 
-  // Chapter: leicht abgerundete Ecken für die Timeline
+  // Chapter: leicht abgerundete Ecken fÃ¼r die Timeline
   &--chapter {
     border-radius: 16px;
   }
 
-  // Value: füllt die Karte oben (16/9 aspect-ratio vom Parent)
+  // Value: fÃ¼llt die Karte oben (16/9 aspect-ratio vom Parent)
   &--value {
     border-radius: 0;
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // 1. ABOUT PAGE WRAPPER
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 .about-page {
   overflow-x: hidden;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // 2. HERO
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 .about-hero {
   position:    relative;
@@ -232,7 +232,7 @@
   color:       var(--clr-on-dark);
   overflow:    hidden;
 
-  // Hintergrundbild + Farbblobs — parallax-verschoben via --about-sy
+  // Hintergrundbild + Farbblobs â€” parallax-verschoben via --about-sy
   &__bg {
     position:            absolute;
     inset:               0;
@@ -344,7 +344,7 @@
     &:hover { color: var(--clr-on-dark); }
   }
 
-  // Animated graphic — parallax scrollt langsamer als Content
+  // Animated graphic â€” parallax scrollt langsamer als Content
   &__graphic {
     display:      none;
     position:     relative;
@@ -414,11 +414,11 @@
       rgba(255, 255, 255, 0.72);
   }
 
-  .about-hero__eyebrow   { color: color-mix(in srgb, var(--clr-text) 45%, transparent); }
+  .about-hero__eyebrow   { color: color-mix(in srgb, var(--clr-text) 68%, transparent); }
   .about-hero__title     { color: var(--clr-text); }
   .about-hero__title em  { color: var(--clr-primary); }
-  .about-hero__sub       { color: color-mix(in srgb, var(--clr-text) 55%, transparent); }
-  .about-hero__scroll-cta { color: color-mix(in srgb, var(--clr-text) 48%, transparent);
+  .about-hero__sub       { color: color-mix(in srgb, var(--clr-text) 72%, transparent); }
+  .about-hero__scroll-cta { color: color-mix(in srgb, var(--clr-text) 70%, transparent);
     &:hover { color: var(--clr-text); }
   }
   .about-hero__indicator-line  { background: linear-gradient(to bottom, var(--clr-text), transparent); }
@@ -426,9 +426,9 @@
   .about-hero__graphic-label   { color: color-mix(in srgb, var(--clr-text) 22%, transparent); }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // 3. MANIFESTO PULL QUOTE
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 .about-manifesto {
   background:  var(--clr-dark-surface);
@@ -484,9 +484,9 @@
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // 4. STORY TIMELINE
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 .about-timeline {
   position:   relative;
@@ -519,7 +519,7 @@
   }
 }
 
-// ── CHAPTER (Blog-Eintrag) ─────────────────────────────────────────────────
+// â”€â”€ CHAPTER (Blog-Eintrag) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .about-chapter {
   position: relative;
@@ -613,7 +613,7 @@
     max-width:   520px;
   }
 
-  // Variante A: Grafik links, Text rechts — Jahr-BG links
+  // Variante A: Grafik links, Text rechts â€” Jahr-BG links
   &--a {
     @include respond-to('lg') {
       grid-template-columns: 1fr 40px 1fr;
@@ -625,7 +625,7 @@
     }
   }
 
-  // Variante B: Text links, Grafik rechts — Jahr-BG rechts
+  // Variante B: Text links, Grafik rechts â€” Jahr-BG rechts
   &--b {
     @include respond-to('lg') {
       grid-template-columns: 1fr 40px 1fr;
@@ -638,20 +638,20 @@
   }
 }
 
-// ── CHAPTER SCROLL ANIMATIONS ─────────────────────────────────────────────
+// â”€â”€ CHAPTER SCROLL ANIMATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
-// Kein data-reveal hier — eigenes System mit .is-revealed auf .about-chapter.
-// IntersectionObserver in about.tsx fügt die Klasse hinzu.
+// Kein data-reveal hier â€” eigenes System mit .is-revealed auf .about-chapter.
+// IntersectionObserver in about.tsx fÃ¼gt die Klasse hinzu.
 //
-// Elemente animieren unabhängig voneinander mit gestaffelten Delays:
-//   __graphic   → Zoom-In + Blur + Directional Slide (A: von links, B: von rechts)
-//   __year-bg   → Scale von 1.22 auf 1 + Fade
-//   __meta      → Slide up (Bounce-Easing)
-//   __title     → Clip-Path Curtain-Reveal (von oben nach unten)
-//   __text      → Slide up + Fade
-// ────────────────────────────────────────────────────────────────────────────
+// Elemente animieren unabhÃ¤ngig voneinander mit gestaffelten Delays:
+//   __graphic   â†’ Zoom-In + Blur + Directional Slide (A: von links, B: von rechts)
+//   __year-bg   â†’ Scale von 1.22 auf 1 + Fade
+//   __meta      â†’ Slide up (Bounce-Easing)
+//   __title     â†’ Clip-Path Curtain-Reveal (von oben nach unten)
+//   __text      â†’ Slide up + Fade
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-// ① Grafik: Zoom-out + Blur als Startzustand
+// â‘  Grafik: Zoom-out + Blur als Startzustand
 .about-chapter__graphic {
   opacity:    0;
   filter:     blur(7px);
@@ -669,7 +669,7 @@
   .about-chapter--b .about-chapter__graphic { transform: scale(0.78) translateX(56px); }
 }
 
-// ② Jahres-Wasserzeichen: skaliert von groß auf normal
+// â‘¡ Jahres-Wasserzeichen: skaliert von groÃŸ auf normal
 .about-chapter__year-bg {
   opacity:    0;
   transform:  translateY(-50%) scale(1.24);
@@ -678,7 +678,7 @@
     transform 1s cubic-bezier(0.16, 1, 0.3, 1)     0.06s;
 }
 
-// ③ Meta (Tag + Jahreszahl): Slide up mit Bounce
+// â‘¢ Meta (Tag + Jahreszahl): Slide up mit Bounce
 .about-chapter__meta {
   opacity:    0;
   transform:  translateY(20px);
@@ -687,13 +687,13 @@
     transform 0.65s cubic-bezier(0.34, 1.45, 0.64, 1) 0.22s;
 }
 
-// ④ Titel: Clip-Path Curtain — Text erscheint von oben nach unten
+// â‘£ Titel: Clip-Path Curtain â€” Text erscheint von oben nach unten
 .about-chapter__title {
   clip-path:  inset(0 0 108% 0);
   transition: clip-path 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.36s;
 }
 
-// ⑤ Text: Slide up + Fade
+// â‘¤ Text: Slide up + Fade
 .about-chapter__text {
   opacity:    0;
   transform:  translateY(20px);
@@ -702,7 +702,7 @@
     transform 0.65s ease 0.54s;
 }
 
-// ── Revealed State ─────────────────────────────────────────────────────────
+// â”€â”€ Revealed State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .about-chapter.is-revealed {
   .about-chapter__graphic {
@@ -731,7 +731,7 @@
   }
 }
 
-// ── Reduced Motion ─────────────────────────────────────────────────────────
+// â”€â”€ Reduced Motion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @media (prefers-reduced-motion: reduce) {
   .about-chapter__graphic,
@@ -756,9 +756,9 @@
   .about-chapter.is-revealed .about-chapter__title { opacity: 1; }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 5. VALUES — 3D CARDS
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// 5. VALUES â€” 3D CARDS
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 .about-values {
   padding:    4rem 0;
@@ -798,7 +798,7 @@
   }
 }
 
-// ── VALUE CARD (3D tilt via --tx / --ty CSS vars) ─────────────────────────
+// â”€â”€ VALUE CARD (3D tilt via --tx / --ty CSS vars) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .value-card {
   background:     var(--clr-secondary);
@@ -879,13 +879,13 @@
   &__metric-unit {
     font-size:   0.75rem;
     font-weight: 600;
-    color:       color-mix(in srgb, var(--clr-text) 44%, transparent);
+    color:       color-mix(in srgb, var(--clr-text) 68%, transparent);
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 6. METRICS — Blur-to-Sharp Reveal
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// 6. METRICS â€” Blur-to-Sharp Reveal
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 .about-metrics-section {
   background: var(--clr-dark-surface);
@@ -959,9 +959,9 @@
   .about-metric:nth-child(4) .about-metric__label { opacity: 1; transform: none; transition-delay: 0.38s; }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // 7. PROCESS STEPS
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 .about-process {
   padding:    4rem 0;
@@ -1063,14 +1063,14 @@
   &__text {
     font-size:   0.875rem;
     line-height: 1.7;
-    color:       color-mix(in srgb, var(--clr-text) 55%, transparent);
+    color:       color-mix(in srgb, var(--clr-text) 72%, transparent);
     margin:      0;
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // 8. TEAM
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 .about-team-section {
   background: var(--clr-dark-surface);
@@ -1154,9 +1154,9 @@
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // 9. CTA SECTION
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 .about-cta {
   position:   relative;
@@ -1238,7 +1238,7 @@
   }
 }
 
-// ── LIGHT-MODE OVERRIDES ───────────────────────────────────────────────────
+// â”€â”€ LIGHT-MODE OVERRIDES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 [data-theme$="-light"] {
   // Process-Section: ag-Ringe sichtbarer auf hellem Hintergrund
@@ -1252,7 +1252,7 @@
     .ag__dot { background: var(--clr-primary); }
   }
 
-  // Process connector line stärker sichtbar
+  // Process connector line stÃ¤rker sichtbar
   .about-process__grid::before {
     background: linear-gradient(
       to right,

@@ -26,10 +26,13 @@ export default function SearchPage() {
   const validSorts: SortBy[] = ['popularity', 'price-asc', 'price-desc', 'newest'];
   const initialSort = urlSort && validSorts.includes(urlSort) ? urlSort : 'popularity';
 
-  const [query,     setQuery]     = useState('');
-  const [activeIdx, setActiveIdx] = useState(Math.max(0, initialIdx));
-  const [sortBy,    setSortBy]    = useState<SortBy>(initialSort);
-  const [quickView, setQuickView] = useState<Product | null>(null);
+  const [query,        setQuery]        = useState('');
+  const [activeIdx,    setActiveIdx]    = useState(Math.max(0, initialIdx));
+  const [sortBy,       setSortBy]       = useState<SortBy>(initialSort);
+  const [quickView,    setQuickView]    = useState<Product | null>(null);
+  const [visibleCount, setVisibleCount] = useState(24);
+
+  const PAGE_SIZE = 24;
 
   const { addItem } = useCart();
   const notify      = useNotifications(s => s.notify);
@@ -42,6 +45,11 @@ export default function SearchPage() {
   const category       = activeIdx === 0 ? null : CATEGORY_FILTERS[activeIdx] as string;
   const { data: results } = useProductSearch(query, category, sortBy);
   const displayResults = isSale ? results.filter(p => p.discount !== null) : results;
+  const visibleResults = displayResults.slice(0, visibleCount);
+  const hasMore        = displayResults.length > visibleCount;
+
+  // Reset pagination when filters change
+  useEffect(() => { setVisibleCount(24); }, [query, activeIdx, sortBy, isSale]);
 
   useEffect(() => {
     let obs: IntersectionObserver;
@@ -151,6 +159,7 @@ export default function SearchPage() {
             {isSale && <> im <em>Sale</em></>}
             {query && <> — <em>„{query}"</em></>}
             {category && !query && !isSale && <> in <em>{category}</em></>}
+            {hasMore && <> · <em>{visibleCount} von {displayResults.length} angezeigt</em></>}
           </p>
 
           {displayResults.length === 0 ? (
@@ -172,11 +181,26 @@ export default function SearchPage() {
               </button>
             </div>
           ) : (
-            <div className="collection-grid">
-              {displayResults.map((p, idx) => (
-                <ProductCard key={p.id} product={p} revealDelay={idx + 1} onQuickView={setQuickView} />
-              ))}
-            </div>
+            <>
+              <div className="collection-grid">
+                {visibleResults.map((p, idx) => (
+                  <ProductCard key={p.id} product={p} revealDelay={idx + 1} onQuickView={setQuickView} />
+                ))}
+              </div>
+              {hasMore && (
+                <div className="collection-load-more">
+                  <button
+                    className="btn btn--ghost collection-load-more__btn"
+                    onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+                  >
+                    Mehr laden
+                    <span className="collection-load-more__hint">
+                      ({displayResults.length - visibleCount} weitere)
+                    </span>
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

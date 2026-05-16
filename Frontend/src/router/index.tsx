@@ -1,41 +1,55 @@
+import React, { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { MainLayout, AuthLayout, AccountLayout, PrivateRoute } from '../components/layout';
 import { ROUTES } from '../config/routes';
 import { FEATURES } from '../config/features';
 
-// ── Pages ──────────────────────────────────────────────────────────────────
-import HomePage          from '../pages/home/home';
-import LoginPage         from '../pages/auth/login';
-import RegisterPage      from '../pages/auth/register';
-import CartPage          from '../pages/shop/cart';
-import CheckoutPage      from '../pages/shop/checkout';
-import ProductDetailPage from '../pages/shop/product-detail';
-import SearchPage        from '../pages/shop/search-results';
-import CategoriesPage   from '../pages/shop/categories';
-import OrderSuccessPage  from '../pages/shop/order-success';
-import DashboardPage     from '../pages/user/dashboard';
-import OrdersPage        from '../pages/user/orders-history';
-import WishlistPage      from '../pages/user/wishlist';
-import AboutPage         from '../pages/common/about';
-import ContactPage       from '../pages/common/contact';
-import FaqPage           from '../pages/info/faq';
-import ShippingPage      from '../pages/info/shipping';
-import ImpressumPage     from '../pages/info/impressum';
-import PrivacyPage       from '../pages/info/privacy';
-import TermsPage         from '../pages/info/terms';
-import WiderrufPage      from '../pages/info/widerruf';
-import NotFoundPage      from '../pages/system/not-found';
-import ChatPage          from '../pages/support/chat';
-import SupportPortalPage from '../pages/support/portal';
-import TicketsPage       from '../pages/user/tickets';
-import TicketNewPage         from '../pages/user/ticket-new';
-import ForgotPasswordPage   from '../pages/auth/forgot-password';
-import ResetPasswordPage    from '../pages/auth/reset-password';
-import AuthCallbackPage     from '../pages/auth/auth-callback';
-import SettingsPage         from '../pages/user/settings';
-import AddressesPage        from '../pages/user/addresses';
-import OrderDetailPage      from '../pages/user/order-detail';
-import MyDataPage           from '../pages/user/my-data';
+// ── Lazy Pages ─────────────────────────────────────────────────────────────
+const HomePage          = lazy(() => import('../pages/home/home'));
+const LoginPage         = lazy(() => import('../pages/auth/login'));
+const RegisterPage      = lazy(() => import('../pages/auth/register'));
+const CartPage          = lazy(() => import('../pages/shop/cart'));
+const CheckoutPage      = lazy(() => import('../pages/shop/checkout'));
+const ProductDetailPage = lazy(() => import('../pages/shop/product-detail'));
+const SearchPage        = lazy(() => import('../pages/shop/search-results'));
+const CategoriesPage    = lazy(() => import('../pages/shop/categories'));
+const OrderSuccessPage  = lazy(() => import('../pages/shop/order-success'));
+const DashboardPage     = lazy(() => import('../pages/user/dashboard'));
+const OrdersPage        = lazy(() => import('../pages/user/orders-history'));
+const WishlistPage      = lazy(() => import('../pages/user/wishlist'));
+const AboutPage         = lazy(() => import('../pages/common/about'));
+const ContactPage       = lazy(() => import('../pages/common/contact'));
+const FaqPage           = lazy(() => import('../pages/info/faq'));
+const ShippingPage      = lazy(() => import('../pages/info/shipping'));
+const ImpressumPage     = lazy(() => import('../pages/info/impressum'));
+const PrivacyPage       = lazy(() => import('../pages/info/privacy'));
+const TermsPage         = lazy(() => import('../pages/info/terms'));
+const WiderrufPage      = lazy(() => import('../pages/info/widerruf'));
+const NotFoundPage      = lazy(() => import('../pages/system/not-found'));
+const ChatPage          = lazy(() => import('../pages/support/chat'));
+const SupportPortalPage = lazy(() => import('../pages/support/portal'));
+const TicketsPage       = lazy(() => import('../pages/user/tickets'));
+const TicketNewPage     = lazy(() => import('../pages/user/ticket-new'));
+const ForgotPasswordPage = lazy(() => import('../pages/auth/forgot-password'));
+const ResetPasswordPage  = lazy(() => import('../pages/auth/reset-password'));
+const AuthCallbackPage   = lazy(() => import('../pages/auth/auth-callback'));
+const SettingsPage       = lazy(() => import('../pages/user/settings'));
+const AddressesPage      = lazy(() => import('../pages/user/addresses'));
+const OrderDetailPage    = lazy(() => import('../pages/user/order-detail'));
+const MyDataPage         = lazy(() => import('../pages/user/my-data'));
+
+// ── Skeleton-Fallback ──────────────────────────────────────────────────────
+function PageLoader() {
+  return (
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 32, height: 32, border: '3px solid var(--clr-secondary)', borderTopColor: 'var(--clr-primary)', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+    </div>
+  );
+}
+
+function lazy$(el: React.ReactElement) {
+  return <Suspense fallback={<PageLoader />}>{el}</Suspense>;
+}
 
 // ── Router-Konfiguration ───────────────────────────────────────────────────
 export const router = createBrowserRouter([
@@ -44,30 +58,30 @@ export const router = createBrowserRouter([
   {
     element: <MainLayout />,
     children: [
-      { path: ROUTES.HOME,               element: <HomePage /> },
-      { path: ROUTES.SHOP.PRODUCT,       element: <ProductDetailPage /> },
-      { path: ROUTES.SHOP.CART,          element: <CartPage /> },
+      { path: ROUTES.HOME,               element: lazy$(<HomePage />) },
+      { path: ROUTES.SHOP.PRODUCT,       element: lazy$(<ProductDetailPage />) },
+      { path: ROUTES.SHOP.CART,          element: lazy$(<CartPage />) },
 
       // ── Checkout & Order-Success: Login erforderlich ───────────────────
       {
         element: <PrivateRoute />,
         children: [
-          { path: ROUTES.SHOP.CHECKOUT,      element: <CheckoutPage /> },
-          { path: ROUTES.SHOP.ORDER_SUCCESS, element: <OrderSuccessPage /> },
+          { path: ROUTES.SHOP.CHECKOUT,      element: lazy$(<CheckoutPage />) },
+          { path: ROUTES.SHOP.ORDER_SUCCESS, element: lazy$(<OrderSuccessPage />) },
         ],
       },
-      { path: ROUTES.SHOP.SEARCH,        element: <SearchPage /> },
-      { path: ROUTES.SHOP.CATEGORIES,   element: <CategoriesPage /> },
-      { path: ROUTES.INFO.ABOUT,         element: <AboutPage /> },
-      { path: ROUTES.INFO.CONTACT,       element: <ContactPage /> },
-      { path: ROUTES.INFO.FAQ,           element: <FaqPage /> },
-      { path: ROUTES.INFO.SHIPPING,     element: <ShippingPage /> },
-      { path: ROUTES.INFO.IMPRESSUM,     element: <ImpressumPage /> },
-      { path: ROUTES.INFO.PRIVACY,   element: <PrivacyPage /> },
-      { path: ROUTES.INFO.TERMS,     element: <TermsPage /> },
-      { path: ROUTES.INFO.WIDERRUF,  element: <WiderrufPage /> },
-      { path: ROUTES.SUPPORT.CHAT,       element: <ChatPage /> },
-      { path: ROUTES.SUPPORT.PORTAL,     element: <SupportPortalPage /> },
+      { path: ROUTES.SHOP.SEARCH,        element: lazy$(<SearchPage />) },
+      { path: ROUTES.SHOP.CATEGORIES,    element: lazy$(<CategoriesPage />) },
+      { path: ROUTES.INFO.ABOUT,         element: lazy$(<AboutPage />) },
+      { path: ROUTES.INFO.CONTACT,       element: lazy$(<ContactPage />) },
+      { path: ROUTES.INFO.FAQ,           element: lazy$(<FaqPage />) },
+      { path: ROUTES.INFO.SHIPPING,      element: lazy$(<ShippingPage />) },
+      { path: ROUTES.INFO.IMPRESSUM,     element: lazy$(<ImpressumPage />) },
+      { path: ROUTES.INFO.PRIVACY,       element: lazy$(<PrivacyPage />) },
+      { path: ROUTES.INFO.TERMS,         element: lazy$(<TermsPage />) },
+      { path: ROUTES.INFO.WIDERRUF,      element: lazy$(<WiderrufPage />) },
+      { path: ROUTES.SUPPORT.CHAT,       element: lazy$(<ChatPage />) },
+      { path: ROUTES.SUPPORT.PORTAL,     element: lazy$(<SupportPortalPage />) },
 
       // ── Account (Auth-geschützt + Sidebar-Layout) ─────────────────────
       {
@@ -78,19 +92,17 @@ export const router = createBrowserRouter([
             element: <AccountLayout />,
             children: [
               { index: true,           element: <Navigate to={ROUTES.ACCOUNT.DASHBOARD} replace /> },
-              { path: 'dashboard',     element: <DashboardPage /> },
-              { path: 'orders',        element: <OrdersPage /> },
-              { path: 'orders/:id',    element: <OrderDetailPage /> },
-              // OPTIONAL — Schalter: src/config/features.ts → wishlist
-              ...(FEATURES.wishlist ? [{ path: 'wishlist', element: <WishlistPage /> }] : []),
-              // OPTIONAL — Schalter: src/config/features.ts → tickets
+              { path: 'dashboard',     element: lazy$(<DashboardPage />) },
+              { path: 'orders',        element: lazy$(<OrdersPage />) },
+              { path: 'orders/:id',    element: lazy$(<OrderDetailPage />) },
+              ...(FEATURES.wishlist ? [{ path: 'wishlist', element: lazy$(<WishlistPage />) }] : []),
               ...(FEATURES.tickets ? [
-                { path: 'tickets',     element: <TicketsPage /> },
-                { path: 'tickets/new', element: <TicketNewPage /> },
+                { path: 'tickets',     element: lazy$(<TicketsPage />) },
+                { path: 'tickets/new', element: lazy$(<TicketNewPage />) },
               ] : []),
-              { path: 'settings',      element: <SettingsPage /> },
-              { path: 'addresses',     element: <AddressesPage /> },
-              { path: 'my-data',       element: <MyDataPage /> },
+              { path: 'settings',      element: lazy$(<SettingsPage />) },
+              { path: 'addresses',     element: lazy$(<AddressesPage />) },
+              { path: 'my-data',       element: lazy$(<MyDataPage />) },
             ],
           },
         ],
@@ -102,14 +114,14 @@ export const router = createBrowserRouter([
   {
     element: <AuthLayout />,
     children: [
-      { path: ROUTES.AUTH.LOGIN,           element: <LoginPage /> },
-      { path: ROUTES.AUTH.REGISTER,        element: <RegisterPage /> },
-      { path: ROUTES.AUTH.FORGOT_PASSWORD, element: <ForgotPasswordPage /> },
-      { path: ROUTES.AUTH.RESET_PASSWORD,  element: <ResetPasswordPage /> },
-      { path: ROUTES.AUTH.CALLBACK,        element: <AuthCallbackPage /> },
+      { path: ROUTES.AUTH.LOGIN,           element: lazy$(<LoginPage />) },
+      { path: ROUTES.AUTH.REGISTER,        element: lazy$(<RegisterPage />) },
+      { path: ROUTES.AUTH.FORGOT_PASSWORD, element: lazy$(<ForgotPasswordPage />) },
+      { path: ROUTES.AUTH.RESET_PASSWORD,  element: lazy$(<ResetPasswordPage />) },
+      { path: ROUTES.AUTH.CALLBACK,        element: lazy$(<AuthCallbackPage />) },
     ],
   },
 
   // ── 404 ───────────────────────────────────────────────────────────────────
-  { path: '*', element: <NotFoundPage /> },
+  { path: '*', element: lazy$(<NotFoundPage />) },
 ]);

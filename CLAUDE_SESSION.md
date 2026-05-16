@@ -3,7 +3,7 @@
 Diese Datei wird von Claude am Anfang jeder Session gelesen und am Ende/bei Pausen aktualisiert.
 Ziel: Kontextverlust durch Compacting verhindern.
 
-**Letzte Aktualisierung:** 2026-05-16
+**Letzte Aktualisierung:** 2026-05-16 (Abend)
 
 ---
 
@@ -30,15 +30,26 @@ Ziel: Kontextverlust durch Compacting verhindern.
 
 ## Offene Aufgaben (Priorität)
 
+### In dieser Session implementiert (2026-05-16)
+- [x] **Admin 2FA (TOTP)** — `otplib` v12, `/login/totp` Route, `admin_totp` Tabelle, Settings UI
+- [x] **Order Detail** — echte API (kein Mock mehr), `getAdminOrder()`, Status-Update
+- [x] **Customer Detail** — echte API, `getAdminCustomer()`, Delete
+- [x] **Klarna-Logo Fix** — SVG text zentriert, kein Clipping mehr
+- [x] **Produkt-Paginierung** — `.limit(100)` + 24 visible + "Mehr laden" Button
+- [x] **Lighthouse-Optimierungen** — Route Lazy Loading (526KB → 57KB index), `fetchPriority`, Chunk-Splitting, Contrast-Fix (11 SCSS-Dateien), `will-change: transform`
+- [x] **Migration 006** — `admin_totp` Tabelle (User hat ausgeführt)
+
 ### Noch nicht implementiert
 - [ ] **Kategorie-Manager** im Admin (persistente Dropdowns statt hartcodierte Liste)
 - [ ] **Rollen-System** (`owner | admin | mod | customer`) — aktuell nur ein Admin
 - [ ] **Google OAuth** — Button existiert im Login-UI, aber nicht verdrahtet
-- [ ] **Stripe-Zahlungsabwicklung** — aktuell nur Mock (Backend-Route-Gerüst vorhanden)
-- [ ] `migration_005_shipping_settings.sql` in Supabase SQL Editor ausführen (falls noch nicht geschehen)
+- [ ] **Heading-Reihenfolge** — Lighthouse Accessibility: H-Tags auf Homepage + anderen Seiten prüfen
+- [ ] **Bilder → WebP** — 519 KB Einsparpotenzial, manuell via squoosh.app
 
-### Dokumentation
-- [ ] `SETUP.en.md` auf v1.4.0 bringen (aktuell v1.1.0 — sehr veraltet)
+### Bekannte Bugs / offene Probleme
+- [ ] **Register 400-Fehler** — `signInWithPassword` schlägt fehl bei aktivierter E-Mail-Bestätigung in Supabase. Fix: Supabase Dashboard → Auth → Settings → "Enable email confirmations" AUS für Tests, oder echte E-Mail bestätigen.
+- [ ] **SETUP.en.md** veraltet (v1.1.0)
+
 
 ---
 

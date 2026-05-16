@@ -14,6 +14,7 @@
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  will-change: transform;
   @include transition(all);
 
   &:focus-visible { @include focus-ring; }
