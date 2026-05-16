@@ -128,7 +128,9 @@ router.post('/login', authRateLimit, validate(LoginSchema), async (req: Request,
     }).catch(() => null);
   }
 
-  res.json({ ok: true });
+  // Token auch im Body zurückgeben — Frontend speichert in localStorage
+  // (Cookie bleibt als Fallback für Desktop-Browser)
+  res.json({ ok: true, token });
 });
 
 // POST /api/admin/login/totp — zweiter Schritt nach 2FA
@@ -167,7 +169,7 @@ router.post('/login/totp', authRateLimit, validate(TotpSchema), async (req: Requ
   const userAgent = (req.headers['user-agent'] ?? '').slice(0, 500);
   void supabase.from('admin_login_log').insert({ ip_address: ip, user_agent: userAgent, success: true });
 
-  res.json({ ok: true });
+  res.json({ ok: true, token: sessionToken });
 });
 
 // POST /api/admin/logout

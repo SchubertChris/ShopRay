@@ -8,7 +8,11 @@ interface AdminJwtPayload {
 }
 
 export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
-  const token = (req.cookies as Record<string, string | undefined>)?.adminSession;
+  // Authorization: Bearer <token> hat Vorrang (für Mobile / cross-domain)
+  const authHeader = req.headers['authorization'];
+  const token = authHeader?.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : (req.cookies as Record<string, string | undefined>)?.adminSession;
 
   if (!token) {
     res.status(401).json({ error: 'Nicht authentifiziert' });

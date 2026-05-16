@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { adminLogin, adminLogout, adminCheck, loginTotp } from '../api/adminApi';
+import { adminLogin, adminLogout, adminCheck, loginTotp, setAdminToken, clearAdminToken } from '../api/adminApi';
 
 interface AuthState {
   isAuthed:    boolean;
@@ -17,7 +17,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
   requireTotp: false,
 
   login: async (password: string) => {
-    const result = await adminLogin(password) as { ok: boolean; requireTotp?: boolean };
+    const result = await adminLogin(password);
+    if (result.token) setAdminToken(result.token);
     if (result.requireTotp) {
       set({ requireTotp: true });
     } else {
@@ -26,12 +27,14 @@ export const useAuthStore = create<AuthState>()((set) => ({
   },
 
   verifyTotp: async (token: string) => {
-    await loginTotp(token);
+    const result = await loginTotp(token) as { ok: boolean; token?: string };
+    if (result.token) setAdminToken(result.token);
     set({ isAuthed: true, requireTotp: false });
   },
 
   logout: async () => {
     await adminLogout().catch(() => null);
+    clearAdminToken();
     set({ isAuthed: false, requireTotp: false });
   },
 

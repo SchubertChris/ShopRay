@@ -1,6 +1,14 @@
-// Produktion: leerer String → relative /api/* Calls → Vercel Rewrite → Backend (same-origin, Cookie-safe)
+// Produktion: leerer String → relative /api/* Calls → Vercel Rewrite → Backend
 // Lokal: VITE_API_URL=http://localhost:5000
 export const API_URL = (import.meta.env.VITE_API_URL as string) ?? '';
+
+// ── Session-Token (localStorage) ──────────────────────────────────────────────
+// Primäre Auth-Methode: Authorization: Bearer <token>
+// Cookie bleibt als Fallback für Desktop-Browser gesetzt
+const TOKEN_KEY = 'adminToken';
+export const getAdminToken  = ()              => localStorage.getItem(TOKEN_KEY);
+export const setAdminToken  = (t: string)     => localStorage.setItem(TOKEN_KEY, t);
+export const clearAdminToken = ()             => localStorage.removeItem(TOKEN_KEY);
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -15,9 +23,13 @@ async function apiFetch<T>(
   const headers: Record<string, string> = {};
   if (!isFormData) headers['Content-Type'] = contentType ?? 'application/json';
 
+  // Bearer-Token hat Vorrang vor Cookie (funktioniert cross-domain auf Mobile)
+  const token = getAdminToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
   const res = await fetch(`${API_URL}${path}`, {
     method,
-    credentials: 'include', // HttpOnly adminSession-Cookie automatisch mitsenden
+    credentials: 'include', // Cookie als Fallback für Desktop
     headers,
     body: isFormData ? body : body !== undefined ? JSON.stringify(body) : undefined,
   });
@@ -34,7 +46,7 @@ async function apiFetch<T>(
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 export const adminLogin  = (password: string) =>
-  apiFetch<{ ok: boolean }>('/api/admin/login', 'POST', { password });
+  apiFetch<{ ok: boolean; requireTotp?: boolean; token?: string }>('/api/admin/login', 'POST', { password });
 
 export const adminLogout = () =>
   apiFetch<{ ok: boolean }>('/api/admin/logout', 'POST');
