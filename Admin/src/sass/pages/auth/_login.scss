@@ -336,3 +336,10 @@
     svg { flex-shrink: 0; }
   }
 }
+
+// ─── MOBILE: iOS Zoom-Prevention ─────────────────────────────────────────────
+@media (max-width: 767px) {
+  .login-form__input-wrap input {
+    font-size: 16px;
+  }
+}

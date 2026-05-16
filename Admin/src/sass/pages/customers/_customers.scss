@@ -208,3 +208,33 @@
     .btn-secondary { width: 100%; justify-content: center; }
   }
 }
+
+// ─── MOBILE: Bottom Sheet ─────────────────────────────────────────────────────
+@media (max-width: 1023px) {
+  .customer-panel {
+    position:      fixed;
+    bottom:        0;
+    left:          0;
+    right:         0;
+    top:           auto;
+    height:        auto;
+    max-height:    80vh;
+    overflow-y:    auto;
+    border-radius: 20px 20px 0 0;
+    border:        none;
+    border-top:    1.5px solid var(--clr-secondary);
+    box-shadow:    0 -8px 40px rgba(0, 0, 0, 0.18);
+    z-index:       400;
+    animation:     panel-slide-up 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+
+    &::before {
+      content:       '';
+      display:       block;
+      width:         36px;
+      height:        4px;
+      border-radius: 2px;
+      background:    color-mix(in srgb, var(--clr-text) 18%, transparent);
+      margin:        0.75rem auto 0.5rem;
+    }
+  }
+}

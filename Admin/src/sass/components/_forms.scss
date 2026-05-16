@@ -513,3 +513,12 @@
 
   &:hover { color: var(--clr-text); }
 }
+
+// ─── MOBILE: iOS Zoom-Prevention (Safari zoomt bei font-size < 16px) ─────────
+@media (max-width: 767px) {
+  .form-input,
+  .form-select,
+  .form-textarea {
+    font-size: 16px;
+  }
+}

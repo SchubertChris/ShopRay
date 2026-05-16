@@ -87,6 +87,7 @@ export default function CustomersPage() {
       </div>
 
       {/* Split View */}
+      {activeCustomer && <div className="panel-backdrop" onClick={() => setActiveId(null)} />}
       <div className={`customer-split${activeCustomer ? ' has-detail' : ''}`}>
         {/* Table */}
         <div className="data-card">

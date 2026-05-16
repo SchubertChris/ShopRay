@@ -108,6 +108,7 @@ export default function OrdersPage() {
       </div>
 
       {/* Split View */}
+      {activeOrder && <div className="panel-backdrop" onClick={() => setActiveId(null)} />}
       <div className={`order-split${activeOrder ? ' has-detail' : ''}`}>
         {/* Table */}
         <div className="data-card">
