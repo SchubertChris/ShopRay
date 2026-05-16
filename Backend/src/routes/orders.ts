@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Router, Response, NextFunction } from 'express';
+import Stripe from 'stripe';
 import { supabase } from '../lib/supabase';
 import { stripe }   from '../lib/stripe';
 import { requireAuth, AuthRequest } from '../middleware/auth';
@@ -9,6 +10,13 @@ import { validate, UUIDParam } from '../lib/validate';
 const router = Router();
 
 // ── Schemas ──────────────────────────────────────────────────────────────────
+const PAYMENT_METHOD_MAP: Record<string, Stripe.Checkout.SessionCreateParams.PaymentMethodType[]> = {
+  card:           ['card'],
+  paypal:         ['paypal'],
+  klarna:         ['klarna'],
+  'bank-transfer': ['sofort'],
+};
+
 const CheckoutSchema = z.object({
   items: z.array(
     z.object({
@@ -24,6 +32,7 @@ const CheckoutSchema = z.object({
     city:      z.string().trim().max(100).optional(),
     country:   z.string().trim().max(100).optional(),
   }).optional(),
+  paymentMethod: z.string().optional(),
 });
 
 type CheckoutBody = z.infer<typeof CheckoutSchema>;
@@ -67,7 +76,7 @@ router.get('/:id', requireAuth, validate(UUIDParam, 'params'), async (req: AuthR
 // POST /api/orders/checkout — Stripe Checkout Session
 router.post('/checkout', requireAuth, checkoutRateLimit, validate(CheckoutSchema), async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { items, shippingAddress } = req.body as CheckoutBody;
+    const { items, shippingAddress, paymentMethod } = req.body as CheckoutBody;
 
     // Preise IMMER aus der Datenbank — Client-Preise werden ignoriert
     const productIds = [...new Set(items.map(i => i.productId))];
@@ -126,8 +135,10 @@ router.post('/checkout', requireAuth, checkoutRateLimit, validate(CheckoutSchema
       })),
     );
 
+    const stripePaymentMethods = PAYMENT_METHOD_MAP[paymentMethod ?? 'card'] ?? ['card'];
+
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      payment_method_types: stripePaymentMethods,
       mode:                 'payment',
       line_items: lineItems.map(({ product, quantity, unitAmountCents }) => ({
         price_data: {

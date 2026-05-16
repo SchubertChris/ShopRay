@@ -12,6 +12,8 @@ import CustomersPage          from '@pages/customers/index';
 import CustomerDetailPage     from '@pages/customers/customer-detail';
 import SupportPage            from '@pages/support/index';
 import InquiriesPage          from '@pages/inquiries/index';
+import ReviewsPage            from '@pages/reviews/index';
+import CategoriesPage         from '@pages/categories/index';
 import SettingsPage           from '@pages/settings/index';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -40,8 +42,10 @@ export const router = createBrowserRouter([
       { path: 'orders/:id',        element: <OrderDetailPage />    },
       { path: 'customers',         element: <CustomersPage />      },
       { path: 'customers/:id',     element: <CustomerDetailPage /> },
-      { path: 'support',           element: <SupportPage />        },
+      { path: 'support',            element: <SupportPage />        },
       { path: 'inquiries',         element: <InquiriesPage />      },
+      { path: 'reviews',           element: <ReviewsPage />        },
+      { path: 'categories',        element: <CategoriesPage />     },
       { path: 'settings',          element: <SettingsPage />       },
     ],
   },

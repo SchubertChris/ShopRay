@@ -323,6 +323,38 @@ export const createCategory   = (name: string, order?: number) =>
 export const deleteCategory   = (id: string) =>
   apiFetch<{ success: boolean }>(`/api/admin/categories/${id}`, 'DELETE');
 
+// ── Bewertungen (Admin) ───────────────────────────────────────────────────────
+
+export interface AdminReview {
+  id:         string;
+  product_id: string;
+  user_id:    string | null;
+  rating:     number;
+  title:      string | null;
+  body:       string | null;
+  verified:   boolean;
+  created_at: string;
+  products:   { name: string } | null;
+  profiles:   { name: string | null; email: string | null } | null;
+}
+
+export const getAdminReviews = (page = 1, limit = 50, verified?: boolean) => {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (verified !== undefined) params.set('verified', String(verified));
+  return apiFetch<{ data: AdminReview[]; total: number; page: number; limit: number }>(
+    `/api/admin/reviews?${params}`,
+  );
+};
+
+export const verifyReview   = (id: string) =>
+  apiFetch<{ id: string; verified: boolean }>(`/api/admin/reviews/${id}/verify`, 'PATCH');
+
+export const rejectReview   = (id: string) =>
+  apiFetch<{ id: string; verified: boolean }>(`/api/admin/reviews/${id}/reject`, 'PATCH');
+
+export const deleteAdminReview = (id: string) =>
+  apiFetch<{ deleted: boolean }>(`/api/admin/reviews/${id}`, 'DELETE');
+
 // ── Kontaktanfragen ───────────────────────────────────────────────────────────
 
 export interface ContactInquiry {

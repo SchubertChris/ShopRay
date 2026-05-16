@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, ShoppingCart, Users,
   MessageSquare, Settings, LogOut, ChevronRight, Mail,
+  Star, Tag,
 } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import { ROUTES } from '@config/routes';
@@ -36,6 +37,8 @@ const NAV: NavGroup[] = [
       { to: ROUTES.PRODUCTS.LIST,    icon: Package,         label: 'Produkte'      },
       { to: ROUTES.ORDERS.LIST,      icon: ShoppingCart,    label: 'Bestellungen', badge: 3 },
       { to: ROUTES.CUSTOMERS.LIST,   icon: Users,           label: 'Kunden'        },
+      { to: ROUTES.CATEGORIES,       icon: Tag,             label: 'Kategorien'    },
+      { to: ROUTES.REVIEWS,          icon: Star,            label: 'Bewertungen'   },
     ],
   },
   {

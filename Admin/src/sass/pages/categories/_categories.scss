@@ -1,0 +1,79 @@
+@use '../../abstracts/mixins' as *;
+@use '../../abstracts/functions' as *;
+
+// ─── NEUE KATEGORIE ERSTELLEN ─────────────────────────────────────────────────
+.cat-create {
+  margin-bottom:  1.5rem;
+  background:     var(--clr-surface);
+  border:         1.5px solid var(--clr-secondary);
+  border-radius:  14px;
+  padding:        1.5rem;
+
+  &__title {
+    font-size:     rem(15px);
+    font-weight:   700;
+    color:         var(--clr-text);
+    margin-bottom: 1rem;
+  }
+
+  &__form {
+    display:        flex;
+    flex-direction: column;
+    gap:            1rem;
+  }
+
+  &__fields {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.875rem;
+    align-items: end;
+  }
+
+  &__order-field {
+    width: 100px;
+  }
+}
+
+// ─── KATEGORIEN-LISTE ─────────────────────────────────────────────────────────
+.cat-list {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.5rem;
+  margin-top:     1.5rem;
+}
+
+.cat-item {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  gap:             1rem;
+  padding:         0.875rem 1.25rem;
+  background:      var(--clr-surface);
+  border:          1.5px solid var(--clr-secondary);
+  border-radius:   10px;
+  @include transition(border-color, background);
+
+  &:hover { border-color: color-mix(in srgb, var(--clr-primary) 25%, transparent); }
+
+  &__info {
+    display:     flex;
+    align-items: center;
+    gap:         0.875rem;
+  }
+
+  &__order {
+    font-size:     rem(11.5px);
+    font-weight:   700;
+    color:         color-mix(in srgb, var(--clr-text) 35%, transparent);
+    background:    var(--clr-background);
+    border-radius: 6px;
+    padding:       0.2rem 0.5rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__name {
+    font-size:   rem(14px);
+    font-weight: 600;
+    color:       var(--clr-text);
+  }
+}

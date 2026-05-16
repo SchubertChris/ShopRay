@@ -6,6 +6,7 @@ export async function createOrder(payload: CheckoutPayload): Promise<CheckoutRes
   const { data } = await api.post<CheckoutResponse>('/orders/checkout', {
     items:           payload.cartItems,
     shippingAddress: payload.shipping,
+    paymentMethod:   payload.paymentMethod,
   });
   return data;
 }
