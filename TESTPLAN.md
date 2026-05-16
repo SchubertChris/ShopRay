@@ -1,19 +1,37 @@
 # ShopRay — Endabnahme-Testplan
 
 **Stand:** 2026-05-16  
-**Umgebung:** Lokale Dev-Umgebung + Supabase Test-Projekt  
-**Stripe-Modus:** Test (`sk_test_...` Key vorausgesetzt)  
 **Tester:** Chris Schubert
 
 ---
 
-## Voraussetzungen
+## Live-URLs (Vercel)
 
-Bevor du anfängst, sicherstellen:
+| Bereich | URL |
+|---|---|
+| Shop (Frontend) | https://shopray-indol.vercel.app |
+| Admin-Panel | https://shopray-admin.vercel.app |
+| Backend API | https://shopray-backend.vercel.app |
+| Health-Check | https://shopray-backend.vercel.app/api/health |
+
+> **Preview-Branch (dev):** Nach dem Push auf `dev` erstellt Vercel automatisch eine Preview-URL — im Vercel Dashboard unter dem jeweiligen Projekt nachschauen.
+
+---
+
+## Wichtig vor dem Test
+
+> **Register-Bug:** Supabase hat standardmäßig E-Mail-Bestätigung aktiviert.  
+> Für lokale Tests oder beim ersten Durchlauf:  
+> **Supabase Dashboard → Authentication → Settings → "Enable email confirmations" AUSSCHALTEN**  
+> Sonst schlägt die Registrierung mit einem 400-Fehler fehl.
+
+---
+
+## Voraussetzungen (lokaler Test)
 
 - [ ] Backend läuft auf `localhost:5000`
 - [ ] Frontend läuft auf `localhost:5173`
-- [ ] Admin läuft auf `localhost:5174` (oder separater Port)
+- [ ] Admin läuft auf `localhost:5174`
 - [ ] Supabase-Projekt aktiv, alle 6 Migrations ausgeführt (schema + 002–006)
 - [ ] `.env` Dateien korrekt befüllt (Stripe Test-Key, JWT_SECRET, ADMIN_PASSWORD_HASH etc.)
 - [ ] Stripe Webhook lokal via `stripe listen --forward-to localhost:5000/api/webhook/stripe` aktiv
