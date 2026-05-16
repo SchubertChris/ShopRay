@@ -59,3 +59,12 @@ Frontend/PROJECT_DOCUMENTS.md
 Frontend/PROJECT_COMMANDS.md
 Frontend/PROJECT_WORKFLOW.md
 Frontend/src/features/auth/explain.md
+Frontend/src/sass/Anleitung.md
+Frontend/docs/
+Frontend/src/features/products/data/products.data.ts
+Frontend/src/sass/components/_feeds.scss
+Frontend/src/sass/components/_post.scss
+
+# ── Redundante Dateien ──────────────────────────────────────────────────────
+.env.example
+database/migration_004_categories.sql
