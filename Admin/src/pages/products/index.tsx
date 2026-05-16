@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Trash2, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, Search, Trash2, AlertCircle, Loader2, Pencil } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import { deleteProduct, toggleProductActive } from '../../api/adminApi';
 import type { AdminProduct } from '../../api/adminApi';
@@ -174,7 +174,7 @@ export default function ProductsPage() {
                   <th>Lager</th>
                   <th>Status</th>
                   <th>Badge</th>
-                  <th className="admin-table__th--action">Löschen</th>
+                  <th className="admin-table__th--action">Aktionen</th>
                 </tr>
               </thead>
               <tbody>
@@ -265,6 +265,14 @@ export default function ProductsPage() {
                       </td>
                       <td>
                         <div className="table-actions">
+                          <Link
+                            to={ROUTES.PRODUCTS.edit(p.id)}
+                            className="table-action"
+                            title="Bearbeiten"
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <Pencil size={13} strokeWidth={2} />
+                          </Link>
                           <button
                             className="table-action table-action--danger"
                             title="Löschen"
@@ -289,7 +297,7 @@ export default function ProductsPage() {
       )}
 
       {!loading && !error && filtered.length > 0 && (
-        <p className="table-hint">Doppelklick zum Bearbeiten · Klick auf Status zum Umschalten</p>
+        <p className="table-hint">Stift-Icon oder Doppelklick zum Bearbeiten · Klick auf Status zum Umschalten</p>
       )}
 
       <ConfirmDialog

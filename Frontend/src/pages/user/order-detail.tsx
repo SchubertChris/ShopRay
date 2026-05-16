@@ -64,9 +64,9 @@ export default function OrderDetailPage() {
         </Link>
 
         <div className="order-detail__header">
-          <h2 className="order-detail__title">
+          <h1 className="order-detail__title">
             Bestellung <span>#{order.orderNumber}</span>
-          </h2>
+          </h1>
           <span className={`order-status order-status--${order.status}`}>
             {orderStatusLabel(order.status)}
           </span>

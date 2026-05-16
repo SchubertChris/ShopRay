@@ -14,7 +14,7 @@ export default function WishlistPage() {
       <SeoMeta title="Wunschliste" noIndex />
     <div className="wishlist-page">
       <div className="wishlist-page__header">
-        <h2>Wunschliste</h2>
+        <h1>Wunschliste</h1>
         <span className="wishlist-page__count">{wishlistProducts.length} Artikel</span>
       </div>
 
@@ -27,7 +27,7 @@ export default function WishlistPage() {
       ) : (
         <div className="wishlist-grid">
           {wishlistProducts.map((p, idx) => (
-            <ProductCard key={p.id} product={p} revealDelay={idx + 1} />
+            <ProductCard key={p.id} product={p} />
           ))}
         </div>
       )}

@@ -59,7 +59,7 @@ export default function AddressesPage() {
       <div className="addresses-page">
 
         <div className="addresses-page__header">
-          <h2 className="addresses-page__title">Meine Adresse</h2>
+          <h1 className="addresses-page__title">Meine Adresse</h1>
         </div>
 
         {/* ── Aktuelle Adresse ── */}

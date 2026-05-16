@@ -4,6 +4,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useAuth, register } from '@features/auth';
 import { SeoMeta, IconGoogle } from '@components/ui';
 import { ROUTES } from '@config/routes';
+import { supabase } from '@/lib/supabase';
 import { APP_NAME } from '@config/app';
 
 export default function RegisterPage() {
@@ -41,7 +42,14 @@ export default function RegisterPage() {
       <p className="auth-card__subtitle">Kostenlos registrieren und loslegen.</p>
 
       <form className="auth-form" onSubmit={handleSubmit}>
-        <button type="button" className="social-btn">
+        <button
+          type="button"
+          className="social-btn"
+          onClick={() => supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: `${window.location.origin}${ROUTES.AUTH.CALLBACK}` },
+          })}
+        >
           <IconGoogle size={20} /> Mit Google registrieren
         </button>
         <div className="auth-form__divider"><span>oder per E-Mail</span></div>

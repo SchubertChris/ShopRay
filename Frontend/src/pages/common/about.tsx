@@ -261,7 +261,7 @@ export default function AboutPage() {
                 <span className="about-chapter__tag">{ch.tag}</span>
                 <span className="about-chapter__year-num">{ch.year}</span>
               </div>
-              <h3 className="about-chapter__title">{ch.title}</h3>
+              <h2 className="about-chapter__title">{ch.title}</h2>
               <p className="about-chapter__text">{ch.body}</p>
             </div>
           </article>
@@ -298,7 +298,7 @@ export default function AboutPage() {
                   )}
                 </div>
                 <span className="value-card__num">{v.num}</span>
-                <h4 className="value-card__title">{v.title}</h4>
+                <h3 className="value-card__title">{v.title}</h3>
                 <p className="value-card__sub">{v.sub}</p>
                 <p className="value-card__body">{v.body}</p>
                 <div className="value-card__metric">

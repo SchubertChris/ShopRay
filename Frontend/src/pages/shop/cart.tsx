@@ -65,7 +65,7 @@ export default function CartPage() {
 
               {/* Bestellübersicht */}
               <div className="cart-summary">
-                <h3 className="cart-summary__title">Bestellübersicht</h3>
+                <h2 className="cart-summary__title">Bestellübersicht</h2>
                 <div className="cart-summary__rows">
                   <div className="cart-summary__row">
                     <span>Zwischensumme</span>

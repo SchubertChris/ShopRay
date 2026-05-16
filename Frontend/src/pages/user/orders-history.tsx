@@ -19,7 +19,7 @@ export default function OrdersPage() {
     return (
       <div>
         {seoMeta}
-        <h2 className="orders-history__title">Bestellungen</h2>
+        <h1 className="orders-history__title">Bestellungen</h1>
         <div className="list-feed">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="order-card">
@@ -39,7 +39,7 @@ export default function OrdersPage() {
     return (
       <div>
         {seoMeta}
-        <h2 className="orders-history__title">Bestellungen</h2>
+        <h1 className="orders-history__title">Bestellungen</h1>
         <p className="orders-history__error">{error}</p>
       </div>
     );
@@ -49,7 +49,7 @@ export default function OrdersPage() {
     return (
       <div>
         {seoMeta}
-        <h2 className="orders-history__title">Bestellungen</h2>
+        <h1 className="orders-history__title">Bestellungen</h1>
         <div className="orders-history__empty">
           <p className="orders-history__empty-text">Du hast noch keine Bestellungen aufgegeben.</p>
           <Link to={ROUTES.HOME} className="btn btn--primary btn--sm">Jetzt shoppen</Link>

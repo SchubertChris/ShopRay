@@ -76,19 +76,21 @@ export function AccountLayout() {
 
       {/* Mobile: fixe Bottom-Tab-Leiste — auf Desktop ausgeblendet */}
       <nav className="account-tab-bar" aria-label="Konto-Navigation">
-        {ACCOUNT_NAV.map(({ label, shortLabel, to, Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) => `account-tab-bar__item${isActive ? ' is-active' : ''}`}
-            aria-label={label}
-          >
-            <Icon size={24} strokeWidth={1.5} />
-            <span>{shortLabel}</span>
-          </NavLink>
-        ))}
+        <div className="account-tab-bar__scroll">
+          {ACCOUNT_NAV.map(({ label, shortLabel, to, Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) => `account-tab-bar__item${isActive ? ' is-active' : ''}`}
+              aria-label={label}
+            >
+              <Icon size={24} strokeWidth={1.5} />
+              <span>{shortLabel}</span>
+            </NavLink>
+          ))}
+        </div>
         <button
-          className="account-tab-bar__item account-tab-bar__item--logout"
+          className="account-tab-bar__item account-tab-bar__item--logout account-tab-bar__item--pinned"
           onClick={handleLogout}
           aria-label="Abmelden"
         >

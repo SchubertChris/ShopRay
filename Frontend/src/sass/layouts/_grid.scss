@@ -280,6 +280,7 @@
 // Fixe Bottom-Navigation — nur auf Mobile sichtbar
 .account-tab-bar {
   display: flex;
+  align-items: stretch;
   position: fixed;
   bottom: 0;
   left: 0;
@@ -288,42 +289,46 @@
   background: var(--clr-surface);
   border-top: 1px solid var(--clr-secondary);
   padding-bottom: env(safe-area-inset-bottom);
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-  // GPU-Layer → kein Zucken beim Scrollen
   will-change: transform;
   transform: translateZ(0);
-  &::-webkit-scrollbar { display: none; }
 
   // Ab Desktop ausblenden
   @include respond-to('lg') { display: none; }
 
+  // Scrollbarer Bereich für Nav-Links
+  &__scroll {
+    display: flex;
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+  }
+
   &__item {
     flex: 1;
-    min-width: 64px;
+    min-width: 60px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 1rem 0.5rem;
+    gap: 4px;
+    padding: 0.75rem 0.5rem;
     color: var(--clr-text);
     opacity: 0.35;
     text-decoration: none;
     background: none;
     border: none;
     cursor: pointer;
-    // Nur color transitionen — kein opacity damit kein Flackern beim Routenwechsel
-    transition: color 0.2s ease;
+    transition: color 0.2s ease, opacity 0.2s ease;
+    white-space: nowrap;
 
     span {
-      font-size: rem(11px);
+      font-size: rem(10px);
       font-weight: 700;
       letter-spacing: 0.03em;
       line-height: 1;
       white-space: nowrap;
-      transition: color 0.2s ease;
     }
 
     &.is-active {
@@ -335,10 +340,16 @@
       opacity: 0.35;
     }
 
-    &--logout {
-      &.account-tab-bar__item:not(.is-active) {
-        color: var(--clr-text);
-      }
+    // Logout — immer sichtbar, rechts angepinnt, mit Trennlinie
+    &--pinned {
+      flex-shrink: 0;
+      min-width: 56px;
+      border-left: 1px solid var(--clr-secondary);
+      opacity: 0.5;
+      color: var(--clr-text);
+
+      &:not(.is-active) { opacity: 0.5; }
+      &:hover { opacity: 0.85; color: var(--clr-error); }
     }
   }
 }

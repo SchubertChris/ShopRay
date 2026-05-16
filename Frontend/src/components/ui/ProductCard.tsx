@@ -41,8 +41,7 @@ export function ProductCard({ product: p, skeleton, revealDelay, onQuickView }: 
   return (
     <div
       className="product-card"
-      data-reveal
-      data-delay={revealDelay ? String(revealDelay) : undefined}
+      {...(revealDelay ? { 'data-reveal': '', 'data-delay': String(revealDelay) } : {})}
     >
       <div className="product-card__image-wrap">
         {p.discount && <span className="product-card__discount">{p.discount}</span>}

@@ -113,7 +113,11 @@
     background:   color-mix(in srgb, var(--clr-error) 4%, transparent);
   }
 
-  &__body { padding: 0; }
+  &__body {
+    padding: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 
   &__empty {
     padding:    3rem 1.375rem;
