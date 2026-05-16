@@ -1,6 +1,6 @@
 # ShopRay — Setup Guide
 
-**Version:** 1.5.0 | **Letzte Aktualisierung:** 2026-05-16
+**Version:** 1.6.0 | **Letzte Aktualisierung:** 2026-05-17
 
 Dieser Guide führt dich Schritt für Schritt durch die Einrichtung deines ShopRay-Templates —
 von der Installation bis zum fertigen, live geschalteten Shop.
@@ -120,6 +120,7 @@ STRIPE_SECRET_KEY=sk_live_xxxx              # Stripe Secret Key (geheim!)
 STRIPE_WEBHOOK_SECRET=whsec_xxxx            # Stripe Webhook Signing Secret
 JWT_SECRET=ein-sehr-langer-zufaelliger-string
 ADMIN_PASSWORD_HASH=$2b$12$...              # bcrypt-Hash deines Admin-Passworts
+CLIENT_URL=https://deinshop.de              # Shop-URL (für Stripe Redirect nach Zahlung)
 SMTP_HOST=smtp.resend.com
 SMTP_PORT=587
 SMTP_USER=resend
@@ -127,6 +128,7 @@ SMTP_PASS=re_xxxx
 SMTP_FROM_EMAIL=bestellung@deinshop.de
 ADMIN_URL=https://admin.deinshop.de
 NODE_ENV=production
+DEMO_MODE=false                             # true = alle Schreibzugriffe im Admin gesperrt
 ```
 
 ### Admin/.env
@@ -163,13 +165,15 @@ Führe die Migrationen **der Reihe nach** aus — jede als eigene Query im SQL E
 
 | Datei | Was sie macht |
 |---|---|
+| `database/migration_001_products_detail.sql` | Erweiterte Produktfelder (Highlights, Zertifikate, LMIV) |
 | `database/migration_002_admin_login_log.sql` | Login-Protokoll für den Admin-Bereich |
 | `database/migration_003_product_images.sql` | Supabase Storage Bucket für Produktbilder |
 | `database/migration_004_grants.sql` | Berechtigungen für alle Tabellen |
 | `database/migration_005_shipping_settings.sql` | Versandkosten-Konfiguration |
 | `database/migration_006_admin_totp.sql` | Admin-2FA Tabelle (TOTP) |
+| `database/migration_007_categories.sql` | Kategorien-Tabelle für den Admin-Bereich |
 
-> **Reihenfolge wichtig:** Führe die Migrationen immer in der Reihenfolge 002 → 003 → 004 → 005 → 006 aus.
+> **Reihenfolge wichtig:** Führe die Migrationen immer in der Reihenfolge 001 → 002 → … → 007 aus.
 
 ### Was passiert automatisch
 
@@ -255,7 +259,7 @@ ShopRay unterstützt Login und Registrierung mit einem Google-Konto. Dafür brau
 
 Nach diesem Schritt funktionieren die "Mit Google anmelden" und "Mit Google registrieren" Buttons im Shop automatisch.
 
-### Schritt 8 — E-Mail-Templates anpassen (optional)
+### Schritt 7 — E-Mail-Templates anpassen (optional)
 
 1. In Supabase: **Authentication → Email Templates**
 2. Passe die Vorlagen für "Confirm signup", "Reset Password" und "Magic Link" mit deinem Shop-Namen und deiner Marke an
@@ -328,7 +332,6 @@ Nach dem Deployment:
 | POST | `/api/webhook/stripe` | Stripe-Events (intern) |
 | GET | `/api/products` | Alle aktiven Produkte |
 | GET | `/api/products/:slug` | Einzelnes Produkt |
-| GET | `/api/products/categories` | Alle Kategorien |
 | GET | `/api/settings/shipping` | Versandkosten-Einstellungen (öffentlich) |
 | POST | `/api/orders/checkout` | Stripe Checkout starten |
 | GET | `/api/orders` | Eigene Bestellungen (Auth) |
@@ -338,6 +341,19 @@ Nach dem Deployment:
 | POST | `/api/contact` | Kontaktanfrage senden |
 | POST | `/api/admin/login` | Admin-Login |
 | GET | `/api/admin/products` | Alle Produkte (Admin) |
+| GET | `/api/admin/categories` | Kategorien-Liste (Admin) |
+| POST | `/api/admin/categories` | Kategorie anlegen (Admin) |
+| DELETE | `/api/admin/categories/:id` | Kategorie löschen (Admin) |
+| GET | `/api/admin/reviews` | Bewertungen verwalten (Admin) |
+| PATCH | `/api/admin/reviews/:id/verify` | Bewertung freischalten (Admin) |
+| PATCH | `/api/admin/reviews/:id/reject` | Bewertung ablehnen (Admin) |
+| DELETE | `/api/admin/reviews/:id` | Bewertung löschen (Admin) |
+| GET | `/api/admin/customers` | Kundenliste (Admin) |
+| GET | `/api/admin/customers/:id` | Kundenprofil + DSGVO-Export (Admin) |
+| PATCH | `/api/admin/customers/:id/role` | Kundenrolle ändern (Admin) |
+| DELETE | `/api/admin/customers/:id` | Kunden löschen (Admin) |
+| GET | `/api/admin/orders` | Bestellungen (Admin) |
+| PATCH | `/api/admin/orders/:id/status` | Bestellstatus ändern (Admin) |
 | PUT | `/api/admin/settings/shipping` | Versandkosten speichern (Admin) |
 
 ---
@@ -517,7 +533,9 @@ Der Admin-Bereich ist ein separates Projekt (`Admin/`) und läuft unabhängig vo
 | **Dashboard** | Umsatz, Bestellungen, Kunden auf einen Blick |
 | **Produkte** | Anlegen, bearbeiten (Stift-Icon oder Doppelklick), Bilder hochladen |
 | **Bestellungen** | Status verwalten (Neu → Bezahlt → Versendet → Zugestellt) |
-| **Kunden** | Kundenliste, Bestellhistorie, DSGVO-Export und -Löschung |
+| **Kunden** | Kundenliste, Bestellhistorie, DSGVO-Export (Art. 20) und -Löschung (Art. 17) |
+| **Kategorien** | Kategorien anlegen, Reihenfolge festlegen, löschen |
+| **Bewertungen** | Freischalten, ablehnen oder löschen — mit Tab-Filter |
 | **Support** | Eingehende Kontaktanfragen und Tickets beantworten |
 | **Einstellungen → Versand** | Versandkosten, Gratisversand-Grenze, Lieferzeit live konfigurieren |
 | **Einstellungen → Sicherheit** | Login-Protokoll — jeder Admin-Login wird aufgezeichnet |
@@ -631,6 +649,15 @@ In Vercel: **Settings → Domains → Add** → Domain eintragen → DNS-Einträ
 
 Wenn `/api/health` nicht `{"status":"ok"}` zurückgibt, prüfe die Umgebungsvariablen im Vercel Backend-Projekt.
 
+### Schritt 6 — Demo-Modus (optional)
+
+Wenn du ShopRay als Demo präsentieren möchtest ohne dass Änderungen dauerhaft gespeichert werden:
+
+1. In Vercel Backend-Projekt → **Settings → Environment Variables**
+2. `DEMO_MODE` auf `true` setzen → Redeploy
+
+Im Demo-Modus sind alle schreibenden Admin-Operationen gesperrt (HTTP 403). Login, Logout und alle GET-Requests funktionieren normal. Zum Zurücksetzen der Demo-Daten: `database/seed.sql` im Supabase SQL-Editor ausführen.
+
 ---
 
 ## 16. Pakete — Was gehört wozu
@@ -649,6 +676,8 @@ Wenn `/api/health` nicht `{"status":"ok"}` zurückgibt, prüfe die Umgebungsvari
 | LMIV-Nährwerttabelle | ❌ | ✅ | ✅ |
 | **Admin-Bereich** | ❌ | ✅ | ✅ |
 | **Admin: Versandkosten konfigurieren** | ❌ | ✅ | ✅ |
+| **Admin: Kategorien-Manager** | ❌ | ✅ | ✅ |
+| **Admin: Bewertungs-Moderation** | ❌ | ✅ | ✅ |
 | Source Code | ❌ | ✅ | ✅ |
 | Prioritäts-Support | ❌ | ❌ | ✅ |
 
