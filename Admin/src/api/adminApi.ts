@@ -188,6 +188,84 @@ export const updateCustomerRole = (id: string, role: UserRole) =>
 export const deleteAdminCustomer = (id: string) =>
   apiFetch<{ deleted: boolean }>(`/api/admin/customers/${id}`, 'DELETE');
 
+// ── Bestellungen (Admin) ──────────────────────────────────────────────────────
+
+export interface AdminOrderItem {
+  id:           string;
+  product_name: string;
+  quantity:     number;
+  price:        number;
+}
+
+export interface AdminOrderProfile {
+  name:  string | null;
+  phone: string | null;
+  email: string | null;
+}
+
+export interface AdminOrder {
+  id:               string;
+  order_number:     string;
+  status:           string;
+  total:            number;
+  shipping_address: {
+    firstName?: string;
+    lastName?:  string;
+    street?:    string;
+    zip?:       string;
+    city?:      string;
+    country?:   string;
+  } | null;
+  customer_note: string | null;
+  created_at:    string;
+  paid_at:       string | null;
+  shipped_at:    string | null;
+  order_items:   AdminOrderItem[];
+  profile:       AdminOrderProfile | null;
+}
+
+export interface AdminOrderListItem {
+  id:           string;
+  order_number: string;
+  status:       string;
+  total:        number;
+  created_at:   string;
+  user_id:      string | null;
+}
+
+export const getAdminOrders = (page = 1, limit = 50) =>
+  apiFetch<{ data: AdminOrderListItem[]; total: number; page: number; limit: number }>(
+    `/api/admin/orders?page=${page}&limit=${limit}`,
+  );
+
+export const getAdminOrder = (id: string) =>
+  apiFetch<AdminOrder>(`/api/admin/orders/${id}`);
+
+export const updateOrderStatus = (id: string, status: string) =>
+  apiFetch<{ id: string; order_number: string; status: string }>(
+    `/api/admin/orders/${id}/status`, 'PATCH', { status },
+  );
+
+// ── 2FA (Admin) ───────────────────────────────────────────────────────────────
+
+export const get2faStatus = () =>
+  apiFetch<{ enabled: boolean }>('/api/admin/2fa/status');
+
+export const get2faSetup = () =>
+  apiFetch<{ secret: string; qrCode: string; otpAuthUrl: string }>('/api/admin/2fa/setup');
+
+export const confirm2fa = (secret: string, token: string) =>
+  apiFetch<{ ok: boolean }>('/api/admin/2fa/confirm', 'POST', { secret, token });
+
+export const verify2fa = (token: string) =>
+  apiFetch<{ ok: boolean }>('/api/admin/2fa/verify', 'POST', { token });
+
+export const disable2fa = () =>
+  apiFetch<{ ok: boolean }>('/api/admin/2fa', 'DELETE');
+
+export const loginTotp = (token: string) =>
+  apiFetch<{ ok: boolean }>('/api/admin/login/totp', 'POST', { token });
+
 // ── Kategorien ────────────────────────────────────────────────────────────────
 
 export interface Category {

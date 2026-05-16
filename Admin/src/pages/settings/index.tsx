@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Save, Store, Mail, Truck, Lock, Tag, Trash2, Plus, ShieldCheck, Monitor, AlertTriangle, Loader2, CheckCircle2 } from 'lucide-react';
+import { Save, Store, Mail, Truck, Lock, Tag, Trash2, Plus, ShieldCheck, Monitor, AlertTriangle, Loader2, CheckCircle2, Smartphone, QrCode, X } from 'lucide-react';
 import {
   getLoginLog, getShippingSettings, updateShippingSettings,
   getCategories, createCategory, deleteCategory,
+  get2faStatus, get2faSetup, confirm2fa, disable2fa, verify2fa,
   type LoginLogEntry, type ShippingSettings, type Category,
 } from '../../api/adminApi';
 
@@ -273,6 +274,184 @@ function ShippingSettings() {
   );
 }
 
+// ── 2FA-Verwaltung ────────────────────────────────────────────────────────────
+function TwoFactorSettings() {
+  type Step = 'idle' | 'setup' | 'disable-confirm';
+
+  const [enabled,    setEnabled]    = useState<boolean | null>(null);
+  const [step,       setStep]       = useState<Step>('idle');
+  const [qrCode,     setQrCode]     = useState('');
+  const [secret,     setSecret]     = useState('');
+  const [token,      setToken]      = useState('');
+  const [tokenErr,   setTokenErr]   = useState('');
+  const [working,    setWorking]    = useState(false);
+
+  useEffect(() => {
+    get2faStatus()
+      .then(d => setEnabled(d.enabled))
+      .catch(() => setEnabled(false));
+  }, []);
+
+  const startSetup = async () => {
+    setWorking(true);
+    try {
+      const data = await get2faSetup();
+      setQrCode(data.qrCode);
+      setSecret(data.secret);
+      setStep('setup');
+      setToken('');
+      setTokenErr('');
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const confirmSetup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (token.length !== 6) { setTokenErr('6-stelligen Code eingeben.'); return; }
+    setWorking(true);
+    setTokenErr('');
+    try {
+      await confirm2fa(secret, token);
+      setEnabled(true);
+      setStep('idle');
+      setToken('');
+    } catch (err) {
+      setTokenErr(err instanceof Error ? err.message : 'Ungültiger Code.');
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const confirmDisable = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (token.length !== 6) { setTokenErr('6-stelligen Code eingeben.'); return; }
+    setWorking(true);
+    setTokenErr('');
+    try {
+      await verify2fa(token);
+      await disable2fa();
+      setEnabled(false);
+      setStep('idle');
+      setToken('');
+    } catch (err) {
+      setTokenErr(err instanceof Error ? err.message : 'Ungültiger Code.');
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  if (enabled === null) {
+    return (
+      <div className="form-section">
+        <div className="page-loading">
+          <Loader2 size={18} strokeWidth={1.5} className="spin" />
+          <span>Lade 2FA-Status…</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="form-section">
+      <div className="form-section__head">
+        <h2 className="form-section__title">
+          <Smartphone size={15} strokeWidth={2} />
+          Zwei-Faktor-Authentifizierung (2FA)
+        </h2>
+        <p className="form-section__desc">
+          Mit 2FA wird beim Login zusätzlich ein Einmal-Code aus deiner Authenticator-App verlangt
+          (z. B. Google Authenticator, Aegis, Authy).
+        </p>
+      </div>
+
+      {/* Status-Badge */}
+      <div className="two-fa-status">
+        <span className={`two-fa-status__badge two-fa-status__badge--${enabled ? 'on' : 'off'}`}>
+          {enabled ? 'Aktiviert' : 'Deaktiviert'}
+        </span>
+        {enabled && step === 'idle' && (
+          <button className="btn-danger" onClick={() => { setStep('disable-confirm'); setToken(''); setTokenErr(''); }}>
+            <X size={13} strokeWidth={2} />
+            2FA deaktivieren
+          </button>
+        )}
+        {!enabled && step === 'idle' && (
+          <button className="btn-primary" onClick={startSetup} disabled={working}>
+            {working
+              ? <Loader2 size={13} strokeWidth={2} className="spin" />
+              : <QrCode  size={13} strokeWidth={2} />
+            }
+            2FA einrichten
+          </button>
+        )}
+      </div>
+
+      {/* Setup-Flow */}
+      {step === 'setup' && (
+        <div className="two-fa-setup">
+          <p className="two-fa-setup__hint">
+            <strong>1.</strong> Scanne diesen QR-Code mit deiner Authenticator-App.
+          </p>
+          {qrCode && <img src={qrCode} alt="2FA QR-Code" className="two-fa-setup__qr" />}
+          <p className="two-fa-setup__hint">
+            <strong>2.</strong> Gib anschließend den 6-stelligen Code ein, um die Einrichtung abzuschließen.
+          </p>
+          <form className="two-fa-setup__form" onSubmit={confirmSetup} noValidate>
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="000000"
+              value={token}
+              onChange={e => { setToken(e.target.value.replace(/\D/g, '').slice(0, 6)); setTokenErr(''); }}
+              className="form-input two-fa-setup__code-input"
+              autoFocus
+            />
+            {tokenErr && <p className="form-error-inline">{tokenErr}</p>}
+            <div className="form-actions">
+              <button type="button" className="btn-secondary" onClick={() => setStep('idle')}>Abbrechen</button>
+              <button type="submit" className="btn-primary" disabled={working || token.length !== 6}>
+                {working ? <Loader2 size={13} strokeWidth={2} className="spin" /> : <CheckCircle2 size={13} strokeWidth={2} />}
+                {working ? 'Wird gespeichert…' : 'Bestätigen & aktivieren'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Deaktivierungs-Flow */}
+      {step === 'disable-confirm' && (
+        <div className="two-fa-setup">
+          <p className="two-fa-setup__hint">
+            Gib deinen aktuellen Authenticator-Code ein, um 2FA zu deaktivieren.
+          </p>
+          <form className="two-fa-setup__form" onSubmit={confirmDisable} noValidate>
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="000000"
+              value={token}
+              onChange={e => { setToken(e.target.value.replace(/\D/g, '').slice(0, 6)); setTokenErr(''); }}
+              className="form-input two-fa-setup__code-input"
+              autoFocus
+            />
+            {tokenErr && <p className="form-error-inline">{tokenErr}</p>}
+            <div className="form-actions">
+              <button type="button" className="btn-secondary" onClick={() => setStep('idle')}>Abbrechen</button>
+              <button type="submit" className="btn-danger" disabled={working || token.length !== 6}>
+                {working ? <Loader2 size={13} strokeWidth={2} className="spin" /> : <X size={13} strokeWidth={2} />}
+                {working ? 'Wird deaktiviert…' : '2FA deaktivieren'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Sicherheit ────────────────────────────────────────────────────────────────
 function SecuritySettings() {
   const [log,     setLog]     = useState<LoginLogEntry[]>([]);
@@ -304,6 +483,9 @@ function SecuritySettings() {
 
   return (
     <div className="security-panel">
+
+      {/* 2FA */}
+      <TwoFactorSettings />
 
       {/* Passwort-Info */}
       <div className="form-section">

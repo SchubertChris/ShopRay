@@ -137,3 +137,111 @@
     &:disabled { opacity: 0.4; cursor: not-allowed; }
   }
 }
+
+// ─── 2FA-STATUS ───────────────────────────────────────────────────────────────
+.two-fa-status {
+  display:     flex;
+  align-items: center;
+  gap:         1rem;
+  margin-bottom: 1.25rem;
+
+  &__badge {
+    display:       inline-flex;
+    align-items:   center;
+    padding:       0.3rem 0.75rem;
+    border-radius: 50px;
+    font-size:     rem(12px);
+    font-weight:   700;
+    letter-spacing: 0.04em;
+
+    &--on {
+      background: color-mix(in srgb, var(--clr-success) 12%, transparent);
+      color:      var(--clr-success);
+      border:     1px solid color-mix(in srgb, var(--clr-success) 25%, transparent);
+    }
+
+    &--off {
+      background: color-mix(in srgb, var(--clr-text) 6%, transparent);
+      color:      color-mix(in srgb, var(--clr-text) 45%, transparent);
+      border:     1px solid color-mix(in srgb, var(--clr-text) 12%, transparent);
+    }
+  }
+}
+
+// ─── 2FA-SETUP ────────────────────────────────────────────────────────────────
+.two-fa-setup {
+  display:        flex;
+  flex-direction: column;
+  gap:            1rem;
+  padding:        1.25rem;
+  background:     color-mix(in srgb, var(--clr-primary) 4%, transparent);
+  border:         1px solid color-mix(in srgb, var(--clr-primary) 15%, transparent);
+  border-radius:  12px;
+
+  &__hint {
+    font-size:   rem(13.5px);
+    color:       var(--clr-text);
+    line-height: 1.5;
+  }
+
+  &__qr {
+    width:         180px;
+    height:        180px;
+    border-radius: 10px;
+    border:        1px solid var(--clr-secondary);
+    image-rendering: pixelated;
+  }
+
+  &__form {
+    display:        flex;
+    flex-direction: column;
+    gap:            0.75rem;
+  }
+
+  &__code-input {
+    max-width:     160px;
+    font-size:     rem(20px) !important;
+    font-weight:   700;
+    letter-spacing: 0.25em;
+    text-align:    center;
+  }
+}
+
+// ─── PAGE-ERROR ───────────────────────────────────────────────────────────────
+.page-error {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            1rem;
+  padding:        4rem 2rem;
+  text-align:     center;
+  color:          var(--clr-error);
+
+  span {
+    font-size:   rem(14px);
+    color:       var(--clr-text);
+  }
+}
+
+// ─── LOGIN TOTP INPUT ─────────────────────────────────────────────────────────
+.login-form__totp-input {
+  width:         100%;
+  text-align:    center;
+  font-size:     rem(24px);
+  font-weight:   700;
+  letter-spacing: 0.3em;
+}
+
+.login-form__back-link {
+  background:  none;
+  border:      none;
+  font-size:   rem(13px);
+  color:       color-mix(in srgb, var(--clr-text) 50%, transparent);
+  cursor:      pointer;
+  margin-top:  0.5rem;
+  padding:     0;
+  text-align:  center;
+  @include transition(color);
+
+  &:hover { color: var(--clr-text); }
+}

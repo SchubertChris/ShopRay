@@ -63,7 +63,7 @@ const PAYMENT_METHODS: Array<{ value: PaymentMethod; label: string; sub: string;
     logo: (
       <svg width="48" height="30" viewBox="0 0 48 30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <rect width="48" height="30" rx="4" fill="#FFB3C7" />
-        <text x="8" y="21" fontFamily="Arial,sans-serif" fontSize="13" fontWeight="900" fill="#17120E" letterSpacing="-0.5">klarna</text>
+        <text x="24" y="21" textAnchor="middle" fontFamily="Arial,sans-serif" fontSize="12" fontWeight="900" fill="#17120E" letterSpacing="-0.3">klarna</text>
       </svg>
     ),
   },

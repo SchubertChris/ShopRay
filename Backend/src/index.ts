@@ -14,6 +14,8 @@ import adminAuthRouter       from './routes/admin-auth';
 import adminProductsRouter   from './routes/admin-products';
 import adminCategoriesRouter from './routes/admin-categories';
 import adminCustomersRouter  from './routes/admin-customers';
+import adminOrdersRouter     from './routes/admin-orders';
+import admin2faRouter        from './routes/admin-2fa';
 import settingsRouter        from './routes/settings';
 
 const app  = express();
@@ -45,6 +47,8 @@ app.use('/api/admin',             adminAuthRouter);
 app.use('/api/admin/products',    adminProductsRouter);
 app.use('/api/admin/categories',  adminCategoriesRouter);
 app.use('/api/admin/customers',   adminCustomersRouter);
+app.use('/api/admin/orders',      adminOrdersRouter);
+app.use('/api/admin/2fa',         admin2faRouter);
 app.use('/api/admin/settings',    settingsRouter);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────

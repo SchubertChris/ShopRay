@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt    from 'jsonwebtoken';
+import { verifySync } from 'otplib';
 import { authRateLimit } from '../middleware/security';
 import { requireAdmin }  from '../middleware/adminAuth';
 import { supabase }      from '../lib/supabase';
@@ -12,6 +13,12 @@ import { validate } from '../lib/validate';
 const LoginSchema = z.object({
   password: z.string().min(1, 'Passwort fehlt.').max(200),
 });
+
+const TotpSchema = z.object({
+  token: z.string().length(6, 'TOTP-Code muss 6 Stellen haben.').regex(/^\d{6}$/, 'Nur Ziffern.'),
+});
+
+const TOTP_PENDING_MAX_AGE = 5 * 60 * 1000; // 5 Minuten
 
 function getClientIp(req: Request): string {
   const forwarded = req.headers['x-forwarded-for'];
@@ -82,6 +89,26 @@ router.post('/login', authRateLimit, validate(LoginSchema), async (req: Request,
     return;
   }
 
+  // ── 2FA prüfen ────────────────────────────────────────────────────────────
+  const { count: totpCount } = await supabase
+    .from('admin_totp')
+    .select('*', { count: 'exact', head: true });
+
+  if ((totpCount ?? 0) > 0) {
+    // 2FA aktiv → temporäres Pending-Cookie setzen, noch keine Session
+    const pendingToken = jwt.sign({ totpPending: true }, secret, { expiresIn: '5m' });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('totpPending', pendingToken, {
+      httpOnly: true,
+      secure:   isProd,
+      sameSite: isProd ? 'none' : 'lax',
+      maxAge:   TOTP_PENDING_MAX_AGE,
+      path:     '/',
+    });
+    res.json({ ok: true, requireTotp: true });
+    return;
+  }
+
   const token = jwt.sign({ role: 'admin' }, secret, { expiresIn: '24h' });
   setAdminCookie(res, token);
 
@@ -100,6 +127,45 @@ router.post('/login', authRateLimit, validate(LoginSchema), async (req: Request,
       html:    adminLoginAlertHtml({ ip, userAgent, date, adminUrl }),
     }).catch(() => null);
   }
+
+  res.json({ ok: true });
+});
+
+// POST /api/admin/login/totp — zweiter Schritt nach 2FA
+router.post('/login/totp', authRateLimit, validate(TotpSchema), async (req: Request, res: Response): Promise<void> => {
+  const { token: totpCode } = req.body as z.infer<typeof TotpSchema>;
+  const secret = process.env.JWT_SECRET;
+  if (!secret) { res.status(500).json({ error: 'JWT_SECRET fehlt.' }); return; }
+
+  // Pending-Cookie prüfen
+  const pendingRaw = (req.cookies as Record<string, string>)['totpPending'];
+  if (!pendingRaw) { res.status(401).json({ error: 'Kein Pending-Token. Bitte zuerst Passwort eingeben.' }); return; }
+
+  try {
+    jwt.verify(pendingRaw, secret) as { totpPending: boolean };
+  } catch {
+    res.status(401).json({ error: 'Pending-Token abgelaufen. Bitte neu anmelden.' });
+    return;
+  }
+
+  // TOTP-Secret aus DB
+  const { data: totpRow } = await supabase.from('admin_totp').select('secret').limit(1).single();
+  if (!totpRow) { res.status(500).json({ error: '2FA nicht konfiguriert.' }); return; }
+
+  const { valid: isValid } = verifySync({ token: totpCode, secret: totpRow.secret });
+  if (!isValid) { res.status(401).json({ error: 'Ungültiger TOTP-Code.' }); return; }
+
+  // Pending-Cookie löschen, Admin-Session setzen
+  const isProd = process.env.NODE_ENV === 'production';
+  res.clearCookie('totpPending', { httpOnly: true, secure: isProd, sameSite: isProd ? 'none' : 'lax', path: '/' });
+
+  const sessionToken = jwt.sign({ role: 'admin' }, secret, { expiresIn: '24h' });
+  setAdminCookie(res, sessionToken);
+
+  // Login loggen
+  const ip        = getClientIp(req);
+  const userAgent = (req.headers['user-agent'] ?? '').slice(0, 500);
+  void supabase.from('admin_login_log').insert({ ip_address: ip, user_agent: userAgent, success: true });
 
   res.json({ ok: true });
 });

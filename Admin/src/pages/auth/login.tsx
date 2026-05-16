@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useRef, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Zap, CheckCircle, Eye, EyeOff, Lock } from 'lucide-react';
+import { Shield, Zap, CheckCircle, Eye, EyeOff, Lock, Smartphone } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import { ROUTES } from '@config/routes';
 
@@ -10,8 +10,14 @@ export default function LoginPage() {
   const [error,    setError]    = useState('');
   const [loading,  setLoading]  = useState(false);
 
-  const { login } = useAuthStore();
-  const navigate  = useNavigate();
+  // TOTP-Schritt
+  const [totpCode,    setTotpCode]    = useState('');
+  const [totpLoading, setTotpLoading] = useState(false);
+  const [totpError,   setTotpError]   = useState('');
+  const totpInputRef = useRef<HTMLInputElement>(null);
+
+  const { login, verifyTotp, requireTotp } = useAuthStore();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -20,11 +26,34 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(password);
-      navigate(ROUTES.DASHBOARD);
+      // Wenn requireTotp jetzt true ist, bleibt die Seite — zeigt TOTP-Form
+      // Wenn false → navigate passiert durch checkAuth im App-Wrapper oder hier direkt:
+      if (!useAuthStore.getState().requireTotp) {
+        navigate(ROUTES.DASHBOARD);
+      } else {
+        setTimeout(() => totpInputRef.current?.focus(), 50);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Anmeldung fehlgeschlagen.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTotpSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (totpCode.length !== 6) { setTotpError('Bitte 6-stelligen Code eingeben.'); return; }
+    setTotpError('');
+    setTotpLoading(true);
+    try {
+      await verifyTotp(totpCode);
+      navigate(ROUTES.DASHBOARD);
+    } catch (err) {
+      setTotpError(err instanceof Error ? err.message : 'Ungültiger Code.');
+      setTotpCode('');
+      totpInputRef.current?.focus();
+    } finally {
+      setTotpLoading(false);
     }
   };
 
@@ -79,56 +108,116 @@ export default function LoginPage() {
         <div className="login-form-wrap">
 
           <div className="login-form__lock-icon" aria-hidden="true">
-            <Lock size={22} strokeWidth={1.75} />
+            {requireTotp
+              ? <Smartphone size={22} strokeWidth={1.75} />
+              : <Lock       size={22} strokeWidth={1.75} />
+            }
           </div>
 
-          <form className="login-form" onSubmit={handleSubmit} noValidate>
-            <p className="login-form__eyebrow">Admin-Bereich</p>
-            <h2 className="login-form__title">Anmelden</h2>
-            <p className="login-form__sub">Nur autorisierte Nutzer haben Zugriff.</p>
+          {/* ── Passwort-Form ── */}
+          {!requireTotp && (
+            <form className="login-form" onSubmit={handleSubmit} noValidate>
+              <p className="login-form__eyebrow">Admin-Bereich</p>
+              <h2 className="login-form__title">Anmelden</h2>
+              <p className="login-form__sub">Nur autorisierte Nutzer haben Zugriff.</p>
 
-            <div className="login-form__group">
-              <label htmlFor="password">Admin-Passwort</label>
-              <div className="login-form__input-wrap">
+              <div className="login-form__group">
+                <label htmlFor="password">Admin-Passwort</label>
+                <div className="login-form__input-wrap">
+                  <input
+                    id="password"
+                    type={showPw ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    placeholder="••••••••••••"
+                    value={password}
+                    onChange={e => { setPassword(e.target.value); if (error) setError(''); }}
+                    required
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    className="login-form__pw-toggle"
+                    onClick={() => setShowPw(v => !v)}
+                    tabIndex={-1}
+                    aria-label={showPw ? 'Passwort verbergen' : 'Passwort anzeigen'}
+                  >
+                    {showPw
+                      ? <EyeOff size={15} strokeWidth={2} />
+                      : <Eye    size={15} strokeWidth={2} />
+                    }
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <div className="login-form__error">
+                  <Shield size={13} strokeWidth={2} />
+                  {error}
+                </div>
+              )}
+
+              <button className="login-form__submit" type="submit" disabled={loading}>
+                {loading
+                  ? <><span className="login-form__spinner" />Wird angemeldet…</>
+                  : 'Anmelden'
+                }
+              </button>
+            </form>
+          )}
+
+          {/* ── TOTP-Form ── */}
+          {requireTotp && (
+            <form className="login-form" onSubmit={handleTotpSubmit} noValidate>
+              <p className="login-form__eyebrow">2-Faktor-Authentifizierung</p>
+              <h2 className="login-form__title">Code eingeben</h2>
+              <p className="login-form__sub">
+                Öffne deine Authenticator-App und gib den 6-stelligen Code ein.
+              </p>
+
+              <div className="login-form__group">
+                <label htmlFor="totp">Authenticator-Code</label>
                 <input
-                  id="password"
-                  type={showPw ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  placeholder="••••••••••••"
-                  value={password}
-                  onChange={e => { setPassword(e.target.value); if (error) setError(''); }}
+                  id="totp"
+                  ref={totpInputRef}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  placeholder="000000"
+                  maxLength={6}
+                  value={totpCode}
+                  onChange={e => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setTotpCode(val);
+                    if (totpError) setTotpError('');
+                  }}
                   required
-                  autoFocus
+                  className="login-form__totp-input"
                 />
-                <button
-                  type="button"
-                  className="login-form__pw-toggle"
-                  onClick={() => setShowPw(v => !v)}
-                  tabIndex={-1}
-                  aria-label={showPw ? 'Passwort verbergen' : 'Passwort anzeigen'}
-                >
-                  {showPw
-                    ? <EyeOff size={15} strokeWidth={2} />
-                    : <Eye    size={15} strokeWidth={2} />
-                  }
-                </button>
               </div>
-            </div>
 
-            {error && (
-              <div className="login-form__error">
-                <Shield size={13} strokeWidth={2} />
-                {error}
-              </div>
-            )}
+              {totpError && (
+                <div className="login-form__error">
+                  <Shield size={13} strokeWidth={2} />
+                  {totpError}
+                </div>
+              )}
 
-            <button className="login-form__submit" type="submit" disabled={loading}>
-              {loading
-                ? <><span className="login-form__spinner" />Wird angemeldet…</>
-                : 'Anmelden'
-              }
-            </button>
-          </form>
+              <button className="login-form__submit" type="submit" disabled={totpLoading || totpCode.length !== 6}>
+                {totpLoading
+                  ? <><span className="login-form__spinner" />Wird geprüft…</>
+                  : 'Bestätigen'
+                }
+              </button>
+
+              <button
+                type="button"
+                className="login-form__back-link"
+                onClick={() => useAuthStore.setState({ requireTotp: false })}
+              >
+                ← Zurück zur Passwort-Eingabe
+              </button>
+            </form>
+          )}
 
           <p className="login-form__security-note">
             <Shield size={12} strokeWidth={2} />
