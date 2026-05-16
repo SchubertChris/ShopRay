@@ -4,6 +4,7 @@ import cookieParser    from 'cookie-parser';
 import { corsMiddleware }                          from './middleware/cors';
 import { errorHandler }                           from './middleware/errorHandler';
 import { helmetMiddleware, globalRateLimit }       from './middleware/security';
+import { demoModeGuard }                           from './middleware/demoMode';
 import healthRouter       from './routes/health';
 import stripeRouter       from './routes/stripe';
 import ordersRouter       from './routes/orders';
@@ -43,6 +44,7 @@ app.use('/api/contact',   contactRouter);
 app.use('/api/settings', settingsRouter);
 
 // ── Admin Routes (JWT HttpOnly Cookie erforderlich) ───────────────────────────
+app.use('/api/admin', demoModeGuard);
 app.use('/api/admin',             adminAuthRouter);
 app.use('/api/admin/products',    adminProductsRouter);
 app.use('/api/admin/categories',  adminCategoriesRouter);
