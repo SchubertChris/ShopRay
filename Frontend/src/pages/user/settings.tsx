@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import { SeoMeta } from '@components/ui';
 import { useAuth } from '@features/auth';
 import { updateUser } from '@features/users';
@@ -51,6 +52,11 @@ export default function SettingsPage() {
   const [enrollData,   setEnrollData]   = useState<{ factorId: string; qrCode: string; secret: string } | null>(null);
   const [mfaCode,      setMfaCode]      = useState('');
   const [mfaSubmitting, setMfaSubmitting] = useState(false);
+
+  // ── Passwort sichtbar ────────────────────────────────────────────────────
+  const [showCurPw,  setShowCurPw]  = useState(false);
+  const [showNewPw,  setShowNewPw]  = useState(false);
+  const [showConfPw, setShowConfPw] = useState(false);
 
   // ── Konto löschen ────────────────────────────────────────────────────────
   const [deleteOpen,    setDeleteOpen]    = useState(false);
@@ -301,41 +307,56 @@ export default function SettingsPage() {
 
             <div className="form-group">
               <label className="form-label" htmlFor="s-curpw">Aktuelles Passwort</label>
-              <input
-                id="s-curpw"
-                className="form-input"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={pw.currentPassword}
-                onChange={e => setPw(p => ({ ...p, currentPassword: e.target.value }))}
-              />
+              <div className="form-input-wrap">
+                <input
+                  id="s-curpw"
+                  className="form-input form-input--with-icon"
+                  type={showCurPw ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  required
+                  value={pw.currentPassword}
+                  onChange={e => setPw(p => ({ ...p, currentPassword: e.target.value }))}
+                />
+                <button type="button" className="form-input-toggle" aria-label="Passwort anzeigen" onClick={() => setShowCurPw(v => !v)}>
+                  {showCurPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
 
             <div className="settings-form__row">
               <div className="form-group">
                 <label className="form-label" htmlFor="s-newpw">Neues Passwort</label>
-                <input
-                  id="s-newpw"
-                  className="form-input"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={pw.newPassword}
-                  onChange={e => setPw(p => ({ ...p, newPassword: e.target.value }))}
-                />
+                <div className="form-input-wrap">
+                  <input
+                    id="s-newpw"
+                    className="form-input form-input--with-icon"
+                    type={showNewPw ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    required
+                    value={pw.newPassword}
+                    onChange={e => setPw(p => ({ ...p, newPassword: e.target.value }))}
+                  />
+                  <button type="button" className="form-input-toggle" aria-label="Passwort anzeigen" onClick={() => setShowNewPw(v => !v)}>
+                    {showNewPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="s-confirmpw">Passwort bestätigen</label>
-                <input
-                  id="s-confirmpw"
-                  className="form-input"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={pw.confirmPassword}
-                  onChange={e => setPw(p => ({ ...p, confirmPassword: e.target.value }))}
-                />
+                <div className="form-input-wrap">
+                  <input
+                    id="s-confirmpw"
+                    className="form-input form-input--with-icon"
+                    type={showConfPw ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    required
+                    value={pw.confirmPassword}
+                    onChange={e => setPw(p => ({ ...p, confirmPassword: e.target.value }))}
+                  />
+                  <button type="button" className="form-input-toggle" aria-label="Passwort anzeigen" onClick={() => setShowConfPw(v => !v)}>
+                    {showConfPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
             </div>
 

@@ -48,7 +48,6 @@ $card-shadow-hover: (
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  will-change: transform;
   box-shadow: $card-shadow-rest;
   transition:
     transform   0.28s cubic-bezier(0.22, 1, 0.36, 1),

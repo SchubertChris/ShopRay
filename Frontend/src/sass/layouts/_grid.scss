@@ -186,6 +186,32 @@
   }
 }
 
+.form-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-input--with-icon {
+  padding-right: 2.75rem;
+}
+
+.form-input-toggle {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--clr-text);
+  opacity: 0.45;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  @include transition(opacity);
+
+  &:hover { opacity: 0.9; }
+}
+
 // ─── SPINNER / LOADER ──────────────────────────────────────────────────────
 .spinner {
   display: inline-block;

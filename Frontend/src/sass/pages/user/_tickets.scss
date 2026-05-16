@@ -137,6 +137,65 @@
 // TICKET ERSTELLEN
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
+// ── Ticket-Liste ───────────────────────────────────────────────────────────
+
+.tickets-list {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.75rem;
+}
+
+.ticket-card {
+  display:     flex;
+  align-items: center;
+  gap:         1rem;
+  padding:     1rem 1.25rem;
+  background:  var(--clr-surface);
+  border:      1px solid color-mix(in srgb, var(--clr-text) 8%, transparent);
+  border-radius: 12px;
+  @include transition(border-color, box-shadow);
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--clr-primary) 30%, transparent);
+    box-shadow:   0 2px 12px color-mix(in srgb, var(--clr-primary) 8%, transparent);
+  }
+
+  &__body    { flex: 1; min-width: 0; }
+
+  &__subject {
+    font-size:     0.9rem;
+    font-weight:   600;
+    color:         var(--clr-text);
+    white-space:   nowrap;
+    overflow:      hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__meta {
+    font-size:  0.75rem;
+    color:      color-mix(in srgb, var(--clr-text) 55%, transparent);
+    margin-top: 0.2rem;
+  }
+}
+
+.ticket-status {
+  font-size:      0.7rem;
+  font-weight:    700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding:        0.3rem 0.7rem;
+  border-radius:  20px;
+  white-space:    nowrap;
+  flex-shrink:    0;
+
+  &--open        { background: color-mix(in srgb, #3b82f6 12%, transparent); color: #2563eb; }
+  &--in-progress { background: color-mix(in srgb, #f59e0b 12%, transparent); color: #d97706; }
+  &--resolved    { background: color-mix(in srgb, #10b981 12%, transparent); color: #059669; }
+  &--closed      { background: color-mix(in srgb, var(--clr-text) 8%, transparent); color: color-mix(in srgb, var(--clr-text) 55%, transparent); }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 .ticket-new-page {
   display:        flex;
   flex-direction: column;

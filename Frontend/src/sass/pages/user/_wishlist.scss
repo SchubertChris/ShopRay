@@ -33,6 +33,13 @@
 }
 
 // ─── WISHLIST-GRID ─────────────────────────────────────────────────────────
+// Karten immer sichtbar — unabhängig von data-reveal (async load)
+.wishlist-grid [data-reveal],
+.wishlist-grid .product-card {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
 .wishlist-grid {
   display: grid;
   grid-template-columns: 1fr;

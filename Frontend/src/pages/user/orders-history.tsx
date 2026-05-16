@@ -52,7 +52,7 @@ export default function OrdersPage() {
         <h1 className="orders-history__title">Bestellungen</h1>
         <div className="orders-history__empty">
           <p className="orders-history__empty-text">Du hast noch keine Bestellungen aufgegeben.</p>
-          <Link to={ROUTES.HOME} className="btn btn--primary btn--sm">Jetzt shoppen</Link>
+          <Link to={ROUTES.SHOP.CATEGORIES} className="btn btn--primary btn--sm">Kollektion entdecken</Link>
         </div>
       </div>
     );
