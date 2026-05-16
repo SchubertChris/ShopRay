@@ -571,16 +571,6 @@ Den Wert in `Backend/.env` als `JWT_SECRET` eintragen.
 
 > **Wichtig:** Das Standard-Passwort aus dem Template muss vor dem Launch geändert werden!
 
-**Hinweis zur Session-Persistenz auf Vercel:**
-
-Da Admin-Frontend und Backend auf unterschiedlichen Vercel-Domains laufen (`shopray-admin.vercel.app` → `shopray-backend.vercel.app`), leitet der Vercel-Proxy `Set-Cookie`-Header vom Backend nicht zuverlässig weiter — das Cookie landet nicht im Browser. ShopRay löst das mit `Authorization: Bearer <token>` + `sessionStorage`:
-
-- Nach dem Login speichert das Frontend den JWT-Token im `sessionStorage`
-- Jeder API-Request sendet `Authorization: Bearer <token>` als Header → funktioniert cross-domain ohne Cookies
-- `sessionStorage` wird beim Schließen des Browser-Tabs geleert (kein Sicherheitsrisiko bei längerer Inaktivität)
-
-Langfristig empfohlen: Admin auf eine Custom-Domain (`admin.shopray.de`) legen, dann kann `SameSite=Lax` Cookie genutzt werden.
-
 ### Admin lokal starten
 
 ```bash
