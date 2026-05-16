@@ -10,9 +10,11 @@ import ordersRouter       from './routes/orders';
 import productsRouter     from './routes/products';
 import customersRouter    from './routes/customers';
 import contactRouter      from './routes/contact';
-import adminAuthRouter    from './routes/admin-auth';
-import adminProductsRouter from './routes/admin-products';
-import settingsRouter      from './routes/settings';
+import adminAuthRouter       from './routes/admin-auth';
+import adminProductsRouter   from './routes/admin-products';
+import adminCategoriesRouter from './routes/admin-categories';
+import adminCustomersRouter  from './routes/admin-customers';
+import settingsRouter        from './routes/settings';
 
 const app  = express();
 const PORT = process.env.PORT ?? 5000;
@@ -39,9 +41,11 @@ app.use('/api/contact',   contactRouter);
 app.use('/api/settings', settingsRouter);
 
 // ── Admin Routes (JWT HttpOnly Cookie erforderlich) ───────────────────────────
-app.use('/api/admin',          adminAuthRouter);
-app.use('/api/admin/products', adminProductsRouter);
-app.use('/api/admin/settings', settingsRouter);
+app.use('/api/admin',             adminAuthRouter);
+app.use('/api/admin/products',    adminProductsRouter);
+app.use('/api/admin/categories',  adminCategoriesRouter);
+app.use('/api/admin/customers',   adminCustomersRouter);
+app.use('/api/admin/settings',    settingsRouter);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 app.use((_req, res) => {

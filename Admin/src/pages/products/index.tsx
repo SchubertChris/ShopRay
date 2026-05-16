@@ -6,10 +6,9 @@ import { deleteProduct, toggleProductActive } from '../../api/adminApi';
 import type { AdminProduct } from '../../api/adminApi';
 import type { ProductCategory } from '../../types/index';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { API_URL } from '../../api/adminApi';
 
 type Density = 'compact' | 'normal';
-
-const API_URL    = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:5000';
 const CATEGORIES: Array<'Alle' | ProductCategory> = ['Alle', 'Wohnen', 'Deko', 'Küche', 'Textilien', 'Kunst'];
 const DENSITY_KEY = 'admin-product-density';
 

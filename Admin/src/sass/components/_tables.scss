@@ -72,6 +72,10 @@
     text-decoration: line-through;
     margin-left:     0.375rem;
   }
+
+  &__cell--right {
+    text-align: right !important;
+  }
 }
 
 // ─── SKELETON ────────────────────────────────────────────────────────────────

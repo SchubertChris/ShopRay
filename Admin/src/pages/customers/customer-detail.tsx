@@ -1,9 +1,19 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Download, Trash2, ShoppingBag, Mail, Phone, Calendar } from 'lucide-react';
+import { ArrowLeft, Download, Trash2, ShoppingBag, Mail, Phone, Calendar, ShieldCheck } from 'lucide-react';
 import { ROUTES } from '@config/routes';
+import { updateCustomerRole, type UserRole } from '../../api/adminApi';
 import type { OrderStatus } from '../../types/index';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+
+const ROLE_LABELS: Record<UserRole, string> = {
+  owner:    'Inhaber',
+  admin:    'Admin',
+  mod:      'Moderator',
+  customer: 'Kunde',
+};
+
+const ROLE_OPTIONS: UserRole[] = ['customer', 'mod', 'admin', 'owner'];
 
 // Mock — wird durch echten API-Call ersetzt
 const MOCK_CUSTOMER = {
@@ -42,6 +52,26 @@ export default function CustomerDetailPage() {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting]                   = useState(false);
+  const [role,     setRole]                       = useState<UserRole>('customer');
+  const [roleSaving, setRoleSaving]               = useState(false);
+  const [roleError,  setRoleError]                = useState<string | null>(null);
+  const [roleSaved,  setRoleSaved]                = useState(false);
+
+  const handleRoleSave = async () => {
+    if (!id) return;
+    setRoleSaving(true);
+    setRoleError(null);
+    setRoleSaved(false);
+    try {
+      await updateCustomerRole(id, role);
+      setRoleSaved(true);
+      setTimeout(() => setRoleSaved(false), 3000);
+    } catch (err) {
+      setRoleError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen.');
+    } finally {
+      setRoleSaving(false);
+    }
+  };
 
   const initials = customer.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
@@ -166,6 +196,36 @@ export default function CustomerDetailPage() {
 
         {/* ── Rechte Spalte ── */}
         <div>
+          {/* Rollen-Verwaltung */}
+          <div className="detail-card">
+            <div className="detail-card__header">
+              <ShieldCheck size={15} strokeWidth={1.75} />
+              Rolle
+            </div>
+            <div className="detail-card__body">
+              <p className="detail-info-item__label detail-role__label">
+                Benutzerrolle festlegen
+              </p>
+              <select
+                className="form-select"
+                value={role}
+                onChange={e => { setRole(e.target.value as UserRole); setRoleSaved(false); }}
+              >
+                {ROLE_OPTIONS.map(r => (
+                  <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                ))}
+              </select>
+              {roleError && <p className="form-error-inline detail-role__error">{roleError}</p>}
+              <button
+                className="btn-primary detail-role__btn"
+                onClick={handleRoleSave}
+                disabled={roleSaving}
+              >
+                {roleSaving ? 'Speichert…' : roleSaved ? 'Gespeichert ✓' : 'Rolle speichern'}
+              </button>
+            </div>
+          </div>
+
           {/* DSGVO-Bereich */}
           <div className="detail-card dsgvo-card">
             <div className="detail-card__header dsgvo-card__header">

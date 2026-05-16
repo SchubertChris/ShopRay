@@ -36,9 +36,13 @@ function setAdminCookie(res: Response, token: string): void {
   });
 }
 
+const LOCKOUT_MAX_ATTEMPTS = 5;
+const LOCKOUT_WINDOW_MS    = 15 * 60 * 1000; // 15 Minuten
+
 // POST /api/admin/login
 router.post('/login', authRateLimit, validate(LoginSchema), async (req: Request, res: Response): Promise<void> => {
   const { password } = req.body as z.infer<typeof LoginSchema>;
+  const ip           = getClientIp(req);
 
   const hash = process.env.ADMIN_PASSWORD_HASH;
   if (!hash) {
@@ -46,10 +50,24 @@ router.post('/login', authRateLimit, validate(LoginSchema), async (req: Request,
     return;
   }
 
+  // ── IP-Lockout prüfen (vor dem bcrypt-Vergleich) ──────────────────────────
+  const cutoff = new Date(Date.now() - LOCKOUT_WINDOW_MS).toISOString();
+  const { count } = await supabase
+    .from('admin_login_log')
+    .select('*', { count: 'exact', head: true })
+    .eq('ip_address', ip)
+    .eq('success', false)
+    .gte('created_at', cutoff);
+
+  if ((count ?? 0) >= LOCKOUT_MAX_ATTEMPTS) {
+    res.status(429).json({ error: 'Zu viele fehlgeschlagene Anmeldeversuche. Bitte warte 15 Minuten.' });
+    return;
+  }
+
   const valid = await bcrypt.compare(password, hash);
   if (!valid) {
     void supabase.from('admin_login_log').insert({
-      ip_address: getClientIp(req),
+      ip_address: ip,
       user_agent: (req.headers['user-agent'] ?? '').slice(0, 500),
       success: false,
     });
@@ -68,7 +86,6 @@ router.post('/login', authRateLimit, validate(LoginSchema), async (req: Request,
   setAdminCookie(res, token);
 
   // ── Login loggen + E-Mail-Alarm (fire-and-forget) ────────────────────────
-  const ip        = getClientIp(req);
   const userAgent = (req.headers['user-agent'] ?? '').slice(0, 500);
   const date      = new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });
 

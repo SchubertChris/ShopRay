@@ -1,4 +1,4 @@
-const API_URL = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:5000';
+export const API_URL = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:5000';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -148,6 +148,63 @@ export interface LoginLogEntry {
 
 export const getLoginLog = () =>
   apiFetch<LoginLogEntry[]>('/api/admin/login-log');
+
+// ── Kunden (Admin) ────────────────────────────────────────────────────────────
+
+export type UserRole = 'owner' | 'admin' | 'mod' | 'customer';
+
+export interface AdminCustomer {
+  id:         string;
+  name:       string | null;
+  email:      string | null;
+  role:       UserRole;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface AdminCustomerDetail extends AdminCustomer {
+  orders: Array<{
+    id:           string;
+    order_number: string;
+    status:       string;
+    total:        string;
+    created_at:   string;
+  }>;
+}
+
+export const getAdminCustomers = (page = 1, limit = 50) =>
+  apiFetch<{ data: AdminCustomer[]; total: number; page: number; limit: number }>(
+    `/api/admin/customers?page=${page}&limit=${limit}`,
+  );
+
+export const getAdminCustomer = (id: string) =>
+  apiFetch<AdminCustomerDetail>(`/api/admin/customers/${id}`);
+
+export const updateCustomerRole = (id: string, role: UserRole) =>
+  apiFetch<{ id: string; name: string; email: string; role: UserRole }>(
+    `/api/admin/customers/${id}/role`, 'PATCH', { role },
+  );
+
+export const deleteAdminCustomer = (id: string) =>
+  apiFetch<{ deleted: boolean }>(`/api/admin/customers/${id}`, 'DELETE');
+
+// ── Kategorien ────────────────────────────────────────────────────────────────
+
+export interface Category {
+  id:         string;
+  name:       string;
+  order:      number;
+  created_at: string;
+}
+
+export const getCategories    = () =>
+  apiFetch<Category[]>('/api/admin/categories');
+
+export const createCategory   = (name: string, order?: number) =>
+  apiFetch<Category>('/api/admin/categories', 'POST', { name, order: order ?? 0 });
+
+export const deleteCategory   = (id: string) =>
+  apiFetch<{ success: boolean }>(`/api/admin/categories/${id}`, 'DELETE');
 
 // ── Kontaktanfragen ───────────────────────────────────────────────────────────
 

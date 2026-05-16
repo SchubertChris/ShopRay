@@ -9,9 +9,7 @@ export interface CheckoutPayload {
   cartItems:     Array<{ productId: string; quantity: number }>;
 }
 
-/** Backend-Antwort nach erfolgreicher Bestellung */
+/** Backend-Antwort: Stripe-Checkout-URL zur Weiterleitung */
 export interface CheckoutResponse {
-  orderId:     string;
-  orderNumber: string;
-  total:       number;
+  checkoutUrl: string;
 }

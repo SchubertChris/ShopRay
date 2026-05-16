@@ -361,6 +361,13 @@
   margin:     1.25rem 0;
 }
 
+// ─── ROLLEN-KARTE ────────────────────────────────────────────────────────────
+.detail-role {
+  &__label { margin-bottom: 0.5rem; }
+  &__error { margin-top: 0.5rem; }
+  &__btn   { margin-top: 0.875rem; width: 100%; justify-content: center; }
+}
+
 // ─── DANGER BUTTON ───────────────────────────────────────────────────────────
 .btn-danger {
   display:         inline-flex;

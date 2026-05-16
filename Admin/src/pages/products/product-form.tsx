@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2, X, Plus } from 'lucide-react';
 import { ROUTES } from '@config/routes';
-import { getAdminProduct, createProduct, updateProduct } from '../../api/adminApi';
+import { getAdminProduct, createProduct, updateProduct, API_URL } from '../../api/adminApi';
 import type { AdminProduct, LmivInfo, DealerLink, ProductDocument } from '../../api/adminApi';
 import type { ProductCategory } from '../../types/index';
 import NumberInput        from '../../components/ui/NumberInput';
@@ -66,8 +66,7 @@ export default function ProductFormPage() {
 
   /* ── Kategorien laden ───────────────────────────────────────────────────── */
   useEffect(() => {
-    const apiUrl = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:5000';
-    fetch(`${apiUrl}/api/products/categories`)
+    fetch(`${API_URL}/api/products/categories`)
       .then(r => r.json())
       .then((data: unknown) => { if (Array.isArray(data)) setCategories(data as string[]); })
       .catch(() => setCategories(['Wohnen', 'Deko', 'Küche', 'Textilien', 'Kunst']));

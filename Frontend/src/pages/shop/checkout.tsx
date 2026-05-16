@@ -156,10 +156,8 @@ export default function CheckoutPage() {
         cartItems: items.map(i => ({ productId: i.id, quantity: i.quantity })),
       });
       clearCart();
-      navigate(ROUTES.SHOP.ORDER_SUCCESS, {
-        state: { orderNumber: result.orderNumber, total: result.total },
-        replace: true,
-      });
+      // Weiterleitung zur Stripe-Hosted-Checkout-Seite
+      window.location.href = result.checkoutUrl;
     } catch (err) {
       setApiError(getErrorMessage(err));
     } finally {

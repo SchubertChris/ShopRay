@@ -129,7 +129,14 @@ export default function LoginPage() {
             <p className="auth-card__subtitle">Melde dich an, um fortzufahren.</p>
 
             <form className="auth-form" onSubmit={handleSubmit}>
-              <button type="button" className="social-btn">
+              <button
+                type="button"
+                className="social-btn"
+                onClick={() => supabase.auth.signInWithOAuth({
+                  provider: 'google',
+                  options: { redirectTo: `${window.location.origin}${ROUTES.AUTH.CALLBACK}` },
+                })}
+              >
                 <IconGoogle size={20} /> Mit Google anmelden
               </button>
 

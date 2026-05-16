@@ -62,8 +62,8 @@ export default function OrderDetailPage() {
   const [status, setStatus] = useState<OrderStatus>(order.status);
 
   const handleSave = () => {
-    // API call to update status
-    console.log('Update order', id, 'status to', status);
+    // TODO: API call to update order status
+    void id;
   };
 
   return (
@@ -80,10 +80,9 @@ export default function OrderDetailPage() {
         </div>
         <div className="page-header__actions">
           <select
-            className="form-select"
             value={status}
             onChange={e => setStatus(e.target.value as OrderStatus)}
-            style={{ width: 'auto' }}
+            className="form-select form-select--auto"
           >
             {STATUS_OPTIONS.map(o => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -112,7 +111,7 @@ export default function OrderDetailPage() {
                   <th>Produkt</th>
                   <th>Menge</th>
                   <th>Einzelpreis</th>
-                  <th style={{ textAlign: 'right' }}>Gesamt</th>
+                  <th className="admin-table__cell--right">Gesamt</th>
                 </tr>
               </thead>
               <tbody>
@@ -126,7 +125,7 @@ export default function OrderDetailPage() {
                     </td>
                     <td className="admin-table__muted">× {item.qty}</td>
                     <td className="admin-table__muted">€ {item.price}</td>
-                    <td style={{ textAlign: 'right' }}><strong>€ {item.total}</strong></td>
+                    <td className="admin-table__cell--right"><strong>€ {item.total}</strong></td>
                   </tr>
                 ))}
               </tbody>

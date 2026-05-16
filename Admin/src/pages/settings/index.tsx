@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Save, Store, Mail, Truck, Lock, ShieldCheck, Monitor, AlertTriangle, Loader2, CheckCircle2 } from 'lucide-react';
-import { getLoginLog, getShippingSettings, updateShippingSettings, type LoginLogEntry, type ShippingSettings } from '../../api/adminApi';
+import { Save, Store, Mail, Truck, Lock, Tag, Trash2, Plus, ShieldCheck, Monitor, AlertTriangle, Loader2, CheckCircle2 } from 'lucide-react';
+import {
+  getLoginLog, getShippingSettings, updateShippingSettings,
+  getCategories, createCategory, deleteCategory,
+  type LoginLogEntry, type ShippingSettings, type Category,
+} from '../../api/adminApi';
 
-type SettingsTab = 'shop' | 'smtp' | 'shipping' | 'security';
+type SettingsTab = 'shop' | 'smtp' | 'shipping' | 'categories' | 'security';
 
 const TABS: Array<{ key: SettingsTab; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }> = [
-  { key: 'shop',     label: 'Shop-Infos',    icon: Store  },
-  { key: 'smtp',     label: 'E-Mail (SMTP)', icon: Mail   },
-  { key: 'shipping', label: 'Versand',       icon: Truck  },
-  { key: 'security', label: 'Sicherheit',    icon: Lock   },
+  { key: 'shop',       label: 'Shop-Infos',    icon: Store  },
+  { key: 'smtp',       label: 'E-Mail (SMTP)', icon: Mail   },
+  { key: 'shipping',   label: 'Versand',       icon: Truck  },
+  { key: 'categories', label: 'Kategorien',    icon: Tag    },
+  { key: 'security',   label: 'Sicherheit',    icon: Lock   },
 ];
 
 export default function SettingsPage() {
@@ -41,10 +46,11 @@ export default function SettingsPage() {
 
         {/* Content */}
         <div className="settings-content">
-          {tab === 'shop' && <ShopSettings />}
-          {tab === 'smtp' && <SmtpSettings />}
-          {tab === 'shipping' && <ShippingSettings />}
-          {tab === 'security' && <SecuritySettings />}
+          {tab === 'shop'       && <ShopSettings />}
+          {tab === 'smtp'       && <SmtpSettings />}
+          {tab === 'shipping'   && <ShippingSettings />}
+          {tab === 'categories' && <CategoriesSettings />}
+          {tab === 'security'   && <SecuritySettings />}
         </div>
       </div>
     </>
@@ -383,6 +389,119 @@ function SecuritySettings() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ── Kategorien ────────────────────────────────────────────────────────────────
+function CategoriesSettings() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [newName,    setNewName]    = useState('');
+  const [adding,     setAdding]     = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error,      setError]      = useState<string | null>(null);
+
+  useEffect(() => {
+    getCategories()
+      .then(setCategories)
+      .catch(() => setError('Kategorien konnten nicht geladen werden.'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newName.trim()) return;
+    setAdding(true);
+    setError(null);
+    try {
+      const cat = await createCategory(newName.trim());
+      setCategories(prev => [...prev, cat].sort((a, b) => a.name.localeCompare(b.name, 'de')));
+      setNewName('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Hinzufügen fehlgeschlagen.');
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    setError(null);
+    try {
+      await deleteCategory(id);
+      setCategories(prev => prev.filter(c => c.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Löschen fehlgeschlagen.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  return (
+    <div className="form-section">
+      <div className="form-section__head">
+        <h2 className="form-section__title">Kategorien</h2>
+        <p className="form-section__desc">
+          Hier verwaltete Kategorien erscheinen im Produkt-Formular und im Shop-Filter.
+          Hinweis: Vor der ersten Nutzung <code>migration_004_categories.sql</code> in Supabase ausführen.
+        </p>
+      </div>
+
+      {error && <p className="form-error-inline">{error}</p>}
+
+      <form className="category-add-form" onSubmit={handleAdd} noValidate>
+        <input
+          type="text"
+          className="form-input"
+          placeholder="Neue Kategorie…"
+          value={newName}
+          onChange={e => setNewName(e.target.value)}
+          maxLength={100}
+        />
+        <button className="btn-primary" type="submit" disabled={adding || !newName.trim()}>
+          {adding
+            ? <Loader2 size={14} strokeWidth={2} className="spin" />
+            : <Plus    size={14} strokeWidth={2} />
+          }
+          Hinzufügen
+        </button>
+      </form>
+
+      {loading && (
+        <div className="page-loading">
+          <Loader2 size={18} strokeWidth={1.5} className="spin" />
+          <span>Lade Kategorien…</span>
+        </div>
+      )}
+
+      {!loading && categories.length === 0 && !error && (
+        <p className="form-hint" style={{ marginTop: '1rem' }}>
+          Noch keine Kategorien angelegt.
+        </p>
+      )}
+
+      {!loading && categories.length > 0 && (
+        <ul className="category-list">
+          {categories.map(cat => (
+            <li key={cat.id} className="category-list__item">
+              <Tag size={13} strokeWidth={2} className="category-list__icon" />
+              <span className="category-list__name">{cat.name}</span>
+              <button
+                className="category-list__delete"
+                onClick={() => handleDelete(cat.id)}
+                disabled={deletingId === cat.id}
+                title={`"${cat.name}" löschen`}
+              >
+                {deletingId === cat.id
+                  ? <Loader2 size={13} strokeWidth={2} className="spin" />
+                  : <Trash2  size={13} strokeWidth={2} />
+                }
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

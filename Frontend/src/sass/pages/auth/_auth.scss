@@ -402,3 +402,31 @@
     strong { color: var(--clr-text); opacity: 1; font-weight: 600; }
   }
 }
+
+// ─── AUTH CALLBACK ─────────────────────────────────────────────────────────
+.auth-callback {
+  display:         flex;
+  flex-direction:  column;
+  align-items:     center;
+  justify-content: center;
+  gap:             1rem;
+  min-height:      100dvh;
+
+  &__spinner {
+    width:         36px;
+    height:        36px;
+    border:        3px solid color-mix(in srgb, var(--clr-primary) 20%, transparent);
+    border-top-color: var(--clr-primary);
+    border-radius: 50%;
+    animation:     spin 0.75s linear infinite;
+  }
+
+  &__text {
+    font-size:  rem(14px);
+    color:      color-mix(in srgb, var(--clr-text) 55%, transparent);
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
