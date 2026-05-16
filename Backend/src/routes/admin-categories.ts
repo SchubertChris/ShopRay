@@ -18,7 +18,7 @@ router.get('/', async (_req: Request, res: Response, next: NextFunction): Promis
   try {
     const { data, error } = await supabase
       .from('categories')
-      .select('id, name, "order"')
+      .select('id, name, "order", created_at')
       .order('"order"', { ascending: true })
       .order('name',    { ascending: true });
 
