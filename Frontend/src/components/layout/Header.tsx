@@ -25,11 +25,15 @@ export function Header() {
   const lastScrollY               = useRef(0);
   const location                  = useLocation();
 
+  // Nav bleibt auf /shop immer sichtbar (Filterleiste würde sonst verdeckt)
+  const ALWAYS_VISIBLE_PATHS = [ROUTES.SHOP.SEARCH];
+  const isHome = !ALWAYS_VISIBLE_PATHS.some(p => location.pathname.startsWith(p));
+
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
       setScrolled(y > 80);
-      if (y > lastScrollY.current && y > 120) {
+      if (isHome && y > lastScrollY.current && y > 120) {
         setHidden(true);
       } else {
         setHidden(false);
@@ -38,10 +42,13 @@ export function Header() {
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [isHome]);
 
-  // Mobile Nav bei Route-Wechsel schließen
-  useEffect(() => { setMobileNav(false); }, [location.pathname]);
+  // Mobile Nav bei Route-Wechsel schließen; hidden zurücksetzen wenn nicht Home
+  useEffect(() => {
+    setMobileNav(false);
+    if (!isHome) setHidden(false);
+  }, [location.pathname, isHome]);
 
   // Hintergrund-Scroll sperren wenn Nav offen
   useEffect(() => {
