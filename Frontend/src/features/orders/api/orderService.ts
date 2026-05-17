@@ -8,6 +8,7 @@ function mapItem(raw: Record<string, unknown>): OrderItem {
     productName: String(raw.product_name ?? ''),
     price:       String(raw.price ?? '0'),
     quantity:    Number(raw.quantity ?? 1),
+    imageUrl:    (raw.image_url as string | null) ?? null,
   };
 }
 
@@ -22,6 +23,7 @@ function mapOrder(raw: Record<string, unknown>): Order {
     items:           rawItems.map(mapItem),
     shippingAddress: (raw.shipping_address as Order['shippingAddress']) ?? null,
     total:           Number(raw.total ?? 0),
+    paymentMethod:   (raw.payment_method as string | null) ?? null,
     paidAt:          (raw.paid_at as string | null) ?? null,
     shippedAt:       (raw.shipped_at as string | null) ?? null,
     customerNote:    (raw.customer_note as string | null) ?? null,

@@ -4,6 +4,19 @@ import { SeoMeta } from '@components/ui';
 import { ROUTES } from '@config/routes';
 import type { OrderStatus } from '@/types/order';
 
+const PAYMENT_LABELS: Record<string, string> = {
+  card:           'Kreditkarte',
+  paypal:         'PayPal',
+  klarna:         'Klarna',
+  'bank-transfer': 'SEPA-Überweisung',
+  sofort:         'Sofortüberweisung',
+};
+
+function paymentLabel(method: string | null | undefined): string {
+  if (!method) return 'Kreditkarte';
+  return PAYMENT_LABELS[method] ?? method;
+}
+
 const TIMELINE_STEPS: { status: OrderStatus; label: string }[] = [
   { status: 'pending',   label: 'Bestellung eingegangen' },
   { status: 'paid',      label: 'Bezahlt' },
@@ -119,7 +132,11 @@ export default function OrderDetailPage() {
               <div className="order-items">
                 {order.items.map((item, i) => (
                   <div key={i} className="order-item">
-                    <div className="order-item__thumb" />
+                    <div className="order-item__thumb">
+                      {item.imageUrl && (
+                        <img src={item.imageUrl} alt={item.productName} loading="lazy" />
+                      )}
+                    </div>
                     <div className="order-item__info">
                       <div className="order-item__name">{item.productName}</div>
                       <div className="order-item__qty">Menge: {item.quantity}</div>
@@ -147,6 +164,10 @@ export default function OrderDetailPage() {
                 <div className="order-summary__row">
                   <span className="order-summary__label">Datum</span>
                   <span className="order-summary__value">{formattedDate}</span>
+                </div>
+                <div className="order-summary__row">
+                  <span className="order-summary__label">Zahlung</span>
+                  <span className="order-summary__value">{paymentLabel(order.paymentMethod)}</span>
                 </div>
                 <div className="order-summary__row">
                   <span className="order-summary__label">Zwischensumme</span>

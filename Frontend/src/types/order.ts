@@ -25,6 +25,7 @@ export interface OrderItem {
   productName: string;
   price:       string;
   quantity:    number;
+  imageUrl?:   string | null;
 }
 
 /** Vollständige Bestellung */
@@ -35,6 +36,7 @@ export interface Order {
   items:            OrderItem[];
   shippingAddress:  ShippingAddress | null;
   total:            number;
+  paymentMethod?:   string | null;
   paidAt?:          string | null;
   shippedAt?:       string | null;
   customerNote?:    string | null;

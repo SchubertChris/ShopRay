@@ -119,6 +119,7 @@ router.post('/checkout', requireAuth, checkoutRateLimit, validate(CheckoutSchema
         status:           'pending',
         total:            (lineItems.reduce((s, i) => s + i.unitAmountCents * i.quantity, 0) / 100).toFixed(2),
         shipping_address: shippingAddress ?? null,
+        payment_method:   paymentMethod ?? 'card',
       })
       .select()
       .single();
@@ -132,6 +133,7 @@ router.post('/checkout', requireAuth, checkoutRateLimit, validate(CheckoutSchema
         product_name: product.name,
         quantity,
         price:        (unitAmountCents / 100).toFixed(2),
+        image_url:    product.image_url ?? null,
       })),
     );
 
