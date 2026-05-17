@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { SeoMeta } from '@components/ui';
 import { ROUTES } from '@config/routes';
 import { getTickets } from '@features/tickets';
@@ -25,6 +25,8 @@ export default function TicketsPage() {
   const [tickets,  setTickets]  = useState<Ticket[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState<string | null>(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
@@ -105,7 +107,14 @@ export default function TicketsPage() {
         {!loading && !error && filtered.length > 0 && (
           <div className="tickets-list" role="tabpanel">
             {filtered.map(ticket => (
-              <div key={ticket.id} className="ticket-card">
+              <div
+                key={ticket.id}
+                className="ticket-card ticket-card--clickable"
+                onClick={() => navigate(ROUTES.ACCOUNT.ticketDetail(ticket.id))}
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => e.key === 'Enter' && navigate(ROUTES.ACCOUNT.ticketDetail(ticket.id))}
+              >
                 <div className="ticket-card__body">
                   <div className="ticket-card__subject">{ticket.subject}</div>
                   <div className="ticket-card__meta">
