@@ -464,7 +464,7 @@ function SecuritySettings() {
   useEffect(() => {
     getLoginLog()
       .then(setLog)
-      .catch(() => setError('Protokoll konnte nicht geladen werden.'))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Protokoll konnte nicht geladen werden.'))
       .finally(() => setLoading(false));
   }, []);
 

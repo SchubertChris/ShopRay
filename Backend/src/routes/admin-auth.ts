@@ -200,7 +200,8 @@ router.get('/login-log', requireAdmin, async (_req: Request, res: Response): Pro
 
     if (error) throw error;
     res.json(data ?? []);
-  } catch {
+  } catch (err) {
+    console.error('[login-log] Supabase-Fehler:', err);
     res.status(500).json({ error: 'Protokoll konnte nicht geladen werden.' });
   }
 });
