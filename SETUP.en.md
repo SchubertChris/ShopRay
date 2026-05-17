@@ -1,521 +1,597 @@
 # ShopRay — Setup Guide
 
-**Version:** 1.4.0 | **Last updated:** 2026-05-16
+**Version:** 1.6.0 | **Last updated:** 2026-05-17
 
-This guide walks you through setting up your ShopRay template step by step —
-from installation to a live, running shop.
+This guide walks you step by step through setting up your ShopRay template —
+from installation to a fully live shop.
 
 ---
 
-## Table of Contents
+## Contents
 
-1. [Requirements](#1-requirements)
+1. [Prerequisites](#1-prerequisites)
 2. [Installation](#2-installation)
 3. [Environment Variables](#3-environment-variables)
-4. [Database Setup (Supabase)](#4-database-setup-supabase)
-5. [Auth Setup (Supabase)](#5-auth-setup-supabase)
-6. [Connect Stripe (Payments)](#6-connect-stripe-payments)
-7. [Email Setup (SMTP)](#7-email-setup-smtp)
-8. [Backend Setup](#8-backend-setup)
-9. [Admin Password](#9-admin-password)
-10. [Shop Name & Basic Settings](#10-shop-name--basic-settings)
-11. [Features (Enable / Disable)](#11-features-enable--disable)
+4. [Database Setup](#4-database-setup)
+5. [Connecting Supabase](#5-connecting-supabase)
+6. [Connecting Stripe](#6-connecting-stripe)
+7. [Backend & Webhook](#7-backend--webhook)
+8. [Email Setup](#8-email-setup)
+9. [Choosing a Theme](#9-choosing-a-theme)
+10. [Shop Name & Company Details](#10-shop-name--company-details)
+11. [Enabling or Disabling Features](#11-enabling-or-disabling-features)
 12. [Adding Products](#12-adding-products)
 13. [Legal Pages](#13-legal-pages)
-14. [Admin Panel](#14-admin-panel)
-15. [Deployment (Vercel Monorepo)](#15-deployment-vercel-monorepo)
-16. [Package Tiers](#16-package-tiers)
-17. [Tech Stack & Open Source](#17-tech-stack--open-source)
+14. [Admin Panel Setup](#14-admin-panel-setup)
+15. [Deployment](#15-deployment)
+16. [Packages — What's included?](#16-packages--whats-included)
+17. [Technology & Open Source](#17-technology--open-source)
 
 ---
 
-## 1. Requirements
+## 1. Prerequisites
 
-Make sure you have the following installed:
+Before you start, make sure the following are installed:
 
-| Tool | Version | Download |
+| Program | Version | Download |
 |---|---|---|
-| **Node.js** | 18 or higher | nodejs.org |
-| **npm** | comes with Node.js | — |
-| **Git** | any recent version | git-scm.com |
+| **Node.js** | 18 or newer | https://nodejs.org |
+| **npm** | included with Node.js | — |
+| **Git** | any | https://git-scm.com |
 
-You will also need accounts with these services (all have free tiers):
-- **Supabase** — supabase.com (database + auth)
-- **Stripe** — stripe.com (payments)
-- **Vercel** — vercel.com (hosting, recommended)
+You will also need accounts at:
+- **Supabase** (free) — https://supabase.com
+- **Stripe** (free, fees per transaction only) — https://stripe.com
+- **Vercel** (free) — https://vercel.com
 
 ---
 
 ## 2. Installation
 
+ShopRay consists of three separate projects in one repository: **Frontend**, **Backend**, and **Admin**.
+
+### Step 1 — Install dependencies
+
+Open your terminal and run:
+
 ```bash
-# 1. Clone the repository or unzip the downloaded archive
-git clone https://github.com/your-repo/shopray.git
-cd shopray
+# Frontend
+cd ShopRay/Frontend && npm install
 
-# 2. Install Frontend dependencies
-cd Frontend && npm install
-
-# 3. Install Admin dependencies (Pro/Enterprise only)
-cd ../Admin && npm install
-
-# 4. Install Backend dependencies
+# Backend
 cd ../Backend && npm install
+
+# Admin
+cd ../Admin && npm install
 ```
 
-### Start locally
+### Step 2 — Prepare environment variables
 
-Open 3 terminal windows:
+Each project has its own `.env` file:
 
 ```bash
-# Terminal 1 — Frontend (http://localhost:5173)
-cd Frontend && npm run dev
+cp ShopRay/Frontend/.env.example ShopRay/Frontend/.env
+cp ShopRay/Backend/.env.example ShopRay/Backend/.env
+cp ShopRay/Admin/.env.example ShopRay/Admin/.env
+```
 
-# Terminal 2 — Admin (http://localhost:5174)
-cd Admin && npm run dev
+### Step 3 — Start development servers
 
-# Terminal 3 — Backend (http://localhost:5000)
-cd Backend && npm run dev
+```bash
+# Terminal 1 — Frontend
+cd ShopRay/Frontend && npm run dev   # → http://localhost:5173
+
+# Terminal 2 — Backend
+cd ShopRay/Backend && npm run dev    # → http://localhost:5000
+
+# Terminal 3 — Admin
+cd ShopRay/Admin && npm run dev      # → http://localhost:5174
 ```
 
 ---
 
 ## 3. Environment Variables
 
-Each project has a `.env.example` file. Copy it and fill in your values.
+> **Important:** `.env` files must **never** be committed to Git. They are already listed in `.gitignore`.
 
-```bash
-cp Frontend/.env.example  Frontend/.env
-cp Admin/.env.example     Admin/.env
-cp Backend/.env.example   Backend/.env
+### Frontend/.env
+
+```env
+VITE_API_URL=https://api.yourshop.com          # Your backend URL
+VITE_SUPABASE_URL=https://xxxx.supabase.co     # Supabase project URL
+VITE_SUPABASE_ANON_KEY=eyJ...                  # Supabase anon key (public)
+VITE_STRIPE_PUBLIC_KEY=pk_live_xxxx            # Stripe publishable key
 ```
 
-**Never commit `.env` files** — they are already in `.gitignore`.
+### Backend/.env
 
-### Frontend variables (`Frontend/.env`)
+```env
+SUPABASE_URL=https://xxxx.supabase.co          # Supabase project URL
+SUPABASE_SERVICE_ROLE_KEY=eyJ...               # Supabase service_role key (secret!)
+STRIPE_SECRET_KEY=sk_live_xxxx                 # Stripe secret key (secret!)
+STRIPE_WEBHOOK_SECRET=whsec_xxxx               # Stripe webhook signing secret
+JWT_SECRET=a-very-long-random-string
+ADMIN_PASSWORD_HASH=$2b$12$...                 # bcrypt hash of your admin password
+CLIENT_URL=https://yourshop.com                # Shop URL (for Stripe redirect after payment)
+SMTP_HOST=smtp.resend.com
+SMTP_PORT=587
+SMTP_USER=resend
+SMTP_PASS=re_xxxx
+SMTP_FROM_EMAIL=orders@yourshop.com
+ADMIN_URL=https://admin.yourshop.com
+NODE_ENV=production
+DEMO_MODE=false                                # true = all admin writes are blocked
+```
 
-| Variable | Description | Where to find |
-|---|---|---|
-| `VITE_API_URL` | Your Backend URL | `http://localhost:5000` locally |
-| `VITE_SUPABASE_URL` | Supabase project URL | supabase.com → Settings → API |
-| `VITE_SUPABASE_ANON_KEY` | Supabase public key | same location |
-| `VITE_STRIPE_PUBLIC_KEY` | Stripe publishable key (`pk_...`) | stripe.com → Developers → API Keys |
+### Admin/.env
 
-### Admin variables (`Admin/.env`)
+```env
+VITE_API_URL=https://api.yourshop.com          # Your backend URL
+```
 
-| Variable | Description |
+---
+
+## 4. Database Setup
+
+All database changes are stored as SQL files in the `database/` folder. They need to be run once in the Supabase SQL Editor.
+
+### Step 1 — Create the schema
+
+1. Go to **supabase.com → Your Project → SQL Editor**
+2. Open `database/schema.sql`, copy the contents, and click **"Run"**
+
+This creates the following tables:
+
+| Table | Contents |
 |---|---|
-| `VITE_API_URL` | Your Backend URL (same as Frontend) |
+| `profiles` | Customer data (name, address, role) |
+| `products` | Products (price, description, stock) |
+| `orders` | Orders with status history |
+| `order_items` | Individual items per order |
+| `reviews` | Product reviews |
+| `tickets` | Support tickets |
 
-### Backend variables (`Backend/.env`)
+### Step 2 — Run migrations
 
-| Variable | Description | Where to find |
-|---|---|---|
-| `SUPABASE_URL` | Supabase project URL | supabase.com → Settings → API |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | same location (**keep secret**) |
-| `STRIPE_SECRET_KEY` | Stripe secret key (`sk_...`) | stripe.com → Developers → API Keys |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret (`whsec_...`) | after creating a webhook endpoint |
-| `ADMIN_PASSWORD_HASH` | bcrypt hash of your Admin password | generate with the script below |
-| `SESSION_SECRET` | Random string for cookie signing | generate: `openssl rand -base64 32` |
-| `FRONTEND_URL` | Your shop URL | e.g. `https://yourshop.com` |
-| `ADMIN_URL` | Your Admin panel URL | e.g. `https://admin.yourshop.com` |
+Run migrations **in order** — each as a separate query in the SQL Editor:
 
----
+| File | What it does |
+|---|---|
+| `database/migration_001_products_detail.sql` | Extended product fields (highlights, certificates, nutritional info) |
+| `database/migration_002_admin_login_log.sql` | Login log for the admin panel |
+| `database/migration_003_product_images.sql` | Supabase Storage bucket for product images |
+| `database/migration_004_grants.sql` | Permissions for all tables |
+| `database/migration_005_shipping_settings.sql` | Shipping cost configuration |
+| `database/migration_006_admin_totp.sql` | Admin 2FA table (TOTP) |
+| `database/migration_007_categories.sql` | Categories table for the admin panel |
 
-## 4. Database Setup (Supabase)
+> **Order matters:** Always run migrations in order 001 → 002 → … → 007.
 
-### Create a Supabase project
+### What happens automatically
 
-1. Go to supabase.com → create a free account
-2. Click **"New project"** — choose the **Frankfurt (eu-central-1)** region for GDPR compliance
-3. Wait for the project to initialize (~2 minutes)
-
-### Run the SQL files
-
-Open the **SQL Editor** in Supabase and execute each file **in order**:
-
-| Step | File | What it creates |
-|---|---|---|
-| 1 | `database/schema.sql` | All base tables (products, orders, users, contacts, settings) |
-| 2 | `database/migration_002_admin_login_log.sql` | Admin login log table |
-| 3 | `database/migration_003_product_images.sql` | Multiple product images (JSONB column) |
-| 4 | `database/migration_005_shipping_settings.sql` | Configurable shipping settings |
-
-For each file: **SQL Editor → New query** → paste the content → **Run**.
+- When a user registers → a profile is created automatically
+- When a review changes → the product rating is updated
+- All tables have **Row Level Security (RLS)** — every user only sees their own data
 
 ---
 
-## 5. Auth Setup (Supabase)
+## 5. Connecting Supabase
 
-### Enable Email Auth
+### Step 1 — Create a project
 
-**Authentication → Providers → Email** → enable.
+1. Go to https://supabase.com and sign in
+2. Click **"New Project"**
+3. Choose region **"Central EU (Frankfurt)"** — important for GDPR compliance
+4. Set a project name and a strong database password
+5. Wait ~2 minutes for the project to be ready
 
-For production, configure a custom SMTP server (see section 7) so emails arrive from your domain.
+### Step 2 — Copy API keys
 
-### Enable Two-Factor Authentication (MFA)
+1. In your Supabase project: **Settings → API**
+2. Copy **"Project URL"** → into both `.env` files as `VITE_SUPABASE_URL` (Frontend) and `SUPABASE_URL` (Backend)
+3. Copy **"anon public"** key → `Frontend/.env` as `VITE_SUPABASE_ANON_KEY`
+4. Copy **"service_role"** key → `Backend/.env` as `SUPABASE_SERVICE_ROLE_KEY`
 
-**Authentication → Sign In / Up → Multi-Factor Authentication** → turn on TOTP.
+> **Don't mix up:** The `anon` key goes in the frontend, the `service_role` key in the backend only. The `service_role` key has full database access — it must never be public.
 
-This allows customers to protect their accounts with an authenticator app.
+### Step 3 — Configure authentication
 
-### Set Redirect URLs (for password reset)
+1. In Supabase: **Authentication → URL Configuration**
+2. Set **Site URL**: your shop domain (e.g. `https://myshop.com`)
+3. Under **Redirect URLs** add:
+   ```
+   https://myshop.com/auth/reset-password
+   http://localhost:5173/auth/reset-password
+   ```
 
-**Authentication → URL Configuration → Redirect URLs** → add your URLs:
+### Step 4 — Disable email confirmation
 
-```
-http://localhost:5173/auth/reset-password
-https://yourshop.com/auth/reset-password
-```
+Until you have your own SMTP server set up, disable the confirmation email:
 
-These are required so the "Reset Password" email link works correctly.
+1. In Supabase: **Authentication → Sign In / Providers → Email**
+2. Turn off **"Confirm email"** → click **Save**
+
+### Step 5 — Enable two-factor authentication (recommended)
+
+1. In Supabase: **Authentication → Sign In / Up**
+2. Under **Multi-Factor Authentication** → set **TOTP** to **Enabled**
+
+Customers can then enable 2FA themselves in their account settings.
+
+### Step 6 — Set up Google login (optional)
+
+**Google Cloud Console:**
+
+1. Go to https://console.cloud.google.com → create a project
+2. **APIs & Services → Credentials → Create → OAuth 2.0 Client ID**
+3. Application type: **Web application**
+4. Authorized redirect URI: `https://YOUR-SUPABASE-URL.supabase.co/auth/v1/callback`
+5. Copy **Client ID** and **Client Secret**
+
+**In Supabase:**
+
+1. **Authentication → Sign In / Providers → Google** → Enable
+2. Enter **Client ID** and **Client Secret** → Save
+
+### Step 7 — Customize email templates (optional)
+
+In Supabase: **Authentication → Email Templates** — customize "Confirm signup", "Reset Password", and "Magic Link" with your shop name and branding.
 
 ---
 
-## 6. Connect Stripe (Payments)
+## 6. Connecting Stripe
 
-1. Create a Stripe account at stripe.com
-2. Go to **Developers → API Keys**
-3. Copy the **Publishable key** (`pk_...`) → `VITE_STRIPE_PUBLIC_KEY` in `Frontend/.env`
-4. Copy the **Secret key** (`sk_...`) → `STRIPE_SECRET_KEY` in `Backend/.env`
+### Step 1 — Account and keys
 
-### Set up Webhook
+1. Go to https://stripe.com → **Developers → API Keys**
+2. Copy **"Publishable key"** → `Frontend/.env` as `VITE_STRIPE_PUBLIC_KEY`
+3. Copy **"Secret key"** → `Backend/.env` as `STRIPE_SECRET_KEY`
 
-1. **Developers → Webhooks → Add endpoint**
-2. URL: `https://YOUR-BACKEND-URL/api/webhook/stripe`
-3. Events to listen for:
-   - `checkout.session.completed`
-   - `payment_intent.payment_failed`
-   - `charge.refunded`
-4. Copy the **Webhook signing secret** (`whsec_...`) → `STRIPE_WEBHOOK_SECRET` in `Backend/.env`
+> **Important:** Never put the secret key in the frontend — backend only!
 
-### Test vs. Live mode
+### Step 2 — Test mode
 
-Stripe has test keys (`pk_test_...`) and live keys (`pk_live_...`).  
-During development, always use test keys. Switch to live keys only before launch.
+During development use test keys (`pk_test_...`, `sk_test_...`).
+Test card: `4242 4242 4242 4242`, any future expiry, any CVC.
 
-**Test card numbers:**
-- Success: `4242 4242 4242 4242`
-- Declined: `4000 0000 0000 0002`
+### Step 3 — Production webhook
 
-### Local testing with Stripe CLI
+After deployment (see Step 7):
+
+1. Stripe Dashboard → **Developers → Webhooks → Add endpoint**
+2. URL: `https://YOUR-BACKEND-URL.vercel.app/api/webhook/stripe`
+3. Events: `checkout.session.completed`, `payment_intent.payment_failed`, `charge.refunded`
+4. Copy **Signing Secret** → add to Vercel as `STRIPE_WEBHOOK_SECRET`
+
+---
+
+## 7. Backend & Webhook
+
+> **Note:** Built-in rate limiting: 100 requests / 15 min globally, stricter limits for login and checkout.
+
+### Start locally
 
 ```bash
-# Install Stripe CLI: stripe.com/docs/stripe-cli
+cd Backend && npm run dev
+# Test: http://localhost:5000/api/health → {"status":"ok"}
+```
+
+### Test webhook locally
+
+```bash
 stripe login
 stripe listen --forward-to localhost:5000/api/webhook/stripe
+# Copy the whsec_... secret → Backend/.env as STRIPE_WEBHOOK_SECRET
+```
+
+### Backend endpoints
+
+| Method | Route | Description |
+|---|---|---|
+| GET | `/api/health` | Status check |
+| GET | `/api/products` | All active products |
+| GET | `/api/products/:slug` | Single product |
+| GET | `/api/settings/shipping` | Shipping settings (public) |
+| POST | `/api/orders/checkout` | Start Stripe checkout |
+| GET | `/api/orders` | Own orders (auth) |
+| GET | `/api/customers/me` | Own profile (auth) |
+| GET | `/api/customers/me/export` | GDPR data export (auth) |
+| DELETE | `/api/customers/me` | Delete account (GDPR Art. 17) |
+| POST | `/api/contact` | Send contact request |
+| POST | `/api/admin/login` | Admin login |
+| GET | `/api/admin/products` | All products (admin) |
+| GET | `/api/admin/orders` | Orders (admin) |
+| PATCH | `/api/admin/orders/:id/status` | Update order status (admin) |
+| GET | `/api/admin/customers` | Customer list (admin) |
+| DELETE | `/api/admin/customers/:id` | Delete customer (admin) |
+| GET | `/api/admin/reviews` | Manage reviews (admin) |
+| GET | `/api/admin/tickets` | Support tickets (admin) |
+| GET | `/api/admin/stats` | Dashboard statistics (admin) |
+| PUT | `/api/admin/settings/shipping` | Save shipping settings (admin) |
+
+---
+
+## 8. Email Setup
+
+The shop automatically sends emails for order confirmations, password resets, and ticket replies.
+
+| Provider | Free tier | Link |
+|---|---|---|
+| **Resend** | 3,000 emails/month | https://resend.com |
+| **Postmark** | 100 emails/month | https://postmarkapp.com |
+| **AWS SES** | 62,000 emails/month | https://aws.amazon.com/ses |
+
+### Setup (example: Resend)
+
+1. Create account → verify domain (DNS records)
+2. Create API key
+3. Add to `Backend/.env`:
+   ```env
+   SMTP_HOST=smtp.resend.com
+   SMTP_PORT=587
+   SMTP_USER=resend
+   SMTP_PASS=re_xxxx
+   SMTP_FROM_EMAIL=orders@yourshop.com
+   ```
+
+---
+
+## 9. Choosing a Theme
+
+4 color palettes × 2 modes (dark/light) = **8 themes**.
+
+| Palette | Character | Best for |
+|---|---|---|
+| **sage** | Natural green, calming | Organic, wellness, health |
+| **navy** | Dark blue, professional | Premium, B2B, electronics |
+| **terra** | Earth tones, warm | Fashion, lifestyle, home |
+| **electric** | Bright blue, modern | Streetwear, gaming, tech |
+
+Change the default in [Frontend/src/providers/ThemeProvider.tsx](Frontend/src/providers/ThemeProvider.tsx):
+
+```tsx
+() => (localStorage.getItem('sr-palette') as Palette) ?? 'sage'  // default palette
+() => (localStorage.getItem('sr-mode') as ThemeMode) ?? 'light'  // default mode
 ```
 
 ---
 
-## 7. Email Setup (SMTP)
+## 10. Shop Name & Company Details
 
-ShopRay sends transactional emails (order confirmations, password reset, etc.) via Supabase Auth.
-
-### Recommended providers
-
-| Provider | Free tier | Notes |
-|---|---|---|
-| **Resend** | 3,000 emails/month | Easiest setup |
-| **Postmark** | 100 emails/month | Best deliverability |
-| **AWS SES** | 62,000 emails/month | Cheapest at scale |
-
-### Configure in Supabase
-
-**Authentication → SMTP Settings** → enable custom SMTP → enter your provider's credentials.
-
-| Field | Example |
-|---|---|
-| Host | `smtp.resend.com` |
-| Port | `587` |
-| Username | `resend` |
-| Password | Your API key |
-| Sender Name | Your shop name |
-| Sender Email | `noreply@yourshop.com` |
-
-> You need a verified domain at your email provider. Follow the provider's DNS instructions.
-
----
-
-## 8. Backend Setup
-
-The Backend is an Express.js server that handles orders, admin auth, product management, and settings.
-
-### Backend API endpoints
-
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| POST | `/api/auth/login` | Public | Customer login (via Supabase) |
-| POST | `/api/auth/logout` | Public | Customer logout |
-| GET | `/api/products` | Public | Product list |
-| GET | `/api/products/:slug` | Public | Single product |
-| GET | `/api/settings/shipping` | Public | Current shipping config |
-| POST | `/api/orders` | Customer | Create order |
-| GET | `/api/orders` | Customer | Order list |
-| POST | `/api/contact` | Public | Contact form |
-| POST | `/api/admin/login` | Public | Admin login |
-| POST | `/api/admin/logout` | Admin | Admin logout |
-| GET | `/api/admin/check` | Admin | Verify admin session |
-| GET | `/api/admin/products` | Admin | Product list (admin) |
-| POST | `/api/admin/products` | Admin | Create product |
-| PUT | `/api/admin/products/:id` | Admin | Update product |
-| DELETE | `/api/admin/products/:id` | Admin | Delete product |
-| POST | `/api/admin/products/upload` | Admin | Upload product image |
-| PUT | `/api/admin/settings/shipping` | Admin | Update shipping config |
-| GET | `/api/admin/login-log` | Admin | Admin login history |
-| GET | `/api/contact` | Admin | Contact inquiries |
-| PATCH | `/api/contact/:id` | Admin | Update inquiry status |
-
-### Input validation
-
-All Backend endpoints use **Zod** schema validation. Invalid requests get a clear error response — the server never processes malformed data.
-
----
-
-## 9. Admin Password
-
-The Admin panel uses a **single password** (no email). The password is stored as a **bcrypt hash** in `Backend/.env`.
-
-### Setting your password
-
-1. Temporarily set `ADMIN_PASSWORD=yourNewPassword` in `Backend/.env`
-2. Start the Backend once — it will log the generated hash to the console
-3. Copy that hash to `ADMIN_PASSWORD_HASH=<hash>` in `Backend/.env`
-4. Remove `ADMIN_PASSWORD` from `Backend/.env`
-5. Restart the Backend
-
-For Vercel: set `ADMIN_PASSWORD_HASH` in the Backend project's Environment Variables (Settings → Environment Variables).
-
-> **Never use the default password in production.** Change it before launch.
-
----
-
-## 10. Shop Name & Basic Settings
-
-### Shop name
-
-Your shop name is used in the header, footer, emails, and browser tab.
-
-**File:** `Frontend/src/config/app.ts`
+All shop and company data is configured in one file:
+[Frontend/src/config/app.ts](Frontend/src/config/app.ts)
 
 ```ts
-export const APP_NAME = 'ShopRay'; // ← Change to your shop name
-```
+export const APP_NAME    = 'Your Shop Name';
+export const APP_URL     = 'https://your-domain.com';
+export const APP_TAGLINE = 'Short slogan for the footer';
 
-### Theme / Colors
+export const APP_COMPANY = {
+  owner:   'John Doe',
+  street:  '123 Main Street',
+  zip:     '10001',
+  city:    'New York',
+  country: 'United States',
+  ustId:   '',
+};
 
-ShopRay ships with 4 color palettes × 2 modes (light/dark) = **8 themes**.
-
-| Palette | Vibe | Best for |
-|---|---|---|
-| **Sage** (default) | Calm, sustainable | Nature, beauty, lifestyle |
-| **Navy** | Elegant, luxury | Fashion, jewelry |
-| **Terra** | Warm, organic | Ceramics, food, crafts |
-| **Electric** | Modern, tech | Tech, gaming, software |
-
-To set the default: open `Frontend/src/config/theme.ts`.
-
-### Shipping costs
-
-Shipping settings (cost, free threshold, delivery time) are configured directly in the Admin panel under **Settings → Shipping**. Changes take effect immediately in the shop — no code change needed.
-
----
-
-## 11. Features (Enable / Disable)
-
-Open `Frontend/src/config/features.ts`:
-
-```ts
-export const FEATURES = {
-  wishlist: true,   // Wishlist (heart button, wishlist page)
-  reviews:  true,   // Product reviews
-  tickets:  true,   // Support tickets in customer account
-  lmiv:     false,  // Nutritional info (only for food shops)
+export const APP_CONTACT = {
+  email:   'hello@your-domain.com',
+  phone:   '+1 555 000 0000',
+  address: '123 Main Street, 10001 New York',
 };
 ```
 
-Set a feature to `false` to hide it from the UI — no code deletion required.
+Changes automatically apply to the header, footer, imprint, privacy policy, and withdrawal form.
 
-### Fully removing a feature
+> **Important:** Use real data — placeholders are not suitable for a live shop.
 
-| Feature | Files to delete |
-|---|---|
-| **Reviews** | `src/features/reviews/` + reviews tab in `product-detail.tsx` |
-| **Wishlist** | `src/features/wishlist/` + `wishlist.tsx` + heart buttons in cards |
-| **Support Tickets** | `src/features/tickets/` + `tickets.tsx` + `ticket-new.tsx` |
-| **Cookie Consent** | `src/features/consent/` + import in `MainLayout.tsx` |
+---
 
-After any change: run `npx tsc --noEmit` to check for TypeScript errors.
+## 11. Enabling or Disabling Features
+
+Edit `Frontend/src/config/features.ts`:
+
+```ts
+export const FEATURES = {
+  wishlist: true,   // Wishlist — customers can save products for later
+  reviews:  true,   // Product reviews — star ratings and comments
+  tickets:  true,   // Support tickets — customers can submit requests in their account
+  lmiv:     true,   // EU nutritional info — ONLY enable for food / supplements
+};
+```
+
+Set to `false` to hide a feature. The code stays, nothing breaks. To remove completely, delete the corresponding folder under `src/features/<name>/`.
 
 ---
 
 ## 12. Adding Products
 
-### Current state (mock data)
-
-The template ships with example products at:
-`Frontend/src/features/products/data/products.data.ts`
-
-These are for demo purposes. Replace with real data or connect to the Backend API.
-
 ### Via Admin panel (recommended)
 
-Use the Admin panel at `/products` to create, edit, and manage products — including image uploads via Supabase Storage.
+1. Admin panel → **Products → New Product**
+2. Fill in name, price, description, images, category
+3. Click **Save** — visible in the shop immediately
 
-### Via direct database
+### Via seed data (testing)
 
-You can also insert products directly via the Supabase SQL Editor or the Supabase Table Editor.
+Run `database/seed.sql` in the Supabase SQL Editor to populate with sample products.
 
 ---
 
 ## 13. Legal Pages
 
-> **Important:** The legal texts are **placeholders**. Update them before launch — ideally verified by a lawyer or a compliance service (eRecht24, Trusted Shops, etc.).
+> **Important:** Legal texts in the template are placeholders. Update before going live — use a lawyer or a service like Termly or iubenda.
+
+Company data from `app.ts` is automatically applied to `/imprint`, `/privacy`, and `/withdrawal`.
 
 | Page | File | What to update |
 |---|---|---|
-| **Imprint** | `src/pages/info/impressum.tsx` | Name, address, phone, email |
-| **Privacy Policy** | `src/pages/info/privacy.tsx` | Data controller, actual processors (Supabase, Stripe, etc.) |
-| **Terms & Conditions** | `src/pages/info/terms.tsx` | Shop name, payment methods, delivery times |
-| **Shipping & Returns** | `src/pages/info/shipping.tsx` | Your actual shipping costs and partners (auto-synced from Admin) |
-| **Cookie Notice** | `src/features/consent/` | Cookie list if you add new services |
+| **Terms & Conditions** | `src/pages/info/terms.tsx` | Payment methods, delivery times |
+| **Privacy Policy** | `src/pages/info/privacy.tsx` | Add your data processors |
+| **Withdrawal** | `src/pages/info/widerruf.tsx` | Check if template applies |
+
+**Newsletter:** The template has no double opt-in. GDPR requires confirmed opt-in for marketing emails — integrate an external provider (Mailchimp, Brevo, Klaviyo).
+
+**If selling food / supplements (LMIV active):**
+- Register with your national food authority before first sale
+- Fill in all nutritional fields on every product page
+- Only use EU-approved health claims
 
 ---
 
-## 14. Admin Panel
+## 14. Admin Panel Setup
 
-The Admin panel is a **separate app** (`Admin/`) running independently from the customer-facing shop.
-
-### What the Admin panel does
+### What the admin panel can do
 
 | Section | Function |
 |---|---|
-| **Products** | Create, edit, activate/deactivate, upload images |
-| **Orders** | View order details and status |
-| **Customers** | Customer profiles, GDPR deletion |
-| **Inquiries** | Read and respond to contact form submissions |
-| **Settings → Shipping** | Set shipping costs, free threshold, delivery time (applies immediately in shop) |
-| **Settings → Security** | View the last 50 Admin login events |
+| **Dashboard** | Revenue, orders, customers at a glance |
+| **Products** | Create, edit, upload images |
+| **Orders** | Manage status (New → Paid → Shipped → Delivered) |
+| **Customers** | List, order history, GDPR export + deletion |
+| **Categories** | Create, reorder, delete |
+| **Reviews** | Approve, reject, delete |
+| **Support** | Reply to contact requests and tickets |
+| **Settings → Shipping** | Shipping costs, free shipping threshold, delivery time |
+| **Settings → Security** | Admin login log |
 
-### Product management shortcuts
+### Admin login setup
 
-- **Double-click on a row** → open the edit screen
-- **Click on the status badge** → toggle product active/inactive immediately
-- **Density button** in the filter bar → switch between compact and normal table view
-
-### Start locally
+**Hash a secure password:**
 
 ```bash
-cd Admin
-npm install
-npm run dev
-# → http://localhost:5174
+cd Backend
+node -e "const b = require('bcrypt'); b.hash('YOUR-PASSWORD', 12).then(h => console.log(h));"
 ```
 
-The Backend must be running at the same time.
+Add the output (`$2b$12$...`) to `Backend/.env` as `ADMIN_PASSWORD_HASH`.
 
-### Admin password
+**Generate a JWT secret:**
 
-See section 9.
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'));"
+```
+
+Add to `Backend/.env` as `JWT_SECRET`.
 
 ---
 
-## 15. Deployment (Vercel Monorepo)
+## 15. Deployment
 
-ShopRay is a monorepo. Each part (Frontend, Admin, Backend) is a **separate Vercel project** pointing to the same GitHub repository.
+ShopRay uses a **monorepo** with three separate Vercel projects.
 
-### Step 1 — Push to GitHub
+### Step 1 — GitHub repository
 
-If you haven't already, push the repository to GitHub (or GitLab / Bitbucket).
+```bash
+git remote add origin git@github.com:YOUR-USERNAME/ShopRay.git
+git push -u origin main
+```
 
-### Step 2 — Create 3 Vercel projects
+### Step 2 — Three Vercel projects
 
-For each project, go to vercel.com → **"Add New Project"** → select your repository:
+Create one project per part at https://vercel.com → **"Add New Project"**:
 
-| Project name | Root Directory | Environment variables |
+| Vercel project | Root Directory | Framework |
 |---|---|---|
-| shopray-frontend | `Frontend` | From `Frontend/.env` |
-| shopray-admin | `Admin` | From `Admin/.env` |
-| shopray-backend | `Backend` | From `Backend/.env` |
+| shopray (Frontend) | `Frontend` | Vite |
+| shopray-backend | `Backend` | Node.js |
+| shopray-admin | `Admin` | Vite |
 
-To set the Root Directory: **Build and Deployment Settings → Root Directory**.
+Add all environment variables from the respective `.env` file under **Settings → Environment Variables**.
 
-### Step 3 — Add environment variables
+### Step 3 — Production branch
 
-In each Vercel project: **Settings → Environment Variables** → add each variable from the corresponding `.env` file.
+In each Vercel project: **Settings → Environments → Production** → set Branch Tracking to `main`.
 
-> For the Backend: set `ADMIN_PASSWORD_HASH` (not `ADMIN_PASSWORD`).  
-> Never commit secret keys.
+Now every `git push origin main` deploys to production automatically.
 
-### Step 4 — Connect projects
+### Step 4 — Custom domain (recommended)
 
-After all 3 projects are deployed:
-
-1. Set `VITE_API_URL` in Frontend and Admin to your Backend Vercel URL (e.g. `https://shopray-backend.vercel.app`)
-2. Set `FRONTEND_URL` and `ADMIN_URL` in Backend to the respective Vercel URLs
-3. Add the Backend URL as the Stripe webhook endpoint (stripe.com → Developers → Webhooks)
-4. Add the Frontend URL as a redirect URL in Supabase (section 5)
-5. Redeploy all 3 projects
-
-### Custom domains (optional)
-
-In each Vercel project: **Settings → Domains → Add Domain**.
-
-| Project | Recommended domain |
+| Project | Suggested domain |
 |---|---|
 | Frontend | `yourshop.com` |
-| Admin | `admin.yourshop.com` (keep this private) |
 | Backend | `api.yourshop.com` |
+| Admin | `admin.yourshop.com` |
+
+In Vercel: **Settings → Domains → Add**.
+
+### Step 5 — Verify after deployment
+
+| URL | Expected result |
+|---|---|
+| `https://BACKEND-URL/api/health` | `{"status":"ok"}` |
+| `https://SHOP-URL` | Shop homepage loads |
+| `https://ADMIN-URL` | Login page appears |
+
+### Step 6 — Demo mode (optional)
+
+Set `DEMO_MODE=true` in Vercel backend environment variables → redeploy.
+All admin writes are blocked (HTTP 403). Reset data with `database/seed.sql`.
 
 ---
 
-## 16. Package Tiers
+## 16. Packages — What's included?
 
 | Feature | Lite | Pro | Enterprise |
 |---|---|---|---|
 | Shop, cart, checkout | ✅ | ✅ | ✅ |
-| 4 themes (light + dark) | ✅ | ✅ | ✅ |
-| GDPR package (consent, my data, deletion) | ✅ | ✅ | ✅ |
+| 4 themes (dark + light) | ✅ | ✅ | ✅ |
+| GDPR package (consent, my data) | ✅ | ✅ | ✅ |
 | Customer account + order history | ✅ | ✅ | ✅ |
+| Two-factor authentication (TOTP) | ✅ | ✅ | ✅ |
 | Wishlist | ❌ | ✅ | ✅ |
 | Product reviews | ❌ | ✅ | ✅ |
 | Support tickets | ❌ | ✅ | ✅ |
-| Live chat integration | ❌ | ❌ | ✅ |
+| LMIV nutritional table | ❌ | ✅ | ✅ |
 | **Admin panel** | ❌ | ✅ | ✅ |
-| **2FA (customer MFA via TOTP)** | ❌ | ✅ | ✅ |
-| **Configurable shipping costs (Admin)** | ❌ | ✅ | ✅ |
+| **Admin: shipping configuration** | ❌ | ✅ | ✅ |
+| **Admin: category manager** | ❌ | ✅ | ✅ |
+| **Admin: review moderation** | ❌ | ✅ | ✅ |
 | Source code | ❌ | ✅ | ✅ |
 | Priority support | ❌ | ❌ | ✅ |
 
 ---
 
-## 17. Tech Stack & Open Source
+## 17. Technology & Open Source
 
-| Layer | Technology | Version | License |
+| Technology | Role | License | Self-hostable |
 |---|---|---|---|
-| Frontend framework | React | 19 | MIT |
-| Build tool | Vite | 6 | MIT |
-| Language | TypeScript | 5 | Apache 2.0 |
-| State management | Zustand | 5 | MIT |
-| Routing | React Router | 7 | MIT |
-| HTTP client | Axios | 1 | MIT |
-| CSS preprocessor | Sass/SCSS | 1.8 | MIT |
-| Validation | Zod | 3 | MIT |
-| Backend framework | Express | 4 | MIT |
-| Password hashing | bcryptjs | 2 | MIT |
-| Database / Auth | Supabase | — | Apache 2.0 |
-| Payments | Stripe | — | Commercial |
-| Hosting | Vercel | — | Commercial |
+| **React** | Frontend framework | MIT | — |
+| **TypeScript** | Language | Apache 2.0 | — |
+| **Vite** | Build tool | MIT | — |
+| **Express.js** | Backend server | MIT | — |
+| **Zod** | Input validation | MIT | — |
+| **Nodemailer** | Email sending | MIT | — |
+| **Zustand** | State management | MIT | — |
+| **PostgreSQL** | Database | PostgreSQL License | ✅ |
+| **Supabase** | Auth + database host | Apache 2.0 | ✅ |
+| **Stripe** | Payment processing | proprietary | ❌ |
+
+### Self-hosting Supabase
+
+- VPS with at least 4 GB RAM (Hetzner, DigitalOcean, Linode)
+- Docker + official guide: https://supabase.com/docs/guides/self-hosting/docker
+- Swap the URL in `.env`: `VITE_SUPABASE_URL=https://supabase.yourserver.com`
+
+### Stripe alternatives
+
+| Alternative | Highlight |
+|---|---|
+| **Mollie** | Popular in Europe, supports iDEAL, SEPA |
+| **PayPal** | Widely accepted |
+| **Lemon Squeezy** | Handles EU VAT, ideal for digital products |
+| **Paddle** | Merchant of record, automatic tax handling |
 
 ---
 
 ## Help & Support
 
-For template questions:
-- GitHub Issues: your repository URL
-- Email: your support address
+For questions about the template:
+- GitHub Issues: https://github.com/SchubertChris/ShopRay/issues
+- Email: [your support address]
 
-For third-party services:
+For external services:
 - Supabase Docs: https://supabase.com/docs
 - Stripe Docs: https://stripe.com/docs
 - Vercel Docs: https://vercel.com/docs
