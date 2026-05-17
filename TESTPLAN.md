@@ -16,8 +16,7 @@ Stand: 2026-05-17
 
 ## Alle Seiten
 
-<details>
-<summary>Frontend — vollständige Linkliste</summary>
+**Frontend**
 
 | Seite | Lokal | Produktion |
 |---|---|---|
@@ -48,10 +47,7 @@ Stand: 2026-05-17
 | AGB | http://localhost:5173/agb | https://shopray-indol.vercel.app/agb |
 | Widerruf | http://localhost:5173/widerruf | https://shopray-indol.vercel.app/widerruf |
 
-</details>
-
-<details>
-<summary>Admin — vollständige Linkliste</summary>
+**Admin**
 
 | Seite | Lokal | Produktion |
 |---|---|---|
@@ -66,8 +62,6 @@ Stand: 2026-05-17
 | Tickets | http://localhost:5174/support | https://shopray-admin.vercel.app/support |
 | Anfragen | http://localhost:5174/inquiries | https://shopray-admin.vercel.app/inquiries |
 | Einstellungen | http://localhost:5174/settings | https://shopray-admin.vercel.app/settings |
-
-</details>
 
 ---
 
