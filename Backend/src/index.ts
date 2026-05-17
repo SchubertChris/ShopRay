@@ -59,6 +59,13 @@ app.use('/api/admin/tickets',     adminTicketsRouter);
 app.use('/api/admin/stats',       adminStatsRouter);
 app.use('/api/admin/settings',    settingsRouter);
 
+// ── Favicon ───────────────────────────────────────────────────────────────────
+app.get('/favicon.svg', (_req, res) => {
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.send('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#1a1a1a"/><text x="7" y="23" font-family="Georgia, serif" font-size="18" font-weight="700" fill="white" letter-spacing="-1">C</text><circle cx="25" cy="22" r="2.5" fill="#6366f1"/></svg>');
+});
+
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 app.use((_req, res) => {
   res.status(404).json({ error: 'Route nicht gefunden' });
