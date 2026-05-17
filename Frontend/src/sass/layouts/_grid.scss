@@ -392,7 +392,8 @@
 
     // Logout — immer sichtbar, rechts angepinnt, mit Trennlinie
     &--pinned {
-      flex-shrink: 0;
+      flex:      0 0 56px;   // kein Wachsen — überschreibt flex: 1 aus __item
+      width:     56px;
       min-width: 56px;
       border-left: 1px solid var(--clr-secondary);
       opacity: 0.5;
