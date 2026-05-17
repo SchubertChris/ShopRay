@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { User, Heart, ShoppingCart, Menu, X, LogOut } from 'lucide-react';
+import { User, Heart, ShoppingCart, Menu, X, LogOut, Sun, Moon } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import { FEATURES } from '@config/features';
 import { APP_NAME } from '@config/app';
 import { useCart } from '@features/cart';
 import { useAuth, logout } from '@features/auth';
+import { useTheme } from '@/providers/ThemeProvider';
 
 const NAV_LINKS: { label: string; to: string }[] = [
   { label: 'Shop',         to: ROUTES.SHOP.SEARCH },
@@ -18,6 +19,7 @@ const NAV_LINKS: { label: string; to: string }[] = [
 export function Header() {
   const cartCount = useCart(s => s.items.reduce((sum, i) => sum + i.quantity, 0));
   const { isAuthenticated, clearAuth } = useAuth();
+  const { mode, toggleMode } = useTheme();
   const navigate                   = useNavigate();
   const [scrolled, setScrolled]    = useState(false);
   const [hidden,   setHidden]      = useState(false);
@@ -103,6 +105,17 @@ export function Header() {
               </Link>
             )}
 
+            <button
+              className="nav__theme-btn"
+              onClick={toggleMode}
+              aria-label={mode === 'dark' ? 'Light Mode aktivieren' : 'Dark Mode aktivieren'}
+            >
+              {mode === 'dark'
+                ? <Sun  size={18} strokeWidth={1.75} />
+                : <Moon size={18} strokeWidth={1.75} />
+              }
+            </button>
+
             <Link className="nav__cart nav__cart--badge" to={ROUTES.SHOP.CART} aria-label="Warenkorb">
               <ShoppingCart size={20} strokeWidth={1.75} />
               {cartCount > 0 && (
@@ -159,6 +172,20 @@ export function Header() {
 
           {/* Quick Actions Footer */}
           <div className="mobile-nav__footer">
+            <button
+              className="mobile-nav__action"
+              onClick={toggleMode}
+              aria-label={mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            >
+              {mode === 'dark'
+                ? <Sun  size={22} strokeWidth={1.75} />
+                : <Moon size={22} strokeWidth={1.75} />
+              }
+              <span className="mobile-nav__action-label">
+                {mode === 'dark' ? 'Light' : 'Dark'}
+              </span>
+            </button>
+
             <Link
               to={ROUTES.SHOP.CART}
               className="mobile-nav__action"
