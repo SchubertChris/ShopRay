@@ -347,6 +347,20 @@ export interface DhlLabelResult {
 export const createShippingLabel = (id: string, weight_g: number) =>
   apiFetch<DhlLabelResult>(`/api/admin/orders/${id}/label`, 'POST', { weight_g });
 
+export interface ShippingAddress {
+  firstName: string;
+  lastName:  string;
+  street:    string;
+  zip:       string;
+  city:      string;
+  country:   string;
+}
+
+export const updateOrderAddress = (id: string, address: ShippingAddress) =>
+  apiFetch<{ id: string; shipping_address: ShippingAddress }>(
+    `/api/admin/orders/${id}/address`, 'PATCH', address,
+  );
+
 // ── 2FA (Admin) ───────────────────────────────────────────────────────────────
 
 export const get2faStatus = () =>

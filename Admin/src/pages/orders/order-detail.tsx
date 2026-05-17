@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Package, User, MapPin, Clock, Loader2, AlertTriangle, FileText, Truck, Download, ExternalLink } from 'lucide-react';
 import { ROUTES } from '@config/routes';
-import { getAdminOrder, updateOrderStatus, downloadOrderInvoice, type AdminOrder } from '../../api/adminApi';
-import ShippingLabelModal from '../../components/ui/ShippingLabelModal';
+import { getAdminOrder, updateOrderStatus, downloadOrderInvoice, type AdminOrder, type ShippingAddress } from '../../api/adminApi';
+import ShippingLabelModal  from '../../components/ui/ShippingLabelModal';
+import AddressEditModal    from '../../components/ui/AddressEditModal';
 import type { OrderStatus } from '../../types/index';
 
 const STATUS_OPTIONS: Array<{ value: OrderStatus; label: string }> = [
@@ -47,8 +48,9 @@ export default function OrderDetailPage() {
   const [status,  setStatus]  = useState<OrderStatus>('pending');
   const [saving,  setSaving]  = useState(false);
   const [saved,          setSaved]          = useState(false);
-  const [invoiceLoading, setInvoiceLoading] = useState(false);
-  const [showLabelModal, setShowLabelModal] = useState(false);
+  const [invoiceLoading,  setInvoiceLoading]  = useState(false);
+  const [showLabelModal,  setShowLabelModal]  = useState(false);
+  const [showAddressEdit, setShowAddressEdit] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -282,6 +284,15 @@ export default function OrderDetailPage() {
               <div className="detail-card__header">
                 <MapPin size={15} strokeWidth={1.75} />
                 Lieferadresse
+                {!order.tracking_number && (
+                  <button
+                    className="detail-card__edit-btn"
+                    onClick={() => setShowAddressEdit(true)}
+                    title="Adresse korrigieren"
+                  >
+                    Bearbeiten
+                  </button>
+                )}
               </div>
               <div className="detail-card__body">
                 <address className="detail-address">
@@ -290,6 +301,34 @@ export default function OrderDetailPage() {
                   {addr.zip} {addr.city}<br />
                   {addr.country}
                 </address>
+
+                {order.tracking_number && (
+                  <div className="address-shipped-info">
+                    <p className="address-shipped-info__text">
+                      Paket bereits versendet — Adressänderung wirkt sich nicht auf das laufende DHL-Label aus.
+                    </p>
+                    <div className="address-shipped-info__actions">
+                      <a
+                        href={`https://www.dhl.de/de/geschaeftskunden/paket/versand-online/sendungskorrektur.html`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="address-shipped-info__link"
+                      >
+                        DHL Sendungskorrektur
+                        <ExternalLink size={11} strokeWidth={2} />
+                      </a>
+                      <a
+                        href={`https://www.dhl.de/de/privatkunden/pakete-empfangen/verfolgen.html?idc=${order.tracking_number}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="address-shipped-info__link"
+                      >
+                        Sendung verfolgen
+                        <ExternalLink size={11} strokeWidth={2} />
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -350,6 +389,18 @@ export default function OrderDetailPage() {
           onCreated={(trackingNumber) => {
             setOrder(prev => prev ? { ...prev, tracking_number: trackingNumber, status: 'shipped' } : prev);
             setStatus('shipped');
+          }}
+        />
+      )}
+
+      {showAddressEdit && id && addr && (
+        <AddressEditModal
+          orderId={id}
+          orderNumber={order.order_number}
+          current={addr as ShippingAddress}
+          onClose={() => setShowAddressEdit(false)}
+          onSaved={(updated) => {
+            setOrder(prev => prev ? { ...prev, shipping_address: updated } : prev);
           }}
         />
       )}

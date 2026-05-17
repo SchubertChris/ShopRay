@@ -161,4 +161,36 @@ router.get('/:id/invoice', validate(UUIDParam, 'params'), async (req: Request, r
   }
 });
 
+const AddressSchema = z.object({
+  firstName: z.string().min(1).max(100),
+  lastName:  z.string().min(1).max(100),
+  street:    z.string().min(1).max(200),
+  zip:       z.string().min(4).max(20),
+  city:      z.string().min(1).max(100),
+  country:   z.string().min(1).max(100),
+});
+
+// PATCH /api/admin/orders/:id/address — Lieferadresse korrigieren (nur vor Versand sinnvoll)
+router.patch('/:id/address', validate(UUIDParam, 'params'), validate(AddressSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { firstName, lastName, street, zip, city, country } = req.body as z.infer<typeof AddressSchema>;
+
+    const { data, error } = await supabase
+      .from('orders')
+      .update({
+        shipping_address: { firstName, lastName, street, zip, city, country },
+        updated_at:       new Date().toISOString(),
+      })
+      .eq('id', req.params.id)
+      .select('id, shipping_address, tracking_number')
+      .single();
+
+    if (error) throw error;
+    if (!data) { res.status(404).json({ error: 'Bestellung nicht gefunden.' }); return; }
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;
