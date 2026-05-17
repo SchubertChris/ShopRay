@@ -1,11 +1,70 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { stripe }   from '../lib/stripe';
 import { supabase } from '../lib/supabase';
-import { sendMail, orderConfirmationHtml } from '../lib/mailer';
+import { sendMail, sendMailWithAttachment, orderConfirmationHtml } from '../lib/mailer';
+import { generateInvoicePdf } from '../lib/invoice-pdf';
 import { sendPushToAll } from './admin-push';
 import Stripe from 'stripe';
 
 const router = Router();
+
+async function generateInvoiceAndSend(orderId: string, customerEmail: string): Promise<void> {
+  const { data: order } = await supabase
+    .from('orders')
+    .select('*, order_items(*)')
+    .eq('id', orderId)
+    .single();
+
+  if (!order) return;
+
+  const prefix = process.env.INVOICE_PREFIX ?? 'RE';
+  const year   = new Date().getFullYear();
+  const count  = await supabase.from('orders').select('id', { count: 'exact', head: true }).not('invoice_number', 'is', null);
+  const seq    = (count.count ?? 0) + 1;
+  const invoiceNumber = `${prefix}-${year}-${String(seq).padStart(5, '0')}`;
+
+  await supabase.from('orders').update({ invoice_number: invoiceNumber }).eq('id', orderId);
+
+  const items = (order.order_items as Array<{ product_name: string; quantity: number; price: number }>) ?? [];
+  const subtotal = items.reduce((s: number, i: { price: number; quantity: number }) => s + i.price * i.quantity, 0);
+  const shipping = Math.max(0, (order.total as number) - subtotal);
+
+  const shop = {
+    name:      process.env.SHOP_NAME       ?? 'Mein Shop',
+    street:    process.env.SHOP_STREET     ?? 'Musterstraße 1',
+    zip:       process.env.SHOP_ZIP        ?? '12345',
+    city:      process.env.SHOP_CITY       ?? 'Musterstadt',
+    country:   process.env.SHOP_COUNTRY    ?? 'Deutschland',
+    email:     process.env.SHOP_EMAIL      ?? process.env.SMTP_FROM_EMAIL ?? '',
+    phone:     process.env.SHOP_PHONE,
+    vatId:     process.env.SHOP_VAT_ID,
+    taxNumber: process.env.SHOP_TAX_NUMBER,
+  };
+
+  const pdfBuffer = await generateInvoicePdf({
+    invoiceNumber,
+    orderNumber:  order.order_number as string,
+    invoiceDate:  new Date().toISOString(),
+    deliveryDate: (order.paid_at as string | null) ?? (order.created_at as string),
+    paidAt:       order.paid_at as string | null,
+    paymentMethod: order.payment_method as string | null,
+    items:        items.map((i: { product_name: string; quantity: number; price: number }) => ({
+      name: i.product_name, quantity: i.quantity, price: i.price,
+    })),
+    total:    order.total as number,
+    shipping,
+    address:  order.shipping_address as { firstName?: string; lastName?: string; street?: string; zip?: string; city?: string; country?: string } | null,
+    shop,
+  });
+
+  await sendMailWithAttachment({
+    to:       customerEmail,
+    subject:  `Rechnung ${invoiceNumber} — ${order.order_number as string}`,
+    html:     `<p>Hallo,<br><br>anbei deine Rechnung für Bestellung <strong>${order.order_number as string}</strong>. Danke für deinen Einkauf!</p>`,
+    filename: `Rechnung_${invoiceNumber}.pdf`,
+    content:  pdfBuffer,
+  });
+}
 
 // POST /api/webhook/stripe
 // express.raw() ist in index.ts für diese Route registriert
@@ -75,6 +134,13 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction): 
           body:  `${customerName} — € ${Number(order.total).toLocaleString('de-DE', { minimumFractionDigits: 2 })}`,
           url:   `/orders/${order.id}`,
         }).catch(err => console.error('Push fehlgeschlagen:', err));
+
+        // Rechnung generieren und per E-Mail versenden (non-blocking)
+        if (customerEmail) {
+          generateInvoiceAndSend(order.id as string, customerEmail).catch(e =>
+            console.error('Rechnung-Generierung fehlgeschlagen:', e)
+          );
+        }
         break;
       }
 

@@ -25,6 +25,21 @@ export async function sendMail({ to, subject, html }: MailOptions): Promise<void
   });
 }
 
+interface MailWithAttachmentOptions extends MailOptions {
+  filename: string;
+  content:  Buffer;
+}
+
+export async function sendMailWithAttachment({ to, subject, html, filename, content }: MailWithAttachmentOptions): Promise<void> {
+  await transporter.sendMail({
+    from:        `"${process.env.SMTP_FROM_NAME ?? 'Shop'}" <${process.env.SMTP_FROM_EMAIL}>`,
+    to,
+    subject,
+    html,
+    attachments: [{ filename, content, contentType: 'application/pdf' }],
+  });
+}
+
 // ── E-Mail-Templates ─────────────────────────────────────────────────────────
 
 export function orderConfirmationHtml(params: {

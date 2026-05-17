@@ -3,6 +3,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { supabase }     from '../lib/supabase';
 import { requireAdmin } from '../middleware/adminAuth';
 import { validate, UUIDParam } from '../lib/validate';
+import { generateInvoicePdf }  from '../lib/invoice-pdf';
 
 const router = Router();
 router.use(requireAdmin);
@@ -89,6 +90,72 @@ router.patch('/:id/status', validate(UUIDParam, 'params'), validate(StatusSchema
     if (error) throw error;
     if (!data) { res.status(404).json({ error: 'Bestellung nicht gefunden.' }); return; }
     res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/admin/orders/:id/invoice — Rechnung als PDF
+router.get('/:id/invoice', validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { data: order, error } = await supabase
+      .from('orders')
+      .select('*, order_items(*)')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error || !order) { res.status(404).json({ error: 'Bestellung nicht gefunden.' }); return; }
+
+    // Rechnungsnummer holen oder neu vergeben
+    let invoiceNumber = order.invoice_number as string | null;
+    if (!invoiceNumber) {
+      const prefix = process.env.INVOICE_PREFIX ?? 'RE';
+      const year   = new Date().getFullYear();
+
+      const { data: seqData } = await supabase.rpc('nextval', { seq_name: 'invoice_seq' }).single();
+      // Fallback: manuelle Zählung falls RPC nicht verfügbar
+      const seq = (seqData as number | null) ?? Date.now();
+      invoiceNumber = `${prefix}-${year}-${String(seq).padStart(5, '0')}`;
+
+      await supabase
+        .from('orders')
+        .update({ invoice_number: invoiceNumber })
+        .eq('id', req.params.id);
+    }
+
+    const items = (order.order_items as Array<{ product_name: string; quantity: number; price: number }>) ?? [];
+    const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
+    const shipping = Math.max(0, (order.total as number) - subtotal);
+
+    const shop = {
+      name:       process.env.SHOP_NAME       ?? 'Mein Shop',
+      street:     process.env.SHOP_STREET     ?? 'Musterstraße 1',
+      zip:        process.env.SHOP_ZIP        ?? '12345',
+      city:       process.env.SHOP_CITY       ?? 'Musterstadt',
+      country:    process.env.SHOP_COUNTRY    ?? 'Deutschland',
+      email:      process.env.SHOP_EMAIL      ?? process.env.SMTP_FROM_EMAIL ?? '',
+      phone:      process.env.SHOP_PHONE,
+      vatId:      process.env.SHOP_VAT_ID,
+      taxNumber:  process.env.SHOP_TAX_NUMBER,
+    };
+
+    const pdfBuffer = await generateInvoicePdf({
+      invoiceNumber,
+      orderNumber:   order.order_number as string,
+      invoiceDate:   new Date().toISOString(),
+      deliveryDate:  (order.paid_at as string | null) ?? (order.created_at as string),
+      paidAt:        order.paid_at as string | null,
+      paymentMethod: order.payment_method as string | null,
+      items:         items.map(i => ({ name: i.product_name, quantity: i.quantity, price: i.price })),
+      total:         order.total as number,
+      shipping,
+      address:       order.shipping_address as { firstName?: string; lastName?: string; street?: string; zip?: string; city?: string; country?: string } | null,
+      shop,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="Rechnung_${invoiceNumber}.pdf"`);
+    res.send(pdfBuffer);
   } catch (err) {
     next(err);
   }

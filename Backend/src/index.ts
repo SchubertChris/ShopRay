@@ -21,6 +21,7 @@ import adminReviewsRouter    from './routes/admin-reviews';
 import adminTicketsRouter    from './routes/admin-tickets';
 import adminStatsRouter      from './routes/admin-stats';
 import adminPushRouter       from './routes/admin-push';
+import adminShippingRouter   from './routes/admin-shipping';
 import settingsRouter        from './routes/settings';
 
 const app  = express();
@@ -54,6 +55,7 @@ app.use('/api/admin/products',    adminProductsRouter);
 app.use('/api/admin/categories',  adminCategoriesRouter);
 app.use('/api/admin/customers',   adminCustomersRouter);
 app.use('/api/admin/orders',      adminOrdersRouter);
+app.use('/api/admin/orders',      adminShippingRouter);
 app.use('/api/admin/2fa',         admin2faRouter);
 app.use('/api/admin/reviews',     adminReviewsRouter);
 app.use('/api/admin/tickets',     adminTicketsRouter);

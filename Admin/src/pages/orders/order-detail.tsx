@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Package, User, MapPin, Clock, Loader2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Save, Package, User, MapPin, Clock, Loader2, AlertTriangle, FileText, Truck, Download, ExternalLink } from 'lucide-react';
 import { ROUTES } from '@config/routes';
-import { getAdminOrder, updateOrderStatus, type AdminOrder } from '../../api/adminApi';
+import { getAdminOrder, updateOrderStatus, downloadOrderInvoice, type AdminOrder } from '../../api/adminApi';
+import ShippingLabelModal from '../../components/ui/ShippingLabelModal';
 import type { OrderStatus } from '../../types/index';
 
 const STATUS_OPTIONS: Array<{ value: OrderStatus; label: string }> = [
@@ -45,7 +46,9 @@ export default function OrderDetailPage() {
   const [error,   setError]   = useState<string | null>(null);
   const [status,  setStatus]  = useState<OrderStatus>('pending');
   const [saving,  setSaving]  = useState(false);
-  const [saved,   setSaved]   = useState(false);
+  const [saved,          setSaved]          = useState(false);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [showLabelModal, setShowLabelModal] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -73,6 +76,18 @@ export default function OrderDetailPage() {
       setStatus(order.status as OrderStatus);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    if (!id) return;
+    setInvoiceLoading(true);
+    try {
+      await downloadOrderInvoice(id);
+    } catch (err) {
+      // Fehler still ignorieren — PDF-Download zeigt Fehler im Browser
+    } finally {
+      setInvoiceLoading(false);
     }
   };
 
@@ -119,6 +134,27 @@ export default function OrderDetailPage() {
           <p className="page-header__sub">{formatDate(order.created_at)}</p>
         </div>
         <div className="page-header__actions">
+          <button
+            className="btn-secondary"
+            onClick={handleDownloadInvoice}
+            disabled={invoiceLoading}
+            title="Rechnung als PDF herunterladen"
+          >
+            {invoiceLoading
+              ? <Loader2 size={14} strokeWidth={2} className="spin" />
+              : <Download size={14} strokeWidth={2} />
+            }
+            Rechnung
+          </button>
+          <button
+            className="btn-secondary"
+            onClick={() => setShowLabelModal(true)}
+            title="DHL Versandlabel erstellen"
+            disabled={!!order.tracking_number}
+          >
+            <Truck size={14} strokeWidth={2} />
+            {order.tracking_number ? 'Label erstellt' : 'DHL Label'}
+          </button>
           <select
             value={status}
             onChange={e => { setStatus(e.target.value as OrderStatus); setSaved(false); }}
@@ -287,10 +323,36 @@ export default function OrderDetailPage() {
                   );
                 })}
               </div>
+              {order.tracking_number && (
+                <div className="order-tracking-info">
+                  <p className="order-tracking-info__label">DHL Sendungsnummer</p>
+                  <a
+                    href={`https://www.dhl.de/de/privatkunden/pakete-empfangen/verfolgen.html?idc=${order.tracking_number}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="order-tracking-info__link"
+                  >
+                    {order.tracking_number}
+                    <ExternalLink size={11} strokeWidth={2} />
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {showLabelModal && id && (
+        <ShippingLabelModal
+          orderId={id}
+          orderNumber={order.order_number}
+          onClose={() => setShowLabelModal(false)}
+          onCreated={(trackingNumber) => {
+            setOrder(prev => prev ? { ...prev, tracking_number: trackingNumber, status: 'shipped' } : prev);
+            setStatus('shipped');
+          }}
+        />
+      )}
     </>
   );
 }

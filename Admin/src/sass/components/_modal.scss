@@ -881,6 +881,35 @@ input[type='number'] {
   }
 }
 
+// ─── CSV MODAL SMALL VARIANT ──────────────────────────────────────────────────
+.csv-modal--sm {
+  max-width: 480px;
+  min-height: unset;
+}
+
+.csv-modal__hint {
+  font-size:   rem(13.5px);
+  color:       color-mix(in srgb, var(--clr-text) 65%, transparent);
+  line-height: 1.6;
+  margin:      0;
+
+  strong { color: var(--clr-text); font-weight: 600; }
+  em     { font-style: normal; color: var(--clr-primary); font-weight: 500; }
+}
+
+.csv-modal__error {
+  display:       flex;
+  align-items:   center;
+  gap:           0.5rem;
+  padding:       0.625rem 0.875rem;
+  background:    color-mix(in srgb, var(--clr-error) 8%, transparent);
+  border:        1.5px solid color-mix(in srgb, var(--clr-error) 18%, transparent);
+  border-radius: 8px;
+  color:         var(--clr-error);
+  font-size:     rem(13px);
+  margin:        0;
+}
+
 .input-number-wrap {
   position:   relative;
   display:    flex;

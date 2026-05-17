@@ -280,12 +280,14 @@ export interface AdminOrder {
     city?:      string;
     country?:   string;
   } | null;
-  customer_note: string | null;
-  created_at:    string;
-  paid_at:       string | null;
-  shipped_at:    string | null;
-  order_items:   AdminOrderItem[];
-  profile:       AdminOrderProfile | null;
+  customer_note:   string | null;
+  created_at:      string;
+  paid_at:         string | null;
+  shipped_at:      string | null;
+  order_items:     AdminOrderItem[];
+  profile:         AdminOrderProfile | null;
+  invoice_number:  string | null;
+  tracking_number: string | null;
 }
 
 export interface AdminOrderListItem {
@@ -309,6 +311,41 @@ export const updateOrderStatus = (id: string, status: string) =>
   apiFetch<{ id: string; order_number: string; status: string }>(
     `/api/admin/orders/${id}/status`, 'PATCH', { status },
   );
+
+export async function downloadOrderInvoice(id: string): Promise<void> {
+  const token = getAdminToken();
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_URL}/api/admin/orders/${id}/invoice`, {
+    credentials: 'include',
+    headers,
+  });
+
+  if (!res.ok) throw new Error('Rechnung konnte nicht generiert werden.');
+
+  const blob        = await res.blob();
+  const url         = URL.createObjectURL(blob);
+  const contentDisp = res.headers.get('Content-Disposition') ?? '';
+  const match       = contentDisp.match(/filename="?([^"]+)"?/);
+  const filename    = match?.[1] ?? 'Rechnung.pdf';
+
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+export interface DhlLabelResult {
+  tracking_number: string;
+  label_b64:       string;
+}
+
+export const createShippingLabel = (id: string, weight_g: number) =>
+  apiFetch<DhlLabelResult>(`/api/admin/orders/${id}/label`, 'POST', { weight_g });
 
 // ── 2FA (Admin) ───────────────────────────────────────────────────────────────
 

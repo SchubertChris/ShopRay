@@ -1,6 +1,6 @@
 -- ══════════════════════════════════════════════════════════════════════════════
 -- ShopRay — Vollständiges Datenbankschema (konsolidiert)
--- Stand: 2026-05-17 — enthält alle Änderungen aus Migrations 001–012
+-- Stand: 2026-05-17 — enthält alle Änderungen aus Migrations 001–013
 -- ══════════════════════════════════════════════════════════════════════════════
 --
 -- FRISCHE INSTALLATION (Neukunde):
@@ -107,6 +107,8 @@ INSERT INTO public.categories (name, "order") VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- ── ORDERS ───────────────────────────────────────────────────────────────────
+CREATE SEQUENCE IF NOT EXISTS public.invoice_seq START 1;
+
 CREATE TABLE IF NOT EXISTS public.orders (
   id                 UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id            UUID          REFERENCES public.profiles(id) ON DELETE SET NULL,
@@ -120,6 +122,9 @@ CREATE TABLE IF NOT EXISTS public.orders (
   customer_note      TEXT,
   paid_at            TIMESTAMPTZ,
   shipped_at         TIMESTAMPTZ,
+  invoice_number     TEXT          UNIQUE,
+  tracking_number    TEXT,
+  label_b64          TEXT,
   created_at         TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_at         TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );

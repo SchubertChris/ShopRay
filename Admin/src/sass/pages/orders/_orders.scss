@@ -149,6 +149,53 @@
   }
 }
 
+// ─── TRACKING INFO ────────────────────────────────────────────────────────────
+.order-tracking-info {
+  margin-top:    0.75rem;
+  padding:       0.75rem 1rem;
+  background:    color-mix(in srgb, var(--clr-primary) 4%, transparent);
+  border-radius: 8px;
+  border:        1px solid color-mix(in srgb, var(--clr-primary) 12%, transparent);
+
+  &__label {
+    font-size:      rem(10px);
+    font-weight:    700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color:          color-mix(in srgb, var(--clr-text) 45%, transparent);
+    margin:         0 0 0.375rem;
+  }
+
+  &__link {
+    display:         inline-flex;
+    align-items:     center;
+    gap:             0.3rem;
+    font-size:       rem(13px);
+    font-weight:     600;
+    font-family:     'DM Mono', monospace;
+    color:           var(--clr-primary);
+    text-decoration: none;
+
+    &:hover { text-decoration: underline; }
+  }
+}
+
+// ─── LABEL WEIGHT INPUT ───────────────────────────────────────────────────────
+.label-weight-row {
+  display:     flex;
+  align-items: center;
+  gap:         0.5rem;
+
+  .form-input { flex: 1; }
+}
+
+.label-weight-unit {
+  font-size:   rem(13px);
+  font-weight: 600;
+  color:       color-mix(in srgb, var(--clr-text) 50%, transparent);
+  white-space: nowrap;
+}
+
 // ─── MOBILE: Bottom Sheet ─────────────────────────────────────────────────────
 @media (max-width: 1023px) {
   .order-detail {

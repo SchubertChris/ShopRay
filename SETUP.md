@@ -1,6 +1,6 @@
 # ShopRay — Setup Guide
 
-**Version:** 1.6.0 | **Letzte Aktualisierung:** 2026-05-17
+**Version:** 1.7.0 | **Letzte Aktualisierung:** 2026-05-17
 
 Dieser Guide führt dich Schritt für Schritt durch die Einrichtung deines ShopRay-Templates —
 von der Installation bis zum fertigen, live geschalteten Shop.
@@ -17,15 +17,18 @@ von der Installation bis zum fertigen, live geschalteten Shop.
 6. [Stripe anbinden](#6-stripe-anbinden)
 7. [Backend starten & Webhook einrichten](#7-backend--webhook)
 8. [E-Mail-Versand einrichten](#8-e-mail-versand-einrichten)
-9. [Theme wählen](#9-theme-wählen)
-10. [Shop-Name & Firmendaten einrichten](#10-shop-name--firmendaten-einrichten)
-11. [Features aktivieren oder deaktivieren](#11-features-aktivieren-oder-deaktivieren)
-12. [Produkte befüllen](#12-produkte-befüllen)
-13. [Rechtliche Texte anpassen](#13-rechtliche-texte-anpassen)
-14. [Admin-Bereich einrichten](#14-admin-bereich-einrichten)
-15. [Deployment (Veröffentlichen)](#15-deployment)
-16. [Was gehört zu welchem Paket?](#16-pakete--was-gehört-wozu)
-17. [Technologie & Open Source](#17-technologie--open-source)
+9. [Rechnungen einrichten](#9-rechnungen-einrichten)
+10. [DHL Versandlabels einrichten](#10-dhl-versandlabels-einrichten)
+11. [Push-Benachrichtigungen einrichten](#11-push-benachrichtigungen-einrichten)
+12. [Theme wählen](#12-theme-wählen)
+13. [Shop-Name & Firmendaten einrichten](#13-shop-name--firmendaten-einrichten)
+14. [Features aktivieren oder deaktivieren](#14-features-aktivieren-oder-deaktivieren)
+15. [Produkte befüllen](#15-produkte-befüllen)
+16. [Rechtliche Texte anpassen](#16-rechtliche-texte-anpassen)
+17. [Admin-Bereich einrichten](#17-admin-bereich-einrichten)
+18. [Deployment (Veröffentlichen)](#18-deployment)
+19. [Was gehört zu welchem Paket?](#19-pakete--was-gehört-wozu)
+20. [Technologie & Open Source](#20-technologie--open-source)
 
 ---
 
@@ -114,21 +117,60 @@ VITE_STRIPE_PUBLIC_KEY=pk_live_xxxx          # Stripe publishable Key
 ### Backend/.env
 
 ```env
+# ── Supabase ─────────────────────────────────────────────────────────────────
 SUPABASE_URL=https://xxxx.supabase.co        # Supabase Projekt-URL
 SUPABASE_SERVICE_ROLE_KEY=eyJ...             # Supabase service_role Key (geheim!)
+
+# ── Stripe ───────────────────────────────────────────────────────────────────
 STRIPE_SECRET_KEY=sk_live_xxxx              # Stripe Secret Key (geheim!)
 STRIPE_WEBHOOK_SECRET=whsec_xxxx            # Stripe Webhook Signing Secret
+
+# ── Admin-Auth ────────────────────────────────────────────────────────────────
 JWT_SECRET=ein-sehr-langer-zufaelliger-string
 ADMIN_PASSWORD_HASH=$2b$12$...              # bcrypt-Hash deines Admin-Passworts
+ADMIN_URL=https://admin.deinshop.de
+
+# ── URLs ──────────────────────────────────────────────────────────────────────
 CLIENT_URL=https://deinshop.de              # Shop-URL (für Stripe Redirect nach Zahlung)
+NODE_ENV=production
+DEMO_MODE=false                             # true = alle Schreibzugriffe im Admin gesperrt
+
+# ── E-Mail (SMTP) ─────────────────────────────────────────────────────────────
 SMTP_HOST=smtp.resend.com
 SMTP_PORT=587
 SMTP_USER=resend
 SMTP_PASS=re_xxxx
 SMTP_FROM_EMAIL=bestellung@deinshop.de
-ADMIN_URL=https://admin.deinshop.de
-NODE_ENV=production
-DEMO_MODE=false                             # true = alle Schreibzugriffe im Admin gesperrt
+SMTP_FROM_NAME=Mein Shop                    # Absendername in E-Mails
+
+# ── Shop-Daten für Rechnungs-PDF (§14 UStG) ──────────────────────────────────
+# Diese Angaben erscheinen auf jeder generierten Rechnung
+SHOP_NAME=Mein Shop GmbH
+SHOP_STREET=Musterstraße 1
+SHOP_ZIP=12345
+SHOP_CITY=Musterstadt
+SHOP_COUNTRY=Deutschland
+SHOP_EMAIL=info@deinshop.de
+SHOP_PHONE=+49 30 000 000 00               # optional
+SHOP_VAT_ID=DE123456789                    # Umsatzsteuer-ID (empfohlen)
+SHOP_TAX_NUMBER=12/345/67890               # Steuernummer (alternative zu VAT_ID)
+INVOICE_PREFIX=RE                          # Rechnungsnummern-Präfix (RE-2026-00001)
+
+# ── DHL Versandlabels ─────────────────────────────────────────────────────────
+# Credentials aus dem DHL Geschäftskunden-Portal (developer.dhl.com)
+DHL_API_KEY=dein-dhl-api-key               # DHL Business API Key
+DHL_BILLING_NUMBER=12345678012082          # 14-stellige Abrechnungsnummer aus DHL-Vertrag
+DHL_SHIPPER_NAME=Mein Shop GmbH            # Absender-Name auf dem Label
+DHL_SHIPPER_STREET=Musterstraße 1          # Absender-Straße + Hausnummer
+DHL_SHIPPER_ZIP=12345                      # Absender-PLZ
+DHL_SHIPPER_CITY=Musterstadt               # Absender-Stadt
+DHL_SANDBOX=true                           # auf false setzen für echte Labels in Produktion
+
+# ── Push-Benachrichtigungen (VAPID) ──────────────────────────────────────────
+# Einmalig generieren: node -e "require('web-push').generateVAPIDKeys()"
+VAPID_PUBLIC_KEY=BGJBw...                  # VAPID Public Key (beginnt mit B)
+VAPID_PRIVATE_KEY=FazEa...                 # VAPID Private Key (geheim!)
+VAPID_EMAIL=mailto:admin@deinshop.de       # Kontakt-E-Mail für Push-Service
 ```
 
 ### Admin/.env
@@ -172,8 +214,14 @@ Führe die Migrationen **der Reihe nach** aus — jede als eigene Query im SQL E
 | `database/migration_005_shipping_settings.sql` | Versandkosten-Konfiguration |
 | `database/migration_006_admin_totp.sql` | Admin-2FA Tabelle (TOTP) |
 | `database/migration_007_categories.sql` | Kategorien-Tabelle für den Admin-Bereich |
+| `database/migration_008_reviews.sql` | Bewertungs-System mit Moderation |
+| `database/migration_009_tickets.sql` | Support-Tickets |
+| `database/migration_010_contact_inquiries.sql` | Kontaktanfragen-Tabelle |
+| `database/migration_011_user_ban.sql` | Kunden-Sperrsystem (Ban/Unban) |
+| `database/migration_012_push_subscriptions.sql` | Push-Benachrichtigungen (Web Push) |
+| `database/migration_013_invoice_label.sql` | Rechnungsnummern + DHL-Tracking-Spalten |
 
-> **Reihenfolge wichtig:** Führe die Migrationen immer in der Reihenfolge 001 → 002 → … → 007 aus.
+> **Reihenfolge wichtig:** Führe die Migrationen immer in der Reihenfolge 001 → 002 → … → 013 aus.
 
 ### Was passiert automatisch
 
@@ -388,7 +436,133 @@ Der Shop sendet automatisch E-Mails für Bestellbestätigungen, Passwort-Reset u
 
 ---
 
-## 9. Theme wählen
+## 9. Rechnungen einrichten
+
+ShopRay generiert automatisch eine GoBD-konforme PDF-Rechnung, sobald eine Bestellung bezahlt wurde. Die Rechnung wird:
+- **automatisch** per E-Mail an den Kunden geschickt (mit Stripe Webhook)
+- im **Admin-Bereich** auf der Bestelldetailseite als Download bereitgestellt
+
+### Pflichtangaben eintragen (§14 UStG)
+
+Trage in `Backend/.env` deine Firmendaten ein — sie erscheinen auf jeder Rechnung:
+
+```env
+SHOP_NAME=Mein Shop GmbH
+SHOP_STREET=Musterstraße 1
+SHOP_ZIP=12345
+SHOP_CITY=Musterstadt
+SHOP_COUNTRY=Deutschland
+SHOP_EMAIL=info@deinshop.de
+SHOP_PHONE=+49 30 000 000 00    # optional
+SHOP_VAT_ID=DE123456789         # Umsatzsteuer-ID (z.B. DE123456789)
+SHOP_TAX_NUMBER=12/345/67890    # Steuernummer (Finanzamt)
+INVOICE_PREFIX=RE               # Rechnungsnummer-Präfix (RE-2026-00001, RE-2026-00002, …)
+```
+
+> **USt-IdNr. vs. Steuernummer:** Für B2C-Shops reicht die Steuernummer. Wenn du auch B2B-Rechnungen schreibst oder EU-weit verkaufst, empfehlen wir zusätzlich die USt-IdNr. Trage einfach beide ein — die Rechnung zeigt automatisch was vorhanden ist.
+
+### Rechnungsnummern
+
+Rechnungsnummern werden fortlaufend vergeben (z.B. `RE-2026-00001`, `RE-2026-00002`, …). Die Vergabe ist idempotent — wird eine Bestellung mehrfach abgerufen, bleibt die Nummer gleich. Das erfüllt die GoBD-Anforderung nach Unabänderlichkeit.
+
+### Rechnung manuell herunterladen
+
+Admin-Panel → **Bestellungen** → Bestellung öffnen → Button **"Rechnung"** oben rechts.
+
+---
+
+## 10. DHL Versandlabels einrichten
+
+DHL-Labels werden direkt aus dem Admin-Panel erstellt — ohne DHL-Portal öffnen zu müssen.
+
+### Voraussetzungen
+
+- **DHL Geschäftskunden-Account** mit aktiviertem API-Zugang
+- API-Zugang beantragen unter: https://developer.dhl.com → "DHL Parcel DE Shipping" → Sandbox/Production Access
+
+### Schritt 1 — DHL Credentials eintragen
+
+```env
+DHL_API_KEY=dein-dhl-api-key
+DHL_BILLING_NUMBER=12345678012082   # 14-stellige Abrechnungsnummer aus deinem DHL-Vertrag
+DHL_SHIPPER_NAME=Mein Shop GmbH
+DHL_SHIPPER_STREET=Musterstraße 1  # Straße + Hausnummer
+DHL_SHIPPER_ZIP=12345
+DHL_SHIPPER_CITY=Musterstadt
+DHL_SANDBOX=true                    # Für Tests: true. Für echte Labels: false
+```
+
+**Wo finde ich die Abrechnungsnummer?** Im DHL Geschäftskunden-Portal unter **Mein DHL → Produkte & Verträge**. Sie ist 14-stellig und beginnt mit deiner 8-stelligen EKP-Nummer.
+
+### Schritt 2 — Sandbox testen
+
+Mit `DHL_SANDBOX=true` werden Labels gegen die DHL-Testumgebung erstellt. Die Labels sind nicht für den echten Versand geeignet, aber perfekt zum Testen.
+
+Sandbox-Zugangsdaten für Tests: https://developer.dhl.com/api-reference/parcel-de-shipping-post-parcel-germany-v2#section/Authentication/ApiKeyAuth
+
+### Schritt 3 — Auf Produktion umstellen
+
+```env
+DHL_SANDBOX=false
+```
+
+Danach werden echte Labels erstellt und dem Kunden wird bei Erstellung automatisch der Status **"Versendet"** gesetzt.
+
+### Label erstellen (Admin-Panel)
+
+Admin-Panel → **Bestellungen** → Bestellung öffnen → Button **"DHL Label"** → Paketgewicht eingeben → **"Label erstellen & herunterladen"**
+
+Das Label wird als PDF heruntergeladen. Die DHL-Sendungsnummer wird in der Bestellung gespeichert und als Tracking-Link angezeigt.
+
+---
+
+## 11. Push-Benachrichtigungen einrichten
+
+Der Admin kann sich Browser-Push-Benachrichtigungen aktivieren — er wird sofort benachrichtigt wenn eine neue Bestellung eingeht.
+
+### Unterstützte Geräte
+
+| Gerät | Anforderung |
+|---|---|
+| **Desktop (Chrome, Firefox, Edge)** | Funktioniert direkt im Browser |
+| **Android (Chrome)** | Funktioniert direkt im Browser |
+| **iPhone/iPad** | Erfordert iOS 16.4+ und "Zum Home-Bildschirm hinzufügen" |
+
+### Schritt 1 — VAPID-Keys generieren (einmalig)
+
+```bash
+cd Backend
+node -e "const wp = require('web-push'); const keys = wp.generateVAPIDKeys(); console.log(JSON.stringify(keys, null, 2));"
+```
+
+Das gibt aus:
+```json
+{
+  "publicKey": "BGJBw...",
+  "privateKey": "FazEa..."
+}
+```
+
+Trage beide Werte in `Backend/.env` ein:
+```env
+VAPID_PUBLIC_KEY=BGJBw...
+VAPID_PRIVATE_KEY=FazEa...
+VAPID_EMAIL=mailto:admin@deinshop.de
+```
+
+> **Wichtig:** Die Keys dürfen nur einmal generiert werden. Wenn du neue Keys generierst, müssen alle vorhandenen Push-Abonnements erneuert werden (Nutzer müssen sich neu anmelden).
+
+### Schritt 2 — Push aktivieren (Admin-Panel)
+
+1. Admin-Panel öffnen → **Einstellungen → Benachrichtigungen**
+2. Auf **"Benachrichtigungen aktivieren"** klicken
+3. Browser-Freigabe bestätigen
+
+Danach erscheint eine Push-Benachrichtigung bei jeder neuen Bestellung — auch wenn der Browser minimiert ist.
+
+---
+
+## 12. Theme wählen
 
 ShopRay kommt mit **4 Farbpaletten**, jede in **Dark und Light Mode** — macht 8 Themes gesamt.
 
@@ -415,7 +589,7 @@ ShopRay kommt mit **4 Farbpaletten**, jede in **Dark und Light Mode** — macht 
 
 ---
 
-## 10. Shop-Name & Firmendaten einrichten
+## 13. Shop-Name & Firmendaten einrichten
 
 Alle Shop- und Firmendaten sind zentral in einer Datei konfiguriert:
 [Frontend/src/config/app.ts](Frontend/src/config/app.ts)
@@ -448,7 +622,7 @@ export const APP_CONTACT = {
 
 ---
 
-## 11. Features aktivieren oder deaktivieren
+## 14. Features aktivieren oder deaktivieren
 
 Ändere in `Frontend/src/config/features.ts` die Werte:
 
@@ -474,7 +648,7 @@ Nach jeder Änderung: `npx tsc --noEmit` ausführen um TypeScript-Fehler zu prü
 
 ---
 
-## 12. Produkte befüllen
+## 15. Produkte befüllen
 
 Produkte werden über den **Admin-Bereich** angelegt (empfohlen) oder direkt per SQL in die Datenbank eingefügt.
 
@@ -490,7 +664,7 @@ Im Ordner `database/seed.sql` liegt eine Datei mit Beispielprodukten. Diese kann
 
 ---
 
-## 13. Rechtliche Texte anpassen
+## 16. Rechtliche Texte anpassen
 
 > **Wichtig:** Die rechtlichen Texte im Template sind Platzhalter. Vor dem Launch anpassen — am besten mit einem Anwalt oder einem Dienst wie eRecht24 oder Trusted Shops.
 
@@ -522,7 +696,7 @@ Das Template enthält kein Double-Opt-In. Nach § 7 Abs. 2 Nr. 3 UWG ist ein bes
 
 ---
 
-## 14. Admin-Bereich einrichten
+## 17. Admin-Bereich einrichten
 
 Der Admin-Bereich ist ein separates Projekt (`Admin/`) und läuft unabhängig vom Shop-Frontend.
 
@@ -530,15 +704,16 @@ Der Admin-Bereich ist ein separates Projekt (`Admin/`) und läuft unabhängig vo
 
 | Bereich | Funktion |
 |---|---|
-| **Dashboard** | Umsatz, Bestellungen, Kunden auf einen Blick |
-| **Produkte** | Anlegen, bearbeiten (Stift-Icon oder Doppelklick), Bilder hochladen |
-| **Bestellungen** | Status verwalten (Neu → Bezahlt → Versendet → Zugestellt) |
-| **Kunden** | Kundenliste, Bestellhistorie, DSGVO-Export (Art. 20) und -Löschung (Art. 17) |
+| **Dashboard** | Umsatz, Bestellungen, Kunden auf einen Blick — Klick auf Bestellung öffnet Details |
+| **Produkte** | Anlegen, bearbeiten, Bilder hochladen, CSV-Massenimport |
+| **Bestellungen** | Status verwalten, Rechnung als PDF herunterladen, DHL-Versandlabel erstellen |
+| **Kunden** | Kundenliste, Bestellhistorie, DSGVO-Export (Art. 20), Kunden sperren (Ban) |
 | **Kategorien** | Kategorien anlegen, Reihenfolge festlegen, löschen |
 | **Bewertungen** | Freischalten, ablehnen oder löschen — mit Tab-Filter |
 | **Support** | Eingehende Kontaktanfragen und Tickets beantworten |
 | **Einstellungen → Versand** | Versandkosten, Gratisversand-Grenze, Lieferzeit live konfigurieren |
 | **Einstellungen → Sicherheit** | Login-Protokoll — jeder Admin-Login wird aufgezeichnet |
+| **Einstellungen → Benachrichtigungen** | Push-Benachrichtigungen aktivieren (neue Bestellungen auf Smartphone) |
 
 ### Versandkosten konfigurieren
 
@@ -580,7 +755,7 @@ cd Admin && npm install && npm run dev
 
 ---
 
-## 15. Deployment
+## 18. Deployment
 
 ShopRay besteht aus drei separaten Vercel-Projekten im gleichen GitHub-Repository (**Monorepo**).
 
@@ -660,7 +835,7 @@ Im Demo-Modus sind alle schreibenden Admin-Operationen gesperrt (HTTP 403). Logi
 
 ---
 
-## 16. Pakete — Was gehört wozu
+## 19. Pakete — Was gehört wozu
 
 | Feature | Lite | Pro | Enterprise |
 |---|---|---|---|
@@ -683,7 +858,7 @@ Im Demo-Modus sind alle schreibenden Admin-Operationen gesperrt (HTTP 403). Logi
 
 ---
 
-## 17. Technologie & Open Source
+## 20. Technologie & Open Source
 
 ShopRay basiert fast vollständig auf Open-Source-Technologien.
 
