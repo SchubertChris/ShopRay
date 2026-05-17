@@ -15,6 +15,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS public.profiles (
   id               UUID        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name             TEXT,
+  email            TEXT,
   phone            TEXT,
   address_street   TEXT,
   address_zip      TEXT,
@@ -29,8 +30,12 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, name)
-  VALUES (NEW.id, NEW.raw_user_meta_data->>'name');
+  INSERT INTO public.profiles (id, name, email)
+  VALUES (
+    NEW.id,
+    NEW.raw_user_meta_data->>'name',
+    NEW.email
+  );
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
