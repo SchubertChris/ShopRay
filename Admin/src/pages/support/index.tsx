@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { MessageSquare, Clock, CheckCircle, ChevronRight, Search, Archive } from 'lucide-react';
 import { getAdminTickets, replyToTicket, type AdminTicket } from '../../api/adminApi';
 import { useBadgeStore } from '@stores/badgeStore';
+import ViewToggle from '../../components/ui/ViewToggle';
+import { useViewMode } from '../../hooks/useViewMode';
 
 type StatusFilter = AdminTicket['status'] | 'all';
-type ViewMode     = 'active' | 'archive';
+type ListViewMode = 'active' | 'archive';
 
 const ACTIVE_TABS: Array<{ key: StatusFilter; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }> = [
   { key: 'all',         label: 'Alle',           icon: MessageSquare },
@@ -28,8 +30,9 @@ const STATUS_LABELS: Record<string, string> = {
 export default function SupportPage() {
   const [tickets, setTickets]     = useState<AdminTicket[]>([]);
   const [loading, setLoading]     = useState(true);
-  const [viewMode, setViewMode]   = useState<ViewMode>('active');
+  const [viewMode, setViewMode]   = useState<ListViewMode>('active');
   const [status, setStatus]       = useState<StatusFilter>('all');
+  const [displayMode, toggleDisplayMode] = useViewMode('admin-support-view');
   const [category, setCategory]   = useState<string>('all');
   const [search, setSearch]       = useState('');
   const [active, setActive]       = useState<string | null>(null);
@@ -92,7 +95,7 @@ export default function SupportPage() {
     setSaving(false);
   };
 
-  const switchView = (mode: ViewMode) => {
+  const switchView = (mode: ListViewMode) => {
     setViewMode(mode);
     setStatus('all');
     setSearch('');
@@ -137,6 +140,7 @@ export default function SupportPage() {
             className="filter-bar__input"
           />
         </div>
+        <ViewToggle mode={displayMode} onToggle={toggleDisplayMode} />
       </div>
 
       <div className="tab-nav">
@@ -170,6 +174,50 @@ export default function SupportPage() {
         </select>
       </div>
 
+      {/* Grid-Ansicht */}
+      {displayMode === 'grid' && (
+        <div className="admin-grid admin-grid--wide">
+          {loading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="admin-card">
+                <div className="admin-card__body">
+                  <span className="skeleton skeleton--md" style={{ display: 'block', marginBottom: '0.4rem' }} />
+                  <span className="skeleton skeleton--sm" style={{ display: 'block' }} />
+                </div>
+              </div>
+            ))
+          ) : filtered.length === 0 ? (
+            <p className="data-card__empty">
+              {search ? 'Keine Treffer für diese Suche.' : 'Keine Tickets in dieser Kategorie.'}
+            </p>
+          ) : filtered.map(t => (
+            <div
+              key={t.id}
+              className="admin-card"
+              onClick={() => setActive(active === t.id ? null : t.id)}
+            >
+              <div className="admin-card__body">
+                <p className="admin-card__name">{t.subject}</p>
+                <div className="admin-card__status-row">
+                  <span className={`ticket-card__status ticket-card__status--${t.status}`}>
+                    {STATUS_LABELS[t.status]}
+                  </span>
+                  <span className="ticket-card__cat">{CAT_LABELS[t.category] ?? t.category}</span>
+                </div>
+                <p className="admin-card__preview admin-card__meta">
+                  {t.message.length > 80 ? `${t.message.slice(0, 80)}…` : t.message}
+                </p>
+              </div>
+              <div className="admin-card__footer">
+                <span className="admin-card__meta">{new Date(t.created_at).toLocaleDateString('de-DE')}</span>
+                <span className="admin-card__meta">{t.profiles?.name ?? t.profiles?.email ?? '—'}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {displayMode === 'table' && (
       <div className={`ticket-split${activeTicket ? ' has-detail' : ''}`}>
         <div className="ticket-list">
           {loading ? (
@@ -244,6 +292,7 @@ export default function SupportPage() {
           </div>
         )}
       </div>
+      )}
     </>
   );
 }

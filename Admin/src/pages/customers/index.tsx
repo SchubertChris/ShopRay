@@ -1,12 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Eye, Download, Trash2, Mail, ShoppingBag, X } from 'lucide-react';
+import { Search, Eye, Download, Trash2, Mail, ShoppingBag, X, ShieldOff, ShieldCheck } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import BanModal from '../../components/ui/BanModal';
 import {
   getAdminCustomers, getAdminCustomer, deleteAdminCustomer, updateCustomerRole,
+  unbanCustomer,
   type AdminCustomer, type AdminCustomerDetail, type UserRole,
 } from '../../api/adminApi';
+import ViewToggle from '../../components/ui/ViewToggle';
+import { useViewMode } from '../../hooks/useViewMode';
 
 function initials(name: string | null) {
   if (!name) return '?';
@@ -35,8 +39,10 @@ export default function CustomersPage() {
   const [deleteTarget, setDeleteTarget] = useState<AdminCustomer | null>(null);
   const [roleChanging, setRoleChanging] = useState(false);
   const [pendingRole,  setPendingRole]  = useState<{ id: string; name: string | null; from: UserRole; to: UserRole } | null>(null);
+  const [banTarget,    setBanTarget]    = useState<AdminCustomer | null>(null);
   const panelRef    = useRef<HTMLDivElement>(null);
   const touchStartY = useRef(-1);
+  const [viewMode, toggleViewMode] = useViewMode('admin-customers-view');
 
   useEffect(() => {
     setLoading(true);
@@ -105,6 +111,33 @@ export default function CustomersPage() {
     setDeleteTarget(null);
   };
 
+  const handleUnban = async (customer: AdminCustomer) => {
+    try {
+      await unbanCustomer(customer.id);
+      setCustomers(prev => prev.map(c =>
+        c.id === customer.id
+          ? { ...c, banned_at: null, banned_until: null, ban_reason: null }
+          : c,
+      ));
+      setDetail(prev => prev && prev.id === customer.id
+        ? { ...prev, banned_at: null, banned_until: null, ban_reason: null }
+        : prev,
+      );
+    } catch { /* ignore */ }
+  };
+
+  const handleBanned = async (id: string) => {
+    try {
+      const updated = await getAdminCustomer(id);
+      setCustomers(prev => prev.map(c =>
+        c.id === id
+          ? { ...c, banned_at: updated.banned_at, banned_until: updated.banned_until, ban_reason: updated.ban_reason }
+          : c,
+      ));
+      setDetail(prev => prev && prev.id === id ? updated : prev);
+    } catch { /* ignore */ }
+  };
+
   return (
     <>
       <div className="page-header">
@@ -127,9 +160,51 @@ export default function CustomersPage() {
           />
         </div>
         <div className="filter-bar__hint">DSGVO: Export- und Lösch-Aktionen werden protokolliert.</div>
+        <ViewToggle mode={viewMode} onToggle={toggleViewMode} />
       </div>
 
-      {detail && <div className="panel-backdrop" onClick={() => setActiveId(null)} />}
+      {/* Grid-Ansicht */}
+      {viewMode === 'grid' && (
+        <div className="admin-grid admin-grid--wide">
+          {loading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="admin-card admin-card--centered">
+                <div className="admin-card__body">
+                  <div className="admin-card__avatar skeleton" style={{ margin: '0 auto 0.75rem' }} />
+                  <span className="skeleton skeleton--md" style={{ display: 'block', marginBottom: '0.3rem' }} />
+                  <span className="skeleton skeleton--sm" style={{ display: 'block' }} />
+                </div>
+              </div>
+            ))
+          ) : filtered.map(c => (
+            <div
+              key={c.id}
+              className="admin-card admin-card--centered"
+              onClick={() => setActiveId(prev => prev === c.id ? null : c.id)}
+            >
+              <div className="admin-card__body">
+                <div className="admin-card__avatar">{initials(c.name)}</div>
+                <p className="admin-card__name">{c.name ?? '—'}</p>
+                <p className="admin-card__meta">{c.email ?? '—'}</p>
+                <div className="admin-card__status-row admin-card__status-row--centered">
+                  <span className="cat-badge">{c.role}</span>
+                  {c.banned_at && (
+                    <span className="status-badge status-badge--payment_failed">Gesperrt</span>
+                  )}
+                </div>
+              </div>
+              <div className="admin-card__footer admin-card__footer--centered">
+                <p className="admin-card__meta">
+                  {new Date(c.created_at).toLocaleDateString('de-DE')}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {detail && viewMode === 'table' && <div className="panel-backdrop" onClick={() => setActiveId(null)} />}
+      {viewMode === 'table' && (
       <div className={`customer-split${detail ? ' has-detail' : ''}`}>
         <div className="data-card">
           <div className="data-card__body">
@@ -144,6 +219,7 @@ export default function CustomersPage() {
                     <th>Kunde</th>
                     <th>Rolle</th>
                     <th>Seit</th>
+                    <th>Status</th>
                     <th className="admin-table__th--action">Aktionen</th>
                   </tr>
                 </thead>
@@ -167,6 +243,11 @@ export default function CustomersPage() {
                       <td className="admin-table__muted">
                         {new Date(c.created_at).toLocaleDateString('de-DE')}
                       </td>
+                      <td>
+                        {c.banned_at && (
+                          <span className="status-badge status-badge--payment_failed">Gesperrt</span>
+                        )}
+                      </td>
                       <td onClick={e => e.stopPropagation()}>
                         <div className="table-actions">
                           <button
@@ -179,6 +260,23 @@ export default function CustomersPage() {
                           >
                             <Download size={13} strokeWidth={2} />
                           </button>
+                          {c.banned_at ? (
+                            <button
+                              className="table-action"
+                              title="Sperre aufheben"
+                              onClick={() => handleUnban(c)}
+                            >
+                              <ShieldCheck size={13} strokeWidth={2} />
+                            </button>
+                          ) : (
+                            <button
+                              className="table-action table-action--warning"
+                              title="Konto sperren"
+                              onClick={() => setBanTarget(c)}
+                            >
+                              <ShieldOff size={13} strokeWidth={2} />
+                            </button>
+                          )}
                           <button
                             className="table-action table-action--danger"
                             title="Konto löschen (DSGVO Art. 17)"
@@ -293,8 +391,9 @@ export default function CustomersPage() {
           </div>
         )}
       </div>
+      )}
 
-      {filtered.length > 0 && !detail && (
+      {viewMode === 'table' && filtered.length > 0 && !detail && (
         <p className="table-hint">Klick auf einen Kunden für die Schnellansicht</p>
       )}
 
@@ -318,6 +417,18 @@ export default function CustomersPage() {
         onConfirm={handleRoleChange}
         onCancel={() => setPendingRole(null)}
       />
+
+      {banTarget && (
+        <BanModal
+          customer={banTarget}
+          onClose={() => setBanTarget(null)}
+          onBanned={() => {
+            const id = banTarget.id;
+            setBanTarget(null);
+            handleBanned(id);
+          }}
+        />
+      )}
     </>
   );
 }

@@ -4,6 +4,8 @@ import {
   getCategories, createCategory, deleteCategory,
   type Category,
 } from '../../api/adminApi';
+import ViewToggle from '../../components/ui/ViewToggle';
+import { useViewMode } from '../../hooks/useViewMode';
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -14,6 +16,7 @@ export default function CategoriesPage() {
   const [saving,     setSaving]     = useState(false);
   const [saveError,  setSaveError]  = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewMode, toggleViewMode] = useViewMode('admin-categories-view');
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
@@ -74,6 +77,7 @@ export default function CategoriesPage() {
             <RefreshCw size={15} strokeWidth={2} />
             Aktualisieren
           </button>
+          <ViewToggle mode={viewMode} onToggle={toggleViewMode} />
         </div>
       </div>
 
@@ -140,7 +144,37 @@ export default function CategoriesPage() {
         </div>
       )}
 
-      {!loading && !error && categories.length > 0 && (
+      {!loading && !error && categories.length > 0 && viewMode === 'grid' && (
+        <div className="admin-grid">
+          {categories.map(cat => (
+            <div key={cat.id} className="admin-card admin-card--centered">
+              <div className="admin-card__body">
+                <div className="admin-card__avatar">
+                  <Tag size={22} strokeWidth={1.75} />
+                </div>
+                <p className="admin-card__name">{cat.name}</p>
+                <p className="admin-card__meta">Reihenfolge #{cat.order}</p>
+              </div>
+              <div className="admin-card__footer">
+                <span className="admin-card__meta">{new Date(cat.created_at).toLocaleDateString('de-DE')}</span>
+                <button
+                  className="table-action table-action--danger"
+                  onClick={() => handleDelete(cat.id, cat.name)}
+                  disabled={deletingId === cat.id}
+                  title={`"${cat.name}" löschen`}
+                >
+                  {deletingId === cat.id
+                    ? <Loader2 size={13} strokeWidth={2} className="spin" />
+                    : <Trash2 size={13} strokeWidth={2} />
+                  }
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!loading && !error && categories.length > 0 && viewMode === 'table' && (
         <div className="cat-list">
           {categories.map(cat => (
             <div key={cat.id} className="cat-item">

@@ -7,6 +7,8 @@ import {
   getAdminReviews, verifyReview, rejectReview, deleteAdminReview,
   type AdminReview,
 } from '../../api/adminApi';
+import ViewToggle from '../../components/ui/ViewToggle';
+import { useViewMode } from '../../hooks/useViewMode';
 
 type VerifiedFilter = 'all' | 'pending' | 'verified';
 
@@ -43,6 +45,7 @@ export default function ReviewsPage() {
   const [error,    setError]    = useState<string | null>(null);
   const [filter,   setFilter]   = useState<VerifiedFilter>('all');
   const [busy,     setBusy]     = useState<string | null>(null);
+  const [viewMode, toggleViewMode] = useViewMode('admin-reviews-view');
 
   const fetchReviews = useCallback(async () => {
     setLoading(true);
@@ -114,6 +117,7 @@ export default function ReviewsPage() {
             <RefreshCw size={15} strokeWidth={2} />
             Aktualisieren
           </button>
+          <ViewToggle mode={viewMode} onToggle={toggleViewMode} />
         </div>
       </div>
 
@@ -156,7 +160,64 @@ export default function ReviewsPage() {
         </div>
       )}
 
-      {!loading && !error && filtered.length > 0 && (
+      {!loading && !error && filtered.length > 0 && viewMode === 'grid' && (
+        <div className="admin-grid admin-grid--wide">
+          {filtered.map(review => (
+            <div key={review.id} className={`admin-card${review.verified ? '' : ''}`}>
+              <div className="admin-card__body">
+                <p className="admin-card__name">{review.title ?? '(Kein Titel)'}</p>
+                <p className="admin-card__meta">{review.products?.name ?? review.product_id.slice(0, 8)}</p>
+                <div className="admin-card__status-row">
+                  <StarRow rating={review.rating} />
+                  <span className={`rev-badge${review.verified ? ' rev-badge--verified' : ' rev-badge--pending'}`}>
+                    {review.verified ? 'Freigegeben' : 'Ausstehend'}
+                  </span>
+                </div>
+                {review.body && (
+                  <p className="admin-card__meta admin-card__preview">
+                    {review.body}
+                  </p>
+                )}
+              </div>
+              <div className="admin-card__footer">
+                <span className="admin-card__meta">{formatDate(review.created_at)}</span>
+                <div className="admin-card__actions">
+                  {!review.verified && (
+                    <button
+                      className="table-action"
+                      title="Freischalten"
+                      onClick={() => handleVerify(review.id)}
+                      disabled={busy === review.id}
+                    >
+                      <CheckCircle size={13} strokeWidth={2} />
+                    </button>
+                  )}
+                  {review.verified && (
+                    <button
+                      className="table-action table-action--warning"
+                      title="Ablehnen"
+                      onClick={() => handleReject(review.id)}
+                      disabled={busy === review.id}
+                    >
+                      <XCircle size={13} strokeWidth={2} />
+                    </button>
+                  )}
+                  <button
+                    className="table-action table-action--danger"
+                    title="Löschen"
+                    onClick={() => handleDelete(review.id)}
+                    disabled={busy === review.id}
+                  >
+                    <Trash2 size={13} strokeWidth={2} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!loading && !error && filtered.length > 0 && viewMode === 'table' && (
         <div className="rev-list">
           {filtered.map(review => (
             <div key={review.id} className={`rev-card${review.verified ? ' rev-card--verified' : ' rev-card--pending'}`}>

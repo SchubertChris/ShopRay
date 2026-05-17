@@ -6,10 +6,12 @@ import {
 } from 'lucide-react';
 import { getInquiries, updateInquiryStatus, type ContactInquiry } from '../../api/adminApi';
 import { useBadgeStore } from '@stores/badgeStore';
+import ViewToggle from '../../components/ui/ViewToggle';
+import { useViewMode } from '../../hooks/useViewMode';
 
 type InquiryStatus = ContactInquiry['status'];
 type StatusFilter  = InquiryStatus | 'all';
-type ViewMode      = 'active' | 'archive';
+type ListViewMode  = 'active' | 'archive';
 
 const ACTIVE_TABS: Array<{
   key:   StatusFilter;
@@ -50,8 +52,9 @@ export default function InquiriesPage() {
   const [loading,      setLoading]      = useState(false);
   const [error,        setError]        = useState<string | null>(null);
   const [activeId,     setActiveId]     = useState<string | null>(null);
-  const [viewMode,     setViewMode]     = useState<ViewMode>('active');
+  const [viewMode,     setViewMode]     = useState<ListViewMode>('active');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [displayMode, toggleDisplayMode] = useViewMode('admin-inquiries-view');
   const [search,       setSearch]       = useState('');
   const [saving,       setSaving]       = useState(false);
 
@@ -111,7 +114,7 @@ export default function InquiriesPage() {
 
   const activeInquiry = activeId ? inquiries.find(i => i.id === activeId) ?? null : null;
 
-  const switchView = (mode: ViewMode) => {
+  const switchView = (mode: ListViewMode) => {
     setViewMode(mode);
     setStatusFilter('all');
     setSearch('');
@@ -166,6 +169,7 @@ export default function InquiriesPage() {
             className="filter-bar__input"
           />
         </div>
+        <ViewToggle mode={displayMode} onToggle={toggleDisplayMode} />
       </div>
 
       {/* Status-Tabs */}
@@ -210,8 +214,39 @@ export default function InquiriesPage() {
         </div>
       )}
 
+      {/* Grid-Ansicht */}
+      {!loading && !error && displayMode === 'grid' && (
+        <div className="admin-grid admin-grid--wide">
+          {filtered.length === 0 ? (
+            <p className="data-card__empty">
+              {search ? 'Keine Treffer für diese Suche.' : 'Keine Anfragen in dieser Kategorie.'}
+            </p>
+          ) : filtered.map(inq => (
+            <div
+              key={inq.id}
+              className="admin-card"
+              onClick={() => setActiveId(activeId === inq.id ? null : inq.id)}
+            >
+              <div className="admin-card__body">
+                <p className="admin-card__name">{inq.subject}</p>
+                <p className="admin-card__meta">{inq.name} · {inq.email}</p>
+                <div className="admin-card__status-row">
+                  <StatusBadge status={inq.status} />
+                </div>
+                <p className="admin-card__preview admin-card__meta">
+                  {inq.message.length > 80 ? `${inq.message.slice(0, 80)}…` : inq.message}
+                </p>
+              </div>
+              <div className="admin-card__footer">
+                <span className="admin-card__meta">{formatDate(inq.created_at)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Split View */}
-      {!loading && !error && (
+      {!loading && !error && displayMode === 'table' && (
         <div className={`inq-split${activeInquiry ? ' has-detail' : ''}`}>
           {/* Liste */}
           <div className="inq-list">

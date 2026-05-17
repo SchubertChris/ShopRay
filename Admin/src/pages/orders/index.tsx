@@ -5,6 +5,8 @@ import { ROUTES } from '@config/routes';
 import type { OrderStatus } from '../../types/index';
 import { getAdminOrders, getAdminOrder, updateOrderStatus, type AdminOrder } from '../../api/adminApi';
 import { useBadgeStore } from '@stores/badgeStore';
+import ViewToggle from '../../components/ui/ViewToggle';
+import { useViewMode } from '../../hooks/useViewMode';
 
 const ACTIVE_STATUSES:  OrderStatus[] = ['pending', 'paid', 'shipped'];
 const ARCHIVE_STATUSES: OrderStatus[] = ['delivered', 'cancelled', 'payment_failed', 'refunded'];
@@ -37,14 +39,15 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE');
 }
 
-type ViewMode = 'active' | 'archive';
+type ListViewMode = 'active' | 'archive';
 
 export default function OrdersPage() {
   const [orders, setOrders]       = useState<Awaited<ReturnType<typeof getAdminOrders>>['data']>([]);
   const [total, setTotal]         = useState(0);
   const [loading, setLoading]     = useState(true);
-  const [viewMode, setViewMode]   = useState<ViewMode>('active');
+  const [viewMode, setViewMode]   = useState<ListViewMode>('active');
   const [activeTab, setActiveTab] = useState<OrderStatus | 'all'>('all');
+  const [displayMode, toggleDisplayMode] = useViewMode('admin-orders-view');
   const [search, setSearch]       = useState('');
   const [activeId, setActiveId]   = useState<string | null>(null);
   const [detail, setDetail]       = useState<AdminOrder | null>(null);
@@ -124,7 +127,7 @@ export default function OrdersPage() {
     } catch { /* ignore */ }
   };
 
-  const switchView = (mode: ViewMode) => {
+  const switchView = (mode: ListViewMode) => {
     setViewMode(mode);
     setActiveTab('all');
     setSearch('');
@@ -172,6 +175,7 @@ export default function OrdersPage() {
             className="filter-bar__input"
           />
         </div>
+        <ViewToggle mode={displayMode} onToggle={toggleDisplayMode} />
       </div>
 
       <div className="tab-nav">
@@ -195,7 +199,46 @@ export default function OrdersPage() {
         ))}
       </div>
 
-      {detail && <div className="panel-backdrop" onClick={() => setActiveId(null)} />}
+      {/* Grid-Ansicht */}
+      {displayMode === 'grid' && (
+        <div className="admin-grid admin-grid--wide">
+          {loading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="admin-card">
+                <div className="admin-card__body">
+                  <span className="skeleton skeleton--md" style={{ display: 'block', marginBottom: '0.4rem' }} />
+                  <span className="skeleton skeleton--sm" style={{ display: 'block' }} />
+                </div>
+              </div>
+            ))
+          ) : filtered.length === 0 ? (
+            <p className="data-card__empty">Keine Bestellungen in dieser Kategorie.</p>
+          ) : filtered.map(o => (
+            <div
+              key={o.id}
+              className="admin-card"
+              onClick={() => setActiveId(prev => prev === o.id ? null : o.id)}
+            >
+              <div className="admin-card__body">
+                <p className="admin-card__name">{o.order_number}</p>
+                <p className="admin-card__meta">{o.user_id ?? '—'}</p>
+                <div className="admin-card__status-row">
+                  <span className={`status-badge status-badge--${o.status}`}>
+                    {STATUS_LABELS[o.status] ?? o.status}
+                  </span>
+                </div>
+              </div>
+              <div className="admin-card__footer">
+                <span className="admin-card__price">{fmt(Number(o.total))}</span>
+                <span className="admin-card__meta">{fmtDate(o.created_at)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {detail && displayMode === 'table' && <div className="panel-backdrop" onClick={() => setActiveId(null)} />}
+      {displayMode === 'table' && (
       <div className={`order-split${detail ? ' has-detail' : ''}`}>
         <div className="data-card">
           <div className="data-card__body">
@@ -333,8 +376,9 @@ export default function OrdersPage() {
           </div>
         )}
       </div>
+      )}
 
-      {filtered.length > 0 && !detail && (
+      {displayMode === 'table' && filtered.length > 0 && !detail && (
         <p className="table-hint">Klick auf eine Zeile für Details und Statusänderung</p>
       )}
     </>

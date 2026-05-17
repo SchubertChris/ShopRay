@@ -120,6 +120,70 @@ export function adminLoginAlertHtml(params: {
   `;
 }
 
+export function accountBannedHtml(params: {
+  customerName: string;
+  reason:       string;
+  permanent:    boolean;
+  until?:       string; // formatiertes Datum, nur bei temporärer Sperre
+  shopName:     string;
+  contactEmail: string;
+}): string {
+  const durationRow = params.permanent
+    ? `<tr>
+         <td style="padding:10px 12px;background:#f8f8f8;font-weight:600;border-bottom:1px solid #eee">Dauer</td>
+         <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#b91c1c;font-weight:700">Dauerhaft</td>
+       </tr>`
+    : `<tr>
+         <td style="padding:10px 12px;background:#f8f8f8;font-weight:600;border-bottom:1px solid #eee">Gesperrt bis</td>
+         <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#92400e;font-weight:700">${params.until ?? '—'}</td>
+       </tr>`;
+
+  return `
+    <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#111">
+      <div style="background:#b91c1c;border-radius:12px 12px 0 0;padding:24px 28px">
+        <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#fecaca">${params.shopName}</p>
+        <h2 style="margin:8px 0 0;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.03em">Konto gesperrt</h2>
+      </div>
+      <div style="border:1px solid #e5e5e5;border-top:none;border-radius:0 0 12px 12px;padding:28px">
+        <p style="margin:0 0 20px;font-size:15px;color:#444;line-height:1.6">
+          Hallo ${params.customerName},<br><br>
+          dein Konto wurde von unserem Team gesperrt. Du kannst dich während der Sperre
+          nicht einloggen und hast keinen Zugriff auf deine Bestellungen oder andere Funktionen.
+        </p>
+
+        <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px">
+          <tr>
+            <td style="padding:10px 12px;background:#f8f8f8;font-weight:600;width:110px;border-bottom:1px solid #eee;border-radius:6px 0 0 0">Grund</td>
+            <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#222">${params.reason}</td>
+          </tr>
+          ${durationRow}
+          <tr>
+            <td style="padding:10px 12px;background:#f8f8f8;font-weight:600;border-radius:0 0 0 6px">Kontakt</td>
+            <td style="padding:10px 12px">
+              <a href="mailto:${params.contactEmail}" style="color:#0066cc">${params.contactEmail}</a>
+            </td>
+          </tr>
+        </table>
+
+        <p style="margin:0 0 16px;font-size:14px;color:#555;line-height:1.6">
+          Wenn du glaubst, dass diese Sperrung ein Fehler ist, antworte auf diese E-Mail
+          oder wende dich direkt an unseren Support.
+        </p>
+
+        <a href="mailto:${params.contactEmail}"
+           style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:11px 22px;border-radius:8px;font-size:14px;font-weight:700">
+          Support kontaktieren →
+        </a>
+
+        <p style="margin:24px 0 0;font-size:12px;color:#aaa;line-height:1.6">
+          Diese E-Mail wurde automatisch gesendet.<br>
+          ${params.shopName} — Kundenservice
+        </p>
+      </div>
+    </div>
+  `;
+}
+
 export function contactNotificationHtml(params: {
   name:    string;
   email:   string;

@@ -328,4 +328,10 @@
     background:    color-mix(in srgb, var(--clr-error) 10%, transparent);
     border-color:  transparent;
   }
+
+  &--warning:hover {
+    color:         var(--clr-warning);
+    background:    color-mix(in srgb, var(--clr-warning) 10%, transparent);
+    border-color:  transparent;
+  }
 }

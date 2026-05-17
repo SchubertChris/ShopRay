@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Download, Trash2, ShoppingBag, Mail, Calendar, ShieldCheck, Loader2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Download, Trash2, ShoppingBag, Mail, Calendar, ShieldCheck, ShieldOff, Loader2, AlertTriangle } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import {
-  getAdminCustomer, updateCustomerRole, deleteAdminCustomer,
+  getAdminCustomer, updateCustomerRole, deleteAdminCustomer, unbanCustomer,
   type AdminCustomerDetail, type UserRole,
 } from '../../api/adminApi';
 import type { OrderStatus } from '../../types/index';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import BanModal from '../../components/ui/BanModal';
 
 const ROLE_LABELS: Record<UserRole, string> = {
   owner:    'Inhaber',
@@ -48,6 +49,10 @@ export default function CustomerDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting,          setDeleting]          = useState(false);
 
+  const [showBanModal,  setShowBanModal]  = useState(false);
+  const [unbanning,     setUnbanning]     = useState(false);
+  const [unbanError,    setUnbanError]    = useState<string | null>(null);
+
   const [role,            setRole]            = useState<UserRole>('customer');
   const [roleSaving,      setRoleSaving]      = useState(false);
   const [roleError,       setRoleError]       = useState<string | null>(null);
@@ -65,6 +70,21 @@ export default function CustomerDetailPage() {
       .catch(() => setError('Kunde konnte nicht geladen werden.'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const handleUnban = async () => {
+    if (!id) return;
+    setUnbanning(true);
+    setUnbanError(null);
+    try {
+      await unbanCustomer(id);
+      const updated = await getAdminCustomer(id);
+      setCustomer(updated);
+    } catch (err) {
+      setUnbanError(err instanceof Error ? err.message : 'Sperre konnte nicht aufgehoben werden.');
+    } finally {
+      setUnbanning(false);
+    }
+  };
 
   const handleRoleSave = async () => {
     if (!id) return;
@@ -306,6 +326,69 @@ export default function CustomerDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Konto-Status / Ban */}
+          <div className="detail-card">
+            <div className="detail-card__header">
+              {customer.banned_at
+                ? <><ShieldOff size={15} strokeWidth={1.75} /> Konto-Status</>
+                : <><ShieldCheck size={15} strokeWidth={1.75} /> Konto-Status</>
+              }
+            </div>
+            <div className="detail-card__body">
+              {customer.banned_at ? (
+                <>
+                  <div className="ban-info">
+                    <p className="ban-info__item">
+                      <span className="ban-info__label">Gesperrt seit</span>
+                      <span className="ban-info__value">
+                        {new Date(customer.banned_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      </span>
+                    </p>
+                    <p className="ban-info__item">
+                      <span className="ban-info__label">Gesperrt bis</span>
+                      <span className="ban-info__value">
+                        {customer.banned_until
+                          ? new Date(customer.banned_until).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                          : 'Dauerhaft'
+                        }
+                      </span>
+                    </p>
+                    {customer.ban_reason && (
+                      <p className="ban-info__item">
+                        <span className="ban-info__label">Grund</span>
+                        <span className="ban-info__value">{customer.ban_reason}</span>
+                      </p>
+                    )}
+                  </div>
+                  {unbanError && <p className="form-error-inline">{unbanError}</p>}
+                  <button
+                    className="btn-primary detail-role__btn"
+                    onClick={handleUnban}
+                    disabled={unbanning}
+                  >
+                    {unbanning
+                      ? <><Loader2 size={13} className="spin" /> Wird entsperrt…</>
+                      : <><ShieldCheck size={13} /> Sperre aufheben</>
+                    }
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="detail-info-item__label detail-role__label">
+                    Konto ist aktiv. Sperre verhindert den Login und alle Aktivitäten dieses Kontos.
+                  </p>
+                  <button
+                    className="btn-danger detail-role__btn"
+                    onClick={() => setShowBanModal(true)}
+                  >
+                    <ShieldOff size={13} strokeWidth={2} />
+                    Konto sperren
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -330,6 +413,19 @@ export default function CustomerDetailPage() {
         onConfirm={handleDeleteConfirm}
         onCancel={() => setShowDeleteConfirm(false)}
       />
+
+      {showBanModal && (
+        <BanModal
+          customer={{ id: customer.id, name: customer.name, email: customer.email }}
+          onClose={() => setShowBanModal(false)}
+          onBanned={() => {
+            setShowBanModal(false);
+            if (id) {
+              getAdminCustomer(id).then(setCustomer).catch(() => null);
+            }
+          }}
+        />
+      )}
     </>
   );
 }

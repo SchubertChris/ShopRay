@@ -1,6 +1,6 @@
 -- ══════════════════════════════════════════════════════════════════════════════
 -- ShopRay — Vollständiges Datenbankschema (konsolidiert)
--- Stand: 2026-05-17 — enthält alle Änderungen aus Migrations 001–010
+-- Stand: 2026-05-17 — enthält alle Änderungen aus Migrations 001–011
 -- ══════════════════════════════════════════════════════════════════════════════
 --
 -- FRISCHE INSTALLATION (Neukunde):
@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   address_country  TEXT        DEFAULT 'Deutschland',
   role             TEXT        NOT NULL DEFAULT 'customer'
                                CHECK (role IN ('owner', 'admin', 'mod', 'customer')),
+  banned_at        TIMESTAMPTZ,
+  banned_until     TIMESTAMPTZ,                         -- NULL = dauerhaft gesperrt
+  ban_reason       TEXT,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

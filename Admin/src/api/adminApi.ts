@@ -168,12 +168,15 @@ export const getLoginLog = () =>
 export type UserRole = 'owner' | 'admin' | 'mod' | 'customer';
 
 export interface AdminCustomer {
-  id:         string;
-  name:       string | null;
-  email:      string | null;
-  role:       UserRole;
-  created_at: string;
-  updated_at: string | null;
+  id:           string;
+  name:         string | null;
+  email:        string | null;
+  role:         UserRole;
+  created_at:   string;
+  updated_at:   string | null;
+  banned_at?:   string | null;
+  banned_until?: string | null;
+  ban_reason?:  string | null;
 }
 
 export interface AdminCustomerOrderItem {
@@ -240,6 +243,14 @@ export const updateCustomerRole = (id: string, role: UserRole) =>
 
 export const deleteAdminCustomer = (id: string) =>
   apiFetch<{ deleted: boolean }>(`/api/admin/customers/${id}`, 'DELETE');
+
+export const banCustomer = (id: string, reason: string, until?: string) =>
+  apiFetch<{ banned: boolean; banned_at: string; banned_until: string | null; ban_reason: string }>(
+    `/api/admin/customers/${id}/ban`, 'POST', { reason, ...(until ? { until } : {}) },
+  );
+
+export const unbanCustomer = (id: string) =>
+  apiFetch<{ unbanned: boolean }>(`/api/admin/customers/${id}/unban`, 'POST');
 
 // ── Bestellungen (Admin) ──────────────────────────────────────────────────────
 

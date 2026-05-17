@@ -8,6 +8,8 @@ import type { ProductCategory } from '../../types/index';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import CsvImportModal from '../../components/ui/CsvImportModal';
 import { API_URL } from '../../api/adminApi';
+import ViewToggle from '../../components/ui/ViewToggle';
+import { useViewMode } from '../../hooks/useViewMode';
 
 type Density = 'compact' | 'normal';
 const CATEGORIES: Array<'Alle' | ProductCategory> = ['Alle', 'Wohnen', 'Deko', 'Küche', 'Textilien', 'Kunst'];
@@ -29,6 +31,7 @@ export default function ProductsPage() {
     () => (localStorage.getItem(DENSITY_KEY) as Density | null) ?? 'normal',
   );
   const [showCsvModal, setShowCsvModal] = useState(false);
+  const [viewMode, toggleViewMode] = useViewMode('admin-products-view');
 
   const toggleDensity = () => {
     setDensity(prev => {
@@ -149,6 +152,7 @@ export default function ProductsPage() {
         >
           Kompakt
         </button>
+        <ViewToggle mode={viewMode} onToggle={toggleViewMode} />
       </div>
 
       {/* Error State */}
@@ -166,8 +170,67 @@ export default function ProductsPage() {
         </div>
       )}
 
+      {/* Grid-Ansicht */}
+      {!error && viewMode === 'grid' && (
+        <div className="admin-grid">
+          {loading
+            ? Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="admin-card">
+                  <div className="admin-card__img skeleton" />
+                  <div className="admin-card__body">
+                    <span className="skeleton skeleton--md" style={{ display: 'block', marginBottom: '0.4rem' }} />
+                    <span className="skeleton skeleton--sm" style={{ display: 'block' }} />
+                  </div>
+                </div>
+              ))
+            : filtered.map(p => (
+                <div key={p.id} className="admin-card" onDoubleClick={() => handleRowDoubleClick(p.id)}>
+                  <div className="admin-card__img">
+                    {p.image_url
+                      ? <img src={p.image_url} alt={p.name} onContextMenu={e => e.preventDefault()} />
+                      : <span>{p.name[0]}</span>
+                    }
+                  </div>
+                  <div className="admin-card__body">
+                    <p className="admin-card__name">{p.name}</p>
+                    <p className="admin-card__meta">{p.category}</p>
+                    <div className="admin-card__status-row">
+                      <span className={`stock-badge${p.stock === 0 ? ' stock-badge--out' : p.stock <= 5 ? ' stock-badge--low' : ''}`}>
+                        {p.stock === 0 ? 'Ausverkauft' : `${p.stock} Stk.`}
+                      </span>
+                      <span className={`status-badge status-badge--toggle ${p.active ? 'status-badge--active' : 'status-badge--inactive'}`}>
+                        {p.active ? 'Aktiv' : 'Inaktiv'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="admin-card__footer">
+                    <span className="admin-card__price">€ {formatPrice(p.price)}</span>
+                    <div className="admin-card__actions">
+                      <Link
+                        to={ROUTES.PRODUCTS.edit(p.id)}
+                        className="table-action"
+                        title="Bearbeiten"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <Pencil size={13} strokeWidth={2} />
+                      </Link>
+                      <button
+                        className="table-action table-action--danger"
+                        title="Löschen"
+                        onClick={e => { e.stopPropagation(); setConfirmProduct(p); }}
+                      >
+                        <Trash2 size={13} strokeWidth={2} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+          }
+        </div>
+      )}
+
       {/* Table */}
-      {!error && (
+      {!error && viewMode === 'table' && (
         <div className="data-card">
           <div className="data-card__body">
             <table className={`admin-table${density === 'compact' ? ' admin-table--compact' : ''}`}>
