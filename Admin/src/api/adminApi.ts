@@ -474,6 +474,22 @@ export const replyToTicket = (id: string, reply: string, status: AdminTicket['st
     `/api/admin/tickets/${id}/reply`, 'PATCH', { reply, status },
   );
 
+export interface TicketMessage {
+  id:         string;
+  ticket_id:  string;
+  sender:     'customer' | 'admin';
+  text:       string;
+  created_at: string;
+}
+
+export async function getAdminTicketMessages(ticketId: string): Promise<TicketMessage[]> {
+  return apiFetch<TicketMessage[]>(`/api/admin/tickets/${ticketId}/messages`);
+}
+
+export async function sendAdminMessage(ticketId: string, text: string): Promise<TicketMessage> {
+  return apiFetch<TicketMessage>(`/api/admin/tickets/${ticketId}/messages`, 'POST', { text });
+}
+
 // ── Stats (Admin) ─────────────────────────────────────────────────────────────
 
 export interface AdminStats {

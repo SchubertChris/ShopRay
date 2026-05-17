@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Clock, CheckCircle, ChevronRight, Search, Archive } from 'lucide-react';
-import { getAdminTickets, replyToTicket, type AdminTicket } from '../../api/adminApi';
+import { getAdminTickets, replyToTicket, getAdminTicketMessages, sendAdminMessage, type AdminTicket, type TicketMessage } from '../../api/adminApi';
 import { useBadgeStore } from '@stores/badgeStore';
 import ViewToggle from '../../components/ui/ViewToggle';
 import { useViewMode } from '../../hooks/useViewMode';
@@ -39,6 +39,14 @@ export default function SupportPage() {
   const [reply, setReply]         = useState('');
   const [replyStatus, setReplyStatus] = useState<AdminTicket['status']>('closed');
   const [saving, setSaving]       = useState(false);
+
+  const [chatView,    setChatView]    = useState(false);
+  const [chatTicket,  setChatTicket]  = useState<AdminTicket | null>(null);
+  const [chatMsgs,    setChatMsgs]    = useState<TicketMessage[]>([]);
+  const [chatInput,   setChatInput]   = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatSending, setChatSending] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     useBadgeStore.getState().clear('openTickets');
@@ -100,7 +108,46 @@ export default function SupportPage() {
     setStatus('all');
     setSearch('');
     setActive(null);
+    setChatView(false);
+    if (pollRef.current) clearInterval(pollRef.current);
   };
+
+  const openChat = async (ticket: AdminTicket) => {
+    setChatTicket(ticket);
+    setChatLoading(true);
+    try {
+      const msgs = await getAdminTicketMessages(ticket.id);
+      setChatMsgs(msgs);
+    } finally {
+      setChatLoading(false);
+    }
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(async () => {
+      const fresh = await getAdminTicketMessages(ticket.id).catch(() => null);
+      if (fresh) setChatMsgs(fresh);
+    }, 2000);
+  };
+
+  const closeChat = () => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = null;
+    setChatTicket(null);
+    setChatMsgs([]);
+  };
+
+  const sendChat = async () => {
+    if (!chatTicket || !chatInput.trim() || chatSending) return;
+    setChatSending(true);
+    try {
+      const msg = await sendAdminMessage(chatTicket.id, chatInput.trim());
+      setChatMsgs(prev => [...prev, msg]);
+      setChatInput('');
+    } finally {
+      setChatSending(false);
+    }
+  };
+
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
   return (
     <>
@@ -125,6 +172,13 @@ export default function SupportPage() {
             <Archive size={13} strokeWidth={2} />
             Archiv
             {archiveCount > 0 && <span className="tab-nav__count">{archiveCount}</span>}
+          </button>
+          <button
+            className={`filter-bar__tab${chatView ? ' is-active' : ''}`}
+            onClick={() => { if (chatView) { closeChat(); setChatView(false); } else { closeChat(); setChatView(true); setActive(null); } }}
+          >
+            Chats
+            {activeCount > 0 && <span className="tab-nav__count">{activeCount}</span>}
           </button>
         </div>
       </div>
@@ -292,6 +346,86 @@ export default function SupportPage() {
           </div>
         )}
       </div>
+      )}
+
+      {chatView && !chatTicket && (
+        <div className="ticket-list">
+          {tickets
+            .filter(t => t.status !== 'closed')
+            .map(ticket => (
+              <button
+                key={ticket.id}
+                className="ticket-card"
+                onClick={() => openChat(ticket)}
+                type="button"
+              >
+                <div className="ticket-card__top">
+                  {ticket.status === 'open' && <span className="unread-dot" />}
+                  <span className={`ticket-card__status ticket-card__status--${ticket.status}`}>
+                    {STATUS_LABELS[ticket.status]}
+                  </span>
+                  <span className="ticket-card__cat">{CAT_LABELS[ticket.category] ?? ticket.category}</span>
+                  <span className="ticket-card__date">
+                    {new Date(ticket.created_at).toLocaleDateString('de-DE')}
+                  </span>
+                </div>
+                <p className="ticket-card__subject">{ticket.subject}</p>
+                <p className="ticket-card__customer">{ticket.profiles?.name ?? ticket.profiles?.email ?? '—'}</p>
+              </button>
+            ))}
+          {tickets.filter(t => t.status !== 'closed').length === 0 && (
+            <div className="data-card"><div className="data-card__empty">Keine offenen Tickets.</div></div>
+          )}
+        </div>
+      )}
+
+      {chatView && chatTicket && (
+        <div className="admin-chat-panel">
+          <div className="admin-chat-panel__header">
+            <button className="btn-ghost btn-sm" onClick={closeChat} type="button">← Zurück</button>
+            <span className="admin-chat-panel__subject">{chatTicket.subject}</span>
+            <span className="admin-chat-panel__customer">{chatTicket.profiles?.name ?? chatTicket.profiles?.email ?? '—'}</span>
+          </div>
+          <div className="admin-chat-panel__messages">
+            {chatLoading && <p className="admin-chat-panel__loading">Lädt…</p>}
+            {!chatLoading && chatMsgs.map(msg => (
+              <div
+                key={msg.id}
+                className={`chat-bubble chat-bubble--${msg.sender === 'admin' ? 'admin-sent' : 'customer-recv'}`}
+              >
+                <div className="chat-bubble__text">{msg.text}</div>
+                <div className="chat-bubble__time">
+                  {new Date(msg.created_at).toLocaleString('de-DE', {
+                    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+                  })}
+                </div>
+              </div>
+            ))}
+            {!chatLoading && chatMsgs.length === 0 && (
+              <p className="admin-chat-panel__empty">Noch keine Nachrichten.</p>
+            )}
+          </div>
+          <div className="admin-chat-panel__input-bar">
+            <input
+              className="form-input"
+              type="text"
+              placeholder="Antwort schreiben…"
+              value={chatInput}
+              onChange={e => setChatInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && sendChat()}
+              disabled={chatSending}
+              maxLength={5000}
+            />
+            <button
+              className="btn-primary"
+              type="button"
+              onClick={sendChat}
+              disabled={chatSending || !chatInput.trim()}
+            >
+              {chatSending ? '…' : 'Senden'}
+            </button>
+          </div>
+        </div>
       )}
     </>
   );
