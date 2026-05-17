@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ShoppingCart, Users, Package, TrendingUp } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@config/routes';
 import { getAdminStats, type AdminStats } from '../../api/adminApi';
 
@@ -19,6 +19,7 @@ function fmt(n: number) {
 }
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const [stats, setStats]   = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -84,7 +85,12 @@ export default function DashboardPage() {
                 </thead>
                 <tbody>
                   {stats.recentOrders.map(o => (
-                    <tr key={o.id}>
+                    <tr
+                      key={o.id}
+                      className="admin-table__row--clickable"
+                      onClick={() => navigate(ROUTES.ORDERS.detail(o.id))}
+                      title="Bestellung öffnen"
+                    >
                       <td><strong>{o.order_number}</strong></td>
                       <td>{o.profiles?.name ?? o.profiles?.email ?? '—'}</td>
                       <td>{fmt(o.total)}</td>
