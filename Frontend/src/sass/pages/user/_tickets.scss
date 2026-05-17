@@ -180,7 +180,7 @@
 
 .ticket-card--clickable {
   cursor: pointer;
-  @include transition(background, border-color);
+  @include transition(background, border-color, box-shadow);
   &:hover { background: color-mix(in srgb, var(--clr-primary) 4%, var(--clr-surface)); }
 }
 
