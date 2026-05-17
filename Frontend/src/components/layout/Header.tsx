@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { User, Heart, ShoppingCart, Menu, X, LogOut } from 'lucide-react';
 import { ROUTES } from '@config/routes';
@@ -20,11 +20,22 @@ export function Header() {
   const { isAuthenticated, clearAuth } = useAuth();
   const navigate                   = useNavigate();
   const [scrolled, setScrolled]    = useState(false);
+  const [hidden,   setHidden]      = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
+  const lastScrollY               = useRef(0);
   const location                  = useLocation();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 80);
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 80);
+      if (y > lastScrollY.current && y > 120) {
+        setHidden(true);
+      } else {
+        setHidden(false);
+      }
+      lastScrollY.current = y;
+    };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -48,7 +59,7 @@ export function Header() {
 
   return (
     <>
-      <header className={`header${scrolled ? ' header--scrolled' : ''}`}>
+      <header className={`header${scrolled ? ' header--scrolled' : ''}${hidden ? ' header--hidden' : ''}`}>
         <nav className="nav">
           <Link className="nav__logo" to={ROUTES.HOME}>{APP_NAME}<span>.</span></Link>
 

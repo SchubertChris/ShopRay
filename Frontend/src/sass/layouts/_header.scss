@@ -18,7 +18,11 @@
 .header {
   background: transparent;
   border-bottom-color: transparent;
-  transition: background 0.3s ease, backdrop-filter 0.3s ease, border-bottom-color 0.3s ease;
+  transition:
+    background         0.3s ease,
+    backdrop-filter    0.3s ease,
+    border-bottom-color 0.3s ease,
+    transform          0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 // Wenn gescrollt: Glas-Effekt
@@ -26,6 +30,11 @@
   background: var(--clr-glass);
   backdrop-filter: blur(16px);
   border-bottom-color: var(--clr-secondary);
+}
+
+// Beim Runter-Scrollen ausblenden
+.header--hidden {
+  transform: translateY(-100%);
 }
 
 // ─── NAV ───────────────────────────────────────────────────────────────────
