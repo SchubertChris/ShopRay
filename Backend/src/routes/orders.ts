@@ -149,8 +149,8 @@ router.post('/checkout', requireAuth, checkoutRateLimit, validate(CheckoutSchema
         quantity,
       })),
       metadata:    { orderId: order.id },
-      success_url: `${process.env.CLIENT_URL}/bestellung-erfolgreich?order=${order.id}`,
-      cancel_url:  `${process.env.CLIENT_URL}/warenkorb`,
+      success_url: `${process.env.CLIENT_URL}/order-success?order=${order.id}`,
+      cancel_url:  `${process.env.CLIENT_URL}/cart`,
     });
 
     await supabase.from('orders').update({ stripe_session_id: session.id }).eq('id', order.id);
