@@ -1,14 +1,14 @@
 -- ══════════════════════════════════════════════════════════════════════════════
 -- ShopRay — Vollständiges Datenbankschema (konsolidiert)
--- Stand: 2026-05-17 — enthält alle Änderungen aus Migrations 001–009
+-- Stand: 2026-05-17 — enthält alle Änderungen aus Migrations 001–010
 -- ══════════════════════════════════════════════════════════════════════════════
 --
 -- FRISCHE INSTALLATION (Neukunde):
 --   1. Dieses Script (schema.sql) ausführen → alle Tabellen, Trigger, Grants
---   2. seed.sql ausführen → 25 Produkte + 8 Testkunden + 10 Bestellungen
+--   2. Optional: seed.sql ausführen → Beispieldaten zum Testen
 --
 -- BESTEHENDE DATENBANK AKTUALISIEREN:
---   Migrations in Reihenfolge ausführen: migration_001 bis migration_009
+--   Nur die jeweils neue Migration ausführen (migration_XXX.sql)
 --
 -- Ausführen: Supabase → SQL Editor → Inhalt einfügen → Run
 -- ══════════════════════════════════════════════════════════════════════════════
@@ -113,6 +113,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
   total              NUMERIC(10,2) NOT NULL,
   shipping_address   JSONB,
   stripe_session_id  TEXT,
+  payment_method     TEXT,
   customer_note      TEXT,
   paid_at            TIMESTAMPTZ,
   shipped_at         TIMESTAMPTZ,
@@ -131,6 +132,7 @@ CREATE TABLE IF NOT EXISTS public.order_items (
   product_name TEXT          NOT NULL,
   quantity     INTEGER       NOT NULL CHECK (quantity > 0),
   price        NUMERIC(10,2) NOT NULL,
+  image_url    TEXT,
   created_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
