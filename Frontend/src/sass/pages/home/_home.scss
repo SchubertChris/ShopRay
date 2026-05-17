@@ -593,19 +593,18 @@ $slot-vis:    5;   // sichtbare EintrÃ¤ge
     display:    block;
   }
 
-  // Gradient-Overlay: legt Theme-Palette als Tint Ã¼ber das Foto
+  // Dunkler Scrim von unten — nur fuer Text-Lesbarkeit, kein Farb-Tint
   &__img-overlay {
     position:       absolute;
     inset:          0;
     pointer-events: none;
+    background:     linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0.15) 45%,
+      transparent         75%
+    );
   }
-  // Jede Karte behÃ¤lt ihre individuelle Gradient-Farbe als Overlay
-  &__item:nth-child(1) &__img-overlay { background: linear-gradient(155deg, var(--clr-primary), var(--clr-accent)); mix-blend-mode: multiply; opacity: 0.55; }
-  &__item:nth-child(2) &__img-overlay { background: linear-gradient(190deg, color-mix(in srgb, var(--clr-accent) 55%, var(--clr-primary)), var(--clr-primary)); mix-blend-mode: multiply; opacity: 0.55; }
-  &__item:nth-child(3) &__img-overlay { background: linear-gradient(130deg, var(--clr-accent), color-mix(in srgb, var(--clr-primary) 65%, var(--clr-accent))); mix-blend-mode: multiply; opacity: 0.55; }
-  &__item:nth-child(4) &__img-overlay { background: linear-gradient(145deg, var(--clr-primary), var(--clr-accent)); mix-blend-mode: multiply; opacity: 0.55; }
-  &__item:nth-child(5) &__img-overlay { background: linear-gradient(160deg, var(--clr-accent), var(--clr-primary)); mix-blend-mode: multiply; opacity: 0.55; }
-  &__item:nth-child(6) &__img-overlay { background: linear-gradient(135deg, color-mix(in srgb, var(--clr-primary) 45%, var(--clr-accent)), color-mix(in srgb, var(--clr-primary) 88%, #000)); mix-blend-mode: multiply; opacity: 0.55; }
 
   // Text Ã¼ber dem Bild (z-index nÃ¶tig wenn Bild gesetzt)
   &__num, &__body, &__arrow { position: relative; z-index: 1; }
