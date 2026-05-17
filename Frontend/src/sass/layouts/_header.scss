@@ -486,5 +486,12 @@
       justify-content: center;
       line-height: 1;
     }
+
+    &--logout {
+      &:hover {
+        background: color-mix(in srgb, var(--clr-error) 10%, transparent);
+        color: var(--clr-error);
+      }
+    }
   }
 }

@@ -183,6 +183,17 @@ export function Header() {
                 {isAuthenticated ? 'Konto' : 'Anmelden'}
               </span>
             </Link>
+
+            {isAuthenticated && (
+              <button
+                className="mobile-nav__action mobile-nav__action--logout"
+                onClick={() => { close(); handleLogout(); }}
+                aria-label="Abmelden"
+              >
+                <LogOut size={22} strokeWidth={1.75} />
+                <span className="mobile-nav__action-label">Logout</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
