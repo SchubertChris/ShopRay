@@ -42,6 +42,18 @@ export function useProductsByCategory(category: string | null) {
   return { data, loading };
 }
 
+export function useRelatedProducts(currentProductId: string, category: string, limit = 4) {
+  const { data: all, loading } = useProducts();
+  const data = useMemo(
+    () => all
+      .filter(p => p.category === category && p.id !== currentProductId)
+      .sort((a, b) => b.rating - a.rating || b.reviews - a.reviews)
+      .slice(0, limit),
+    [all, currentProductId, category, limit]
+  );
+  return { data, loading };
+}
+
 export function useProductSearch(
   query: string,
   category: string | null,

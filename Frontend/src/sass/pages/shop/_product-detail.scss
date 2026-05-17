@@ -742,6 +742,57 @@
   svg { flex-shrink: 0; color: var(--clr-primary); opacity: 0.7; }
 }
 
+// ─── ÄHNLICHE PRODUKTE ────────────────────────────────────────────────────
+.related-products {
+  margin-top: 5rem;
+  padding-top: 3rem;
+  border-top: 1px solid color-mix(in srgb, var(--clr-text) 8%, transparent);
+
+  &__header {
+    @include flex-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  &__title {
+    font-size: rem(22px);
+    font-weight: 800;
+    color: var(--clr-text);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+
+    @include respond-to('md') {
+      font-size: rem(26px);
+    }
+  }
+
+  &__more {
+    font-size: rem(13px);
+    font-weight: 600;
+    color: var(--clr-primary);
+    text-decoration: none;
+    white-space: nowrap;
+    @include transition(opacity);
+
+    &:hover { opacity: 0.7; }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+
+    @include respond-to('sm') {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include respond-to('xl') {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+}
+
 // ─── BEWERTUNGS-FORMULAR ───────────────────────────────────────────────────
 .review-form {
   background: var(--clr-secondary);

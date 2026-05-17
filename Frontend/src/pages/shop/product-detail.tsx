@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import { Search, ChevronLeft, Heart, CheckCircle2, Check, ExternalLink, FileText } from 'lucide-react';
-import { useProductBySlug } from '@features/products';
+import { useProductBySlug, useRelatedProducts } from '@features/products';
 import type { LmivInfo } from '@features/products';
 import { ImageGallery } from '@features/products/components/ImageGallery';
 import { useCart } from '@features/cart';
@@ -10,7 +10,7 @@ import { useNotifications } from '@features/notifications';
 import { useWishlist } from '@features/wishlist';
 import { useReviews, createReview } from '@features/reviews';
 import { useAuth } from '@features/auth';
-import { Stars, SeoMeta, JsonLd } from '@components/ui';
+import { Stars, SeoMeta, JsonLd, ProductCard } from '@components/ui';
 import { ROUTES } from '@config/routes';
 import { FEATURES } from '@config/features';
 import { getErrorMessage } from '@/utils/errorMessage';
@@ -54,6 +54,7 @@ export default function ProductDetailPage() {
   const [activeTab, setActiveTab] = useState<Tab>('details');
 
   const { data: reviews, loading: reviewsLoading, refetch: refetchReviews } = useReviews(product?.id ?? '');
+  const { data: related } = useRelatedProducts(product?.id ?? '', product?.category ?? '');
 
   const [reviewRating,  setReviewRating]  = useState(0);
   const [reviewTitle,   setReviewTitle]   = useState('');
@@ -499,6 +500,23 @@ export default function ProductDetailPage() {
                       }
                       <span>{d.label}</span>
                     </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Das könnte dich auch interessieren ──────────────────── */}
+            {related.length > 0 && (
+              <div className="related-products" data-reveal>
+                <div className="related-products__header">
+                  <h2 className="related-products__title">Das könnte dich auch interessieren</h2>
+                  <Link className="related-products__more" to={`${ROUTES.SHOP.SEARCH}?category=${encodeURIComponent(product.category)}`}>
+                    Alle aus {product.category} →
+                  </Link>
+                </div>
+                <div className="related-products__grid">
+                  {related.map((p, i) => (
+                    <ProductCard key={p.id} product={p} revealDelay={i * 80} />
                   ))}
                 </div>
               </div>
