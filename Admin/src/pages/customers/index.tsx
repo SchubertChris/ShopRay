@@ -34,6 +34,7 @@ export default function CustomersPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AdminCustomer | null>(null);
   const [roleChanging, setRoleChanging] = useState(false);
+  const [pendingRole,  setPendingRole]  = useState<{ id: string; name: string | null; from: UserRole; to: UserRole } | null>(null);
   const panelRef    = useRef<HTMLDivElement>(null);
   const touchStartY = useRef(-1);
 
@@ -82,14 +83,16 @@ export default function CustomersPage() {
     (c.email ?? '').toLowerCase().includes(search.toLowerCase()),
   );
 
-  const handleRoleChange = async (id: string, role: UserRole) => {
+  const handleRoleChange = async () => {
+    if (!pendingRole) return;
     setRoleChanging(true);
     try {
-      await updateCustomerRole(id, role);
-      setCustomers(prev => prev.map(c => c.id === id ? { ...c, role } : c));
-      setDetail(prev => prev ? { ...prev, role } : prev);
+      await updateCustomerRole(pendingRole.id, pendingRole.to);
+      setCustomers(prev => prev.map(c => c.id === pendingRole.id ? { ...c, role: pendingRole.to } : c));
+      setDetail(prev => prev ? { ...prev, role: pendingRole.to } : prev);
     } catch { /* ignore */ }
     setRoleChanging(false);
+    setPendingRole(null);
   };
 
   const handleDelete = async () => {
@@ -234,12 +237,17 @@ export default function CustomersPage() {
                     className="form-select form-select--sm"
                     value={detail.role}
                     disabled={roleChanging}
-                    onChange={e => handleRoleChange(detail.id, e.target.value as UserRole)}
+                    onChange={e => setPendingRole({
+                      id:   detail.id,
+                      name: detail.name,
+                      from: detail.role,
+                      to:   e.target.value as UserRole,
+                    })}
                   >
-                    <option value="customer">customer</option>
-                    <option value="mod">mod</option>
-                    <option value="admin">admin</option>
-                    <option value="owner">owner</option>
+                    <option value="customer">Kunde</option>
+                    <option value="mod">Moderator</option>
+                    <option value="admin">Admin</option>
+                    <option value="owner">Inhaber</option>
                   </select>
                 </div>
 
@@ -298,6 +306,17 @@ export default function CustomersPage() {
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={!!pendingRole}
+        title="Rolle ändern?"
+        description={`${pendingRole?.name ?? 'Dieser Kunde'} erhält die Rolle „${pendingRole?.to ?? ''}". ${pendingRole?.to === 'admin' || pendingRole?.to === 'owner' ? '⚠️ Achtung: Admins haben vollen Zugriff auf das Backend.' : ''}`}
+        confirmLabel="Rolle ändern"
+        variant={pendingRole?.to === 'admin' || pendingRole?.to === 'owner' ? 'warning' : 'info'}
+        loading={roleChanging}
+        onConfirm={handleRoleChange}
+        onCancel={() => setPendingRole(null)}
       />
     </>
   );

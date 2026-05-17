@@ -48,10 +48,11 @@ export default function CustomerDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting,          setDeleting]          = useState(false);
 
-  const [role,       setRole]       = useState<UserRole>('customer');
-  const [roleSaving, setRoleSaving] = useState(false);
-  const [roleError,  setRoleError]  = useState<string | null>(null);
-  const [roleSaved,  setRoleSaved]  = useState(false);
+  const [role,            setRole]            = useState<UserRole>('customer');
+  const [roleSaving,      setRoleSaving]      = useState(false);
+  const [roleError,       setRoleError]       = useState<string | null>(null);
+  const [roleSaved,       setRoleSaved]       = useState(false);
+  const [showRoleConfirm, setShowRoleConfirm] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -262,8 +263,8 @@ export default function CustomerDetailPage() {
               {roleError && <p className="form-error-inline detail-role__error">{roleError}</p>}
               <button
                 className="btn-primary detail-role__btn"
-                onClick={handleRoleSave}
-                disabled={roleSaving}
+                onClick={() => setShowRoleConfirm(true)}
+                disabled={roleSaving || role === customer.role}
               >
                 {roleSaving ? 'Speichert…' : roleSaved ? 'Gespeichert ✓' : 'Rolle speichern'}
               </button>
@@ -307,6 +308,17 @@ export default function CustomerDetailPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showRoleConfirm}
+        title="Rolle wirklich ändern?"
+        description={`${customer.name ?? 'Dieser Kunde'} bekommt die Rolle „${ROLE_LABELS[role]}".${role === 'admin' || role === 'owner' ? ' ⚠️ Admins und Inhaber haben vollen Backend-Zugriff.' : ''}`}
+        confirmLabel="Rolle ändern"
+        variant={role === 'admin' || role === 'owner' ? 'warning' : 'info'}
+        loading={roleSaving}
+        onConfirm={async () => { await handleRoleSave(); setShowRoleConfirm(false); }}
+        onCancel={() => { setShowRoleConfirm(false); }}
+      />
 
       <ConfirmDialog
         isOpen={showDeleteConfirm}
