@@ -82,9 +82,6 @@ export function Header() {
                 <Link className="nav__account" to={ROUTES.ACCOUNT.DASHBOARD} aria-label="Mein Konto">
                   <User size={20} strokeWidth={1.75} />
                 </Link>
-                <button className="nav__logout" onClick={handleLogout} aria-label="Abmelden">
-                  <LogOut size={18} strokeWidth={1.75} />
-                </button>
               </>
             ) : (
               <Link className="nav__login-btn" to={ROUTES.AUTH.LOGIN}>
