@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { PaginatedResponse } from '@/types/api';
-import type { Ticket, TicketCategory, TicketStatus, TicketPayload, TicketMessage } from '../types/ticket.types';
+import type { Ticket, TicketCategory, TicketStatus, TicketPriority, TicketPayload, TicketMessage } from '../types/ticket.types';
 
 // Frontend-Kategorie → DB-Kategorie
 const CATEGORY_TO_DB: Record<string, string> = {
@@ -31,7 +31,9 @@ function mapMessage(raw: Record<string, unknown>): TicketMessage {
   return {
     id:        String(raw.id ?? ''),
     ticketId:  String(raw.ticket_id ?? ''),
-    sender:    (raw.sender as 'customer' | 'admin') ?? 'customer',
+    sender:    (['customer', 'admin'] as const).includes(raw.sender as 'customer' | 'admin')
+      ? (raw.sender as 'customer' | 'admin')
+      : 'customer',
     text:      String(raw.text ?? ''),
     createdAt: String(raw.created_at ?? ''),
   };
@@ -42,7 +44,9 @@ function mapTicket(raw: Record<string, unknown>): Ticket {
     id:          String(raw.id ?? ''),
     subject:     String(raw.subject ?? ''),
     category:    CATEGORY_FROM_DB[String(raw.category)] ?? 'Sonstiges',
-    priority:    'normal',
+    priority:    (['normal', 'high', 'urgent'] as const).includes(raw.priority as TicketPriority)
+      ? (raw.priority as TicketPriority)
+      : 'normal',
     status:      STATUS_FROM_DB[String(raw.status)] ?? 'open',
     description: String(raw.message ?? ''),
     createdAt:   String(raw.created_at ?? ''),
@@ -104,9 +108,10 @@ export async function createTicket(payload: TicketPayload): Promise<Ticket> {
   if (error) throw error;
 
   // Erste Nachricht als Chat-Eintrag anlegen
-  await supabase
+  const { error: msgError } = await supabase
     .from('ticket_messages')
     .insert({ ticket_id: data.id, sender: 'customer', text: payload.description });
+  if (msgError) throw msgError;
 
   return mapTicket(data as Record<string, unknown>);
 }
