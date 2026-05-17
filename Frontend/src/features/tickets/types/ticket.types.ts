@@ -25,3 +25,11 @@ export interface TicketPayload {
   priority:    TicketPriority;
   description: string;
 }
+
+export interface TicketMessage {
+  id:        string;
+  ticketId:  string;
+  sender:    'customer' | 'admin';
+  text:      string;
+  createdAt: string;
+}

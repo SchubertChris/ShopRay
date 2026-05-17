@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { PaginatedResponse } from '@/types/api';
-import type { Ticket, TicketCategory, TicketStatus, TicketPayload } from '../types/ticket.types';
+import type { Ticket, TicketCategory, TicketStatus, TicketPayload, TicketMessage } from '../types/ticket.types';
 
 // Frontend-Kategorie → DB-Kategorie
 const CATEGORY_TO_DB: Record<string, string> = {
@@ -26,6 +26,16 @@ const STATUS_FROM_DB: Record<string, TicketStatus> = {
   in_progress: 'in-progress',
   closed:      'closed',
 };
+
+function mapMessage(raw: Record<string, unknown>): TicketMessage {
+  return {
+    id:        String(raw.id ?? ''),
+    ticketId:  String(raw.ticket_id ?? ''),
+    sender:    (raw.sender as 'customer' | 'admin') ?? 'customer',
+    text:      String(raw.text ?? ''),
+    createdAt: String(raw.created_at ?? ''),
+  };
+}
 
 function mapTicket(raw: Record<string, unknown>): Ticket {
   return {
@@ -92,5 +102,31 @@ export async function createTicket(payload: TicketPayload): Promise<Ticket> {
     .select('*')
     .single();
   if (error) throw error;
+
+  // Erste Nachricht als Chat-Eintrag anlegen
+  await supabase
+    .from('ticket_messages')
+    .insert({ ticket_id: data.id, sender: 'customer', text: payload.description });
+
   return mapTicket(data as Record<string, unknown>);
+}
+
+export async function getTicketMessages(ticketId: string): Promise<TicketMessage[]> {
+  const { data, error } = await supabase
+    .from('ticket_messages')
+    .select('*')
+    .eq('ticket_id', ticketId)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data as Record<string, unknown>[]).map(mapMessage);
+}
+
+export async function sendTicketMessage(ticketId: string, text: string): Promise<TicketMessage> {
+  const { data, error } = await supabase
+    .from('ticket_messages')
+    .insert({ ticket_id: ticketId, sender: 'customer', text: text.trim() })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return mapMessage(data as Record<string, unknown>);
 }
