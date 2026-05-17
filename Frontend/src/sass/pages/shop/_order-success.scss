@@ -1,6 +1,18 @@
 @use '../../abstracts/mixins' as *;
 @use '../../abstracts/functions' as *;
 
+// ─── CHECKMARK-ANIMATIONEN ─────────────────────────────────────────────────
+
+@keyframes checkmark-circle {
+  0%   { stroke-dashoffset: 166; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes checkmark-stroke {
+  0%   { stroke-dashoffset: 60; }
+  100% { stroke-dashoffset: 0; }
+}
+
 // ─── ORDER-SUCCESS-SEITE ───────────────────────────────────────────────────
 .order-success {
   @include flex-col-center;
@@ -14,10 +26,7 @@
     @include flex-center;
     width: 80px;
     height: 80px;
-    border-radius: 50%;
-    background: rgba(34, 197, 94, 0.12);
-    font-size: 2.5rem;
-    animation: glow 2s ease-in-out infinite;
+    flex-shrink: 0;
   }
 
   &__title {
@@ -46,6 +55,28 @@
     color: var(--clr-text);
 
     span { color: var(--clr-primary); }
+  }
+
+  // ── Animiertes SVG-Checkmark ──────────────────────────────────────────────
+  &__checkmark {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+
+    &-circle {
+      stroke: var(--clr-success, #22c55e);
+      stroke-dasharray: 166;
+      stroke-dashoffset: 166;
+      animation: checkmark-circle 0.55s cubic-bezier(0.65, 0, 0.45, 1) 0.15s forwards;
+    }
+
+    &-check {
+      stroke: var(--clr-success, #22c55e);
+      stroke-dasharray: 60;
+      stroke-dashoffset: 60;
+      animation: checkmark-stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.75s forwards;
+      fill: none;
+    }
   }
 
   &__actions {

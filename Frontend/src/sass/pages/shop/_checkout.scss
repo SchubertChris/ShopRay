@@ -22,39 +22,51 @@
 // ─── CHECKOUT-STEPS ────────────────────────────────────────────────────────
 .checkout-steps {
   display: flex;
+  align-items: center;
   gap: 0;
   margin-bottom: 2.5rem;
-  border-bottom: 1px solid var(--clr-secondary);
 }
 
 .checkout-step {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 1rem 1.5rem 1rem 0;
+  padding: 0.75rem 0;
   font-size: rem(13px);
   font-weight: 600;
   color: var(--clr-text);
-  opacity: 0.35;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
+  opacity: 0.3;
   cursor: default;
-  @include transition(opacity, border-color);
+  white-space: nowrap;
 
   &__num {
     @include flex-center;
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     background: var(--clr-secondary);
-    font-size: rem(12px);
+    font-size: rem(11px);
+    font-weight: 700;
     flex-shrink: 0;
+    @include transition(background, color);
+  }
+
+  // Verbindungslinie zwischen Steps
+  & + & {
+    &::before {
+      content: '';
+      display: block;
+      width: clamp(1.5rem, 4vw, 3rem);
+      height: 1px;
+      background: color-mix(in srgb, var(--clr-text) 12%, transparent);
+      flex-shrink: 0;
+      margin-right: 0.5rem;
+    }
   }
 
   &--active {
     opacity: 1;
     color: var(--clr-primary);
-    border-bottom-color: var(--clr-primary);
 
     .checkout-step__num {
       background: var(--clr-primary);
@@ -63,7 +75,13 @@
   }
 
   &--done {
-    opacity: 0.65;
+    opacity: 0.7;
+    color: var(--clr-success, #22c55e);
+
+    .checkout-step__num {
+      background: color-mix(in srgb, var(--clr-success, #22c55e) 15%, transparent);
+      color: var(--clr-success, #22c55e);
+    }
   }
 }
 
@@ -208,6 +226,26 @@
     right:    0.625rem;
     color:    var(--clr-primary);
     line-height: 0;
+  }
+}
+
+// ─── TRUST-BADGES UNTER CTA ────────────────────────────────────────────────
+.checkout-trust {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-top: 0.875rem;
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: rem(11px);
+    color: var(--clr-text);
+    opacity: 0.4;
+
+    svg { flex-shrink: 0; color: var(--clr-text); }
   }
 }
 

@@ -188,6 +188,26 @@ export default function CheckoutPage() {
         <form className="checkout-page" onSubmit={handleSubmit} noValidate>
           <h1 className="checkout-page__title">Kasse</h1>
 
+          {/* ── Schritte-Anzeige ────────────────────────────────────────── */}
+          <div className="checkout-steps">
+            <div className="checkout-step checkout-step--done">
+              <span className="checkout-step__num">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                  <path d="M2 5l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </span>
+              Warenkorb
+            </div>
+            <div className="checkout-step checkout-step--active">
+              <span className="checkout-step__num">2</span>
+              Kasse
+            </div>
+            <div className="checkout-step">
+              <span className="checkout-step__num">3</span>
+              Bestätigung
+            </div>
+          </div>
+
           <div className="checkout-page__layout">
             {/* ── Formulare (links) ─────────────────────────────────────── */}
             <div className="checkout-form">
@@ -361,8 +381,33 @@ export default function CheckoutPage() {
                   type="submit"
                   disabled={loading}
                 >
-                  {loading ? 'Bestellung wird verarbeitet …' : `Jetzt kaufen — ${grandTotal} €`}
+                  {loading
+                    ? 'Bestellung wird verarbeitet …'
+                    : (
+                      <>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ marginRight: '0.4rem', verticalAlign: 'middle' }}>
+                          <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" strokeWidth="2"/>
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                        Jetzt kaufen — {grandTotal} €
+                      </>
+                    )
+                  }
                 </button>
+                <div className="checkout-trust">
+                  <span className="checkout-trust__item">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/></svg>
+                    SSL-verschlüsselt
+                  </span>
+                  <span className="checkout-trust__item">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    Käuferschutz
+                  </span>
+                  <span className="checkout-trust__item">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12h18M3 12l4-4M3 12l4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    30 Tage Rückgabe
+                  </span>
+                </div>
               </div>
             </div>
           </div>

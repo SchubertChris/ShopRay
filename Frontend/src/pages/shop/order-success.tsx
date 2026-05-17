@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useCart } from '@features/cart';
 import { SeoMeta } from '@components/ui';
 import { ROUTES } from '@config/routes';
@@ -10,12 +10,15 @@ interface OrderSuccessState {
 }
 
 export default function OrderSuccessPage() {
-  const { clearCart } = useCart();
-  const location      = useLocation();
-  const state         = location.state as OrderSuccessState | null;
+  const { clearCart }       = useCart();
+  const location            = useLocation();
+  const [searchParams]      = useSearchParams();
+  const state               = location.state as OrderSuccessState | null;
 
-  const orderNumber = state?.orderNumber ?? '#SR-2026-XXXX';
-  const total       = state?.total != null ? `${state.total.toFixed(2)} €` : null;
+  const orderIdFromUrl  = searchParams.get('order');
+  const orderNumber     = state?.orderNumber
+    ?? (orderIdFromUrl ? `#${orderIdFromUrl.slice(0, 8).toUpperCase()}` : '#SR-2026-XXXX');
+  const total           = state?.total != null ? `${state.total.toFixed(2)} €` : null;
 
   useEffect(() => {
     clearCart();
@@ -27,7 +30,14 @@ export default function OrderSuccessPage() {
     <section className="section">
       <div className="container">
         <div className="order-success">
-          <div className="order-success__icon" aria-hidden="true" />
+
+          {/* Animiertes SVG-Checkmark */}
+          <div className="order-success__icon" aria-hidden="true">
+            <svg className="order-success__checkmark" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle className="order-success__checkmark-circle" cx="26" cy="26" r="24" strokeWidth="2"/>
+              <path   className="order-success__checkmark-check"  d="M14 26l8 8 16-16" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
 
           <h1 className="order-success__title">Bestellung erfolgreich!</h1>
 
