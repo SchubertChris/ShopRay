@@ -6,6 +6,7 @@ import { ROUTES } from '@config/routes';
 import { getErrorMessage } from '@/utils/errorMessage';
 import { supabase } from '@/lib/supabase';
 import api from '@/api/axiosinstance';
+import { APP_CONTACT } from '@config/app';
 
 const DATA_CATEGORIES = [
   {
@@ -258,8 +259,8 @@ export default function MyDataPage() {
         <div className="my-data-contact">
           <div className="my-data-contact__left">
             <div className="my-data-contact__label">Datenschutz-Kontakt</div>
-            <a href="mailto:datenschutz@Concepts.de" className="my-data-contact__email">
-              datenschutz@Concepts.de
+            <a href={`mailto:${APP_CONTACT.email}`} className="my-data-contact__email">
+              {APP_CONTACT.email}
             </a>
           </div>
           <div className="my-data-contact__right">

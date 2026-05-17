@@ -47,9 +47,13 @@ async function migrate() {
   }
 
   // ── 3. Admin-Passwort-Hash generieren ────────────────────────────────────────
-  const bcrypt    = await import('bcrypt');
-  const password  = process.env.ADMIN_PASSWORD ?? 'changeme';
-  const hash      = await bcrypt.hash(password, 12);
+  const bcrypt   = await import('bcrypt');
+  const password = process.env.ADMIN_PASSWORD;
+  if (!password) {
+    console.error('ADMIN_PASSWORD muss in der .env gesetzt sein.');
+    process.exit(1);
+  }
+  const hash = await bcrypt.hash(password, 12);
 
   console.log('\n── .env Einträge ──────────────────────────────────────────────');
   console.log(`ADMIN_PASSWORD_HASH=${hash}`);

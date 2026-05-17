@@ -41,8 +41,8 @@ const MyDataPage         = lazy(() => import('../pages/user/my-data'));
 // ── Skeleton-Fallback ──────────────────────────────────────────────────────
 function PageLoader() {
   return (
-    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: 32, height: 32, border: '3px solid var(--clr-secondary)', borderTopColor: 'var(--clr-primary)', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+    <div className="page-loader">
+      <div className="page-loader__spinner" />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import {
   LayoutDashboard, Package, ShoppingCart, Users,
   MessageSquare, Settings, LogOut, ChevronRight, Mail,
@@ -6,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import { ROUTES } from '@config/routes';
+import { getAdminStats } from '../../api/adminApi';
 
 interface SidebarProps {
   isOpen:   boolean;
@@ -35,7 +37,7 @@ const NAV: NavGroup[] = [
     section: 'Shop',
     items: [
       { to: ROUTES.PRODUCTS.LIST,    icon: Package,         label: 'Produkte'      },
-      { to: ROUTES.ORDERS.LIST,      icon: ShoppingCart,    label: 'Bestellungen', badge: 3 },
+      { to: ROUTES.ORDERS.LIST,      icon: ShoppingCart,    label: 'Bestellungen', badge: 0 },
       { to: ROUTES.CUSTOMERS.LIST,   icon: Users,           label: 'Kunden'        },
       { to: ROUTES.CATEGORIES,       icon: Tag,             label: 'Kategorien'    },
       { to: ROUTES.REVIEWS,          icon: Star,            label: 'Bewertungen'   },
@@ -44,7 +46,7 @@ const NAV: NavGroup[] = [
   {
     section: 'Support',
     items: [
-      { to: ROUTES.SUPPORT.TICKETS,  icon: MessageSquare,   label: 'Tickets',      badge: 5 },
+      { to: ROUTES.SUPPORT.TICKETS,  icon: MessageSquare,   label: 'Tickets',      badge: 0 },
       { to: ROUTES.INQUIRIES,        icon: Mail,            label: 'Anfragen'                },
     ],
   },
@@ -59,6 +61,25 @@ const NAV: NavGroup[] = [
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { logout } = useAuthStore();
   const navigate   = useNavigate();
+  const [badges, setBadges] = useState({ orders: 0, tickets: 0 });
+
+  useEffect(() => {
+    getAdminStats()
+      .then(s => setBadges({ orders: s.pendingOrders, tickets: s.openTickets }))
+      .catch(() => null);
+  }, []);
+
+  const navWithBadges = NAV.map(group => ({
+    ...group,
+    items: group.items.map(item => ({
+      ...item,
+      badge: item.to === ROUTES.ORDERS.LIST
+        ? badges.orders
+        : item.to === ROUTES.SUPPORT.TICKETS
+          ? badges.tickets
+          : item.badge,
+    })),
+  }));
 
   const initials = 'AD';
 
@@ -83,7 +104,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="admin-sidebar__nav">
-          {NAV.map(group => (
+          {navWithBadges.map(group => (
             <div key={group.section} className="admin-sidebar__section">
               <p className="admin-sidebar__section-label">{group.section}</p>
               {group.items.map(item => (
@@ -101,7 +122,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   {item.badge && item.badge > 0 && (
                     <span className="admin-sidebar__badge">{item.badge}</span>
                   )}
-                  <ChevronRight size={12} style={{ marginLeft: 'auto', opacity: 0.3 }} />
+                  <ChevronRight size={12} />
                 </NavLink>
               ))}
             </div>

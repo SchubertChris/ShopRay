@@ -13,7 +13,7 @@ export default function App() {
 
   if (checking) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <div className="admin-loading-screen">
         <span className="spinner" aria-label="Prüfe Sitzung…" />
       </div>
     );

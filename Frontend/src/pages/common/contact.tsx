@@ -5,11 +5,12 @@ import { getErrorMessage } from '@/utils/errorMessage';
 import { SeoMeta } from '@components/ui';
 import { ROUTES } from '@config/routes';
 import { IMAGES } from '@config/images';
+import { APP_CONTACT } from '@config/app';
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
 const CHANNELS = [
-  { tag: 'E-Mail',   value: 'hallo@Concepts.de', sub: 'Antwort in unter 2 h' },
+  { tag: 'E-Mail',   value: APP_CONTACT.email, sub: 'Antwort in unter 2 h' },
   { tag: 'Telefon',  value: '+49 30 000 000 00',      sub: 'Mo–Fr · 09–17 Uhr' },
   { tag: 'Chat',     value: 'Live im Shop',            sub: 'Mo–Fr · 09–18 Uhr' },
 ];

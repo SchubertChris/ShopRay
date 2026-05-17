@@ -232,7 +232,15 @@
   @include flex-center;
   min-height: 60vh;
 
-  // Kompakte Variante für Bereiche innerhalb einer Seite
+  &__spinner {
+    width:            32px;
+    height:           32px;
+    border:           3px solid var(--clr-secondary);
+    border-top-color: var(--clr-primary);
+    border-radius:    50%;
+    animation:        spin 0.7s linear infinite;
+  }
+
   &--inline {
     min-height: auto;
     padding-block: 2rem;

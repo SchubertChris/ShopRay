@@ -202,6 +202,8 @@
   color:       color-mix(in srgb, var(--clr-text) 38%, transparent);
   margin:      0;
   line-height: 1.5;
+
+  &--spaced { margin-top: 1rem; }
 }
 
 .form-actions {

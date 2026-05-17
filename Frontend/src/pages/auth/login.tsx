@@ -102,20 +102,6 @@ export default function LoginPage() {
     setError(null);
   }
 
-  const handleDemoLogin = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await login({ email: 'anna.mueller@shopray-test.de', password: 'Test1234!' });
-      setAuth(response.user, response.token);
-      navigate(from, { replace: true });
-    } catch {
-      setError('Demo-Login nicht verfügbar. Bitte melde dich mit deinen Zugangsdaten an.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <>
       <SeoMeta title="Anmelden" noIndex />
@@ -186,10 +172,6 @@ export default function LoginPage() {
 
               <button className="btn btn--primary btn--full" type="submit" disabled={loading}>
                 {loading ? 'Anmelden…' : 'Anmelden'}
-              </button>
-
-              <button type="button" className="btn btn--secondary btn--full" onClick={handleDemoLogin} disabled={loading}>
-                Demo-Zugang — direkt einloggen
               </button>
 
               <p className="auth-form__footer">

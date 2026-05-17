@@ -506,7 +506,7 @@ function SecuritySettings() {
         </div>
         <div className="form-actions">
           <a
-            href="https://github.com/SchubertChris/ShopRay"
+            href="SETUP.md"
             className="btn-secondary"
             target="_blank"
             rel="noopener noreferrer"
@@ -658,7 +658,7 @@ function CategoriesSettings() {
       )}
 
       {!loading && categories.length === 0 && !error && (
-        <p className="form-hint" style={{ marginTop: '1rem' }}>
+        <p className="form-hint form-hint--spaced">
           Noch keine Kategorien angelegt.
         </p>
       )}

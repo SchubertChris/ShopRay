@@ -387,3 +387,49 @@ export const getInquiries    = () =>
 
 export const updateInquiryStatus = (id: string, status: ContactInquiry['status']) =>
   apiFetch<{ success: boolean }>(`/api/contact/${id}`, 'PATCH', { status });
+
+// ── Tickets (Admin) ───────────────────────────────────────────────────────────
+
+export interface AdminTicket {
+  id:          string;
+  subject:     string;
+  category:    string;
+  status:      'open' | 'in_progress' | 'closed';
+  message:     string;
+  reply:       string | null;
+  replied_at:  string | null;
+  created_at:  string;
+  updated_at:  string | null;
+  user_id:     string | null;
+  profiles:    { name: string | null; email: string | null } | null;
+}
+
+export const getAdminTickets = () =>
+  apiFetch<{ data: AdminTicket[]; total: number }>('/api/admin/tickets');
+
+export const replyToTicket = (id: string, reply: string, status: AdminTicket['status']) =>
+  apiFetch<{ id: string; status: string; replied_at: string }>(
+    `/api/admin/tickets/${id}/reply`, 'PATCH', { reply, status },
+  );
+
+// ── Stats (Admin) ─────────────────────────────────────────────────────────────
+
+export interface AdminStats {
+  orders:         number;
+  revenue30d:     number;
+  customers:      number;
+  activeProducts: number;
+  pendingOrders:  number;
+  openTickets:    number;
+  recentOrders:   {
+    id:           string;
+    order_number: string;
+    status:       string;
+    total:        number;
+    created_at:   string;
+    profiles:     { name: string | null; email: string | null } | null;
+  }[];
+}
+
+export const getAdminStats = () =>
+  apiFetch<AdminStats>('/api/admin/stats');

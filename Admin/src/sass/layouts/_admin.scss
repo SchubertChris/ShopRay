@@ -117,6 +117,12 @@
       @include transition(opacity);
     }
 
+    // ChevronRight am rechten Rand
+    svg:last-child:not(:first-child) {
+      margin-left: auto;
+      opacity:     0.3;
+    }
+
     &:hover {
       background: color-mix(in srgb, var(--sidebar-text-active) 8%, transparent);
       color:      var(--sidebar-text-active);
@@ -381,4 +387,12 @@
     flex-wrap:   wrap;
     flex-shrink: 0;
   }
+}
+
+// ─── LOADING SCREEN ──────────────────────────────────────────────────────────
+.admin-loading-screen {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  height:          100vh;
 }

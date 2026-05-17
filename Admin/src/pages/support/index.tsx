@@ -1,20 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MessageSquare, Clock, CheckCircle, ChevronRight } from 'lucide-react';
-import type { Ticket, TicketStatus, TicketCategory } from '../../types/index';
+import { getAdminTickets, replyToTicket, type AdminTicket } from '../../api/adminApi';
 
-const MOCK_TICKETS: Ticket[] = [
-  { id: '1',  subject: 'Bestellung #1039 — Lieferzeit?',          message: 'Wann kommt meine Bestellung an?',                    status: 'open',        category: 'order',   customerId: '4', customerName: 'Max Müller',     createdAt: '13.05.2026' },
-  { id: '2',  subject: 'Produkt defekt angekommen',               message: 'Die Holzschale hat einen Riss.',                     status: 'in_progress', category: 'product', customerId: '1', customerName: 'Laura Meier',    createdAt: '12.05.2026' },
-  { id: '3',  subject: 'Zahlung fehlgeschlagen — was tun?',       message: 'Meine Kreditkarte wird abgelehnt.',                  status: 'open',        category: 'payment', customerId: '5', customerName: 'Anna Schmidt',   createdAt: '12.05.2026' },
-  { id: '4',  subject: 'Wo ist meine Rechnung?',                  message: 'Ich habe keine E-Mail erhalten.',                    status: 'open',        category: 'order',   customerId: '8', customerName: 'Lukas Hoffmann', createdAt: '11.05.2026' },
-  { id: '5',  subject: 'Wolldecke nicht mehr verfügbar',          message: 'Gibt es eine Nachbestellung?',                      status: 'in_progress', category: 'product', customerId: '3', customerName: 'Sara König',     createdAt: '10.05.2026' },
-  { id: '6',  subject: 'Rückgabe: Kissenhülle passt nicht',       message: 'Ich möchte das Produkt zurückgeben.',               status: 'closed',      category: 'other',   customerId: '2', customerName: 'Jonas Braun',    createdAt: '09.05.2026' },
-  { id: '7',  subject: 'Rabattcode funktioniert nicht',           message: 'Der Code SOMMER10 wird nicht akzeptiert.',           status: 'closed',      category: 'payment', customerId: '7', customerName: 'Mia Becker',     createdAt: '08.05.2026' },
-  { id: '8',  subject: 'Adresse ändern nach Bestellung',         message: 'Kann ich die Lieferadresse noch anpassen?',          status: 'open',        category: 'order',   customerId: '10',customerName: 'Tim Schulz',     createdAt: '07.05.2026' },
-];
-
-type StatusFilter = TicketStatus | 'all';
-type CatFilter   = TicketCategory | 'all';
+type StatusFilter = AdminTicket['status'] | 'all';
 
 const STATUS_TABS: Array<{ key: StatusFilter; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }> = [
   { key: 'all',         label: 'Alle',           icon: MessageSquare },
@@ -23,38 +11,69 @@ const STATUS_TABS: Array<{ key: StatusFilter; label: string; icon: React.Compone
   { key: 'closed',      label: 'Geschlossen',    icon: CheckCircle   },
 ];
 
-const CAT_LABELS: Record<TicketCategory, string> = {
+const CAT_LABELS: Record<string, string> = {
   order:   'Bestellung',
   product: 'Produkt',
   payment: 'Zahlung',
   other:   'Sonstiges',
 };
 
-const STATUS_LABELS: Record<TicketStatus, string> = {
+const STATUS_LABELS: Record<string, string> = {
   open:        'Offen',
   in_progress: 'In Bearbeitung',
   closed:      'Geschlossen',
 };
 
 export default function SupportPage() {
-  const [status, setStatus]   = useState<StatusFilter>('all');
-  const [category, setCategory] = useState<CatFilter>('all');
-  const [active, setActive]   = useState<string | null>(null);
+  const [tickets, setTickets]     = useState<AdminTicket[]>([]);
+  const [total, setTotal]         = useState(0);
+  const [loading, setLoading]     = useState(true);
+  const [status, setStatus]       = useState<StatusFilter>('all');
+  const [category, setCategory]   = useState<string>('all');
+  const [active, setActive]       = useState<string | null>(null);
+  const [reply, setReply]         = useState('');
+  const [replyStatus, setReplyStatus] = useState<AdminTicket['status']>('closed');
+  const [saving, setSaving]       = useState(false);
 
-  const filtered = MOCK_TICKETS.filter(t => {
+  useEffect(() => {
+    setLoading(true);
+    getAdminTickets()
+      .then(res => { setTickets(res.data); setTotal(res.total); })
+      .catch(() => null)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = tickets.filter(t => {
     const matchStatus = status === 'all' || t.status === status;
     const matchCat    = category === 'all' || t.category === category;
     return matchStatus && matchCat;
   });
 
   const counts = STATUS_TABS.reduce<Record<string, number>>((acc, tab) => {
-    acc[tab.key] = tab.key === 'all'
-      ? MOCK_TICKETS.length
-      : MOCK_TICKETS.filter(t => t.status === tab.key).length;
+    acc[tab.key] = tab.key === 'all' ? tickets.length : tickets.filter(t => t.status === tab.key).length;
     return acc;
   }, {});
 
-  const activeTicket = active ? MOCK_TICKETS.find(t => t.id === active) : null;
+  const activeTicket = active ? tickets.find(t => t.id === active) : null;
+
+  useEffect(() => {
+    if (activeTicket) {
+      setReply(activeTicket.reply ?? '');
+      setReplyStatus(activeTicket.status === 'open' ? 'in_progress' : activeTicket.status);
+    }
+  }, [active]);
+
+  const handleSend = async () => {
+    if (!activeTicket || !reply.trim()) return;
+    setSaving(true);
+    try {
+      await replyToTicket(activeTicket.id, reply, replyStatus);
+      setTickets(prev => prev.map(t =>
+        t.id === activeTicket.id ? { ...t, reply, status: replyStatus, replied_at: new Date().toISOString() } : t,
+      ));
+    } catch { /* ignore */ }
+    setSaving(false);
+  };
 
   return (
     <>
@@ -62,11 +81,10 @@ export default function SupportPage() {
         <div className="page-header__left">
           <span className="page-header__eyebrow">Support</span>
           <h1 className="page-header__title">Tickets</h1>
-          <p className="page-header__sub">{MOCK_TICKETS.filter(t => t.status === 'open').length} offene Tickets</p>
+          <p className="page-header__sub">{tickets.filter(t => t.status === 'open').length} offene Tickets</p>
         </div>
       </div>
 
-      {/* Status-Tabs */}
       <div className="tab-nav">
         {STATUS_TABS.map(tab => (
           <button
@@ -83,26 +101,20 @@ export default function SupportPage() {
           </button>
         ))}
         <div className="tab-nav__spacer" />
-        <select
-          className="tab-nav__filter"
-          value={category}
-          onChange={e => setCategory(e.target.value as CatFilter)}
-        >
+        <select className="tab-nav__filter" value={category} onChange={e => setCategory(e.target.value)}>
           <option value="all">Alle Kategorien</option>
-          {(Object.keys(CAT_LABELS) as TicketCategory[]).map(k => (
+          {Object.keys(CAT_LABELS).map(k => (
             <option key={k} value={k}>{CAT_LABELS[k]}</option>
           ))}
         </select>
       </div>
 
-      {/* Split View */}
       <div className={`ticket-split${activeTicket ? ' has-detail' : ''}`}>
-        {/* Ticket List */}
         <div className="ticket-list">
-          {filtered.length === 0 ? (
-            <div className="data-card">
-              <div className="data-card__empty">Keine Tickets in dieser Kategorie.</div>
-            </div>
+          {loading ? (
+            <div className="data-card"><div className="data-card__empty">Lade Tickets…</div></div>
+          ) : filtered.length === 0 ? (
+            <div className="data-card"><div className="data-card__empty">Keine Tickets in dieser Kategorie.</div></div>
           ) : (
             filtered.map(t => (
               <button
@@ -114,24 +126,25 @@ export default function SupportPage() {
                   <span className={`ticket-card__status ticket-card__status--${t.status}`}>
                     {STATUS_LABELS[t.status]}
                   </span>
-                  <span className="ticket-card__cat">{CAT_LABELS[t.category]}</span>
-                  <span className="ticket-card__date">{t.createdAt}</span>
+                  <span className="ticket-card__cat">{CAT_LABELS[t.category] ?? t.category}</span>
+                  <span className="ticket-card__date">
+                    {new Date(t.created_at).toLocaleDateString('de-DE')}
+                  </span>
                 </div>
                 <p className="ticket-card__subject">{t.subject}</p>
-                <p className="ticket-card__customer">{t.customerName}</p>
+                <p className="ticket-card__customer">{t.profiles?.name ?? t.profiles?.email ?? '—'}</p>
               </button>
             ))
           )}
         </div>
 
-        {/* Reply Panel */}
         {activeTicket && (
           <div className="ticket-detail">
             <div className="ticket-detail__header">
-              <p className="ticket-detail__id">Ticket #{activeTicket.id}</p>
+              <p className="ticket-detail__id">Ticket #{activeTicket.id.slice(0, 8)}</p>
               <p className="ticket-detail__subject">{activeTicket.subject}</p>
               <p className="ticket-detail__meta">
-                {activeTicket.customerName} · {activeTicket.createdAt}
+                {activeTicket.profiles?.name ?? activeTicket.profiles?.email ?? '—'} · {new Date(activeTicket.created_at).toLocaleDateString('de-DE')}
               </p>
             </div>
             <div className="ticket-detail__message">
@@ -144,14 +157,22 @@ export default function SupportPage() {
                 className="form-textarea"
                 rows={5}
                 placeholder="Deine Antwort an den Kunden…"
+                value={reply}
+                onChange={e => setReply(e.target.value)}
               />
               <div className="ticket-detail__actions">
-                <select className="form-select form-select--sm">
+                <select
+                  className="form-select form-select--sm"
+                  value={replyStatus}
+                  onChange={e => setReplyStatus(e.target.value as AdminTicket['status'])}
+                >
                   <option value="open">Status: Offen</option>
                   <option value="in_progress">Status: In Bearbeitung</option>
                   <option value="closed">Status: Geschlossen</option>
                 </select>
-                <button className="btn-primary">Senden & aktualisieren</button>
+                <button className="btn-primary" onClick={handleSend} disabled={saving || !reply.trim()}>
+                  {saving ? 'Speichern…' : 'Senden & aktualisieren'}
+                </button>
               </div>
             </div>
           </div>

@@ -1,46 +1,21 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, X, Package, User, Mail, CreditCard } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import type { OrderStatus } from '../../types/index';
-
-interface MockOrder {
-  id:            string;
-  orderNumber:   string;
-  customerName:  string;
-  customerEmail: string;
-  total:         string;
-  status:        OrderStatus;
-  items:         number;
-  date:          string;
-  address?:      string;
-  paymentMethod?: string;
-}
-
-const MOCK_ORDERS: MockOrder[] = [
-  { id: '1',  orderNumber: '#1042', customerName: 'Laura Meier',    customerEmail: 'l.meier@mail.de',   total: '€ 89,00',   status: 'paid',           items: 2, date: '14.05.2026', address: 'Musterstr. 12, 10115 Berlin',      paymentMethod: 'Kreditkarte' },
-  { id: '2',  orderNumber: '#1041', customerName: 'Jonas Braun',    customerEmail: 'j.braun@mail.de',   total: '€ 124,50',  status: 'shipped',        items: 3, date: '13.05.2026', address: 'Hauptstr. 5, 80331 München',       paymentMethod: 'PayPal' },
-  { id: '3',  orderNumber: '#1040', customerName: 'Sara König',     customerEmail: 's.koenig@mail.de',  total: '€ 56,00',   status: 'delivered',      items: 1, date: '13.05.2026', address: 'Bahnhofstr. 3, 70173 Stuttgart',   paymentMethod: 'Kreditkarte' },
-  { id: '4',  orderNumber: '#1039', customerName: 'Max Müller',     customerEmail: 'm.mueller@mail.de', total: '€ 210,00',  status: 'pending',        items: 4, date: '12.05.2026', address: 'Gartenweg 8, 60311 Frankfurt',     paymentMethod: 'Vorkasse' },
-  { id: '5',  orderNumber: '#1038', customerName: 'Anna Schmidt',   customerEmail: 'a.schmidt@mail.de', total: '€ 38,00',   status: 'cancelled',      items: 1, date: '11.05.2026', address: 'Lindenstr. 22, 50667 Köln',        paymentMethod: 'PayPal' },
-  { id: '6',  orderNumber: '#1037', customerName: 'Felix Wagner',   customerEmail: 'f.wagner@mail.de',  total: '€ 67,50',   status: 'delivered',      items: 2, date: '10.05.2026', address: 'Rosestr. 1, 40210 Düsseldorf',     paymentMethod: 'Kreditkarte' },
-  { id: '7',  orderNumber: '#1036', customerName: 'Mia Becker',     customerEmail: 'm.becker@mail.de',  total: '€ 159,00',  status: 'shipped',        items: 3, date: '09.05.2026', address: 'Bergstr. 17, 04109 Leipzig',       paymentMethod: 'PayPal' },
-  { id: '8',  orderNumber: '#1035', customerName: 'Lukas Hoffmann', customerEmail: 'l.hoffmann@web.de', total: '€ 44,90',   status: 'paid',           items: 2, date: '08.05.2026', address: 'Waldweg 6, 01067 Dresden',         paymentMethod: 'Kreditkarte' },
-  { id: '9',  orderNumber: '#1034', customerName: 'Sophie Fischer', customerEmail: 's.fischer@web.de',  total: '€ 319,00',  status: 'delivered',      items: 5, date: '07.05.2026', address: 'Seestr. 30, 90403 Nürnberg',      paymentMethod: 'Kreditkarte' },
-  { id: '10', orderNumber: '#1033', customerName: 'Tim Schulz',     customerEmail: 't.schulz@web.de',   total: '€ 79,90',   status: 'payment_failed', items: 1, date: '06.05.2026', address: 'Kirchgasse 9, 20095 Hamburg',      paymentMethod: 'Kreditkarte' },
-];
+import { getAdminOrders, getAdminOrder, updateOrderStatus, type AdminOrder } from '../../api/adminApi';
 
 const STATUS_TABS: Array<{ key: OrderStatus | 'all'; label: string }> = [
-  { key: 'all',           label: 'Alle'        },
-  { key: 'pending',       label: 'Ausstehend'  },
-  { key: 'paid',          label: 'Bezahlt'     },
-  { key: 'shipped',       label: 'Versendet'   },
-  { key: 'delivered',     label: 'Zugestellt'  },
-  { key: 'cancelled',     label: 'Storniert'   },
-  { key: 'payment_failed',label: 'Zahlung fehlg.' },
+  { key: 'all',            label: 'Alle'             },
+  { key: 'pending',        label: 'Ausstehend'       },
+  { key: 'paid',           label: 'Bezahlt'          },
+  { key: 'shipped',        label: 'Versendet'        },
+  { key: 'delivered',      label: 'Zugestellt'       },
+  { key: 'cancelled',      label: 'Storniert'        },
+  { key: 'payment_failed', label: 'Zahlung fehlg.'  },
 ];
 
-const STATUS_LABELS: Record<OrderStatus, string> = {
+const STATUS_LABELS: Record<string, string> = {
   pending:        'Ausstehend',
   paid:           'Bezahlt',
   shipped:        'Versendet',
@@ -50,27 +25,51 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   refunded:       'Erstattet',
 };
 
+function fmt(n: number) {
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n);
+}
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString('de-DE');
+}
+
 export default function OrdersPage() {
-  const [activeTab, setActiveTab]   = useState<OrderStatus | 'all'>('all');
-  const [activeId, setActiveId]     = useState<string | null>(null);
-  const [status, setStatus]         = useState<Record<string, OrderStatus>>({});
+  const [orders, setOrders]       = useState<Awaited<ReturnType<typeof getAdminOrders>>['data']>([]);
+  const [total, setTotal]         = useState(0);
+  const [loading, setLoading]     = useState(true);
+  const [activeTab, setActiveTab] = useState<OrderStatus | 'all'>('all');
+  const [activeId, setActiveId]   = useState<string | null>(null);
+  const [detail, setDetail]       = useState<AdminOrder | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const panelRef    = useRef<HTMLDivElement>(null);
   const touchStartY = useRef(-1);
+
+  useEffect(() => {
+    setLoading(true);
+    getAdminOrders(1, 200)
+      .then(res => { setOrders(res.data); setTotal(res.total); })
+      .catch(() => null)
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (!activeId) { setDetail(null); return; }
+    setDetailLoading(true);
+    getAdminOrder(activeId)
+      .then(setDetail)
+      .catch(() => null)
+      .finally(() => setDetailLoading(false));
+  }, [activeId]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (panelRef.current && panelRef.current.scrollTop === 0)
       touchStartY.current = e.touches[0].clientY;
   };
-
   const handleTouchMove = (e: React.TouchEvent) => {
     if (touchStartY.current < 0 || !panelRef.current) return;
     const dy = e.touches[0].clientY - touchStartY.current;
-    if (dy > 0) {
-      panelRef.current.style.transition = 'none';
-      panelRef.current.style.transform  = `translateY(${dy}px)`;
-    }
+    if (dy > 0) { panelRef.current.style.transition = 'none'; panelRef.current.style.transform = `translateY(${dy}px)`; }
   };
-
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchStartY.current < 0 || !panelRef.current) return;
     const dy = e.changedTouches[0].clientY - touchStartY.current;
@@ -85,29 +84,25 @@ export default function OrdersPage() {
     }
   };
 
-  const getStatus = (o: MockOrder): OrderStatus => status[o.id] ?? o.status;
-
   const filtered = activeTab === 'all'
-    ? MOCK_ORDERS
-    : MOCK_ORDERS.filter(o => getStatus(o) === activeTab);
+    ? orders
+    : orders.filter(o => o.status === activeTab);
 
   const counts = STATUS_TABS.reduce<Record<string, number>>((acc, tab) => {
-    acc[tab.key] = tab.key === 'all'
-      ? MOCK_ORDERS.length
-      : MOCK_ORDERS.filter(o => getStatus(o) === tab.key).length;
+    acc[tab.key] = tab.key === 'all' ? orders.length : orders.filter(o => o.status === tab.key).length;
     return acc;
   }, {});
 
-  const activeOrder = activeId ? MOCK_ORDERS.find(o => o.id === activeId) ?? null : null;
-  const activeStatus = activeOrder ? getStatus(activeOrder) : null;
-
-  const handleStatusChange = (id: string, newStatus: OrderStatus) => {
-    setStatus(prev => ({ ...prev, [id]: newStatus }));
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      await updateOrderStatus(id, newStatus);
+      setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+      if (detail?.id === id) setDetail(prev => prev ? { ...prev, status: newStatus } : prev);
+    } catch { /* ignore */ }
   };
 
-  const handleRowClick = (id: string) => {
-    setActiveId(prev => prev === id ? null : id);
-  };
+  const profile = detail?.profile;
+  const addr    = detail?.shipping_address;
 
   return (
     <>
@@ -115,11 +110,10 @@ export default function OrdersPage() {
         <div className="page-header__left">
           <span className="page-header__eyebrow">Shop</span>
           <h1 className="page-header__title">Bestellungen</h1>
-          <p className="page-header__sub">{MOCK_ORDERS.length} Bestellungen insgesamt</p>
+          <p className="page-header__sub">{total} Bestellungen insgesamt</p>
         </div>
       </div>
 
-      {/* Status-Tabs */}
       <div className="tab-nav">
         {STATUS_TABS.map(tab => (
           <button
@@ -137,55 +131,50 @@ export default function OrdersPage() {
         ))}
       </div>
 
-      {/* Split View */}
-      {activeOrder && <div className="panel-backdrop" onClick={() => setActiveId(null)} />}
-      <div className={`order-split${activeOrder ? ' has-detail' : ''}`}>
-        {/* Table */}
+      {detail && <div className="panel-backdrop" onClick={() => setActiveId(null)} />}
+      <div className={`order-split${detail ? ' has-detail' : ''}`}>
         <div className="data-card">
           <div className="data-card__body">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Bestellung</th>
-                  <th>Kunde</th>
-                  <th>Artikel</th>
-                  <th>Betrag</th>
-                  <th>Status</th>
-                  <th>Datum</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(o => {
-                  const currentStatus = getStatus(o);
-                  return (
+            {loading ? (
+              <p className="data-card__empty">Lade Bestellungen…</p>
+            ) : filtered.length === 0 ? (
+              <p className="data-card__empty">Keine Bestellungen in dieser Kategorie.</p>
+            ) : (
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Bestellung</th>
+                    <th>Kunde</th>
+                    <th>Betrag</th>
+                    <th>Status</th>
+                    <th>Datum</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(o => (
                     <tr
                       key={o.id}
                       className={`admin-table__row--clickable${activeId === o.id ? ' is-selected' : ''}`}
-                      onClick={() => handleRowClick(o.id)}
+                      onClick={() => setActiveId(prev => prev === o.id ? null : o.id)}
                     >
-                      <td><strong>{o.orderNumber}</strong></td>
+                      <td><strong>{o.order_number}</strong></td>
+                      <td><p className="admin-table__primary">{o.user_id ?? '—'}</p></td>
+                      <td><strong>{fmt(o.total)}</strong></td>
                       <td>
-                        <p className="admin-table__primary">{o.customerName}</p>
-                        <p className="admin-table__secondary">{o.customerEmail}</p>
-                      </td>
-                      <td className="admin-table__muted">{o.items} Artikel</td>
-                      <td><strong>{o.total}</strong></td>
-                      <td>
-                        <span className={`status-badge status-badge--${currentStatus}`}>
-                          {STATUS_LABELS[currentStatus]}
+                        <span className={`status-badge status-badge--${o.status}`}>
+                          {STATUS_LABELS[o.status] ?? o.status}
                         </span>
                       </td>
-                      <td className="admin-table__muted">{o.date}</td>
+                      <td className="admin-table__muted">{fmtDate(o.created_at)}</td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
 
-        {/* Detail Panel */}
-        {activeOrder && activeStatus && (
+        {(detail || detailLoading) && (
           <div
             className="order-detail"
             ref={panelRef}
@@ -193,81 +182,90 @@ export default function OrdersPage() {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            <div className="order-detail__header">
-              <div className="order-detail__header-top">
-                <p className="order-detail__number">{activeOrder.orderNumber}</p>
-                <button className="order-detail__close" onClick={() => setActiveId(null)} title="Schließen">
-                  <X size={15} strokeWidth={2} />
-                </button>
-              </div>
-              <span className={`status-badge status-badge--${activeStatus}`}>
-                {STATUS_LABELS[activeStatus]}
-              </span>
-              <p className="order-detail__date">{activeOrder.date}</p>
-            </div>
-
-            <div className="order-detail__section">
-              <p className="order-detail__label">Kunde</p>
-              <div className="order-detail__row">
-                <User size={13} strokeWidth={2} className="order-detail__icon" />
-                <span>{activeOrder.customerName}</span>
-              </div>
-              <div className="order-detail__row">
-                <Mail size={13} strokeWidth={2} className="order-detail__icon" />
-                <a className="order-detail__link" href={`mailto:${activeOrder.customerEmail}`}>
-                  {activeOrder.customerEmail}
-                </a>
-              </div>
-            </div>
-
-            <div className="order-detail__section">
-              <p className="order-detail__label">Bestellung</p>
-              <div className="order-detail__row">
-                <Package size={13} strokeWidth={2} className="order-detail__icon" />
-                <span>{activeOrder.items} Artikel</span>
-              </div>
-              <div className="order-detail__total">
-                <span className="order-detail__total-label">Gesamtbetrag</span>
-                <span className="order-detail__total-value">{activeOrder.total}</span>
-              </div>
-              {activeOrder.paymentMethod && (
-                <div className="order-detail__row">
-                  <CreditCard size={13} strokeWidth={2} className="order-detail__icon" />
-                  <span className="admin-table__muted">{activeOrder.paymentMethod}</span>
+            {detailLoading ? (
+              <p className="data-card__empty">Lade Details…</p>
+            ) : detail && (
+              <>
+                <div className="order-detail__header">
+                  <div className="order-detail__header-top">
+                    <p className="order-detail__number">{detail.order_number}</p>
+                    <button className="order-detail__close" onClick={() => setActiveId(null)} title="Schließen">
+                      <X size={15} strokeWidth={2} />
+                    </button>
+                  </div>
+                  <span className={`status-badge status-badge--${detail.status}`}>
+                    {STATUS_LABELS[detail.status] ?? detail.status}
+                  </span>
+                  <p className="order-detail__date">{fmtDate(detail.created_at)}</p>
                 </div>
-              )}
-              {activeOrder.address && (
-                <p className="order-detail__address">{activeOrder.address}</p>
-              )}
-            </div>
 
-            <div className="order-detail__section">
-              <p className="order-detail__label">Status ändern</p>
-              <select
-                className="form-select"
-                value={activeStatus}
-                onChange={e => handleStatusChange(activeOrder.id, e.target.value as OrderStatus)}
-              >
-                <option value="pending">Ausstehend</option>
-                <option value="paid">Bezahlt</option>
-                <option value="shipped">Versendet</option>
-                <option value="delivered">Zugestellt</option>
-                <option value="cancelled">Storniert</option>
-                <option value="refunded">Erstattet</option>
-              </select>
-            </div>
+                {profile && (
+                  <div className="order-detail__section">
+                    <p className="order-detail__label">Kunde</p>
+                    {profile.name && (
+                      <div className="order-detail__row">
+                        <User size={13} strokeWidth={2} className="order-detail__icon" />
+                        <span>{profile.name}</span>
+                      </div>
+                    )}
+                    {profile.email && (
+                      <div className="order-detail__row">
+                        <Mail size={13} strokeWidth={2} className="order-detail__icon" />
+                        <a className="order-detail__link" href={`mailto:${profile.email}`}>{profile.email}</a>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-            <div className="order-detail__footer">
-              <Link to={ROUTES.ORDERS.detail(activeOrder.id)} className="btn-secondary">
-                <Eye size={13} strokeWidth={2} />
-                Vollansicht
-              </Link>
-            </div>
+                <div className="order-detail__section">
+                  <p className="order-detail__label">Bestellung</p>
+                  <div className="order-detail__row">
+                    <Package size={13} strokeWidth={2} className="order-detail__icon" />
+                    <span>{detail.order_items.length} Artikel</span>
+                  </div>
+                  <div className="order-detail__total">
+                    <span className="order-detail__total-label">Gesamtbetrag</span>
+                    <span className="order-detail__total-value">{fmt(detail.total)}</span>
+                  </div>
+                  {addr && (
+                    <div className="order-detail__row">
+                      <CreditCard size={13} strokeWidth={2} className="order-detail__icon" />
+                      <span className="admin-table__muted">
+                        {[addr.firstName, addr.lastName].filter(Boolean).join(' ')}{addr.street ? `, ${addr.street}` : ''}{addr.zip ? `, ${addr.zip}` : ''}{addr.city ? ` ${addr.city}` : ''}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="order-detail__section">
+                  <p className="order-detail__label">Status ändern</p>
+                  <select
+                    className="form-select"
+                    value={detail.status}
+                    onChange={e => handleStatusChange(detail.id, e.target.value)}
+                  >
+                    <option value="pending">Ausstehend</option>
+                    <option value="paid">Bezahlt</option>
+                    <option value="shipped">Versendet</option>
+                    <option value="delivered">Zugestellt</option>
+                    <option value="cancelled">Storniert</option>
+                    <option value="refunded">Erstattet</option>
+                  </select>
+                </div>
+
+                <div className="order-detail__footer">
+                  <Link to={ROUTES.ORDERS.detail(detail.id)} className="btn-secondary">
+                    <Eye size={13} strokeWidth={2} />
+                    Vollansicht
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
 
-      {filtered.length > 0 && !activeOrder && (
+      {filtered.length > 0 && !detail && (
         <p className="table-hint">Klick auf eine Zeile für Details und Statusänderung</p>
       )}
     </>
