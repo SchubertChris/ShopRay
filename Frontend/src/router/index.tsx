@@ -36,6 +36,7 @@ const AuthCallbackPage   = lazy(() => import('../pages/auth/auth-callback'));
 const SettingsPage       = lazy(() => import('../pages/user/settings'));
 const AddressesPage      = lazy(() => import('../pages/user/addresses'));
 const OrderDetailPage    = lazy(() => import('../pages/user/order-detail'));
+const TicketDetailPage   = lazy(() => import('../pages/user/ticket-detail'));
 const MyDataPage         = lazy(() => import('../pages/user/my-data'));
 
 // ── Skeleton-Fallback ──────────────────────────────────────────────────────
@@ -97,8 +98,9 @@ export const router = createBrowserRouter([
               { path: 'orders/:id',    element: lazy$(<OrderDetailPage />) },
               ...(FEATURES.wishlist ? [{ path: 'wishlist', element: lazy$(<WishlistPage />) }] : []),
               ...(FEATURES.tickets ? [
-                { path: 'tickets',     element: lazy$(<TicketsPage />) },
-                { path: 'tickets/new', element: lazy$(<TicketNewPage />) },
+                { path: 'tickets',      element: lazy$(<TicketsPage />) },
+                { path: 'tickets/new',  element: lazy$(<TicketNewPage />) },
+                { path: 'tickets/:id',  element: lazy$(<TicketDetailPage />) },
               ] : []),
               { path: 'settings',      element: lazy$(<SettingsPage />) },
               { path: 'addresses',     element: lazy$(<AddressesPage />) },
