@@ -21,6 +21,7 @@ import adminReviewsRouter    from './routes/admin-reviews';
 import adminTicketsRouter    from './routes/admin-tickets';
 import adminStatsRouter      from './routes/admin-stats';
 import adminPushRouter       from './routes/admin-push';
+import adminTicketMessagesRouter from './routes/admin-ticket-messages';
 import adminShippingRouter   from './routes/admin-shipping';
 import settingsRouter        from './routes/settings';
 
@@ -59,6 +60,7 @@ app.use('/api/admin/orders',      adminShippingRouter);
 app.use('/api/admin/2fa',         admin2faRouter);
 app.use('/api/admin/reviews',     adminReviewsRouter);
 app.use('/api/admin/tickets',     adminTicketsRouter);
+app.use('/api/admin/tickets',     adminTicketMessagesRouter);
 app.use('/api/admin/stats',       adminStatsRouter);
 app.use('/api/admin/push',        adminPushRouter);
 app.use('/api/admin/settings',    settingsRouter);
