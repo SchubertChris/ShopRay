@@ -13,6 +13,7 @@ import {
 import { getErrorMessage } from '@/utils/errorMessage';
 import { ROUTES } from '@config/routes';
 import { supabase } from '@/lib/supabase';
+import { API_BASE } from '@config/api';
 
 interface ProfileForm {
   firstName: string;
@@ -203,7 +204,7 @@ export default function SettingsPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api'}/customers/me`,
+        `${API_BASE}/customers/me`,
         {
           method:  'DELETE',
           headers: { Authorization: `Bearer ${session?.access_token ?? ''}` },

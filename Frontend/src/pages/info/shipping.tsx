@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SeoMeta, LegalPage } from '@components/ui';
+import { API_BASE } from '@config/api';
 
 interface ShippingSettings {
   standard:   number;
@@ -7,8 +8,6 @@ interface ShippingSettings {
   free_above: number;
   delivery:   string;
 }
-
-const API_URL = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:5000';
 
 const DEFAULTS: ShippingSettings = { standard: 4.90, express: 9.90, free_above: 50, delivery: '2–4 Werktage' };
 
@@ -29,7 +28,7 @@ export default function ShippingPage() {
   const [s, setS] = useState<ShippingSettings>(DEFAULTS);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/settings/shipping`)
+    fetch(`${API_BASE}/settings/shipping`)
       .then(r => r.ok ? r.json() : null)
       .then((data: ShippingSettings | null) => { if (data) setS(data); })
       .catch(() => { /* Fallback-Werte bleiben */ });

@@ -1,5 +1,6 @@
-/** Basis-URL für alle API-Anfragen — via .env konfigurierbar */
-export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api';
+// VITE_API_URL: Basis-URL ohne /api-Suffix (z.B. http://localhost:5000)
+// In Vercel-Production nicht setzen → relative /api/* Calls → Vercel Rewrite → Backend
+const ORIGIN = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
-/** Request-Timeout in Millisekunden */
+export const API_BASE    = `${ORIGIN}/api`;
 export const API_TIMEOUT = 10_000;

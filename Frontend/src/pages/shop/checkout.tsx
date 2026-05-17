@@ -6,6 +6,7 @@ import { ProductImage, SeoMeta } from '@components/ui';
 import { ROUTES } from '@config/routes';
 import { getErrorMessage } from '@/utils/errorMessage';
 import type { PaymentMethod } from '@/types/checkout';
+import { API_BASE } from '@config/api';
 
 // ── TYPES ─────────────────────────────────────────────────────────────────────
 
@@ -22,8 +23,6 @@ interface ShippingForm {
 type FormErrors = Partial<Record<keyof ShippingForm, string>>;
 
 // ── SHIPPING SETTINGS ─────────────────────────────────────────────────────────
-
-const API_URL = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:5000';
 
 interface ShippingConfig { standard: number; free_above: number; }
 
@@ -110,7 +109,7 @@ export default function CheckoutPage() {
   const [shippingConfig, setShippingConfig] = useState<ShippingConfig>({ standard: 4.90, free_above: 50 });
 
   useEffect(() => {
-    fetch(`${API_URL}/api/settings/shipping`)
+    fetch(`${API_BASE}/settings/shipping`)
       .then(r => r.ok ? r.json() : null)
       .then((data: ShippingConfig | null) => {
         if (data) setShippingConfig({ standard: data.standard, free_above: data.free_above });

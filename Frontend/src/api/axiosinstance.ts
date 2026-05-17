@@ -1,13 +1,14 @@
 import axios from 'axios';
 import { supabase } from '@/lib/supabase';
+import { API_BASE, API_TIMEOUT } from '@config/api';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api',
+  baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   },
-  timeout: 10_000,
+  timeout: API_TIMEOUT,
 });
 
 // Hängt den frischen Supabase-JWT an jeden Request (auto-refresh durch Supabase-Client)
