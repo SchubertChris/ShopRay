@@ -285,20 +285,32 @@
   padding-block: 3rem;
 
   // Platz für die fixe Mobile-Tab-Leiste unten freihalten
-  @media (max-width: 1023px) {
+  @media (max-width: 767px) {
     padding-bottom: calc(3rem + 64px + env(safe-area-inset-bottom));
   }
 }
 
 .account-grid {
   display: grid;
-  gap: 2.5rem;
+  gap: 2rem;
+  // Verhindert dass Grid-Kinder über die Spur hinauswachsen
+  min-width: 0;
 
-  // Sidebar auf Mobile ausblenden — Tab-Leiste übernimmt die Navigation
+  // Sidebar nur auf Mobile ausblenden — Tab-Leiste übernimmt die Navigation
   > aside { display: none; }
 
-  @include respond-to('lg') {
-    grid-template-columns: 220px 1fr;
+  // Outlet-Wrapper: min-width: 0 kritisch gegen horizontalen Overflow
+  > div {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  // Ab Tablet: Sidebar sichtbar, Tab-Leiste überflüssig
+  @include respond-to('md') {
+    grid-template-columns: 200px 1fr;
+    gap: 2.5rem;
+
+    > div { overflow: visible; }
 
     > aside {
       display: block;
@@ -308,10 +320,14 @@
       align-self: start;
     }
   }
+
+  @include respond-to('lg') {
+    grid-template-columns: 220px 1fr;
+  }
 }
 
 // ─── ACCOUNT MOBILE TAB-BAR ────────────────────────────────────────────────
-// Fixe Bottom-Navigation — nur auf Mobile sichtbar
+// Fixe Bottom-Navigation — nur auf Mobile sichtbar (< md)
 .account-tab-bar {
   display: flex;
   align-items: stretch;
@@ -326,8 +342,8 @@
   will-change: transform;
   transform: translateZ(0);
 
-  // Ab Desktop ausblenden
-  @include respond-to('lg') { display: none; }
+  // Ab Tablet ausblenden — Sidebar übernimmt
+  @include respond-to('md') { display: none; }
 
   // Scrollbarer Bereich für Nav-Links
   &__scroll {
