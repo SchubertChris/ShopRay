@@ -21,6 +21,14 @@ export interface ShippingSettings {
   updated_at: string;
 }
 
+const SHIPPING_DEFAULTS: ShippingSettings = {
+  standard:   4.90,
+  express:    9.90,
+  free_above: 50.00,
+  delivery:   '2–4 Werktage',
+  updated_at: new Date().toISOString(),
+};
+
 // GET /api/settings/shipping — öffentlich, kein Auth
 router.get('/shipping', async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -30,7 +38,11 @@ router.get('/shipping', async (_req: Request, res: Response, next: NextFunction)
       .eq('id', 1)
       .single();
 
-    if (error || !data) throw error ?? new Error('Keine Versandeinstellungen gefunden');
+    // Tabelle noch nicht migriert oder leer → Defaults zurückgeben statt 500
+    if (error || !data) {
+      res.json(SHIPPING_DEFAULTS);
+      return;
+    }
     res.json(data);
   } catch (err) {
     next(err);
