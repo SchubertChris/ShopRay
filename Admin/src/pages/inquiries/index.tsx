@@ -2,23 +2,23 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Mail, Inbox, Eye, CheckCheck,
   AlertCircle, User, AtSign, X,
-  RefreshCw, Loader2,
+  RefreshCw, Loader2, Search, Archive,
 } from 'lucide-react';
 import { getInquiries, updateInquiryStatus, type ContactInquiry } from '../../api/adminApi';
 import { useBadgeStore } from '@stores/badgeStore';
 
 type InquiryStatus = ContactInquiry['status'];
 type StatusFilter  = InquiryStatus | 'all';
+type ViewMode      = 'active' | 'archive';
 
-const STATUS_TABS: Array<{
+const ACTIVE_TABS: Array<{
   key:   StatusFilter;
   label: string;
   icon:  React.ComponentType<{ size?: number; strokeWidth?: number }>;
 }> = [
-  { key: 'all',     label: 'Alle',        icon: Inbox      },
-  { key: 'new',     label: 'Neu',         icon: Mail       },
-  { key: 'read',    label: 'Gelesen',     icon: Eye        },
-  { key: 'replied', label: 'Beantwortet', icon: CheckCheck },
+  { key: 'all',  label: 'Alle',    icon: Inbox },
+  { key: 'new',  label: 'Neu',     icon: Mail  },
+  { key: 'read', label: 'Gelesen', icon: Eye   },
 ];
 
 const STATUS_LABELS: Record<InquiryStatus, string> = {
@@ -46,12 +46,14 @@ function StatusBadge({ status }: { status: InquiryStatus }) {
 }
 
 export default function InquiriesPage() {
-  const [inquiries,     setInquiries]     = useState<ContactInquiry[]>([]);
-  const [loading,       setLoading]       = useState(false);
-  const [error,         setError]         = useState<string | null>(null);
-  const [activeId,      setActiveId]      = useState<string | null>(null);
-  const [statusFilter,  setStatusFilter]  = useState<StatusFilter>('all');
-  const [saving,        setSaving]        = useState(false);
+  const [inquiries,    setInquiries]    = useState<ContactInquiry[]>([]);
+  const [loading,      setLoading]      = useState(false);
+  const [error,        setError]        = useState<string | null>(null);
+  const [activeId,     setActiveId]     = useState<string | null>(null);
+  const [viewMode,     setViewMode]     = useState<ViewMode>('active');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [search,       setSearch]       = useState('');
+  const [saving,       setSaving]       = useState(false);
 
   const fetchInquiries = useCallback(async () => {
     setLoading(true);
@@ -78,23 +80,43 @@ export default function InquiriesPage() {
     try {
       await updateInquiryStatus(id, newStatus);
       setInquiries(prev => prev.map(inq => inq.id === id ? { ...inq, status: newStatus } : inq));
-    } catch {
-      // Status-Update fehlgeschlagen — kein optimistic update zurückrollen nötig (kein optimistic)
-    } finally {
+    } catch { /* ignore */ } finally {
       setSaving(false);
     }
   }
 
-  const filtered = inquiries.filter(inq => statusFilter === 'all' || inq.status === statusFilter);
+  // Aktive = new + read, Archiv = replied
+  const byMode = viewMode === 'active'
+    ? inquiries.filter(i => i.status !== 'replied')
+    : inquiries.filter(i => i.status === 'replied');
 
-  const counts = STATUS_TABS.reduce<Record<string, number>>((acc, tab) => {
-    acc[tab.key] = tab.key === 'all'
-      ? inquiries.length
-      : inquiries.filter(i => i.status === tab.key).length;
+  const byStatus = statusFilter === 'all' ? byMode : byMode.filter(i => i.status === statusFilter);
+
+  const q = search.trim().toLowerCase();
+  const filtered = q
+    ? byStatus.filter(i =>
+        i.name.toLowerCase().includes(q) ||
+        i.email.toLowerCase().includes(q) ||
+        i.subject.toLowerCase().includes(q),
+      )
+    : byStatus;
+
+  const counts = ACTIVE_TABS.reduce<Record<string, number>>((acc, tab) => {
+    acc[tab.key] = tab.key === 'all' ? byMode.length : byMode.filter(i => i.status === tab.key).length;
     return acc;
   }, {});
 
+  const archiveCount = inquiries.filter(i => i.status === 'replied').length;
+  const activeCount  = inquiries.filter(i => i.status !== 'replied').length;
+
   const activeInquiry = activeId ? inquiries.find(i => i.id === activeId) ?? null : null;
+
+  const switchView = (mode: ViewMode) => {
+    setViewMode(mode);
+    setStatusFilter('all');
+    setSearch('');
+    setActiveId(null);
+  };
 
   return (
     <>
@@ -110,6 +132,21 @@ export default function InquiriesPage() {
           </p>
         </div>
         <div className="page-header__actions">
+          <button
+            className={`filter-bar__tab${viewMode === 'active' ? ' is-active' : ''}`}
+            onClick={() => switchView('active')}
+          >
+            Aktiv
+            {activeCount > 0 && <span className="tab-nav__count">{activeCount}</span>}
+          </button>
+          <button
+            className={`filter-bar__tab${viewMode === 'archive' ? ' is-active' : ''}`}
+            onClick={() => switchView('archive')}
+          >
+            <Archive size={13} strokeWidth={2} />
+            Archiv
+            {archiveCount > 0 && <span className="tab-nav__count">{archiveCount}</span>}
+          </button>
           <button className="btn-secondary" onClick={fetchInquiries} disabled={loading} title="Aktualisieren">
             <RefreshCw size={15} strokeWidth={2} />
             Aktualisieren
@@ -117,9 +154,23 @@ export default function InquiriesPage() {
         </div>
       </div>
 
+      {/* Suche */}
+      <div className="filter-bar">
+        <div className="filter-bar__search">
+          <Search size={14} strokeWidth={2} className="filter-bar__search-icon" />
+          <input
+            type="text"
+            placeholder="Name, E-Mail oder Betreff suchen…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="filter-bar__input"
+          />
+        </div>
+      </div>
+
       {/* Status-Tabs */}
       <div className="tab-nav">
-        {STATUS_TABS.map(tab => (
+        {viewMode === 'active' && ACTIVE_TABS.map(tab => (
           <button
             key={tab.key}
             className={`tab-nav__item${statusFilter === tab.key ? ' is-active' : ''}`}
@@ -133,6 +184,13 @@ export default function InquiriesPage() {
             )}
           </button>
         ))}
+        {viewMode === 'archive' && (
+          <button className="tab-nav__item is-active">
+            <CheckCheck size={14} strokeWidth={1.75} />
+            Beantwortet
+            <span className="tab-nav__count is-active">{archiveCount}</span>
+          </button>
+        )}
       </div>
 
       {/* Loading */}
@@ -158,7 +216,9 @@ export default function InquiriesPage() {
           {/* Liste */}
           <div className="inq-list">
             {filtered.length === 0 ? (
-              <div className="inq-empty">Keine Anfragen in dieser Kategorie.</div>
+              <div className="inq-empty">
+                {search ? 'Keine Treffer für diese Suche.' : 'Keine Anfragen in dieser Kategorie.'}
+              </div>
             ) : (
               filtered.map(inq => (
                 <button

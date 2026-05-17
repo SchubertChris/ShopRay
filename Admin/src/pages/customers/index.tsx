@@ -4,8 +4,8 @@ import { Search, Eye, Download, Trash2, Mail, ShoppingBag, X } from 'lucide-reac
 import { ROUTES } from '@config/routes';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import {
-  getAdminCustomers, getAdminCustomer, deleteAdminCustomer,
-  type AdminCustomer, type AdminCustomerDetail,
+  getAdminCustomers, getAdminCustomer, deleteAdminCustomer, updateCustomerRole,
+  type AdminCustomer, type AdminCustomerDetail, type UserRole,
 } from '../../api/adminApi';
 
 function initials(name: string | null) {
@@ -33,6 +33,7 @@ export default function CustomersPage() {
   const [detail, setDetail]             = useState<AdminCustomerDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AdminCustomer | null>(null);
+  const [roleChanging, setRoleChanging] = useState(false);
   const panelRef    = useRef<HTMLDivElement>(null);
   const touchStartY = useRef(-1);
 
@@ -80,6 +81,16 @@ export default function CustomersPage() {
     (c.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
     (c.email ?? '').toLowerCase().includes(search.toLowerCase()),
   );
+
+  const handleRoleChange = async (id: string, role: UserRole) => {
+    setRoleChanging(true);
+    try {
+      await updateCustomerRole(id, role);
+      setCustomers(prev => prev.map(c => c.id === id ? { ...c, role } : c));
+      setDetail(prev => prev ? { ...prev, role } : prev);
+    } catch { /* ignore */ }
+    setRoleChanging(false);
+  };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -215,6 +226,21 @@ export default function CustomersPage() {
                       <a className="customer-panel__link" href={`mailto:${detail.email}`}>{detail.email}</a>
                     </div>
                   )}
+                </div>
+
+                <div className="customer-panel__section">
+                  <p className="customer-panel__label">Rolle</p>
+                  <select
+                    className="form-select form-select--sm"
+                    value={detail.role}
+                    disabled={roleChanging}
+                    onChange={e => handleRoleChange(detail.id, e.target.value as UserRole)}
+                  >
+                    <option value="customer">customer</option>
+                    <option value="mod">mod</option>
+                    <option value="admin">admin</option>
+                    <option value="owner">owner</option>
+                  </select>
                 </div>
 
                 <div className="customer-panel__stats">

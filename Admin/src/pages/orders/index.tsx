@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Eye, X, Package, User, Mail, CreditCard } from 'lucide-react';
+import { Eye, X, Package, User, Mail, CreditCard, Search, Archive } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import type { OrderStatus } from '../../types/index';
 import { getAdminOrders, getAdminOrder, updateOrderStatus, type AdminOrder } from '../../api/adminApi';
 import { useBadgeStore } from '@stores/badgeStore';
+
+const ACTIVE_STATUSES:  OrderStatus[] = ['pending', 'paid', 'shipped'];
+const ARCHIVE_STATUSES: OrderStatus[] = ['delivered', 'cancelled', 'payment_failed', 'refunded'];
 
 const STATUS_TABS: Array<{ key: OrderStatus | 'all'; label: string }> = [
   { key: 'all',            label: 'Alle'             },
@@ -34,11 +37,15 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE');
 }
 
+type ViewMode = 'active' | 'archive';
+
 export default function OrdersPage() {
   const [orders, setOrders]       = useState<Awaited<ReturnType<typeof getAdminOrders>>['data']>([]);
   const [total, setTotal]         = useState(0);
   const [loading, setLoading]     = useState(true);
+  const [viewMode, setViewMode]   = useState<ViewMode>('active');
   const [activeTab, setActiveTab] = useState<OrderStatus | 'all'>('all');
+  const [search, setSearch]       = useState('');
   const [activeId, setActiveId]   = useState<string | null>(null);
   const [detail, setDetail]       = useState<AdminOrder | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -86,14 +93,28 @@ export default function OrdersPage() {
     }
   };
 
-  const filtered = activeTab === 'all'
-    ? orders
-    : orders.filter(o => o.status === activeTab);
+  // Erst nach View-Mode filtern, dann nach Tab, dann nach Suche
+  const byMode = viewMode === 'active'
+    ? orders.filter(o => ACTIVE_STATUSES.includes(o.status as OrderStatus))
+    : orders.filter(o => ARCHIVE_STATUSES.includes(o.status as OrderStatus));
+
+  const byTab = activeTab === 'all' ? byMode : byMode.filter(o => o.status === activeTab);
+
+  const q = search.trim().toLowerCase();
+  const filtered = q
+    ? byTab.filter(o =>
+        o.order_number.toLowerCase().includes(q) ||
+        (o.user_id ?? '').toLowerCase().includes(q),
+      )
+    : byTab;
 
   const counts = STATUS_TABS.reduce<Record<string, number>>((acc, tab) => {
-    acc[tab.key] = tab.key === 'all' ? orders.length : orders.filter(o => o.status === tab.key).length;
+    acc[tab.key] = tab.key === 'all' ? byMode.length : byMode.filter(o => o.status === tab.key).length;
     return acc;
   }, {});
+
+  const archiveCount = orders.filter(o => ARCHIVE_STATUSES.includes(o.status as OrderStatus)).length;
+  const activeCount  = orders.filter(o => ACTIVE_STATUSES.includes(o.status as OrderStatus)).length;
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
@@ -101,6 +122,13 @@ export default function OrdersPage() {
       setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
       if (detail?.id === id) setDetail(prev => prev ? { ...prev, status: newStatus } : prev);
     } catch { /* ignore */ }
+  };
+
+  const switchView = (mode: ViewMode) => {
+    setViewMode(mode);
+    setActiveTab('all');
+    setSearch('');
+    setActiveId(null);
   };
 
   const profile = detail?.profile;
@@ -114,10 +142,44 @@ export default function OrdersPage() {
           <h1 className="page-header__title">Bestellungen</h1>
           <p className="page-header__sub">{total} Bestellungen insgesamt</p>
         </div>
+        <div className="page-header__actions">
+          <button
+            className={`filter-bar__tab${viewMode === 'active' ? ' is-active' : ''}`}
+            onClick={() => switchView('active')}
+          >
+            Aktiv
+            {activeCount > 0 && <span className="tab-nav__count">{activeCount}</span>}
+          </button>
+          <button
+            className={`filter-bar__tab${viewMode === 'archive' ? ' is-active' : ''}`}
+            onClick={() => switchView('archive')}
+          >
+            <Archive size={13} strokeWidth={2} />
+            Archiv
+            {archiveCount > 0 && <span className="tab-nav__count">{archiveCount}</span>}
+          </button>
+        </div>
+      </div>
+
+      <div className="filter-bar">
+        <div className="filter-bar__search">
+          <Search size={14} strokeWidth={2} className="filter-bar__search-icon" />
+          <input
+            type="text"
+            placeholder="Bestellnr. oder Kunden-ID suchen…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="filter-bar__input"
+          />
+        </div>
       </div>
 
       <div className="tab-nav">
-        {STATUS_TABS.map(tab => (
+        {STATUS_TABS.filter(tab =>
+          tab.key === 'all' ||
+          (viewMode === 'active'  && ACTIVE_STATUSES.includes(tab.key as OrderStatus)) ||
+          (viewMode === 'archive' && ARCHIVE_STATUSES.includes(tab.key as OrderStatus)),
+        ).map(tab => (
           <button
             key={tab.key}
             className={`tab-nav__item${activeTab === tab.key ? ' is-active' : ''}`}
@@ -140,7 +202,9 @@ export default function OrdersPage() {
             {loading ? (
               <p className="data-card__empty">Lade Bestellungen…</p>
             ) : filtered.length === 0 ? (
-              <p className="data-card__empty">Keine Bestellungen in dieser Kategorie.</p>
+              <p className="data-card__empty">
+                {search ? 'Keine Treffer für diese Suche.' : 'Keine Bestellungen in dieser Kategorie.'}
+              </p>
             ) : (
               <table className="admin-table">
                 <thead>

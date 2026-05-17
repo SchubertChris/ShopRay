@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
-import { MessageSquare, Clock, CheckCircle, ChevronRight } from 'lucide-react';
+import { MessageSquare, Clock, CheckCircle, ChevronRight, Search, Archive } from 'lucide-react';
 import { getAdminTickets, replyToTicket, type AdminTicket } from '../../api/adminApi';
 import { useBadgeStore } from '@stores/badgeStore';
 
 type StatusFilter = AdminTicket['status'] | 'all';
+type ViewMode     = 'active' | 'archive';
 
-const STATUS_TABS: Array<{ key: StatusFilter; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }> = [
+const ACTIVE_TABS: Array<{ key: StatusFilter; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }> = [
   { key: 'all',         label: 'Alle',           icon: MessageSquare },
   { key: 'open',        label: 'Offen',          icon: Clock         },
   { key: 'in_progress', label: 'In Bearbeitung', icon: ChevronRight  },
-  { key: 'closed',      label: 'Geschlossen',    icon: CheckCircle   },
 ];
 
 const CAT_LABELS: Record<string, string> = {
@@ -28,8 +28,10 @@ const STATUS_LABELS: Record<string, string> = {
 export default function SupportPage() {
   const [tickets, setTickets]     = useState<AdminTicket[]>([]);
   const [loading, setLoading]     = useState(true);
+  const [viewMode, setViewMode]   = useState<ViewMode>('active');
   const [status, setStatus]       = useState<StatusFilter>('all');
   const [category, setCategory]   = useState<string>('all');
+  const [search, setSearch]       = useState('');
   const [active, setActive]       = useState<string | null>(null);
   const [reply, setReply]         = useState('');
   const [replyStatus, setReplyStatus] = useState<AdminTicket['status']>('closed');
@@ -44,16 +46,30 @@ export default function SupportPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = tickets.filter(t => {
-    const matchStatus = status === 'all' || t.status === status;
-    const matchCat    = category === 'all' || t.category === category;
-    return matchStatus && matchCat;
-  });
+  // Aktive = open + in_progress, Archiv = closed
+  const byMode = viewMode === 'active'
+    ? tickets.filter(t => t.status !== 'closed')
+    : tickets.filter(t => t.status === 'closed');
 
-  const counts = STATUS_TABS.reduce<Record<string, number>>((acc, tab) => {
-    acc[tab.key] = tab.key === 'all' ? tickets.length : tickets.filter(t => t.status === tab.key).length;
+  const byStatus = status === 'all' ? byMode : byMode.filter(t => t.status === status);
+  const byCategory = category === 'all' ? byStatus : byStatus.filter(t => t.category === category);
+
+  const q = search.trim().toLowerCase();
+  const filtered = q
+    ? byCategory.filter(t =>
+        t.subject.toLowerCase().includes(q) ||
+        (t.profiles?.name ?? '').toLowerCase().includes(q) ||
+        (t.profiles?.email ?? '').toLowerCase().includes(q),
+      )
+    : byCategory;
+
+  const counts = ACTIVE_TABS.reduce<Record<string, number>>((acc, tab) => {
+    acc[tab.key] = tab.key === 'all' ? byMode.length : byMode.filter(t => t.status === tab.key).length;
     return acc;
   }, {});
+
+  const archiveCount = tickets.filter(t => t.status === 'closed').length;
+  const activeCount  = tickets.filter(t => t.status !== 'closed').length;
 
   const activeTicket = active ? tickets.find(t => t.id === active) : null;
 
@@ -76,6 +92,13 @@ export default function SupportPage() {
     setSaving(false);
   };
 
+  const switchView = (mode: ViewMode) => {
+    setViewMode(mode);
+    setStatus('all');
+    setSearch('');
+    setActive(null);
+  };
+
   return (
     <>
       <div className="page-header">
@@ -84,10 +107,40 @@ export default function SupportPage() {
           <h1 className="page-header__title">Tickets</h1>
           <p className="page-header__sub">{tickets.filter(t => t.status === 'open').length} offene Tickets</p>
         </div>
+        <div className="page-header__actions">
+          <button
+            className={`filter-bar__tab${viewMode === 'active' ? ' is-active' : ''}`}
+            onClick={() => switchView('active')}
+          >
+            Aktiv
+            {activeCount > 0 && <span className="tab-nav__count">{activeCount}</span>}
+          </button>
+          <button
+            className={`filter-bar__tab${viewMode === 'archive' ? ' is-active' : ''}`}
+            onClick={() => switchView('archive')}
+          >
+            <Archive size={13} strokeWidth={2} />
+            Archiv
+            {archiveCount > 0 && <span className="tab-nav__count">{archiveCount}</span>}
+          </button>
+        </div>
+      </div>
+
+      <div className="filter-bar">
+        <div className="filter-bar__search">
+          <Search size={14} strokeWidth={2} className="filter-bar__search-icon" />
+          <input
+            type="text"
+            placeholder="Betreff, Name oder E-Mail suchen…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="filter-bar__input"
+          />
+        </div>
       </div>
 
       <div className="tab-nav">
-        {STATUS_TABS.map(tab => (
+        {viewMode === 'active' && ACTIVE_TABS.map(tab => (
           <button
             key={tab.key}
             className={`tab-nav__item${status === tab.key ? ' is-active' : ''}`}
@@ -101,6 +154,13 @@ export default function SupportPage() {
             )}
           </button>
         ))}
+        {viewMode === 'archive' && (
+          <button className="tab-nav__item is-active">
+            <CheckCircle size={14} strokeWidth={1.75} />
+            Geschlossen
+            <span className="tab-nav__count is-active">{archiveCount}</span>
+          </button>
+        )}
         <div className="tab-nav__spacer" />
         <select className="tab-nav__filter" value={category} onChange={e => setCategory(e.target.value)}>
           <option value="all">Alle Kategorien</option>
@@ -115,7 +175,11 @@ export default function SupportPage() {
           {loading ? (
             <div className="data-card"><div className="data-card__empty">Lade Tickets…</div></div>
           ) : filtered.length === 0 ? (
-            <div className="data-card"><div className="data-card__empty">Keine Tickets in dieser Kategorie.</div></div>
+            <div className="data-card">
+              <div className="data-card__empty">
+                {search ? 'Keine Treffer für diese Suche.' : 'Keine Tickets in dieser Kategorie.'}
+              </div>
+            </div>
           ) : (
             filtered.map(t => (
               <button
