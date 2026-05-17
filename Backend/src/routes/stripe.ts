@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { stripe }   from '../lib/stripe';
 import { supabase } from '../lib/supabase';
 import { sendMail, orderConfirmationHtml } from '../lib/mailer';
+import { sendPushToAll } from './admin-push';
 import Stripe from 'stripe';
 
 const router = Router();
@@ -67,6 +68,13 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction): 
             }),
           });
         }
+
+        // Push-Benachrichtigung an alle Admin-Geräte (non-blocking)
+        sendPushToAll({
+          title: `Neue Bestellung ${order.order_number}`,
+          body:  `${customerName} — € ${Number(order.total).toLocaleString('de-DE', { minimumFractionDigits: 2 })}`,
+          url:   `/orders/${order.id}`,
+        }).catch(err => console.error('Push fehlgeschlagen:', err));
         break;
       }
 

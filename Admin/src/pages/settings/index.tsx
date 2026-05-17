@@ -1,20 +1,22 @@
 import { useState, useEffect } from 'react';
-import { Save, Store, Mail, Truck, Lock, Tag, Trash2, Plus, ShieldCheck, Monitor, AlertTriangle, Loader2, CheckCircle2, Smartphone, QrCode, X } from 'lucide-react';
+import { Save, Store, Mail, Truck, Lock, Tag, Trash2, Plus, ShieldCheck, Monitor, AlertTriangle, Loader2, CheckCircle2, Smartphone, QrCode, X, Bell, BellOff } from 'lucide-react';
 import {
   getLoginLog, getShippingSettings, updateShippingSettings,
   getCategories, createCategory, deleteCategory,
   get2faStatus, get2faSetup, confirm2fa, disable2fa, verify2fa,
   type LoginLogEntry, type ShippingSettings, type Category,
 } from '../../api/adminApi';
+import { usePushNotifications } from '../../hooks/usePushNotifications';
 
-type SettingsTab = 'shop' | 'smtp' | 'shipping' | 'categories' | 'security';
+type SettingsTab = 'shop' | 'smtp' | 'shipping' | 'categories' | 'security' | 'notifications';
 
 const TABS: Array<{ key: SettingsTab; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }> = [
-  { key: 'shop',       label: 'Shop-Infos',    icon: Store  },
-  { key: 'smtp',       label: 'E-Mail (SMTP)', icon: Mail   },
-  { key: 'shipping',   label: 'Versand',       icon: Truck  },
-  { key: 'categories', label: 'Kategorien',    icon: Tag    },
-  { key: 'security',   label: 'Sicherheit',    icon: Lock   },
+  { key: 'shop',          label: 'Shop-Infos',          icon: Store    },
+  { key: 'smtp',          label: 'E-Mail (SMTP)',        icon: Mail     },
+  { key: 'shipping',      label: 'Versand',              icon: Truck    },
+  { key: 'categories',    label: 'Kategorien',           icon: Tag      },
+  { key: 'security',      label: 'Sicherheit',           icon: Lock     },
+  { key: 'notifications', label: 'Benachrichtigungen',   icon: Bell     },
 ];
 
 export default function SettingsPage() {
@@ -51,7 +53,8 @@ export default function SettingsPage() {
           {tab === 'smtp'       && <SmtpSettings />}
           {tab === 'shipping'   && <ShippingSettings />}
           {tab === 'categories' && <CategoriesSettings />}
-          {tab === 'security'   && <SecuritySettings />}
+          {tab === 'security'      && <SecuritySettings />}
+          {tab === 'notifications' && <NotificationSettings />}
         </div>
       </div>
     </>
@@ -684,6 +687,65 @@ function CategoriesSettings() {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+// ─── Push-Benachrichtigungen ──────────────────────────────────────────────────
+function NotificationSettings() {
+  const { state, error, subscribe, unsubscribe } = usePushNotifications();
+
+  const isSubscribed   = state === 'subscribed';
+  const isLoading      = state === 'loading';
+  const isUnsupported  = state === 'unsupported';
+  const isDenied       = state === 'denied';
+
+  return (
+    <div className="settings-section">
+      <h2 className="settings-section__title">Push-Benachrichtigungen</h2>
+      <p className="settings-section__desc">
+        Erhalte eine Benachrichtigung direkt auf dieses Gerät, wenn eine neue Bestellung eingeht —
+        auch wenn der Tab geschlossen ist. Jedes Gerät muss einzeln aktiviert werden.
+      </p>
+
+      <div className="push-settings">
+        <div className="push-settings__status">
+          <div className={`push-settings__indicator${isSubscribed ? ' push-settings__indicator--on' : ''}`} />
+          <span className="push-settings__label">
+            {isLoading      && 'Wird geprüft…'}
+            {isUnsupported  && 'Nicht unterstützt (Browser zu alt oder kein HTTPS)'}
+            {isDenied       && 'Benachrichtigungen blockiert — in den Browser-Einstellungen erlauben'}
+            {state === 'unsubscribed' && 'Benachrichtigungen deaktiviert'}
+            {isSubscribed   && 'Benachrichtigungen aktiv auf diesem Gerät'}
+          </span>
+        </div>
+
+        {!isUnsupported && !isDenied && (
+          <button
+            className={isSubscribed ? 'btn-secondary' : 'btn-primary'}
+            onClick={isSubscribed ? unsubscribe : subscribe}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <><Loader2 size={14} strokeWidth={2} className="spin" /> Bitte warten…</>
+            ) : isSubscribed ? (
+              <><BellOff size={14} strokeWidth={2} /> Deaktivieren</>
+            ) : (
+              <><Bell size={14} strokeWidth={2} /> Auf diesem Gerät aktivieren</>
+            )}
+          </button>
+        )}
+
+        {error && (
+          <p className="form-error-inline" style={{ marginTop: '0.5rem' }}>{error}</p>
+        )}
+
+        <div className="push-settings__info">
+          <p><strong>iOS (iPhone/iPad):</strong> Safari → Teilen-Symbol → „Zum Home-Bildschirm" → App öffnen → hier aktivieren.</p>
+          <p><strong>Android / Desktop:</strong> Direkt hier aktivieren, der Browser fragt nach Erlaubnis.</p>
+          <p><strong>Mehrere Geräte:</strong> Den Button auf jedem Gerät separat drücken.</p>
+        </div>
+      </div>
     </div>
   );
 }

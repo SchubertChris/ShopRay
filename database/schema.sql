@@ -1,6 +1,6 @@
 -- ══════════════════════════════════════════════════════════════════════════════
 -- ShopRay — Vollständiges Datenbankschema (konsolidiert)
--- Stand: 2026-05-17 — enthält alle Änderungen aus Migrations 001–011
+-- Stand: 2026-05-17 — enthält alle Änderungen aus Migrations 001–012
 -- ══════════════════════════════════════════════════════════════════════════════
 --
 -- FRISCHE INSTALLATION (Neukunde):
@@ -243,6 +243,14 @@ CREATE TABLE IF NOT EXISTS public.admin_totp (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS public.push_subscriptions (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  endpoint   TEXT        NOT NULL UNIQUE,
+  p256dh     TEXT        NOT NULL,
+  auth       TEXT        NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- ── ROW LEVEL SECURITY (RLS) ─────────────────────────────────────────────────
 ALTER TABLE public.profiles          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products          ENABLE ROW LEVEL SECURITY;
@@ -251,7 +259,8 @@ ALTER TABLE public.orders            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tickets           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.contact_inquiries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.contact_inquiries  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_login_log   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shipping_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_totp        ENABLE ROW LEVEL SECURITY;
@@ -321,7 +330,8 @@ GRANT ALL ON public.tickets           TO service_role;
 GRANT ALL ON public.contact_inquiries TO service_role;
 GRANT ALL ON public.admin_login_log   TO service_role;
 GRANT ALL ON public.shipping_settings TO service_role;
-GRANT ALL ON public.admin_totp        TO service_role;
+GRANT ALL ON public.admin_totp          TO service_role;
+GRANT ALL ON public.push_subscriptions  TO service_role;
 
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO authenticated, service_role;
 
