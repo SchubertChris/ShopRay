@@ -33,3 +33,5 @@ Allow: /
 # Common Crawl (Training-Daten) blockieren
 User-agent: CCBot
 Disallow: /
+
+Sitemap: https://deine-domain.de/sitemap.xml

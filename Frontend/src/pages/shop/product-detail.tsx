@@ -111,12 +111,17 @@ export default function ProductDetailPage() {
     notify({ type: 'success', title: 'In den Warenkorb gelegt', message: product!.name, action: { label: 'Zum Warenkorb', href: '/cart' } });
   }
 
+  const avgRating  = reviews.length > 0
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : null;
+
   const productSchema = {
     '@context': 'https://schema.org',
     '@type':    'Product',
     name:        product.name,
     description: product.description,
     sku:         product.id,
+    image:       product.images?.[0] ?? undefined,
     offers: {
       '@type':        'Offer',
       priceCurrency:  'EUR',
@@ -125,6 +130,15 @@ export default function ProductDetailPage() {
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
     },
+    ...(avgRating && {
+      aggregateRating: {
+        '@type':       'AggregateRating',
+        ratingValue:    avgRating,
+        reviewCount:    reviews.length,
+        bestRating:    '5',
+        worstRating:   '1',
+      },
+    }),
   };
 
   return (

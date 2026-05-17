@@ -1,0 +1,41 @@
+# ShopRay
+
+> A professional e-commerce shop template built with React, TypeScript, and Express.js.
+
+ShopRay is a fully featured online shop with a React frontend, Node.js/Express backend, and a separate admin panel. It is designed as a template for small to medium businesses in the EU, with full GDPR compliance, Stripe payment integration, and Supabase authentication.
+
+## Key Features
+
+- Product catalog with search, filtering, and category browsing
+- Shopping cart and Stripe-powered checkout (hosted payment page)
+- Customer accounts: order history, addresses, profile, wishlist, support tickets
+- Authentication: email/password, Google OAuth, two-factor authentication (TOTP), password reset
+- GDPR compliance: consent banner, data export (Art. 20), account deletion (Art. 17)
+- LMIV nutritional information for food and supplement products (EU food labeling regulation)
+- Admin panel: products, orders, customers, reviews, support tickets, shipping settings
+- 4 color themes × dark/light mode = 8 visual themes
+- Mobile-first responsive design
+
+## Pages
+
+- `/` — Homepage with featured products, categories, reviews, FAQ
+- `/shop` — Product search and filtering
+- `/kategorien` — Product categories
+- `/produkt/:slug` — Individual product detail with images, description, reviews, nutritional info
+- `/ueber-uns` — About the shop
+- `/faq` — Frequently asked questions
+- `/kontakt` — Contact form
+- `/versand` — Shipping information
+- `/impressum` — Legal imprint (German law)
+- `/datenschutz` — Privacy policy (GDPR)
+- `/agb` — Terms and conditions
+- `/widerruf` — Right of withdrawal
+
+## Technology
+
+Frontend: React 19, TypeScript, Vite, SCSS (7-1 architecture), Zustand
+Backend: Node.js, Express, TypeScript, Zod, Nodemailer
+Database: PostgreSQL via Supabase (self-hostable)
+Auth: Supabase Auth with MFA/TOTP and Google OAuth
+Payments: Stripe (hosted checkout page)
+Deployment: Vercel (3 separate projects — frontend, backend, admin)

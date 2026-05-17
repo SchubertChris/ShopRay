@@ -10,6 +10,7 @@ import { ROUTES } from '@config/routes';
 import { useTheme } from '@providers/ThemeProvider';
 import { PALETTES } from '@config/theme';
 import { IMAGES, getAvatarImage, getCategoryImage } from '@config/images';
+import { APP_NAME, APP_URL, APP_SOCIALS } from '@config/app';
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
@@ -105,16 +106,42 @@ export default function HomePage() {
   const cartTotal = total().toFixed(2);
   const cartCount = count();
 
+  const origin = typeof window !== 'undefined' ? window.location.origin : APP_URL;
+
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'ShopRay',
-    url: typeof window !== 'undefined' ? window.location.origin : '',
+    name: APP_NAME,
+    url: origin,
     potentialAction: {
       '@type': 'SearchAction',
-      target: { '@type': 'EntryPoint', urlTemplate: `${typeof window !== 'undefined' ? window.location.origin : ''}/suche?q={search_term_string}` },
+      target: { '@type': 'EntryPoint', urlTemplate: `${origin}/suche?q={search_term_string}` },
       'query-input': 'required name=search_term_string',
     },
+  };
+
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: APP_NAME,
+    url: origin,
+    logo: `${origin}/favicon.svg`,
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'customer service',
+      availableLanguage: 'German',
+    },
+    sameAs: Object.values(APP_SOCIALS).filter(v => v !== '#'),
+  };
+
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQ_ITEMS.map(({ q, a }) => ({
+      '@type': 'Question',
+      name: q,
+      acceptedAnswer: { '@type': 'Answer', text: a },
+    })),
   };
 
   return (
@@ -124,6 +151,8 @@ export default function HomePage() {
         description="Entdecke unsere Kollektion — handverlesene Produkte für Wohnen, Küche, Deko und mehr. Kostenloser Versand ab 50 €."
       />
       <JsonLd data={websiteSchema} />
+      <JsonLd data={organizationSchema} />
+      <JsonLd data={faqSchema} />
       {/* ── THEME DOCK (Demo-Only) ──────────────────────────────────────────── */}
       <div className={`theme-dock${themeDockOpen ? ' is-open' : ''}`}>
         <button
