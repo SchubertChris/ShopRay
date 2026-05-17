@@ -421,6 +421,7 @@ export interface AdminStats {
   activeProducts: number;
   pendingOrders:  number;
   openTickets:    number;
+  newInquiries:   number;
   recentOrders:   {
     id:           string;
     order_number: string;

@@ -4,6 +4,7 @@ import { Eye, X, Package, User, Mail, CreditCard } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import type { OrderStatus } from '../../types/index';
 import { getAdminOrders, getAdminOrder, updateOrderStatus, type AdminOrder } from '../../api/adminApi';
+import { useBadgeStore } from '@stores/badgeStore';
 
 const STATUS_TABS: Array<{ key: OrderStatus | 'all'; label: string }> = [
   { key: 'all',            label: 'Alle'             },
@@ -45,6 +46,7 @@ export default function OrdersPage() {
   const touchStartY = useRef(-1);
 
   useEffect(() => {
+    useBadgeStore.getState().clear('pendingOrders');
     setLoading(true);
     getAdminOrders(1, 200)
       .then(res => { setOrders(res.data); setTotal(res.total); })
@@ -154,10 +156,13 @@ export default function OrdersPage() {
                   {filtered.map(o => (
                     <tr
                       key={o.id}
-                      className={`admin-table__row--clickable${activeId === o.id ? ' is-selected' : ''}`}
+                      className={`admin-table__row--clickable${activeId === o.id ? ' is-selected' : ''}${o.status === 'pending' ? ' is-unread' : ''}`}
                       onClick={() => setActiveId(prev => prev === o.id ? null : o.id)}
                     >
-                      <td><strong>{o.order_number}</strong></td>
+                      <td>
+                        {o.status === 'pending' && <span className="unread-dot" />}
+                        <strong>{o.order_number}</strong>
+                      </td>
                       <td><p className="admin-table__primary">{o.user_id ?? '—'}</p></td>
                       <td><strong>{fmt(o.total)}</strong></td>
                       <td>

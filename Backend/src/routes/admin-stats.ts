@@ -9,7 +9,7 @@ router.get('/', requireAdmin, async (_req: Request, res: Response, next: NextFun
   try {
     const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    const [ordersRes, revenueRes, customersRes, productsRes, pendingRes, openTicketsRes, recentOrdersRes] =
+    const [ordersRes, revenueRes, customersRes, productsRes, pendingRes, openTicketsRes, newInquiriesRes, recentOrdersRes] =
       await Promise.all([
         supabase.from('orders').select('*', { count: 'exact', head: true }),
         supabase.from('orders').select('total').eq('status', 'paid').gte('paid_at', since30d),
@@ -17,6 +17,7 @@ router.get('/', requireAdmin, async (_req: Request, res: Response, next: NextFun
         supabase.from('products').select('*', { count: 'exact', head: true }).eq('active', true),
         supabase.from('orders').select('*', { count: 'exact', head: true }).in('status', ['pending', 'paid']),
         supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('status', 'open'),
+        supabase.from('contacts').select('*', { count: 'exact', head: true }).eq('status', 'new'),
         supabase
           .from('orders')
           .select('id, order_number, status, total, created_at, profiles(name, email)')
@@ -27,13 +28,14 @@ router.get('/', requireAdmin, async (_req: Request, res: Response, next: NextFun
     const revenue30d = (revenueRes.data ?? []).reduce((sum, o) => sum + Number(o.total), 0);
 
     res.json({
-      orders:       ordersRes.count    ?? 0,
+      orders:         ordersRes.count       ?? 0,
       revenue30d,
-      customers:    customersRes.count ?? 0,
-      activeProducts: productsRes.count ?? 0,
-      pendingOrders:  pendingRes.count  ?? 0,
-      openTickets:    openTicketsRes.count ?? 0,
-      recentOrders:   recentOrdersRes.data ?? [],
+      customers:      customersRes.count    ?? 0,
+      activeProducts: productsRes.count     ?? 0,
+      pendingOrders:  pendingRes.count      ?? 0,
+      openTickets:    openTicketsRes.count  ?? 0,
+      newInquiries:   newInquiriesRes.count ?? 0,
+      recentOrders:   recentOrdersRes.data  ?? [],
     });
   } catch (err) {
     next(err);

@@ -5,6 +5,7 @@ import {
   RefreshCw, Loader2,
 } from 'lucide-react';
 import { getInquiries, updateInquiryStatus, type ContactInquiry } from '../../api/adminApi';
+import { useBadgeStore } from '@stores/badgeStore';
 
 type InquiryStatus = ContactInquiry['status'];
 type StatusFilter  = InquiryStatus | 'all';
@@ -67,7 +68,10 @@ export default function InquiriesPage() {
     }
   }, []);
 
-  useEffect(() => { fetchInquiries(); }, [fetchInquiries]);
+  useEffect(() => {
+    useBadgeStore.getState().clear('newInquiries');
+    fetchInquiries();
+  }, [fetchInquiries]);
 
   async function handleStatusChange(id: string, newStatus: InquiryStatus) {
     setSaving(true);
@@ -163,6 +167,7 @@ export default function InquiriesPage() {
                   onClick={() => setActiveId(activeId === inq.id ? null : inq.id)}
                 >
                   <div className="inq-card__top">
+                    {inq.status === 'new' && <span className="unread-dot" />}
                     <StatusBadge status={inq.status} />
                     <span className="inq-card__date">{formatDate(inq.created_at)}</span>
                   </div>

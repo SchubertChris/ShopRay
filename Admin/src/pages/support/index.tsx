@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MessageSquare, Clock, CheckCircle, ChevronRight } from 'lucide-react';
 import { getAdminTickets, replyToTicket, type AdminTicket } from '../../api/adminApi';
+import { useBadgeStore } from '@stores/badgeStore';
 
 type StatusFilter = AdminTicket['status'] | 'all';
 
@@ -35,6 +36,7 @@ export default function SupportPage() {
   const [saving, setSaving]       = useState(false);
 
   useEffect(() => {
+    useBadgeStore.getState().clear('openTickets');
     setLoading(true);
     getAdminTickets()
       .then(res => { setTickets(res.data); })
@@ -122,6 +124,7 @@ export default function SupportPage() {
                 onClick={() => setActive(active === t.id ? null : t.id)}
               >
                 <div className="ticket-card__top">
+                  {t.status === 'open' && <span className="unread-dot" />}
                   <span className={`ticket-card__status ticket-card__status--${t.status}`}>
                     {STATUS_LABELS[t.status]}
                   </span>
