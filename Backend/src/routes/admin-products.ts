@@ -65,8 +65,87 @@ const UpdateProductSchema = ProductBodySchema.partial();
 type ProductBody  = z.infer<typeof ProductBodySchema>;
 type UpdateBody   = z.infer<typeof UpdateProductSchema>;
 
+// Schema für CSV-Import (vereinfacht — nur was im CSV sinnvoll ist)
+const BulkRowSchema = z.object({
+  name:             z.string().trim().min(1).max(200),
+  slug:             z.string().trim().min(1).max(200).regex(/^[a-z0-9-]+$/),
+  description:      z.string().trim().min(1).max(2000),
+  price:            z.coerce.number().min(0).max(999_999),
+  category:         z.string().trim().min(1).max(100),
+  stock:            z.coerce.number().int().min(0).max(999_999).optional().default(0),
+  old_price:        z.coerce.number().min(0).max(999_999).nullable().optional(),
+  badge:            z.string().trim().max(50).nullable().optional(),
+  tax_rate:         z.coerce.number().min(0).max(100).optional().default(19),
+  image_url:        z.string().url().max(2000).nullable().optional(),
+  highlights:       z.string().trim().max(2000).optional(), // semicolon-separated
+});
+
 // Alle Routen erfordern Admin-Session
 router.use(requireAdmin);
+
+// POST /api/admin/products/bulk — Mehrere Produkte auf einmal anlegen
+router.post('/bulk', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const rows = req.body;
+    if (!Array.isArray(rows) || rows.length === 0) {
+      res.status(400).json({ error: 'Leeres oder ungültiges Array.' });
+      return;
+    }
+    if (rows.length > 200) {
+      res.status(400).json({ error: 'Maximal 200 Produkte pro Import.' });
+      return;
+    }
+
+    const results: { row: number; status: 'ok' | 'error'; name?: string; error?: string }[] = [];
+    const toInsert: object[] = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const parsed = BulkRowSchema.safeParse(rows[i]);
+      if (!parsed.success) {
+        results.push({ row: i + 1, status: 'error', name: rows[i]?.name, error: parsed.error.errors[0]?.message ?? 'Ungültige Daten' });
+        continue;
+      }
+      const d = parsed.data;
+      toInsert.push({
+        name:             d.name,
+        slug:             d.slug,
+        description:      d.description,
+        price:            d.price,
+        category:         d.category,
+        stock:            d.stock,
+        old_price:        d.old_price ?? null,
+        badge:            d.badge ?? null,
+        tax_rate:         d.tax_rate,
+        image_url:        d.image_url ?? null,
+        highlights:       d.highlights ? d.highlights.split(';').map(s => s.trim()).filter(Boolean) : [],
+        active:           true,
+        images:           [],
+        certifications:   [],
+        dealer_links:     [],
+        documents:        [],
+        _row:             i + 1,
+        _name:            d.name,
+      });
+    }
+
+    // Batch-Insert
+    for (const product of toInsert) {
+      const { _row, _name, ...data } = product as Record<string, unknown>;
+      const { error } = await supabase.from('products').insert(data);
+      if (error) {
+        results.push({ row: _row as number, status: 'error', name: _name as string, error: error.message });
+      } else {
+        results.push({ row: _row as number, status: 'ok', name: _name as string });
+      }
+    }
+
+    const ok    = results.filter(r => r.status === 'ok').length;
+    const errors = results.filter(r => r.status === 'error').length;
+    res.status(errors === results.length ? 400 : 207).json({ ok, errors, results });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // POST /api/admin/products/upload — Bild hochladen
 router.post('/upload', upload.single('image'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {

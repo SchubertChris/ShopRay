@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Trash2, AlertCircle, Loader2, Pencil } from 'lucide-react';
+import { Plus, Search, Trash2, AlertCircle, Loader2, Pencil, Upload } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import { deleteProduct, toggleProductActive } from '../../api/adminApi';
 import type { AdminProduct } from '../../api/adminApi';
 import type { ProductCategory } from '../../types/index';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import CsvImportModal from '../../components/ui/CsvImportModal';
 import { API_URL } from '../../api/adminApi';
 
 type Density = 'compact' | 'normal';
@@ -27,6 +28,7 @@ export default function ProductsPage() {
   const [density, setDensity]               = useState<Density>(
     () => (localStorage.getItem(DENSITY_KEY) as Density | null) ?? 'normal',
   );
+  const [showCsvModal, setShowCsvModal] = useState(false);
 
   const toggleDensity = () => {
     setDensity(prev => {
@@ -106,6 +108,10 @@ export default function ProductsPage() {
           </p>
         </div>
         <div className="page-header__actions">
+          <button className="btn-secondary" onClick={() => setShowCsvModal(true)}>
+            <Upload size={14} strokeWidth={2} />
+            CSV importieren
+          </button>
           <Link to={ROUTES.PRODUCTS.NEW} className="btn-primary">
             <Plus size={15} strokeWidth={2} />
             Neues Produkt
@@ -321,6 +327,13 @@ export default function ProductsPage() {
         onConfirm={() => setDeleteError(null)}
         onCancel={() => setDeleteError(null)}
       />
+
+      {showCsvModal && (
+        <CsvImportModal
+          onClose={() => setShowCsvModal(false)}
+          onSuccess={count => { fetchProducts(); setShowCsvModal(false); console.info(`${count} Produkte importiert`); }}
+        />
+      )}
     </>
   );
 }
