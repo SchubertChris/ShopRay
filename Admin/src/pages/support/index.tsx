@@ -26,7 +26,6 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function SupportPage() {
   const [tickets, setTickets]     = useState<AdminTicket[]>([]);
-  const [total, setTotal]         = useState(0);
   const [loading, setLoading]     = useState(true);
   const [status, setStatus]       = useState<StatusFilter>('all');
   const [category, setCategory]   = useState<string>('all');
@@ -38,7 +37,7 @@ export default function SupportPage() {
   useEffect(() => {
     setLoading(true);
     getAdminTickets()
-      .then(res => { setTickets(res.data); setTotal(res.total); })
+      .then(res => { setTickets(res.data); })
       .catch(() => null)
       .finally(() => setLoading(false));
   }, []);
