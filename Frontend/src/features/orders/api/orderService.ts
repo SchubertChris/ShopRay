@@ -26,6 +26,7 @@ function mapOrder(raw: Record<string, unknown>): Order {
     paymentMethod:   (raw.payment_method as string | null) ?? null,
     paidAt:          (raw.paid_at as string | null) ?? null,
     shippedAt:       (raw.shipped_at as string | null) ?? null,
+    trackingNumber:  (raw.tracking_number as string | null) ?? null,
     customerNote:    (raw.customer_note as string | null) ?? null,
     stripeSessionId: (raw.stripe_session_id as string | null) ?? null,
     createdAt:       String(raw.created_at ?? ''),

@@ -186,6 +186,24 @@ export default function OrderDetailPage() {
               </div>
             </div>
 
+            {/* Sendungsverfolgung */}
+            {order.trackingNumber && (
+              <div className="detail-card">
+                <div className="detail-card__title">Sendungsverfolgung</div>
+                <div className="order-tracking">
+                  <p className="order-tracking__label">DHL Sendungsnummer</p>
+                  <a
+                    className="order-tracking__link"
+                    href={`https://www.dhl.de/de/privatkunden/pakete-empfangen/verfolgen.html?idc=${order.trackingNumber}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {order.trackingNumber} →
+                  </a>
+                </div>
+              </div>
+            )}
+
             {/* Lieferadresse */}
             <div className="detail-card">
               <div className="detail-card__title">Lieferadresse</div>

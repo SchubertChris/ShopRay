@@ -1,5 +1,5 @@
 # ShopRay — Testplan
-Stand: 2026-05-17
+Stand: 2026-05-17 (v2 — inkl. Rechnungen, DHL, Ban-System, Push, CSV-Import, Grid-View)
 
 ---
 
@@ -97,6 +97,9 @@ Ablauf: beliebig in der Zukunft · CVC: beliebig · PLZ: beliebig
 | Google OAuth | Button vorhanden, noch nicht verdrahtet |
 | Bilder (WebP) | WebP-Konvertierung noch ausstehend |
 | Land-Auswahl bei Adressen | Noch Freitext, Dropdown kommt später |
+| DHL-Label | Nur mit gültigem DHL-Business-Account + Env-Vars — in Sandbox testbar |
+| Rechnungs-PDF | Nur mit gesetzten SHOP_* Env-Vars vollständig (sonst Platzhalter-Daten) |
+| Push-Benachrichtigungen | Nur mit gesetzten VAPID Env-Vars in Vercel aktiv |
 
 ---
 
@@ -181,6 +184,7 @@ Hier prüfe ich zuerst ob echte Daten ankommen — kein Mock.
 - [ ] Login mit falschem Passwort → Fehlermeldung, kein Zugang
 - [ ] Dashboard: Stat-Karten zeigen echte Zahlen (nicht alle 0 oder identisch)
 - [ ] Dashboard: „Letzte Bestellungen" zeigt echte Bestellungen
+- [ ] Dashboard: Zeile in „Letzte Bestellungen" anklicken → öffnet Bestelldetail-Seite
 - [ ] Sidebar-Badges neben Bestellungen + Tickets: Zahl stimmt mit echtem Stand überein
 - [ ] Seite neu laden nach Login → bleibt eingeloggt
 - [ ] Browser-Tab schließen + neu öffnen → ausgeloggt (sessionStorage geleert — korrekt)
@@ -198,17 +202,32 @@ Hier prüfe ich zuerst ob echte Daten ankommen — kein Mock.
 ### 8 — Admin: Bestellungen
 
 - [ ] Bestellliste: echte Daten, Status-Badge korrekt gefärbt
-- [ ] Zeile klicken → Detailpanel: Artikel, Adresse, Zeitstempel, Kundename
-- [ ] Status ändern (z.B. → `shipped`) → in Liste sofort aktualisiert, Supabase geprüft
-- [ ] Mobil: Detailpanel öffnet als Bottom-Sheet, swipe-to-dismiss funktioniert
+- [ ] Grid-View / Tabellen-View Toggle (Symbol oben rechts) → wechselt Ansicht, bleibt nach Reload
+- [ ] Zeile klicken → Detailseite öffnet mit Artikel, Adresse, Zeitstempel, Kundename
+- [ ] Status ändern (z.B. → `shipped`) → speichern → Status aktualisiert
+- [ ] **Rechnung herunterladen:** Button „Rechnung" oben rechts → PDF-Download startet, Dateiname `Rechnung_RE-...pdf`
+- [ ] Rechnung öffnen: Bestellnummer, Kundenadresse, Artikel mit Menge + Preis, Netto/MwSt/Brutto sichtbar
+- [ ] **Lieferadresse bearbeiten** (nur wenn kein Label erstellt): Button „Bearbeiten" im Adress-Card → Modal öffnet mit vorausgefüllten Feldern → speichern → Adresse aktualisiert
+- [ ] Adresse ohne Pflichtfelder speichern → Fehlermeldung
+- [ ] **DHL-Label erstellen:** Button „DHL Label" → Modal mit Gewichtseingabe → Label erstellen → PDF-Download startet, Tracking-Nummer erscheint in Verlauf-Card
+- [ ] Nach Label-Erstellung: „DHL Label"-Button zeigt „Label erstellt" (disabled), Adress-Bearbeiten-Button weg, stattdessen gelbe Infobox mit DHL-Links
+- [ ] Tracking-Link in Verlauf-Card klicken → öffnet DHL-Sendungsverfolgung in neuem Tab
+- [ ] Mobil: Detailseite lädt korrekt, Buttons bedienbar
 
 ---
 
 ### 9 — Admin: Kunden & DSGVO
 
 - [ ] Kundenliste: echte Daten, kein Mock
+- [ ] Grid-View / Tabellen-View Toggle → wechselt Ansicht, bleibt nach Reload erhalten
 - [ ] Kunden-Detail: Bestellungen + Tickets + Bewertungen des Kunden sichtbar
 - [ ] DSGVO-Export: JSON-Download mit `orders`, `tickets`, `reviews`, `exportedAt`
+- [ ] **Ban-System:** Kunden-Detail → „Sperren"-Button → Modal mit Grund + optional Ablaufdatum
+- [ ] Ban bestätigen → Status-Badge wechselt auf „Gesperrt", E-Mail an Kunden gesendet
+- [ ] Gesperrter Kunde versucht Login → Fehlermeldung (nicht einloggbar)
+- [ ] Ban mit Ablaufdatum testen: Datum in der Vergangenheit → Sperre automatisch aufgehoben
+- [ ] Dauerhafter Ban: kein Ablaufdatum → Kunde bleibt dauerhaft gesperrt
+- [ ] „Entsperren"-Button → Sperre aufgehoben, Login wieder möglich
 - [ ] Kunden löschen → Bestätigungsdialog → Account aus `profiles` + Supabase Auth weg
 - [ ] Mobil: Detail-Panel als Bottom-Sheet + swipe-to-dismiss
 
@@ -217,10 +236,15 @@ Hier prüfe ich zuerst ob echte Daten ankommen — kein Mock.
 ### 10 — Admin: Produkte & Kategorien
 
 - [ ] Produktliste: Status, Preis, Kategorie sichtbar
+- [ ] Grid-View / Tabellen-View Toggle → wechselt Ansicht, bleibt nach Reload erhalten
 - [ ] Neues Produkt erstellen → erscheint in Liste und im Frontend-Shop
 - [ ] Produkt bearbeiten → Änderungen im Frontend sofort sichtbar
 - [ ] Produkt deaktivieren → nicht mehr im Frontend-Shop sichtbar
 - [ ] Bild hochladen → Thumbnail sichtbar, in Supabase Storage gespeichert
+- [ ] **CSV-Import:** Button „CSV importieren" → Modal öffnet, Datei auswählen (`.csv`)
+- [ ] CSV-Vorschau: erste Zeilen + Spaltenzuordnung sichtbar, Importanzahl korrekt
+- [ ] Import bestätigen → Produkte erscheinen in der Liste, keine Duplikate
+- [ ] Fehlerhafte CSV (falsche Spalten) → Fehlermeldung, kein Import
 - [ ] Neue Kategorie erstellen → erscheint sofort, im Frontend-Filter verfügbar
 - [ ] Doppelte Kategorie eingeben → Fehlermeldung
 - [ ] Kategorie löschen → verschwindet nach Bestätigung
@@ -242,6 +266,9 @@ Hier prüfe ich zuerst ob echte Daten ankommen — kein Mock.
 
 - [ ] Versandkosten ändern → im Checkout sofort wirksam (neu laden)
 - [ ] Login-Protokoll: letzte Einträge mit Datum + IP sichtbar
+- [ ] **Push-Benachrichtigungen:** „Push aktivieren"-Button → Browser-Berechtigungsdialog erscheint
+- [ ] Berechtigung erteilen → Bestätigung sichtbar, Subscription in Supabase `push_subscriptions` gespeichert
+- [ ] Neue Bestellung aufgeben (Schritt 2) → Push-Benachrichtigung erscheint im Browser (nur wenn VAPID Env-Vars gesetzt sind)
 
 ---
 
@@ -383,14 +410,26 @@ Reihenfolge: genau so durchführen — jeder Schritt baut auf dem vorherigen auf
 **F — Admin-Durchlauf**
 - [ ] Admin-Login: https://shopray-admin.vercel.app/login
 - [ ] Dashboard: Stat-Karten zeigen echte Zahlen (Bestellung aus Schritt D sichtbar)
+- [ ] Dashboard: Zeile in „Letzte Bestellungen" anklicken → öffnet Bestelldetail direkt
 - [ ] Bestellungen: Test-Bestellung mit Status `paid` sichtbar
+- [ ] Grid-View / Tabellen-View Toggle in Bestellliste → wechselt Ansicht, bleibt nach Reload
+- [ ] Bestellung anklicken → Detailseite: Artikel, Adresse, Zeitstempel, Kundenname korrekt
+- [ ] **Rechnung herunterladen:** Button „Rechnung" → PDF-Download startet, Datei öffnen: Bestellnummer, Kundenadresse, Artikel mit Netto/MwSt/Brutto sichtbar
+- [ ] **Lieferadresse bearbeiten:** Button „Bearbeiten" im Adress-Card → Modal öffnet mit vorausgefüllten Feldern → Straße ändern → speichern → Adresse aktualisiert
+- [ ] **DHL-Label erstellen:** Button „DHL Label" → Gewicht eingeben (z.B. 500g) → „Label erstellen" → PDF-Download + Tracking-Nummer in Verlauf-Card sichtbar
+- [ ] Nach Label: „DHL Label" zeigt „Label erstellt" (deaktiviert), Adress-Bearbeiten-Button weg, gelbe Infobox mit DHL-Links sichtbar
 - [ ] Status → `shipped` setzen → gespeichert, Frontend-Account zeigt `shipped`
 - [ ] Produkte: alle 12 Produkte der Liste sichtbar
+- [ ] Grid-View / Tabellen-View Toggle in Produktliste → wechselt Ansicht, bleibt nach Reload
 - [ ] Neues Produkt anlegen → erscheint im Frontend
 - [ ] Bild hochladen → Thumbnail sichtbar, Supabase Storage prüfen
 - [ ] Produkt deaktivieren → verschwindet im Frontend-Shop
 - [ ] Kategorien: alle 6 sichtbar, neue Kategorie anlegen
 - [ ] Kunden: Test-Account aus Schritt C sichtbar
+- [ ] Grid-View Toggle in Kundenliste → wechselt Ansicht
+- [ ] **Kunden sperren:** Test-Account → „Sperren" → Grund eingeben → Ban bestätigen → Status-Badge + E-Mail an Kunden
+- [ ] Gesperrter Kunde im Frontend einloggen → Fehlermeldung
+- [ ] Kunden wieder entsperren → Login wieder möglich
 - [ ] Ticket erstellen (als User): `/account/tickets/new` → im Admin unter Tickets sichtbar
 - [ ] Ticket beantworten + Status `closed` → gespeichert
 - [ ] Einstellungen → Versandkosten ändern → im Frontend-Warenkorb wirksam
@@ -430,6 +469,23 @@ Diese Punkte MÜSSEN erledigt sein bevor das Template an Kunden geht.
 - [ ] Stripe Live-Keys einsetzen (statt Test-Keys) in Backend `.env` + Vercel
 - [ ] Stripe Webhook: Live-Endpoint registrieren + neuen `STRIPE_WEBHOOK_SECRET` setzen
 - [ ] Live-Testzahlung mit echter Karte durchführen
+
+**Rechnungen (Pflicht vor Live-Betrieb)**
+- [ ] `SHOP_NAME`, `SHOP_STREET`, `SHOP_ZIP`, `SHOP_CITY`, `SHOP_COUNTRY` in Vercel (Backend) setzen
+- [ ] `SHOP_EMAIL`, `SHOP_PHONE` (optional), `SHOP_VAT_ID` oder `SHOP_TAX_NUMBER` setzen
+- [ ] `INVOICE_PREFIX` setzen (z.B. `RE`) — danach nie mehr ändern (GoBD)
+- [ ] Test-Rechnung herunterladen: alle Pflichtfelder (§14 UStG) sichtbar, kein Platzhalter-Text
+- [ ] Nach Stripe-Zahlung: Rechnung automatisch per E-Mail versendet (Postfach prüfen)
+
+**DHL Versandlabels**
+- [ ] `DHL_API_KEY`, `DHL_BILLING_NUMBER` (14-stellig) in Vercel (Backend) setzen
+- [ ] `DHL_SHIPPER_NAME`, `DHL_SHIPPER_STREET`, `DHL_SHIPPER_ZIP`, `DHL_SHIPPER_CITY` setzen
+- [ ] `DHL_SANDBOX=true` für Tests, `DHL_SANDBOX=false` für echte Labels
+- [ ] Test-Label erstellen (Sandbox) → PDF öffnen, Tracking-Nummer sichtbar
+
+**Push-Benachrichtigungen**
+- [ ] `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_EMAIL` in Vercel (Backend) setzen
+- [ ] Push im Admin aktivieren → Berechtigung erteilen → Test-Bestellung → Push empfangen
 
 **Inhalte**
 - [ ] Alle Produkt-Platzhalter durch echte Produkte ersetzen

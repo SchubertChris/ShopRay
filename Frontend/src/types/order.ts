@@ -39,6 +39,7 @@ export interface Order {
   paymentMethod?:   string | null;
   paidAt?:          string | null;
   shippedAt?:       string | null;
+  trackingNumber?:  string | null;
   customerNote?:    string | null;
   stripeSessionId?: string | null;
   createdAt:        string;
