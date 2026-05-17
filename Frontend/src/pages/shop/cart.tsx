@@ -18,7 +18,6 @@ export default function CartPage() {
     <>
       <SeoMeta title="Warenkorb" noIndex />
     <section className="section">
-      <div className="container">
         <div className="cart-page">
           <h1 className="cart-page__title">Warenkorb {cartCount > 0 && `(${cartCount})`}</h1>
 
@@ -104,7 +103,6 @@ export default function CartPage() {
             </div>
           )}
         </div>
-      </div>
     </section>
     </>
   );

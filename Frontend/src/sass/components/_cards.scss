@@ -191,6 +191,12 @@ $card-shadow-hover: (
     box-shadow:      0 2px 8px rgba(0, 0, 0, 0.14);
     @include transition(transform, background, box-shadow, color, border-color);
 
+    &:focus        { outline: none; }
+    &:focus-visible {
+      outline:        2px solid rgba(225, 29, 72, 0.6);
+      outline-offset: 2px;
+    }
+
     &:hover:not(.is-active) {
       background:    rgba(255, 255, 255, 0.96);
       color:         #e11d48;

@@ -271,3 +271,53 @@ Hier prüfe ich zuerst ob echte Daten ankommen — kein Mock.
 - [ ] Android Chrome: Navigation + Warenkorb funktionieren
 - [ ] Desktop Chrome + Firefox: keine roten Konsolenfehler
 - [ ] Dark Mode + Light Mode: beide Themes auf allen Seiten ohne Darstellungsfehler
+
+---
+
+### 16 — Candlescope: ShopRay-Vermarktung
+
+Diese Tests prüfen die ShopRay-Präsentation auf candlescope.de (separate Vercel-App).
+
+| Seite | Lokal | Produktion |
+|---|---|---|
+| ShopRay-Teaser (Homepage) | http://localhost:5173 | https://candlescope.de |
+| ShopRay-Seite | http://localhost:5173/shopray | https://candlescope.de/shopray |
+
+**Homepage-Teaser**
+
+- [ ] Teaser-Block zwischen „Die Marke"-Section und „Featured Produkt" sichtbar
+- [ ] Tag-Pills (React 19, Supabase, Stripe …) erscheinen korrekt
+- [ ] „Mehr erfahren"-Button → navigiert zu `/shopray`
+- [ ] „Live-Demo"-Button → öffnet `shopray-indol.vercel.app` in neuem Tab
+- [ ] 4 Stat-Boxen (12 Pages, 30+ Routen, One-Push, Einmalig) korrekt dargestellt
+- [ ] Teaser-Card im Dark-Mode und Light-Mode ohne Darstellungsfehler
+
+**ShopRay-Seite `/shopray`**
+
+- [ ] Seite lädt ohne Fehler (kein Blank Screen, keine roten Konsolenfehler)
+- [ ] Eigener Hero sichtbar: Titel animiert Buchstabe für Buchstabe
+- [ ] Hero: 2 schwebende Screenshots (Shop + Admin) erscheinen im Hero
+- [ ] Screenshots im Hero: Floating-Animation läuft durch (kein Stillstand)
+- [ ] Screenshot-Galerie (5 Bilder, 3+2-Grid): alle Bilder laden korrekt
+- [ ] Screenshot-Galerie: Hover-Effekt (leichter Lift) funktioniert auf allen 5 Karten
+- [ ] Browser-Chrome in `ScreenshotFrame`: 3 Punkte + URL-Leiste + Live-Indikator sichtbar
+- [ ] Feature-Karten (8 Stück): Icons + Texte vollständig, kein Overflow
+- [ ] „Was du bekommst"-Section: AccountDash-Screenshot rechts + 4 Infra-Karten links
+- [ ] „Für wen"-Section: 3 Karten mit Icons sichtbar
+- [ ] Pricing-Section: Preisboxen korrekt dargestellt
+- [ ] „Jetzt kaufen"-Button → öffnet korrekten Ziellink in neuem Tab
+- [ ] „Live-Demo"-Button → öffnet `shopray-indol.vercel.app` in neuem Tab
+
+**Theme-Wechsel**
+
+- [ ] ShopRay-Seite im Dark-Mode: alle Hintergründe und Texte korrekt (`--cs-*` Variablen)
+- [ ] ShopRay-Seite im Light-Mode: keine hartcodierten dunklen Farben sichtbar
+- [ ] Theme-Toggle (Header) auf `/shopray` → Seite wechselt sofort ohne Reload
+- [ ] Screenshot-Rahmen (Browser-Chrome) passt sich dem Theme an
+- [ ] Hero-Hintergrund (Gold-Blur + Ambient-Grid) sichtbar in beiden Modes
+
+**Candlescope-Deployment**
+
+- [ ] Nach `git push origin main` im CS-OP-Repo: Vercel baut `cs-op-frontend` automatisch
+- [ ] Vercel-Build-Status: kein Build-Fehler (TypeScript + Vite sauber)
+- [ ] `candlescope.de/shopray` live erreichbar nach Deploy
