@@ -321,3 +321,128 @@ Diese Tests prüfen die ShopRay-Präsentation auf candlescope.de (separate Verce
 - [ ] Nach `git push origin main` im CS-OP-Repo: Vercel baut `cs-op-frontend` automatisch
 - [ ] Vercel-Build-Status: kein Build-Fehler (TypeScript + Vite sauber)
 - [ ] `candlescope.de/shopray` live erreichbar nach Deploy
+
+---
+
+### 17 — Datenbank-Seed ausführen (vor dem End-Test)
+
+**Einmalig ausführen bevor alle Tests starten:**
+
+1. Supabase SQL Editor öffnen: https://supabase.com/dashboard/project/ikopnwugsohiehzpxxzu/sql/new
+2. Inhalt von `database/seed_supplements.sql` einfügen → Run
+3. Ergebnis: 6 Kategorien + 12 Supplement-Produkte, alle alten Daten weg
+
+**Was der Seed NICHT anfasst:** User-Accounts (profiles), Versandeinstellungen, Admin-2FA
+
+---
+
+### 18 — End-Test: Vollständiger Durchlauf
+
+Reihenfolge: genau so durchführen — jeder Schritt baut auf dem vorherigen auf.
+
+**A — Setup**
+- [ ] Seed ausgeführt (Abschnitt 17)
+- [ ] Vercel: alle 3 Projekte haben Status READY (kein rotes X)
+- [ ] Backend Health-Check: https://shopray-backend.vercel.app/api/health → `{ "ok": true }`
+
+**B — Als neuer Kunde (frische Session, kein Login)**
+- [ ] Startseite lädt, alle Produkte sichtbar
+- [ ] Kategorie-Filter: „Protein" → zeigt nur Protein-Produkte
+- [ ] Suche: „Creatin" → Creatin Monohydrat erscheint
+- [ ] Produktdetail öffnen (z.B. Whey Protein): Galerie, Preis, Tabs
+- [ ] Tab „Inhaltsstoffe & Nährwerte" → Nährwerttabelle sichtbar
+- [ ] Tab „Bewertungen" → „Noch keine Bewertungen" sichtbar (korrekt, Seed hat keine)
+- [ ] „Das könnte dich auch interessieren" → weitere Protein-Produkte sichtbar
+- [ ] „In den Warenkorb" → Badge zeigt `1`
+- [ ] Warenkorb öffnen → Artikel zentriert, Preis korrekt
+- [ ] „Zur Kasse" ohne Login → Redirect zu `/login`
+
+**C — Registrierung & Login**
+- [ ] Neue E-Mail registrieren → eingeloggt, Profil in Supabase angelegt
+- [ ] Logout → wieder Gast
+- [ ] Login (E-Mail + Passwort) → Session aktiv
+- [ ] Direktaufruf `/account/dashboard` ohne Session → Redirect zu `/login`
+
+**D — Kompletter Kaufprozess**
+- [ ] Produkt in Warenkorb legen → Warenkorb öffnen
+- [ ] Menge erhöhen (→ 2) → Gesamtpreis verdoppelt
+- [ ] Artikel entfernen → leerer Warenkorb + Empty-State
+- [ ] Zweites Produkt in Warenkorb → Zur Kasse
+- [ ] Stripe Checkout: Karte `4242 4242 4242 4242`, beliebige Daten
+- [ ] Zurück zu `/order-success` → Bestätigungsseite
+- [ ] Bestellung unter `/account/orders` mit Status `paid` sichtbar
+- [ ] Bestellbestätigungs-Mail kommt an (Bestellnummer, Artikel, Betrag)
+
+**E — Wunschliste & Bewertung**
+- [ ] Herzbutton auf Produktkarte → Badge im Header + Wunschliste-Seite
+- [ ] Wunschliste: Artikel sichtbar, entfernen klappt
+- [ ] Produktdetail → Tab „Bewertungen" → Bewertungsformular sichtbar (eingeloggt)
+- [ ] Bewertung schreiben (5 Sterne, Titel, Text) → abschicken → erscheint in Liste
+- [ ] Rating-Zahl auf Produkt-Karte aktualisiert sich (Trigger)
+
+**F — Admin-Durchlauf**
+- [ ] Admin-Login: https://shopray-admin.vercel.app/login
+- [ ] Dashboard: Stat-Karten zeigen echte Zahlen (Bestellung aus Schritt D sichtbar)
+- [ ] Bestellungen: Test-Bestellung mit Status `paid` sichtbar
+- [ ] Status → `shipped` setzen → gespeichert, Frontend-Account zeigt `shipped`
+- [ ] Produkte: alle 12 Produkte der Liste sichtbar
+- [ ] Neues Produkt anlegen → erscheint im Frontend
+- [ ] Bild hochladen → Thumbnail sichtbar, Supabase Storage prüfen
+- [ ] Produkt deaktivieren → verschwindet im Frontend-Shop
+- [ ] Kategorien: alle 6 sichtbar, neue Kategorie anlegen
+- [ ] Kunden: Test-Account aus Schritt C sichtbar
+- [ ] Ticket erstellen (als User): `/account/tickets/new` → im Admin unter Tickets sichtbar
+- [ ] Ticket beantworten + Status `closed` → gespeichert
+- [ ] Einstellungen → Versandkosten ändern → im Frontend-Warenkorb wirksam
+- [ ] Login-Protokoll: Test-Login aus Schritt F sichtbar
+
+**G — Admin 2FA (falls noch nicht aktiviert)**
+- [ ] Admin → Einstellungen → 2FA → QR-Code scannen (Google Authenticator / Aegis)
+- [ ] Logout → Login → TOTP-Code eingeben → Zugang
+
+**H — DSGVO-Check**
+- [ ] Cookie-Banner erscheint beim ersten Besuch (neues Browser-Tab / Inkognito)
+- [ ] Ablehnen → kein Tracking, kein Google Analytics
+- [ ] `/account/my-data` → persönliche Daten sichtbar, DSGVO-Export funktioniert
+- [ ] Konto löschen: Account-Einstellungen → Löschanfrage → Account weg
+
+**I — Geräte & Theme**
+- [ ] Dark Mode ↔ Light Mode: alle Seiten ohne Darstellungsfehler
+- [ ] Mobile (375px): Startseite, Produktdetail, Warenkorb, Checkout durchklicken
+- [ ] Tablet (768px): Layout korrekt, keine Overflow-Bugs
+- [ ] Rechtsklick auf Produktbild → kein Browser-Kontextmenü (Content-Schutz)
+
+---
+
+### 19 — Pre-Launch Checkliste (vor Verkauf / Live-Betrieb)
+
+Diese Punkte MÜSSEN erledigt sein bevor das Template an Kunden geht.
+
+**Sicherheit**
+- [ ] Neues Admin-Passwort generieren + Hash in Backend `.env` + Vercel aktualisieren
+- [ ] Neuen JWT_SECRET generieren: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`
+- [ ] `NODE_ENV=production` in Backend `.env` + Vercel setzen
+- [ ] Admin 2FA aktivieren (Abschnitt 18-G)
+- [ ] Supabase: „Email Confirmations" wieder einschalten (Auth → Settings)
+- [ ] `VITE_ADMIN_SLUG` in Vercel: sicherer, nicht-erratbarer Pfad (kein `/admin`)
+
+**Stripe**
+- [ ] Stripe Live-Keys einsetzen (statt Test-Keys) in Backend `.env` + Vercel
+- [ ] Stripe Webhook: Live-Endpoint registrieren + neuen `STRIPE_WEBHOOK_SECRET` setzen
+- [ ] Live-Testzahlung mit echter Karte durchführen
+
+**Inhalte**
+- [ ] Alle Produkt-Platzhalter durch echte Produkte ersetzen
+- [ ] Produktbilder hochladen (Admin → Produkt → Bild) — idealerweise WebP
+- [ ] Bilder zu WebP konvertieren: squoosh.app (519 KB Einsparpotenzial)
+- [ ] Impressum + Datenschutz + AGB: echte Firmendaten eintragen
+- [ ] Kontakt-E-Mail in `APP_CONTACT` anpassen
+- [ ] SMTP konfigurieren: `SMTP_PASS` + `SMTP_FROM_EMAIL` in Backend `.env`
+
+**Offene Features (noch nicht implementiert)**
+- [ ] Rollen-System Frontend: Guards + RLS für `admin | mod | customer` (DB-Schema fertig)
+- [ ] Google OAuth: finaler Test (Button ist da, Callback prüfen)
+
+**Dokumentation**
+- [ ] SETUP.md an Käufer-Anleitung anpassen (Firmennamen, Beispielprodukte)
+- [ ] `CREDENTIALS_PRIVATE.txt` sicher aufbewahren (1Password / Bitwarden) — niemals committen
