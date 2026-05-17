@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { User, Heart, ShoppingCart, Menu, X } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { User, Heart, ShoppingCart, Menu, X, LogOut } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import { FEATURES } from '@config/features';
 import { APP_NAME } from '@config/app';
 import { useCart } from '@features/cart';
-import { useAuth } from '@features/auth';
+import { useAuth, logout } from '@features/auth';
 
 const NAV_LINKS: { label: string; to: string }[] = [
   { label: 'Shop',         to: ROUTES.SHOP.SEARCH },
@@ -17,8 +17,9 @@ const NAV_LINKS: { label: string; to: string }[] = [
 
 export function Header() {
   const cartCount = useCart(s => s.items.reduce((sum, i) => sum + i.quantity, 0));
-  const { isAuthenticated } = useAuth();
-  const [scrolled, setScrolled]   = useState(false);
+  const { isAuthenticated, clearAuth } = useAuth();
+  const navigate                   = useNavigate();
+  const [scrolled, setScrolled]    = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
   const location                  = useLocation();
 
@@ -38,6 +39,12 @@ export function Header() {
   }, [mobileNav]);
 
   const close = () => setMobileNav(false);
+
+  const handleLogout = async () => {
+    try { await logout(); } catch { /* ignore */ }
+    clearAuth();
+    navigate(ROUTES.HOME);
+  };
 
   return (
     <>
@@ -60,9 +67,14 @@ export function Header() {
 
           <div className="nav__actions">
             {isAuthenticated ? (
-              <Link className="nav__account" to={ROUTES.ACCOUNT.DASHBOARD} aria-label="Mein Konto">
-                <User size={20} strokeWidth={1.75} />
-              </Link>
+              <>
+                <Link className="nav__account" to={ROUTES.ACCOUNT.DASHBOARD} aria-label="Mein Konto">
+                  <User size={20} strokeWidth={1.75} />
+                </Link>
+                <button className="nav__logout" onClick={handleLogout} aria-label="Abmelden">
+                  <LogOut size={18} strokeWidth={1.75} />
+                </button>
+              </>
             ) : (
               <Link className="nav__login-btn" to={ROUTES.AUTH.LOGIN}>
                 Anmelden

@@ -176,6 +176,25 @@
     }
   }
 
+  // Logout-Button (eingeloggt)
+  &__logout {
+    @include flex-center;
+    width:         44px;
+    height:        44px;
+    border-radius: 10px;
+    background:    var(--clr-secondary);
+    border:        none;
+    cursor:        pointer;
+    color:         var(--clr-text);
+    @include transition(background, color, transform);
+
+    &:hover {
+      background: color-mix(in srgb, var(--clr-error) 12%, transparent);
+      color:      var(--clr-error);
+      transform:  scale(1.05);
+    }
+  }
+
   // Login-Button (nicht eingeloggt)
   &__login-btn {
     padding: 0.5rem 1rem;

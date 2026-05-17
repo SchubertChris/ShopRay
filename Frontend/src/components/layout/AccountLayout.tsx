@@ -38,7 +38,7 @@ export function AccountLayout() {
   const navigate      = useNavigate();
 
   const handleLogout = async () => {
-    try { await logout(); } catch { /* Server-Error ignorieren */ }
+    try { await logout(); } catch { /* ignore */ }
     clearAuth();
     navigate(ROUTES.HOME);
   };
@@ -89,14 +89,6 @@ export function AccountLayout() {
             </NavLink>
           ))}
         </div>
-        <button
-          className="account-tab-bar__item account-tab-bar__item--logout account-tab-bar__item--pinned"
-          onClick={handleLogout}
-          aria-label="Abmelden"
-        >
-          <LogOut size={22} strokeWidth={1.75} />
-          <span>Logout</span>
-        </button>
       </nav>
     </div>
   );
