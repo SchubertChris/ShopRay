@@ -8,7 +8,7 @@ export function useTicketChat(ticketId: string) {
   const [loading,  setLoading]  = useState(true);
   const [sending,  setSending]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const sendingRef = useRef(false);
 
   useEffect(() => {
     if (!ticketId) return;
@@ -20,7 +20,7 @@ export function useTicketChat(ticketId: string) {
       .finally(() => setLoading(false));
 
     const channel = supabase
-      .channel(`ticket_messages:${ticketId}`)
+      .channel(`ticket_messages:ticket_id=eq.${ticketId}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'ticket_messages', filter: `ticket_id=eq.${ticketId}` },
@@ -39,8 +39,6 @@ export function useTicketChat(ticketId: string) {
       )
       .subscribe();
 
-    channelRef.current = channel;
-
     return () => {
       supabase.removeChannel(channel);
     };
@@ -48,17 +46,18 @@ export function useTicketChat(ticketId: string) {
 
   const send = useCallback(async (text: string): Promise<void> => {
     const trimmed = text.trim();
-    if (!trimmed || sending) return;
+    if (!trimmed || sendingRef.current) return;
+    sendingRef.current = true;
     setSending(true);
     try {
       await sendTicketMessage(ticketId, trimmed);
-      // Realtime fügt die Nachricht automatisch zum State hinzu
     } catch {
       setError('Nachricht konnte nicht gesendet werden.');
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
-  }, [ticketId, sending]);
+  }, [ticketId]);
 
   return { messages, loading, sending, error, send };
 }
