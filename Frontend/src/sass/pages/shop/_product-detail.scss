@@ -743,6 +743,13 @@
 }
 
 // ─── ÄHNLICHE PRODUKTE ────────────────────────────────────────────────────
+// Cards immer sichtbar — async load, Observer greift nicht mehr
+.related-products [data-reveal],
+.related-products .product-card {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
 .related-products {
   margin-top: 5rem;
   padding-top: 3rem;

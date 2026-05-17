@@ -507,7 +507,7 @@ export default function ProductDetailPage() {
 
             {/* ── Das könnte dich auch interessieren ──────────────────── */}
             {related.length > 0 && (
-              <div className="related-products" data-reveal>
+              <div className="related-products">
                 <div className="related-products__header">
                   <h2 className="related-products__title">Das könnte dich auch interessieren</h2>
                   <Link className="related-products__more" to={`${ROUTES.SHOP.SEARCH}?category=${encodeURIComponent(product.category)}`}>
