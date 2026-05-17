@@ -1,10 +1,16 @@
 -- ══════════════════════════════════════════════════════════════════════════════
--- ShopRay — Supabase Datenbankschema
+-- ShopRay — Vollständiges Datenbankschema (konsolidiert)
+-- Stand: 2026-05-17 — enthält alle Änderungen aus Migrations 001–009
 -- ══════════════════════════════════════════════════════════════════════════════
--- Anleitung:
---   1. Gehe zu supabase.com → Dein Projekt → SQL Editor
---   2. Füge diesen gesamten Inhalt ein und klicke "Run"
---   3. Alle Tabellen und Sicherheitsregeln werden automatisch angelegt
+--
+-- FRISCHE INSTALLATION (Neukunde):
+--   1. Dieses Script (schema.sql) ausführen → alle Tabellen, Trigger, Grants
+--   2. seed.sql ausführen → 25 Produkte + 8 Testkunden + 10 Bestellungen
+--
+-- BESTEHENDE DATENBANK AKTUALISIEREN:
+--   Migrations in Reihenfolge ausführen: migration_001 bis migration_009
+--
+-- Ausführen: Supabase → SQL Editor → Inhalt einfügen → Run
 -- ══════════════════════════════════════════════════════════════════════════════
 
 -- ── Extensions ───────────────────────────────────────────────────────────────
@@ -21,7 +27,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   address_zip      TEXT,
   address_city     TEXT,
   address_country  TEXT        DEFAULT 'Deutschland',
-  role             TEXT        NOT NULL DEFAULT 'customer' CHECK (role IN ('customer', 'admin')),
+  role             TEXT        NOT NULL DEFAULT 'customer'
+                               CHECK (role IN ('owner', 'admin', 'mod', 'customer')),
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -47,43 +54,70 @@ CREATE TRIGGER on_auth_user_created
 
 -- ── PRODUCTS ─────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.products (
-  id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name        TEXT        NOT NULL,
-  slug        TEXT        NOT NULL UNIQUE,
-  description TEXT,
-  price       NUMERIC(10,2) NOT NULL,
-  old_price   NUMERIC(10,2),
-  discount    TEXT,
-  badge       TEXT,
-  category    TEXT        NOT NULL,
-  rating      NUMERIC(3,1) DEFAULT 0,
-  reviews     INTEGER      DEFAULT 0,
-  stock       INTEGER      NOT NULL DEFAULT 0,
-  image_url   TEXT,
-  active      BOOLEAN      NOT NULL DEFAULT TRUE,
-  created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+  id               UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name             TEXT          NOT NULL,
+  slug             TEXT          NOT NULL UNIQUE,
+  description      TEXT,
+  price            NUMERIC(10,2) NOT NULL,
+  old_price        NUMERIC(10,2),
+  discount         TEXT,
+  badge            TEXT,
+  category         TEXT          NOT NULL,
+  rating           NUMERIC(3,1)  DEFAULT 0,
+  reviews          INTEGER       DEFAULT 0,
+  stock            INTEGER       NOT NULL DEFAULT 0,
+  image_url        TEXT,
+  images           JSONB         NOT NULL DEFAULT '[]'::jsonb,
+  active           BOOLEAN       NOT NULL DEFAULT TRUE,
+  tax_rate         NUMERIC(5,2)  NOT NULL DEFAULT 19,
+  rich_description TEXT,
+  highlights       JSONB         NOT NULL DEFAULT '[]'::jsonb,
+  certifications   JSONB         NOT NULL DEFAULT '[]'::jsonb,
+  lmiv             JSONB,
+  dealer_links     JSONB         NOT NULL DEFAULT '[]'::jsonb,
+  documents        JSONB         NOT NULL DEFAULT '[]'::jsonb,
+  created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_products_slug     ON public.products (slug);
 CREATE INDEX IF NOT EXISTS idx_products_category ON public.products (category);
 CREATE INDEX IF NOT EXISTS idx_products_active   ON public.products (active);
 
+-- ── CATEGORIES ───────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.categories (
+  id         UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name       TEXT        NOT NULL UNIQUE,
+  "order"    INTEGER     NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_categories_order ON public.categories ("order", name);
+
+-- Standard-Kategorien (können im Admin-Panel erweitert werden)
+INSERT INTO public.categories (name, "order") VALUES
+  ('Wohnen',    0),
+  ('Deko',      1),
+  ('Küche',     2),
+  ('Textilien', 3),
+  ('Kunst',     4)
+ON CONFLICT (name) DO NOTHING;
+
 -- ── ORDERS ───────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.orders (
-  id                 UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id            UUID        REFERENCES public.profiles(id) ON DELETE SET NULL,
-  order_number       TEXT        NOT NULL UNIQUE,
-  status             TEXT        NOT NULL DEFAULT 'pending'
-                                 CHECK (status IN ('pending','paid','shipped','delivered','cancelled','payment_failed','refunded')),
+  id                 UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id            UUID          REFERENCES public.profiles(id) ON DELETE SET NULL,
+  order_number       TEXT          NOT NULL UNIQUE,
+  status             TEXT          NOT NULL DEFAULT 'pending'
+                                   CHECK (status IN ('pending','paid','shipped','delivered','cancelled','payment_failed','refunded')),
   total              NUMERIC(10,2) NOT NULL,
   shipping_address   JSONB,
   stripe_session_id  TEXT,
   customer_note      TEXT,
   paid_at            TIMESTAMPTZ,
   shipped_at         TIMESTAMPTZ,
-  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at         TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_orders_user_id ON public.orders (user_id);
@@ -91,13 +125,13 @@ CREATE INDEX IF NOT EXISTS idx_orders_status  ON public.orders (status);
 
 -- ── ORDER ITEMS ───────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.order_items (
-  id           UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
-  order_id     UUID         NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
-  product_id   UUID         REFERENCES public.products(id) ON DELETE SET NULL,
-  product_name TEXT         NOT NULL,
-  quantity     INTEGER      NOT NULL CHECK (quantity > 0),
+  id           UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id     UUID          NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+  product_id   UUID          REFERENCES public.products(id) ON DELETE SET NULL,
+  product_name TEXT          NOT NULL,
+  quantity     INTEGER       NOT NULL CHECK (quantity > 0),
   price        NUMERIC(10,2) NOT NULL,
-  created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+  created_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON public.order_items (order_id);
@@ -155,8 +189,6 @@ CREATE INDEX IF NOT EXISTS idx_tickets_user_id ON public.tickets (user_id);
 CREATE INDEX IF NOT EXISTS idx_tickets_status  ON public.tickets (status);
 
 -- ── CONTACT INQUIRIES ────────────────────────────────────────────────────────
--- Externe Kontaktanfragen (ohne Login) — z. B. für Showcase-Seiten oder
--- Anfragen von Interessenten. Wird nicht mit auth.users verknüpft.
 CREATE TABLE IF NOT EXISTS public.contact_inquiries (
   id         UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
   name       TEXT        NOT NULL,
@@ -169,31 +201,69 @@ CREATE TABLE IF NOT EXISTS public.contact_inquiries (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_contact_inquiries_status ON public.contact_inquiries (status);
+CREATE INDEX IF NOT EXISTS idx_contact_inquiries_status  ON public.contact_inquiries (status);
 CREATE INDEX IF NOT EXISTS idx_contact_inquiries_created ON public.contact_inquiries (created_at DESC);
 
--- ── ROW LEVEL SECURITY (RLS) ─────────────────────────────────────────────────
--- Jeder Nutzer sieht und bearbeitet nur seine eigenen Daten.
--- Der Backend-Service-Key umgeht RLS (nur serverseitig verwenden!).
+-- ── ADMIN LOGIN LOG ──────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.admin_login_log (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  ip_address TEXT        NOT NULL,
+  user_agent TEXT,
+  success    BOOLEAN     NOT NULL DEFAULT TRUE
+);
 
-ALTER TABLE public.profiles   ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_admin_login_log_created_at
+  ON public.admin_login_log (created_at DESC);
+
+-- ── SHIPPING SETTINGS (Singleton-Tabelle) ────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.shipping_settings (
+  id         INTEGER      PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  standard   NUMERIC(6,2) NOT NULL DEFAULT 4.90,
+  express    NUMERIC(6,2) NOT NULL DEFAULT 9.90,
+  free_above NUMERIC(8,2) NOT NULL DEFAULT 50.00,
+  delivery   TEXT         NOT NULL DEFAULT '2–4 Werktage',
+  updated_at TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
+INSERT INTO public.shipping_settings (id, standard, express, free_above, delivery)
+VALUES (1, 4.90, 9.90, 50.00, '2–4 Werktage')
+ON CONFLICT (id) DO NOTHING;
+
+-- ── ADMIN TOTP (2FA) ─────────────────────────────────────────────────────────
+-- Eine Zeile = 2FA aktiv; keine Zeile = 2FA deaktiviert
+CREATE TABLE IF NOT EXISTS public.admin_totp (
+  id         BIGSERIAL   PRIMARY KEY,
+  secret     TEXT        NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ── ROW LEVEL SECURITY (RLS) ─────────────────────────────────────────────────
+ALTER TABLE public.profiles          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.categories        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tickets           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.contact_inquiries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_login_log   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shipping_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_totp        ENABLE ROW LEVEL SECURITY;
 
 -- Profiles
-CREATE POLICY "Eigenes Profil lesen"    ON public.profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Eigenes Profil updaten"  ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Eigenes Profil lesen"   ON public.profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Eigenes Profil updaten" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
--- Products (alle sehen, nur Admin schreibt — Admin nutzt Service Key)
+-- Products
 CREATE POLICY "Produkte öffentlich lesen" ON public.products FOR SELECT USING (active = TRUE);
 
+-- Categories
+CREATE POLICY "Kategorien öffentlich lesen" ON public.categories FOR SELECT USING (TRUE);
+
 -- Orders
-CREATE POLICY "Eigene Orders lesen"     ON public.orders FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Order erstellen"         ON public.orders FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Eigene Orders lesen" ON public.orders FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Order erstellen"     ON public.orders FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Order Items
 CREATE POLICY "Eigene Items lesen" ON public.order_items FOR SELECT
@@ -206,17 +276,51 @@ CREATE POLICY "Eigene Review updaten"    ON public.reviews FOR UPDATE USING (aut
 CREATE POLICY "Eigene Review löschen"    ON public.reviews FOR DELETE USING (auth.uid() = user_id);
 
 -- Tickets
-CREATE POLICY "Eigene Tickets lesen"    ON public.tickets FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Ticket erstellen"        ON public.tickets FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Eigene Tickets lesen" ON public.tickets FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Ticket erstellen"     ON public.tickets FOR INSERT WITH CHECK (auth.uid() = user_id);
 
--- Contact Inquiries
--- Jeder darf einreichen (kein Login nötig) — nur wenn Consent gegeben
--- Lesen ist nur über den Service Key möglich (Backend + Admin)
+-- Contact Inquiries (einreichen ohne Login)
 CREATE POLICY "Kontaktanfrage einreichen" ON public.contact_inquiries
   FOR INSERT WITH CHECK (consent = TRUE);
--- Keine SELECT-Policy für angemeldete Nutzer → nur Service Key kann lesen
 
--- ── UPDATED_AT TRIGGER ────────────────────────────────────────────────────────
+-- Shipping Settings (öffentlich lesbar, nur Service-Role schreibt)
+CREATE POLICY "Versand lesen"    ON public.shipping_settings FOR SELECT USING (TRUE);
+CREATE POLICY "Versand schreiben" ON public.shipping_settings
+  FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
+
+-- ── GRANTS ───────────────────────────────────────────────────────────────────
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+
+-- Öffentliche Leserechte
+GRANT SELECT ON public.products          TO anon, authenticated;
+GRANT SELECT ON public.categories        TO anon, authenticated;
+GRANT SELECT ON public.reviews           TO anon, authenticated;
+GRANT SELECT ON public.shipping_settings TO anon, authenticated;
+GRANT INSERT ON public.contact_inquiries TO anon, authenticated;
+
+-- Authentifizierte Nutzer
+GRANT SELECT, UPDATE         ON public.profiles    TO authenticated;
+GRANT SELECT, INSERT         ON public.orders      TO authenticated;
+GRANT SELECT, INSERT         ON public.order_items TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.reviews     TO authenticated;
+GRANT SELECT, INSERT         ON public.tickets     TO authenticated;
+
+-- Service Role (Backend & Admin — vollständiger Zugriff)
+GRANT ALL ON public.profiles          TO service_role;
+GRANT ALL ON public.products          TO service_role;
+GRANT ALL ON public.categories        TO service_role;
+GRANT ALL ON public.orders            TO service_role;
+GRANT ALL ON public.order_items       TO service_role;
+GRANT ALL ON public.reviews           TO service_role;
+GRANT ALL ON public.tickets           TO service_role;
+GRANT ALL ON public.contact_inquiries TO service_role;
+GRANT ALL ON public.admin_login_log   TO service_role;
+GRANT ALL ON public.shipping_settings TO service_role;
+GRANT ALL ON public.admin_totp        TO service_role;
+
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO authenticated, service_role;
+
+-- ── UPDATED_AT TRIGGER ───────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN NEW.updated_at = NOW(); RETURN NEW; END;

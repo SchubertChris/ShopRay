@@ -3,6 +3,8 @@
 
 // ─── CART-LAYOUT ───────────────────────────────────────────────────────────
 .cart-page {
+  max-width:    960px;
+  margin-inline: auto;
   padding-block: 3rem;
 
   &__title {
@@ -16,7 +18,7 @@
     align-items: start;
 
     @include respond-to('lg') {
-      grid-template-columns: 1fr 360px;
+      grid-template-columns: 1fr 340px;
     }
   }
 }

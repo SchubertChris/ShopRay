@@ -81,8 +81,8 @@ export default function CategoriesPage() {
       <div className="cat-create">
         <h2 className="cat-create__title">Neue Kategorie</h2>
         <form className="cat-create__form" onSubmit={handleCreate}>
-          <div className="cat-create__fields">
-            <div className="form-group">
+          <div className="cat-create__row">
+            <div className="form-group cat-create__name-field">
               <label className="form-label" htmlFor="cat-name">Name</label>
               <input
                 id="cat-name"
@@ -106,12 +106,14 @@ export default function CategoriesPage() {
                 onChange={e => setNewOrder(e.target.value)}
               />
             </div>
+            <div className="cat-create__btn-wrap">
+              <button className="cat-create__btn" type="submit" disabled={saving || !newName.trim()}>
+                <Plus size={15} strokeWidth={2.5} />
+                {saving ? 'Erstellen…' : 'Kategorie erstellen'}
+              </button>
+            </div>
           </div>
           {saveError && <p className="form-error">{saveError}</p>}
-          <button className="btn btn--primary btn--sm" type="submit" disabled={saving || !newName.trim()}>
-            <Plus size={15} strokeWidth={2} />
-            {saving ? 'Erstellen…' : 'Kategorie erstellen'}
-          </button>
         </form>
       </div>
 
