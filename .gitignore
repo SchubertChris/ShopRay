@@ -52,7 +52,6 @@ CREDENTIALS_PRIVATE.txt
 # ── Interne Entwickler-Dateien (nicht für Käufer) ─────────────────────────────
 CLAUDE.md
 CLAUDE_SESSION.md
-TESTPLAN.md
 .claude/
 docs/
 Frontend/PROJECT_DOCUMENTS.md
