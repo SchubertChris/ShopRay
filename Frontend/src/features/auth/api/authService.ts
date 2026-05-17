@@ -144,6 +144,13 @@ export async function getMfaStatus(): Promise<boolean> {
 
 /** Startet TOTP-Enrollment — gibt QR-Code (data-URL) und Secret zurück */
 export async function enrollTotp(): Promise<{ factorId: string; qrCode: string; secret: string }> {
+  // Halbfertige (unverifizierte) Faktoren aus abgebrochenen Setups bereinigen
+  const { data: existing } = await supabase.auth.mfa.listFactors();
+  const unverified = existing?.totp?.filter(f => f.status === 'unverified') ?? [];
+  for (const f of unverified) {
+    await supabase.auth.mfa.unenroll({ factorId: f.id });
+  }
+
   const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
   if (error || !data) throw error ?? new Error('Enrollment fehlgeschlagen');
   return {
