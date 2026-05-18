@@ -1,36 +1,12 @@
-import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SeoMeta } from '@components/ui';
-import { useProducts } from '@features/products';
+import { useCategories } from '@features/categories';
 import { ROUTES } from '@config/routes';
 import { getCategoryImage } from '@config/images';
 
-const TAGLINES: Record<string, string> = {
-  'Wohnen':    'Räume zum Leben gestalten',
-  'Küche':     'Kochen mit Stil & Anspruch',
-  'Deko':      'Details, die den Raum machen',
-  'Textilien': 'Wärme für jeden Raum',
-  'Kunst':     'Ausdruck für deine Wände',
-  'Sport':     'Ausrüstung für jede Aktivität',
-  'Outdoor':   'Natur pur erleben',
-  'Technik':   'Smarte Produkte für den Alltag',
-};
-
-function slugify(name: string) {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-}
-
 export default function CategoriesPage() {
   const navigate = useNavigate();
-  const { data: products } = useProducts();
-
-  const categories = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const p of products) {
-      if (p.category) map.set(p.category, (map.get(p.category) ?? 0) + 1);
-    }
-    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  }, [products]);
+  const { data: categories, loading } = useCategories();
 
   const go = (name: string) =>
     navigate(`${ROUTES.SHOP.SEARCH}?category=${encodeURIComponent(name)}`);
@@ -54,16 +30,23 @@ export default function CategoriesPage() {
           </header>
 
           <div className="cat-grid">
-            {categories.map(([name, count], i) => {
-              const img = getCategoryImage(i);
-              const mod = slugify(name);
+            {loading && (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="cat-card" style={{ '--i': i } as React.CSSProperties}>
+                  <div className="skeleton skeleton--full" style={{ height: '100%', borderRadius: '12px' }} />
+                </div>
+              ))
+            )}
+            {!loading && categories.map((cat, i) => {
+              const img = cat.image_url ?? getCategoryImage(i);
+              const mod = cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
               return (
                 <button
-                  key={name}
+                  key={cat.id}
                   className={`cat-card cat-card--${mod}${img ? ' has-image' : ''}`}
                   style={{ '--i': i } as React.CSSProperties}
-                  onClick={() => go(name)}
-                  aria-label={`${name} entdecken — ${count} Produkte`}
+                  onClick={() => go(cat.name)}
+                  aria-label={`${cat.name} entdecken — ${cat.count} Produkte`}
                 >
                   {img && (
                     <img
@@ -75,17 +58,19 @@ export default function CategoriesPage() {
                     />
                   )}
                   {img && <div className="cat-card__overlay" />}
-                  <span className="cat-card__count">{count} Produkte</span>
+                  <span className="cat-card__count">{cat.count} Produkte</span>
                   <div className="cat-card__body">
-                    <h2 className="cat-card__name">{name}</h2>
-                    <p className="cat-card__tagline">
-                      {TAGLINES[name] ?? 'Jetzt entdecken'}
-                    </p>
+                    <h2 className="cat-card__name">{cat.name}</h2>
                     <span className="cat-card__cta" aria-hidden="true">Entdecken →</span>
                   </div>
                 </button>
               );
             })}
+            {!loading && categories.length === 0 && (
+              <p style={{ gridColumn: '1/-1', textAlign: 'center', opacity: 0.5 }}>
+                Keine Kategorien vorhanden.
+              </p>
+            )}
           </div>
 
         </div>

@@ -5,6 +5,7 @@ import { useNotifications } from '@features/notifications';
 import { useWishlist } from '@features/wishlist';
 import { useProducts } from '@features/products';
 import type { Product } from '@features/products';
+import { useCategories } from '@features/categories';
 import { ProductCard, Stars, ProductImage, SeoMeta, JsonLd } from '@components/ui';
 import { ROUTES } from '@config/routes';
 import { useTheme } from '@providers/ThemeProvider';
@@ -13,15 +14,6 @@ import { IMAGES, getAvatarImage, getCategoryImage } from '@config/images';
 import { APP_NAME, APP_URL, APP_SOCIALS } from '@config/app';
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
-
-const CATEGORIES = [
-  { name: 'Wohnen',    count: 124, num: '01' },
-  { name: 'Deko',      count:  95, num: '02' },
-  { name: 'Küche',     count:  87, num: '03' },
-  { name: 'Textilien', count:  63, num: '04' },
-  { name: 'Garten',    count:  42, num: '05' },
-  { name: 'Keramik',   count:  31, num: '06' },
-];
 
 
 const TRUST_ITEMS = [
@@ -56,7 +48,8 @@ interface ToastState { visible: boolean; message: string; type: 'success' | 'err
 // ── SEITE ─────────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
-  const { data: products } = useProducts();
+  const { data: products }    = useProducts();
+  const { data: categories }  = useCategories();
   const { palette, mode, setPalette, toggleMode } = useTheme();
   const { addItem, items, total, removeItem, count } = useCart();
   const notify = useNotifications(s => s.notify);
@@ -238,7 +231,7 @@ export default function HomePage() {
             </div>
             <div className="hero-slot__window">
               <div className="hero-slot__track" aria-hidden="true">
-                {[...CATEGORIES, ...CATEGORIES, ...CATEGORIES].map((cat, i) => (
+                {[...categories, ...categories, ...categories].map((cat, i) => (
                   <div key={i} className="hero-slot__item">
                     <span className="hero-slot__num">{cat.num}</span>
                     <span className="hero-slot__name">{cat.name}</span>
@@ -279,11 +272,11 @@ export default function HomePage() {
       <section className="section">
         <div className="container">
           <div className="cat-bento" data-reveal>
-            {CATEGORIES.map((cat, idx) => {
-              const catImg = getCategoryImage(idx);
+            {categories.map((cat, idx) => {
+              const catImg = cat.image_url ?? getCategoryImage(idx);
               return (
                 <Link
-                  key={cat.name}
+                  key={cat.id}
                   to={`${ROUTES.SHOP.SEARCH}?category=${encodeURIComponent(cat.name)}`}
                   className="cat-bento__item"
                 >

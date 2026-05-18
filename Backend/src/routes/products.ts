@@ -14,7 +14,7 @@ const ProductQuerySchema = z.object({
   limit:    z.coerce.number().int().min(1).max(100).optional(),
 }).strip(); // Unbekannte Query-Params entfernen
 
-// GET /api/products/categories — eindeutige Kategorien (public)
+// GET /api/products/categories — eindeutige Kategorien aus Produkten (legacy, behalten für Rückwärtskompatibilität)
 router.get('/categories', async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { data, error } = await supabase
