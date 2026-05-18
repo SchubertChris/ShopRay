@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createTicket } from '@features/tickets';
 import type { TicketCategory, TicketPriority } from '@features/tickets';
+import { useAuth } from '@features/auth';
 import { getErrorMessage } from '@/utils/errorMessage';
 import { SeoMeta } from '@components/ui';
 import { ROUTES } from '@config/routes';
@@ -26,16 +27,21 @@ const PRIORITIES = [
 // ── PAGE ──────────────────────────────────────────────────────────────────────
 
 export default function TicketNewPage() {
+  const { isAuthenticated } = useAuth();
+  const isGuest             = !isAuthenticated;
+
   const [form, setForm] = useState<{
     subject:     string;
     category:    TicketCategory;
     priority:    TicketPriority;
     description: string;
+    guestEmail:  string;
   }>({
     subject:     '',
     category:    CATEGORIES[0] as TicketCategory,
     priority:    'normal',
     description: '',
+    guestEmail:  '',
   });
   const [sending, setSending]   = useState(false);
   const [sent, setSent]         = useState(false);
@@ -51,7 +57,10 @@ export default function TicketNewPage() {
     setSending(true);
     setApiError(null);
     try {
-      await createTicket(form);
+      await createTicket({
+        ...form,
+        ...(isGuest && form.guestEmail ? { guestEmail: form.guestEmail } : {}),
+      });
       setSent(true);
     } catch (err) {
       setApiError(getErrorMessage(err));
@@ -79,7 +88,7 @@ export default function TicketNewPage() {
           <button
             className="btn btn--ghost btn--sm"
             type="button"
-            onClick={() => { setSent(false); setApiError(null); setForm({ subject: '', category: CATEGORIES[0] as TicketCategory, priority: 'normal', description: '' }); }}
+            onClick={() => { setSent(false); setApiError(null); setForm({ subject: '', category: CATEGORIES[0] as TicketCategory, priority: 'normal', description: '', guestEmail: '' }); }}
           >
             Weiteres Ticket erstellen
           </button>
@@ -105,6 +114,32 @@ export default function TicketNewPage() {
 
       <form className="ticket-form" onSubmit={handleSubmit} noValidate>
         {apiError && <p className="ticket-form__api-error">{apiError}</p>}
+
+        {isGuest && (
+          <div className="ticket-form__guest-banner">
+            <div className="ticket-form__field">
+              <label className="ticket-form__label" htmlFor="tf-guestemail">
+                Deine E-Mail-Adresse <span className="ticket-form__required">*</span>
+              </label>
+              <input
+                id="tf-guestemail"
+                className="ticket-form__input"
+                type="email"
+                name="guestEmail"
+                placeholder="deine@email.de"
+                autoComplete="email"
+                value={form.guestEmail}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <p className="ticket-form__guest-hint">
+              Kein Konto? Kein Problem.{' '}
+              <Link to={ROUTES.AUTH.LOGIN} className="ticket-form__guest-link">Anmelden</Link>
+              {' '}um deine Tickets jederzeit einzusehen.
+            </p>
+          </div>
+        )}
 
         <div className="ticket-form__field">
           <label className="ticket-form__label" htmlFor="tf-subject">Betreff</label>

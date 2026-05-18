@@ -409,7 +409,34 @@
   }
 }
 
-// â”€â”€ Sende-State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Gast-Banner ────────────────────────────────────────────────────────────
+.ticket-form__guest-banner {
+  background:    color-mix(in srgb, var(--clr-primary) 6%, transparent);
+  border:        1px solid color-mix(in srgb, var(--clr-primary) 20%, transparent);
+  border-radius: 10px;
+  padding:       1rem 1.125rem;
+  margin-bottom: 0.25rem;
+}
+
+.ticket-form__required {
+  color:        var(--clr-error);
+  margin-left:  0.2rem;
+}
+
+.ticket-form__guest-hint {
+  font-size:  rem(12.5px);
+  color:      color-mix(in srgb, var(--clr-text) 50%, transparent);
+  margin-top: 0.5rem;
+}
+
+.ticket-form__guest-link {
+  color:           var(--clr-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  &:hover { opacity: 0.8; }
+}
+
+// ── Sende-State ─────────────────────────────────────────────────────────────
 
 .ticket-sent {
   display:        flex;

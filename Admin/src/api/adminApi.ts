@@ -546,6 +546,7 @@ export interface AdminTicket {
   created_at:  string;
   updated_at:  string | null;
   user_id:     string | null;
+  guest_email: string | null;
   profiles:    { name: string | null; email: string | null } | null;
 }
 

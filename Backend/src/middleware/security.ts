@@ -44,3 +44,12 @@ export const contactRateLimit = rateLimit({
   legacyHeaders:   false,
   message:         { error: 'Zu viele Kontaktanfragen. Bitte versuche es in einer Stunde erneut.' },
 });
+
+// ── Ticket Rate-Limit — 5 Tickets / Stunde pro IP (Gast-Schutz) ──────────────
+export const ticketRateLimit = rateLimit({
+  windowMs:        60 * 60 * 1000,
+  max:             5,
+  standardHeaders: true,
+  legacyHeaders:   false,
+  message:         { error: 'Zu viele Tickets. Bitte versuche es in einer Stunde erneut.' },
+});

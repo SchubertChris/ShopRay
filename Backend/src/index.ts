@@ -11,6 +11,7 @@ import ordersRouter       from './routes/orders';
 import productsRouter     from './routes/products';
 import customersRouter    from './routes/customers';
 import contactRouter      from './routes/contact';
+import ticketsRouter      from './routes/tickets';
 import adminAuthRouter       from './routes/admin-auth';
 import adminProductsRouter   from './routes/admin-products';
 import adminCategoriesRouter from './routes/admin-categories';
@@ -48,6 +49,7 @@ app.use('/api/orders',    ordersRouter);
 app.use('/api/products',  productsRouter);
 app.use('/api/customers', customersRouter);
 app.use('/api/contact',   contactRouter);
+app.use('/api/tickets',   ticketsRouter);
 
 // ── Öffentliche Settings-Route ────────────────────────────────────────────────
 app.use('/api/settings', settingsRouter);

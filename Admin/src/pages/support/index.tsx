@@ -6,6 +6,13 @@ import ViewToggle from '../../components/ui/ViewToggle';
 import { useViewMode } from '../../hooks/useViewMode';
 
 type StatusFilter = AdminTicket['status'] | 'all';
+
+function ticketCustomer(t: AdminTicket): string {
+  if (t.profiles?.name)  return t.profiles.name;
+  if (t.profiles?.email) return t.profiles.email;
+  if (t.guest_email)     return `${t.guest_email} (Gast)`;
+  return '—';
+}
 type ListViewMode = 'active' | 'archive';
 
 const ACTIVE_TABS: Array<{ key: StatusFilter; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }> = [
@@ -70,7 +77,8 @@ export default function SupportPage() {
     ? byCategory.filter(t =>
         t.subject.toLowerCase().includes(q) ||
         (t.profiles?.name ?? '').toLowerCase().includes(q) ||
-        (t.profiles?.email ?? '').toLowerCase().includes(q),
+        (t.profiles?.email ?? '').toLowerCase().includes(q) ||
+        (t.guest_email ?? '').toLowerCase().includes(q),
       )
     : byCategory;
 
@@ -264,7 +272,7 @@ export default function SupportPage() {
               </div>
               <div className="admin-card__footer">
                 <span className="admin-card__meta">{new Date(t.created_at).toLocaleDateString('de-DE')}</span>
-                <span className="admin-card__meta">{t.profiles?.name ?? t.profiles?.email ?? '—'}</span>
+                <span className="admin-card__meta">{ticketCustomer(t)}</span>
               </div>
             </div>
           ))}
@@ -300,7 +308,7 @@ export default function SupportPage() {
                   </span>
                 </div>
                 <p className="ticket-card__subject">{t.subject}</p>
-                <p className="ticket-card__customer">{t.profiles?.name ?? t.profiles?.email ?? '—'}</p>
+                <p className="ticket-card__customer">{ticketCustomer(t)}</p>
               </button>
             ))
           )}
@@ -312,7 +320,7 @@ export default function SupportPage() {
               <p className="ticket-detail__id">Ticket #{activeTicket.id.slice(0, 8)}</p>
               <p className="ticket-detail__subject">{activeTicket.subject}</p>
               <p className="ticket-detail__meta">
-                {activeTicket.profiles?.name ?? activeTicket.profiles?.email ?? '—'} · {new Date(activeTicket.created_at).toLocaleDateString('de-DE')}
+                {ticketCustomer(activeTicket)} · {new Date(activeTicket.created_at).toLocaleDateString('de-DE')}
               </p>
             </div>
             <div className="ticket-detail__message">
@@ -384,7 +392,7 @@ export default function SupportPage() {
           <div className="admin-chat-panel__header">
             <button className="btn-ghost btn-sm" onClick={closeChat} type="button">← Zurück</button>
             <span className="admin-chat-panel__subject">{chatTicket.subject}</span>
-            <span className="admin-chat-panel__customer">{chatTicket.profiles?.name ?? chatTicket.profiles?.email ?? '—'}</span>
+            <span className="admin-chat-panel__customer">{ticketCustomer(chatTicket)}</span>
           </div>
           <div className="admin-chat-panel__messages">
             {chatLoading && <p className="admin-chat-panel__loading">Lädt…</p>}

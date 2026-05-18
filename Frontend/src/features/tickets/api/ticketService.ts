@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import api from '@/api/axiosinstance';
 import type { PaginatedResponse } from '@/types/api';
 import type { Ticket, TicketCategory, TicketStatus, TicketPriority, TicketPayload, TicketMessage } from '../types/ticket.types';
 
@@ -91,28 +92,15 @@ export async function getTicketById(id: string): Promise<Ticket> {
   return mapTicket(data as Record<string, unknown>);
 }
 
-export async function createTicket(payload: TicketPayload): Promise<Ticket> {
-  const { data: { user }, error: authErr } = await supabase.auth.getUser();
-  if (authErr || !user) throw authErr ?? new Error('Nicht eingeloggt');
-
-  const { data, error } = await supabase
-    .from('tickets')
-    .insert({
-      user_id:  user.id,
-      subject:  `[${payload.priority}] ${payload.subject}`,
-      message:  payload.description,
-      category: CATEGORY_TO_DB[payload.category] ?? 'other',
-    })
-    .select('*')
-    .single();
-  if (error) throw error;
-
-  // Erste Nachricht als Chat-Eintrag anlegen
-  const { error: msgError } = await supabase
-    .from('ticket_messages')
-    .insert({ ticket_id: data.id, sender: 'customer', text: payload.description });
-  if (msgError) throw msgError;
-
+export async function createTicket(payload: TicketPayload & { guestEmail?: string }): Promise<Ticket> {
+  // Backend-Route: optionalAuth — funktioniert für Gäste UND eingeloggte Nutzer
+  const { data } = await api.post('/tickets', {
+    subject:     payload.subject,
+    category:    payload.category,
+    description: payload.description,
+    priority:    payload.priority,
+    ...(payload.guestEmail ? { guestEmail: payload.guestEmail } : {}),
+  });
   return mapTicket(data as Record<string, unknown>);
 }
 

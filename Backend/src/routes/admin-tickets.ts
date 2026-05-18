@@ -16,7 +16,7 @@ router.get('/', requireAdmin, async (_req: Request, res: Response, next: NextFun
   try {
     const { data, error, count } = await supabase
       .from('tickets')
-      .select('id, subject, category, status, message, reply, replied_at, created_at, updated_at, user_id, profiles(name, email)', { count: 'exact' })
+      .select('id, subject, category, status, message, reply, replied_at, created_at, updated_at, user_id, guest_email, profiles(name, email)', { count: 'exact' })
       .order('created_at', { ascending: false });
 
     if (error) throw error;
