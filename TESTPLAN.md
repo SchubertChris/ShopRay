@@ -1,5 +1,5 @@
 # ShopRay — Testplan
-Stand: 2026-05-17 (v2 — inkl. Rechnungen, DHL, Ban-System, Push, CSV-Import, Grid-View)
+Stand: 2026-05-18 (v3 — inkl. Bug-Fixes: SEPA, Zahlungsabbruch, Filter, Mobile, Kategorien, Shop-Settings)
 
 ---
 
@@ -100,6 +100,8 @@ Ablauf: beliebig in der Zukunft · CVC: beliebig · PLZ: beliebig
 | DHL-Label | Nur mit gültigem DHL-Business-Account + Env-Vars — in Sandbox testbar |
 | Rechnungs-PDF | Nur mit gesetzten SHOP_* Env-Vars vollständig (sonst Platzhalter-Daten) |
 | Push-Benachrichtigungen | Nur mit gesetzten VAPID Env-Vars in Vercel aktiv |
+| Zahlungsmethode SEPA | „Bank-Transfer" läuft über SEPA-Lastschrift (Sofortüberweisung ist deprecated) |
+| Shop-Settings | Erfordert Migration 014 in Supabase — ohne Migration werden Env-Var-Werte angezeigt |
 
 ---
 
@@ -133,6 +135,7 @@ Das ist der einzige Flow der Geld bringt — bricht hier etwas, ist alles andere
 - [ ] Einloggen → automatisch zurück zu `/checkout`
 - [ ] Checkout-Formular ausfüllen, Karte `4242 4242 4242 4242` eingeben
 - [ ] Stripe-Redirect → Bestätigungs-Button → zurück zu `/order-success`
+- [ ] **Zahlungsabbruch:** Stripe-Seite öffnen → Browser-Zurück-Button → zurück zu `/checkout` → Warenkorb ist noch voll (nicht geleert)
 - [ ] Bestellbestätigungs-Mail kommt an (Bestellnummer, Artikel, Betrag)
 - [ ] Bestellung erscheint unter `/account/orders` mit Status `paid`
 - [ ] Bestellung erscheint im Admin unter `/orders` mit Status `paid`
@@ -213,6 +216,8 @@ Hier prüfe ich zuerst ob echte Daten ankommen — kein Mock.
 - [ ] Nach Label-Erstellung: „DHL Label"-Button zeigt „Label erstellt" (disabled), Adress-Bearbeiten-Button weg, stattdessen gelbe Infobox mit DHL-Links
 - [ ] Tracking-Link in Verlauf-Card klicken → öffnet DHL-Sendungsverfolgung in neuem Tab
 - [ ] Mobil: Detailseite lädt korrekt, Buttons bedienbar
+- [ ] **Erstattet-Filter:** Tab „Erstattet" in Bestellliste → zeigt nur Bestellungen mit Status `refunded`
+- [ ] Mobil Bottom-Sheet: Bestellung anklicken → Detail-Panel öffnet → Seite scrollt nicht mit (nur Panel scrollt)
 
 ---
 
@@ -246,6 +251,9 @@ Hier prüfe ich zuerst ob echte Daten ankommen — kein Mock.
 - [ ] Import bestätigen → Produkte erscheinen in der Liste, keine Duplikate
 - [ ] Fehlerhafte CSV (falsche Spalten) → Fehlermeldung, kein Import
 - [ ] Neue Kategorie erstellen → erscheint sofort, im Frontend-Filter verfügbar
+- [ ] **Kategorie-Bild:** Neue Kategorie mit Bild-URL anlegen → Bild erscheint in Grid-Ansicht (statt Tag-Icon)
+- [ ] Kategorien im Frontend-Shop: Kategorie-Filter auf /suche kommt dynamisch aus DB (nicht hardcoded)
+- [ ] **„Mehr laden"-Test:** Mehr als 8 Produkte im Shop → „Mehr laden" klicken → neue Karten erscheinen sichtbar (kein Z-Index-Bug)
 - [ ] Doppelte Kategorie eingeben → Fehlermeldung
 - [ ] Kategorie löschen → verschwindet nach Bestätigung
 
@@ -266,6 +274,8 @@ Hier prüfe ich zuerst ob echte Daten ankommen — kein Mock.
 
 - [ ] Versandkosten ändern → im Checkout sofort wirksam (neu laden)
 - [ ] Login-Protokoll: letzte Einträge mit Datum + IP sichtbar
+- [ ] **Shop-Einstellungen:** Einstellungen → Shop-Info → Name + Adresse + E-Mail laden aus DB → ändern → speichern → Erfolgsmeldung
+- [ ] Shop-Name-Änderung: nach Speichern in DB gespeichert (kein Verlust nach Reload)
 - [ ] **Push-Benachrichtigungen:** „Push aktivieren"-Button → Browser-Berechtigungsdialog erscheint
 - [ ] Berechtigung erteilen → Bestätigung sichtbar, Subscription in Supabase `push_subscriptions` gespeichert
 - [ ] Neue Bestellung aufgeben (Schritt 2) → Push-Benachrichtigung erscheint im Browser (nur wenn VAPID Env-Vars gesetzt sind)
@@ -396,7 +406,8 @@ Reihenfolge: genau so durchführen — jeder Schritt baut auf dem vorherigen auf
 - [ ] Artikel entfernen → leerer Warenkorb + Empty-State
 - [ ] Zweites Produkt in Warenkorb → Zur Kasse
 - [ ] Stripe Checkout: Karte `4242 4242 4242 4242`, beliebige Daten
-- [ ] Zurück zu `/order-success` → Bestätigungsseite
+- [ ] **Abbruch testen:** Stripe-Seite → Zurück → Checkout wieder offen, Warenkorb noch voll
+- [ ] Zahlung durchführen → Zurück zu `/order-success` → Bestätigungsseite
 - [ ] Bestellung unter `/account/orders` mit Status `paid` sichtbar
 - [ ] Bestellbestätigungs-Mail kommt an (Bestellnummer, Artikel, Betrag)
 
