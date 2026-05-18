@@ -1,8 +1,19 @@
 import { useState, useRef, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Zap, CheckCircle, Eye, EyeOff, Lock, Smartphone, Users } from 'lucide-react';
+import { Shield, Zap, CheckCircle, Eye, EyeOff, Lock, Smartphone, Users, KeyRound } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import { ROUTES } from '@config/routes';
+
+function pwCheck(pw: string) {
+  return {
+    len:     pw.length >= 8,
+    upper:   /[A-Z]/.test(pw),
+    lower:   /[a-z]/.test(pw),
+    digit:   /[0-9]/.test(pw),
+    special: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pw),
+  };
+}
+function pwValid(pw: string) { return Object.values(pwCheck(pw)).every(Boolean); }
 
 export default function LoginPage() {
   const [password, setPassword] = useState('');
@@ -24,8 +35,14 @@ export default function LoginPage() {
   const [modError,    setModError]    = useState('');
   const [modLoading,  setModLoading]  = useState(false);
 
-  const { login, verifyTotp, loginMod, requireTotp } = useAuthStore();
+  const { login, verifyTotp, loginMod, submitNewModPassword, requireTotp, mustChangePassword } = useAuthStore();
   const navigate = useNavigate();
+
+  // Force-Change-Password State (nach Mod-Login mit Startpasswort)
+  const [newPw,       setNewPw]       = useState('');
+  const [newPwShow,   setNewPwShow]   = useState(false);
+  const [changingPw,  setChangingPw]  = useState(false);
+  const [changeError, setChangeError] = useState('');
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -72,11 +89,29 @@ export default function LoginPage() {
     setModLoading(true);
     try {
       await loginMod(modEmail, modPassword);
-      navigate(ROUTES.DASHBOARD);
+      // Wenn mustChangePassword → bleibt auf Login-Seite, zeigt Force-Change-Screen
+      if (!useAuthStore.getState().mustChangePassword) {
+        navigate(ROUTES.DASHBOARD);
+      }
     } catch (err) {
       setModError(err instanceof Error ? err.message : 'Anmeldung fehlgeschlagen.');
     } finally {
       setModLoading(false);
+    }
+  };
+
+  const handlePasswordChange = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!pwValid(newPw)) { setChangeError('Passwort erfüllt nicht alle Anforderungen.'); return; }
+    setChangeError('');
+    setChangingPw(true);
+    try {
+      await submitNewModPassword(newPw);
+      navigate(ROUTES.DASHBOARD);
+    } catch (err) {
+      setChangeError(err instanceof Error ? err.message : 'Passwort konnte nicht gesetzt werden.');
+    } finally {
+      setChangingPw(false);
     }
   };
 
@@ -130,8 +165,78 @@ export default function LoginPage() {
       <div className="login-form-panel">
         <div className="login-form-wrap">
 
+          {/* ── Force-Change-Password (Mitarbeiter, erster Login) ── */}
+          {mustChangePassword && (
+            <form className="login-form" onSubmit={handlePasswordChange} noValidate>
+              <div className="login-form__lock-icon" aria-hidden="true">
+                <KeyRound size={22} strokeWidth={1.75} />
+              </div>
+              <p className="login-form__eyebrow">Sicherheitshinweis</p>
+              <h2 className="login-form__title">Passwort festlegen</h2>
+              <p className="login-form__sub">
+                Das Startpasswort muss beim ersten Login geändert werden.
+                Wähle ein sicheres, persönliches Passwort.
+              </p>
+
+              <div className="login-form__group">
+                <label htmlFor="new-pw">Neues Passwort</label>
+                <div className="login-form__input-wrap">
+                  <input
+                    id="new-pw"
+                    type={newPwShow ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    placeholder="••••••••••••"
+                    value={newPw}
+                    onChange={e => { setNewPw(e.target.value); if (changeError) setChangeError(''); }}
+                    required
+                    autoFocus
+                  />
+                  <button type="button" className="login-form__pw-toggle" onClick={() => setNewPwShow(v => !v)} tabIndex={-1}>
+                    {newPwShow ? <EyeOff size={15} strokeWidth={2} /> : <Eye size={15} strokeWidth={2} />}
+                  </button>
+                </div>
+              </div>
+
+              <ul className="pw-criteria">
+                {([
+                  ['len',     'Mindestens 8 Zeichen'],
+                  ['upper',   'Großbuchstabe (A–Z)'],
+                  ['lower',   'Kleinbuchstabe (a–z)'],
+                  ['digit',   'Zahl (0–9)'],
+                  ['special', 'Sonderzeichen (!@#…)'],
+                ] as const).map(([key, label]) => {
+                  const ok = newPw.length > 0 && pwCheck(newPw)[key];
+                  return (
+                    <li key={key} className={`pw-criteria__item${ok ? ' pw-criteria__item--ok' : ''}`}>
+                      <span className="pw-criteria__dot" />
+                      {label}
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {changeError && (
+                <div className="login-form__error">
+                  <Shield size={13} strokeWidth={2} />
+                  {changeError}
+                </div>
+              )}
+
+              <button
+                className="login-form__submit"
+                type="submit"
+                disabled={changingPw || !pwValid(newPw)}
+              >
+                {changingPw
+                  ? <><span className="login-form__spinner" />Wird gespeichert…</>
+                  : 'Passwort festlegen & weiter'
+                }
+              </button>
+            </form>
+          )}
+
           {/* ── Tab-Switcher ── */}
-          {!requireTotp && (
+          {!requireTotp && !mustChangePassword && (
             <div className="login-tabs">
               <button
                 type="button"
@@ -152,15 +257,17 @@ export default function LoginPage() {
             </div>
           )}
 
+          {!mustChangePassword && (
           <div className="login-form__lock-icon" aria-hidden="true">
             {requireTotp
               ? <Smartphone size={22} strokeWidth={1.75} />
               : <Lock       size={22} strokeWidth={1.75} />
             }
           </div>
+          )}
 
           {/* ── Passwort-Form ── */}
-          {!requireTotp && loginMode === 'owner' && (
+          {!requireTotp && !mustChangePassword && loginMode === 'owner' && (
             <form className="login-form" onSubmit={handleSubmit} noValidate>
               <p className="login-form__eyebrow">Admin-Bereich</p>
               <h2 className="login-form__title">Anmelden</h2>
@@ -211,7 +318,7 @@ export default function LoginPage() {
           )}
 
           {/* ── TOTP-Form ── */}
-          {requireTotp && (
+          {requireTotp && !mustChangePassword && (
             <form className="login-form" onSubmit={handleTotpSubmit} noValidate>
               <p className="login-form__eyebrow">2-Faktor-Authentifizierung</p>
               <h2 className="login-form__title">Code eingeben</h2>
@@ -265,7 +372,7 @@ export default function LoginPage() {
           )}
 
           {/* ── Mitarbeiter-Form ── */}
-          {!requireTotp && loginMode === 'mod' && (
+          {!requireTotp && !mustChangePassword && loginMode === 'mod' && (
             <form className="login-form" onSubmit={handleModSubmit} noValidate>
               <p className="login-form__eyebrow">Mitarbeiter-Zugang</p>
               <h2 className="login-form__title">Anmelden</h2>

@@ -1,25 +1,28 @@
 import { create } from 'zustand';
-import { adminLogin, adminLogout, adminCheck, loginTotp, modLogin, setAdminToken, clearAdminToken } from '../api/adminApi';
+import { adminLogin, adminLogout, adminCheck, loginTotp, modLogin, changeModPassword, setAdminToken, clearAdminToken } from '../api/adminApi';
 
 export type AdminRole = 'owner' | 'mod';
 
 interface AuthState {
-  isAuthed:    boolean;
-  checking:    boolean;
-  requireTotp: boolean;
-  role:        AdminRole | null;
-  login:       (password: string) => Promise<void>;
-  loginMod:    (email: string, password: string) => Promise<void>;
-  verifyTotp:  (token: string) => Promise<void>;
-  logout:      () => Promise<void>;
-  checkAuth:   () => Promise<void>;
+  isAuthed:           boolean;
+  checking:           boolean;
+  requireTotp:        boolean;
+  mustChangePassword: boolean;
+  role:               AdminRole | null;
+  login:                    (password: string) => Promise<void>;
+  loginMod:                 (email: string, password: string) => Promise<void>;
+  submitNewModPassword:     (newPassword: string) => Promise<void>;
+  verifyTotp:               (token: string) => Promise<void>;
+  logout:                   () => Promise<void>;
+  checkAuth:                () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()((set) => ({
-  isAuthed:    false,
-  checking:    true,
-  requireTotp: false,
-  role:        null,
+  isAuthed:           false,
+  checking:           true,
+  requireTotp:        false,
+  mustChangePassword: false,
+  role:               null,
 
   login: async (password: string) => {
     const result = await adminLogin(password);
@@ -34,7 +37,17 @@ export const useAuthStore = create<AuthState>()((set) => ({
   loginMod: async (email: string, password: string) => {
     const result = await modLogin(email, password);
     if (result.token) setAdminToken(result.token);
-    set({ isAuthed: true, role: 'mod' });
+    if (result.mustChangePassword) {
+      // Token speichern, aber noch nicht als vollständig authentifiziert markieren
+      set({ isAuthed: false, mustChangePassword: true, role: 'mod' });
+    } else {
+      set({ isAuthed: true, mustChangePassword: false, role: 'mod' });
+    }
+  },
+
+  submitNewModPassword: async (newPassword: string) => {
+    await changeModPassword(newPassword);
+    set({ isAuthed: true, mustChangePassword: false });
   },
 
   verifyTotp: async (token: string) => {

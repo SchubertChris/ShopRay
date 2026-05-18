@@ -406,3 +406,40 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   }
 }
+
+// ── Passwort-Kriterien-Checkliste ────────────────────────────────────────────
+.pw-criteria {
+  list-style: none;
+  margin:     0.75rem 0 0;
+  padding:    0.75rem 0.875rem;
+  display:    flex;
+  flex-direction: column;
+  gap:        0.3rem;
+  background: color-mix(in srgb, var(--clr-surface) 60%, transparent);
+  border:     1px solid var(--clr-border, #333);
+  border-radius: 8px;
+
+  &__item {
+    display:     flex;
+    align-items: center;
+    gap:         0.5rem;
+    font-size:   rem(12px);
+    color:       color-mix(in srgb, var(--clr-text) 45%, transparent);
+    transition:  color 0.2s;
+
+    &--ok {
+      color: var(--clr-success, #22c55e);
+    }
+  }
+
+  &__dot {
+    width:         7px;
+    height:        7px;
+    border-radius: 50%;
+    flex-shrink:   0;
+    background:    currentColor;
+    opacity:       0.6;
+
+    .pw-criteria__item--ok & { opacity: 1; }
+  }
+}

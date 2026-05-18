@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Users, Trash2, Plus, Loader2, AlertCircle, UserCheck, Mail, Clock } from 'lucide-react';
+import { Users, Trash2, Plus, Loader2, AlertCircle, UserCheck, Clock, Copy, Check, KeyRound } from 'lucide-react';
 import {
   getMods, addMod, removeMod, cancelInvite,
   type ModUser, type PendingInvite,
@@ -15,6 +15,8 @@ export default function TeamTab() {
   const [addError,   setAddError]   = useState<string | null>(null);
   const [addSuccess, setAddSuccess] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [tempPw,     setTempPw]     = useState<{ email: string; pw: string } | null>(null);
+  const [copied,     setCopied]     = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -42,16 +44,16 @@ export default function TeamTab() {
     try {
       const result = await addMod(trimmed);
       setEmail('');
-      if (result.invited) {
-        // Neuer User → Einladungsmail verschickt
+      if (result.invited && result.tempPassword) {
+        // Neuer User → mit Startpasswort angelegt
         setPending(prev => [...prev, { id: crypto.randomUUID(), email: trimmed, invited_at: new Date().toISOString() }]);
-        setAddSuccess(`Einladung an ${trimmed} wurde gesendet.`);
+        setTempPw({ email: trimmed, pw: result.tempPassword });
       } else {
         // Existierender User → direkt als Mod hinzugefügt
         setActive(prev => [...prev, { id: result.id!, email: trimmed, created_at: new Date().toISOString() }]);
         setAddSuccess(`${trimmed} wurde als Mitarbeiter hinzugefügt.`);
+        setTimeout(() => setAddSuccess(null), 5000);
       }
-      setTimeout(() => setAddSuccess(null), 5000);
     } catch (err) {
       setAddError(err instanceof Error ? err.message : 'Hinzufügen fehlgeschlagen.');
     } finally {
@@ -87,8 +89,42 @@ export default function TeamTab() {
 
   const hasAny = active.length > 0 || pending.length > 0;
 
+  function handleCopyPw() {
+    if (!tempPw) return;
+    void navigator.clipboard.writeText(tempPw.pw).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
   return (
     <div className="settings-section">
+
+      {/* ── Startpasswort-Modal ── */}
+      {tempPw && (
+        <div className="temp-pw-overlay" onClick={() => setTempPw(null)}>
+          <div className="temp-pw-modal" onClick={e => e.stopPropagation()}>
+            <div className="temp-pw-modal__icon">
+              <KeyRound size={20} strokeWidth={1.75} />
+            </div>
+            <h3 className="temp-pw-modal__title">Konto erstellt</h3>
+            <p className="temp-pw-modal__desc">
+              Teile das Startpasswort sicher mit <strong>{tempPw.email}</strong>.
+              Der Mitarbeiter muss es beim ersten Login ändern.
+            </p>
+            <div className="temp-pw-modal__pw-row">
+              <code className="temp-pw-modal__pw">{tempPw.pw}</code>
+              <button className="btn-icon" onClick={handleCopyPw} title="Kopieren">
+                {copied ? <Check size={15} strokeWidth={2.5} /> : <Copy size={15} strokeWidth={2} />}
+              </button>
+            </div>
+            <button className="btn-primary" style={{ width: '100%' }} onClick={() => setTempPw(null)}>
+              Verstanden
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="form-section__head">
         <h2 className="form-section__title">Mitarbeiter</h2>
         <p className="form-section__desc">
@@ -191,7 +227,7 @@ export default function TeamTab() {
             <>
               <p className="team-list__section-label">
                 <Clock size={12} strokeWidth={2} />
-                Eingeladen — wartet auf Kontoaktivierung
+                Startpasswort noch nicht geändert
               </p>
               {pending.map(invite => (
                 <div key={invite.id} className="team-item team-item--pending">

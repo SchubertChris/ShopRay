@@ -32,6 +32,16 @@ const ChangePasswordSchema = z.object({
   newPassword:     z.string().min(8, 'Mindestens 8 Zeichen.').max(200),
 });
 
+const StrongPasswordSchema = z.object({
+  newPassword: z.string()
+    .min(8, 'Mindestens 8 Zeichen.')
+    .max(200)
+    .regex(/[A-Z]/, 'Mindestens ein Großbuchstabe (A–Z).')
+    .regex(/[a-z]/, 'Mindestens ein Kleinbuchstabe (a–z).')
+    .regex(/[0-9]/, 'Mindestens eine Zahl (0–9).')
+    .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/, 'Mindestens ein Sonderzeichen.'),
+});
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const TOTP_PENDING_MAX_AGE = 5 * 60 * 1000; // 5 Minuten
 const SESSION_MAX_AGE      = 24 * 60 * 60 * 1000; // 24 Stunden
@@ -53,6 +63,18 @@ function setAdminCookie(res: Response, token: string): void {
     maxAge:   SESSION_MAX_AGE,
     path:     '/',
   });
+}
+
+function generateTempPassword(): string {
+  const upper   = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const lower   = 'abcdefghijklmnopqrstuvwxyz';
+  const digits  = '0123456789';
+  const special = '!@#$%&*';
+  const all     = upper + lower + digits + special;
+  const pick = (s: string) => s[Math.floor(Math.random() * s.length)];
+  const required = [pick(upper), pick(lower), pick(digits), pick(special)];
+  const rest = Array.from({ length: 8 }, () => pick(all));
+  return [...required, ...rest].sort(() => Math.random() - 0.5).join('');
 }
 
 // Liest Passwort-Hash: zuerst aus admin_config (DB), Fallback auf Env-Var
@@ -216,7 +238,7 @@ router.post('/login/mod', authRateLimit, validate(ModLoginSchema), async (req: R
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, must_change_password')
     .eq('id', authData.user.id)
     .single();
 
@@ -234,7 +256,7 @@ router.post('/login/mod', authRateLimit, validate(ModLoginSchema), async (req: R
     success: true,
   });
 
-  res.json({ ok: true, token, role: 'mod' });
+  res.json({ ok: true, token, role: 'mod', mustChangePassword: profile?.must_change_password ?? false });
 });
 
 // ── POST /api/admin/logout ────────────────────────────────────────────────────
@@ -294,7 +316,7 @@ router.put('/password', requireOwner, validate(ChangePasswordSchema), async (req
 // ── GET /api/admin/mods — aktive Mods + ausstehende Einladungen ───────────────
 router.get('/mods', requireOwner, async (_req: Request, res: Response): Promise<void> => {
   const [modsRes, pendingRes] = await Promise.all([
-    supabase.from('profiles').select('id, email, created_at').eq('role', 'mod').order('created_at', { ascending: false }),
+    supabase.from('profiles').select('id, email, created_at').eq('role', 'mod').eq('must_change_password', false).order('created_at', { ascending: false }),
     supabase.from('pending_mod_invites').select('id, email, invited_at').order('invited_at', { ascending: false }),
   ]);
 
@@ -340,7 +362,7 @@ router.post('/mods', requireOwner, validate(AddModSchema), async (req: Request, 
   }
 
   if (profile) {
-    // Account existiert → Rolle direkt setzen
+    // Account existiert → Rolle direkt setzen (eigenes Passwort bleibt)
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ role: 'mod' })
@@ -351,20 +373,61 @@ router.post('/mods', requireOwner, validate(AddModSchema), async (req: Request, 
     return;
   }
 
-  // Kein Account → Supabase-Einladung senden
-  const frontendUrl = process.env.FRONTEND_URL ?? 'https://shopray-indol.vercel.app';
-  const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${frontendUrl}/account/settings`,
+  // Kein Account → direkt anlegen mit generiertem Startpasswort
+  const tempPassword = generateTempPassword();
+  const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+    email,
+    password:      tempPassword,
+    email_confirm: true,
   });
 
-  if (inviteError) {
-    console.error('[mods invite]', inviteError);
-    res.status(500).json({ error: 'Einladung konnte nicht gesendet werden.' });
+  if (createError || !newUser.user) {
+    console.error('[mods create]', createError);
+    res.status(500).json({ error: 'Konto konnte nicht angelegt werden.' });
     return;
   }
 
+  await supabase.from('profiles').upsert(
+    { id: newUser.user.id, email, role: 'mod', must_change_password: true },
+    { onConflict: 'id' },
+  );
+
   await supabase.from('pending_mod_invites').insert({ email });
-  res.json({ ok: true, invited: true, email });
+  res.json({ ok: true, invited: true, tempPassword, email });
+});
+
+// ── PUT /api/admin/mods/change-password — Startpasswort ändern (Pflicht beim ersten Login) ──
+router.put('/mods/change-password', requireAdmin, validate(StrongPasswordSchema), async (req: Request, res: Response): Promise<void> => {
+  const { newPassword } = req.body as z.infer<typeof StrongPasswordSchema>;
+  const userId = req.adminUserId;
+
+  if (!userId) {
+    res.status(403).json({ error: 'Nur für Mitarbeiter verfügbar.' });
+    return;
+  }
+
+  const { error: pwError } = await supabase.auth.admin.updateUserById(userId, { password: newPassword });
+  if (pwError) {
+    res.status(500).json({ error: 'Passwort konnte nicht gesetzt werden.' });
+    return;
+  }
+
+  // Flag löschen + aus Pending-Liste entfernen
+  const [profileRes, profileData] = await Promise.all([
+    supabase.from('profiles').update({ must_change_password: false }).eq('id', userId),
+    supabase.from('profiles').select('email').eq('id', userId).single(),
+  ]);
+
+  if (profileData.data?.email) {
+    await supabase.from('pending_mod_invites').delete().eq('email', profileData.data.email);
+  }
+
+  if (profileRes.error) {
+    res.status(500).json({ error: 'Status konnte nicht aktualisiert werden.' });
+    return;
+  }
+
+  res.json({ ok: true });
 });
 
 // ── DELETE /api/admin/mods/invite/:id — Ausstehende Einladung zurückziehen ────

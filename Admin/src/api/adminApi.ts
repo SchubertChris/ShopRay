@@ -424,7 +424,7 @@ export const loginTotp = (token: string) =>
   apiFetch<{ ok: boolean }>('/api/admin/login/totp', 'POST', { token });
 
 export const modLogin = (email: string, password: string) =>
-  apiFetch<{ ok: boolean; token: string; role: string }>('/api/admin/login/mod', 'POST', { email, password });
+  apiFetch<{ ok: boolean; token: string; role: string; mustChangePassword: boolean }>('/api/admin/login/mod', 'POST', { email, password });
 
 // ── Mod-Management ────────────────────────────────────────────────────────────
 
@@ -449,7 +449,7 @@ export const getMods = () =>
   apiFetch<ModsResponse>('/api/admin/mods');
 
 export const addMod = (email: string) =>
-  apiFetch<{ ok: boolean; invited: boolean; id?: string; email: string }>('/api/admin/mods', 'POST', { email });
+  apiFetch<{ ok: boolean; invited: boolean; id?: string; email: string; tempPassword?: string }>('/api/admin/mods', 'POST', { email });
 
 export const removeMod = (id: string) =>
   apiFetch<{ ok: boolean }>(`/api/admin/mods/${id}`, 'DELETE');
@@ -459,6 +459,9 @@ export const cancelInvite = (id: string) =>
 
 export const changeOwnerPassword = (currentPassword: string, newPassword: string) =>
   apiFetch<{ ok: boolean }>('/api/admin/password', 'PUT', { currentPassword, newPassword });
+
+export const changeModPassword = (newPassword: string) =>
+  apiFetch<{ ok: boolean }>('/api/admin/mods/change-password', 'PUT', { newPassword });
 
 // ── Kategorien ────────────────────────────────────────────────────────────────
 
