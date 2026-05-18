@@ -41,6 +41,7 @@ export default function LoginPage() {
   // Force-Change-Password State (nach Mod-Login mit Startpasswort)
   const [newPw,       setNewPw]       = useState('');
   const [newPwShow,   setNewPwShow]   = useState(false);
+  const [modName,     setModName]     = useState('');
   const [changingPw,  setChangingPw]  = useState(false);
   const [changeError, setChangeError] = useState('');
 
@@ -102,11 +103,12 @@ export default function LoginPage() {
 
   const handlePasswordChange = async (e: FormEvent) => {
     e.preventDefault();
+    if (modName.trim().length < 2) { setChangeError('Bitte gib deinen Namen ein (mind. 2 Zeichen).'); return; }
     if (!pwValid(newPw)) { setChangeError('Passwort erfüllt nicht alle Anforderungen.'); return; }
     setChangeError('');
     setChangingPw(true);
     try {
-      await submitNewModPassword(newPw);
+      await submitNewModPassword(newPw, modName.trim());
       navigate(ROUTES.DASHBOARD);
     } catch (err) {
       setChangeError(err instanceof Error ? err.message : 'Passwort konnte nicht gesetzt werden.');
@@ -179,6 +181,20 @@ export default function LoginPage() {
               </p>
 
               <div className="login-form__group">
+                <label htmlFor="mod-name">Dein Name</label>
+                <input
+                  id="mod-name"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="Vorname Nachname"
+                  value={modName}
+                  onChange={e => { setModName(e.target.value); if (changeError) setChangeError(''); }}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="login-form__group">
                 <label htmlFor="new-pw">Neues Passwort</label>
                 <div className="login-form__input-wrap">
                   <input
@@ -189,7 +205,6 @@ export default function LoginPage() {
                     value={newPw}
                     onChange={e => { setNewPw(e.target.value); if (changeError) setChangeError(''); }}
                     required
-                    autoFocus
                   />
                   <button type="button" className="login-form__pw-toggle" onClick={() => setNewPwShow(v => !v)} tabIndex={-1}>
                     {newPwShow ? <EyeOff size={15} strokeWidth={2} /> : <Eye size={15} strokeWidth={2} />}
@@ -225,7 +240,7 @@ export default function LoginPage() {
               <button
                 className="login-form__submit"
                 type="submit"
-                disabled={changingPw || !pwValid(newPw)}
+                disabled={changingPw || modName.trim().length < 2 || !pwValid(newPw)}
               >
                 {changingPw
                   ? <><span className="login-form__spinner" />Wird gespeichert…</>

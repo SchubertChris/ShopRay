@@ -40,6 +40,7 @@ const StrongPasswordSchema = z.object({
     .regex(/[a-z]/, 'Mindestens ein Kleinbuchstabe (a–z).')
     .regex(/[0-9]/, 'Mindestens eine Zahl (0–9).')
     .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/, 'Mindestens ein Sonderzeichen.'),
+  name: z.string().trim().min(2, 'Name muss mindestens 2 Zeichen haben.').max(80),
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -408,7 +409,7 @@ router.post('/mods', requireOwner, validate(AddModSchema), async (req: Request, 
 
 // ── PUT /api/admin/mods/change-password — Startpasswort ändern (Pflicht beim ersten Login) ──
 router.put('/mods/change-password', requireAdmin, validate(StrongPasswordSchema), async (req: Request, res: Response): Promise<void> => {
-  const { newPassword } = req.body as z.infer<typeof StrongPasswordSchema>;
+  const { newPassword, name } = req.body as z.infer<typeof StrongPasswordSchema>;
   const userId = req.adminUserId;
 
   if (!userId) {
@@ -422,9 +423,9 @@ router.put('/mods/change-password', requireAdmin, validate(StrongPasswordSchema)
     return;
   }
 
-  // Flag löschen + aus Pending-Liste entfernen
+  // Flag löschen, Name setzen + aus Pending-Liste entfernen
   const [profileRes, profileData] = await Promise.all([
-    supabase.from('profiles').update({ must_change_password: false }).eq('id', userId),
+    supabase.from('profiles').update({ must_change_password: false, name }).eq('id', userId),
     supabase.from('profiles').select('email').eq('id', userId).single(),
   ]);
 

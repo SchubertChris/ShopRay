@@ -11,7 +11,7 @@ interface AuthState {
   role:               AdminRole | null;
   login:                    (password: string) => Promise<void>;
   loginMod:                 (email: string, password: string) => Promise<void>;
-  submitNewModPassword:     (newPassword: string) => Promise<void>;
+  submitNewModPassword:     (newPassword: string, name: string) => Promise<void>;
   verifyTotp:               (token: string) => Promise<void>;
   logout:                   () => Promise<void>;
   checkAuth:                () => Promise<void>;
@@ -45,8 +45,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
     }
   },
 
-  submitNewModPassword: async (newPassword: string) => {
-    await changeModPassword(newPassword);
+  submitNewModPassword: async (newPassword: string, name: string) => {
+    await changeModPassword(newPassword, name);
     set({ isAuthed: true, mustChangePassword: false });
   },
 

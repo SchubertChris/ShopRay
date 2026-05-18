@@ -460,8 +460,8 @@ export const cancelInvite = (id: string) =>
 export const changeOwnerPassword = (currentPassword: string, newPassword: string) =>
   apiFetch<{ ok: boolean }>('/api/admin/password', 'PUT', { currentPassword, newPassword });
 
-export const changeModPassword = (newPassword: string) =>
-  apiFetch<{ ok: boolean }>('/api/admin/mods/change-password', 'PUT', { newPassword });
+export const changeModPassword = (newPassword: string, name: string) =>
+  apiFetch<{ ok: boolean }>('/api/admin/mods/change-password', 'PUT', { newPassword, name });
 
 // ── Kategorien ────────────────────────────────────────────────────────────────
 
