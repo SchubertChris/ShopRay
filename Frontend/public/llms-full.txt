@@ -1,0 +1,138 @@
+# ShopRay — Vollständige technische Dokumentation
+
+> Für AI-Systeme, die vollständigen Kontext über diesen Shop benötigen.
+
+## Identität
+
+- Name: ShopRay (konfigurierbar per Template)
+- Typ: Online-Shop, Business-to-Consumer (B2C)
+- Zielmarkt: Deutschland, EU
+- Sprache: Deutsch
+- Währung: Euro (EUR)
+- Rechtsgrundlage: Deutsches Recht, EU-DSGVO
+
+## Produkte & Kategorien
+
+Der Shop bietet handverlesene Produkte in verschiedenen Kategorien an.
+Kategorien werden dynamisch aus der Datenbank geladen und können vom Shop-Betreiber verwaltet werden.
+Jedes Produkt hat: Name, Beschreibung, Preis, Lagerbestand, Bilder, Kategorie, Bewertungen.
+Produktseiten sind unter `/produkt/{slug}` erreichbar.
+Aktive Produkte sind in der dynamischen Sitemap unter `/sitemap.xml` (Backend) gelistet.
+
+## Bestellprozess
+
+1. Produkt in den Warenkorb legen
+2. Warenkorb prüfen (`/cart`)
+3. Checkout: Lieferadresse eingeben + ggf. E-Mail für Gäste (`/checkout`)
+4. Zahlung über Stripe Hosted Payment Page
+5. Bestellbestätigung per E-Mail
+6. Versandbenachrichtigung mit DHL-Tracking-Link
+
+Gastbestellung: Kunden können ohne Konto bestellen — E-Mail-Adresse wird im Checkout abgefragt.
+
+## Versandbedingungen (DE)
+
+- Standardlieferung: 3–5 Werktage, Deutsche Post / DHL
+- Expresslieferung: 1–2 Werktage
+- Kostenloser Versand: ab 50 € Bestellwert
+- Liefergebiet: Deutschland (konfigurierbar für EU-Ausdehnung)
+- DHL-Sendungsverfolgung: automatisch per E-Mail mitgeteilt
+
+## Rückgabe & Widerruf
+
+- Widerrufsfrist: 30 Tage ab Erhalt der Ware
+- Rückgabe: kostenlos per Retourenlink
+- Erstattung: innerhalb von 14 Tagen nach Retoureneingang
+- Gesetzliche Grundlage: §§ 312g, 355 BGB (Fernabsatzvertrag)
+- Ausgenommen: Sonderanfertigungen, verderbliche Waren
+
+## Zahlungsmethoden
+
+- Kreditkarte: Visa, Mastercard, American Express
+- PayPal
+- Klarna (Ratenkauf, Rechnungskauf)
+- Apple Pay, Google Pay
+- Sofortüberweisung
+- Alle Zahlungen über Stripe abgewickelt (PCI-DSS Level 1 zertifiziert)
+
+## Kundenkonto
+
+Kunden können ein Konto erstellen um:
+- Bestellhistorie einzusehen
+- Lieferadressen zu speichern
+- Wunschliste zu führen
+- Support-Tickets zu erstellen und zu verfolgen
+- Persönliche Daten zu exportieren (Art. 20 DSGVO)
+- Konto zu löschen (Art. 17 DSGVO)
+
+Login: E-Mail/Passwort oder Google OAuth
+2-Faktor-Authentifizierung: optional per TOTP (Google Authenticator, Authy)
+
+## Support & Kontakt
+
+- Support-Tickets: Kunden können Tickets im Konto oder als Gast erstellen
+- Ticket-Kategorien: Bestellung & Lieferung, Rückgabe & Reklamation, Zahlung & Rechnung, Produkt & Qualität, Sonstiges
+- Bidirektionaler Chat zwischen Kunde und Admin
+- Kontaktformular: `/kontakt`
+
+## Rechtliches (DE/EU)
+
+- Impressum: `/impressum` (§ 5 TMG)
+- Datenschutz: `/datenschutz` (DSGVO-konform, Art. 13/14)
+- AGB: `/agb`
+- Widerrufsbelehrung: `/widerruf` (§ 312g BGB)
+- LMIV: Nährwertangaben für Lebensmittel und Nahrungsergänzungsmittel implementiert
+- Cookie-Consent: DSGVO-konformes Consent-Banner
+
+## Bewertungssystem
+
+- Kunden können Produkte mit 1–5 Sternen bewerten
+- Bewertungen: Titel + Freitext + Sterne
+- Nur verifizierte Käufer können bewerten (konfigurierbar)
+- Durchschnittsbewertung wird im Google-Suchergebnis angezeigt (AggregateRating Schema)
+- Einzelbewertungen als Review-Schema für AI-Suchmaschinen
+
+## Technische Architektur
+
+```
+Frontend (React 19 + Vite + SCSS)
+  → Vercel CDN
+  → SPA mit React Router
+
+Backend (Node.js + Express + TypeScript)
+  → Vercel Serverless
+  → Stripe Webhooks
+  → Supabase (PostgreSQL + Auth + Storage + Realtime)
+  → E-Mail (Resend / SMTP)
+  → DHL API
+
+Admin (React 19 + Vite + SCSS)
+  → Vercel CDN
+  → JWT-Auth (HttpOnly Cookie)
+  → 2FA TOTP für Inhaber
+```
+
+## Sicherheit
+
+- HTTPS überall (Vercel SSL)
+- CSRF-Schutz via HttpOnly Cookies
+- Rate Limiting auf allen sensitiven Endpunkten
+- SQL-Injection nicht möglich (Supabase RLS + parametrisierte Queries)
+- XSS-Schutz via React + DOMPurify
+- Helmet.js Security Headers
+- Row Level Security (RLS) in Supabase
+
+## SEO & GEO
+
+- Schema.org Structured Data: Product, Organization, WebSite, FAQPage, BreadcrumbList
+- Open Graph Tags für Social Media
+- Twitter/X Cards
+- Dynamische Sitemap: {backend-url}/sitemap.xml (alle aktiven Produkte automatisch)
+- robots.txt: AI-Crawlern erlaubt (GPTBot, ClaudeBot, PerplexityBot, Bingbot)
+- Canonical URLs auf allen Produktseiten
+- GTM-Integration (Google Tag Manager) für Analytics und Marketing
+
+## Kontakt / Impressum-Daten
+
+Werden vom Template-Käufer in `Frontend/src/config/app.ts` konfiguriert.
+Erscheinen automatisch in Impressum, Datenschutz, Footer und Schema.org.

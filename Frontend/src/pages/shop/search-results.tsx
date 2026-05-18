@@ -71,17 +71,27 @@ export default function SearchPage() {
     return () => { clearTimeout(timer); obs?.disconnect(); };
   }, [displayResults, visibleCount]);
 
+  const seoTitle = isSale
+    ? 'Sale — Reduzierte Produkte'
+    : isNew
+    ? 'Neuheiten'
+    : urlCategory
+    ? urlCategory
+    : 'Alle Produkte';
+
+  const seoDescription = isSale
+    ? 'Jetzt sparen — reduzierte Produkte im Sale. Günstig und in bester Qualität.'
+    : isNew
+    ? 'Entdecke die neuesten Produkte in unserem Sortiment — frisch eingetroffen.'
+    : urlCategory
+    ? `Alle ${urlCategory}-Produkte entdecken — handverlesen, direkt lieferbar.`
+    : 'Stöbere durch unsere gesamte Kollektion — Wohnen, Küche, Deko, Textilien und mehr.';
+
   return (
     <>
       <SeoMeta
-        title={isSale ? 'Sale' : isNew ? 'Neuheiten' : 'Kollektionen'}
-        description={
-          isSale
-            ? 'Jetzt sparen — reduzierte Produkte im Sale.'
-            : isNew
-            ? 'Entdecke die neuesten Produkte in unserem Sortiment.'
-            : 'Stöbere durch unsere gesamte Kollektion — Wohnen, Küche, Deko, Textilien und mehr.'
-        }
+        title={seoTitle}
+        description={seoDescription}
       />
 
       {/* ── MODE-AWARE HERO ──────────────────────────────────────────────── */}

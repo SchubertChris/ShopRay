@@ -1,6 +1,10 @@
 User-agent: *
 Allow: /
 
+# Vollständige AI-Kontextdatei
+Allow: /llms.txt
+Allow: /llms-full.txt
+
 # Nutzer-spezifische Seiten nicht indizieren
 Disallow: /account/
 Disallow: /cart
@@ -34,4 +38,6 @@ Allow: /
 User-agent: CCBot
 Disallow: /
 
-Sitemap: https://deine-domain.de/sitemap.xml
+# Sitemap wird vom Backend dynamisch generiert (enthält alle aktiven Produkte).
+# Eigene Backend-URL eintragen — z.B. https://api.dein-shop.de/sitemap.xml
+Sitemap: https://deine-backend-domain.de/sitemap.xml

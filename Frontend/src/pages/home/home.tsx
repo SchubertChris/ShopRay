@@ -11,7 +11,7 @@ import { ROUTES } from '@config/routes';
 import { useTheme } from '@providers/ThemeProvider';
 import { PALETTES } from '@config/theme';
 import { IMAGES, getAvatarImage, getCategoryImage } from '@config/images';
-import { APP_NAME, APP_URL, APP_SOCIALS } from '@config/app';
+import { APP_NAME, APP_URL, APP_SOCIALS, APP_CONTACT, APP_OG_IMAGE } from '@config/app';
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
@@ -118,13 +118,21 @@ export default function HomePage() {
     '@type': 'Organization',
     name: APP_NAME,
     url: origin,
-    logo: `${origin}/favicon.svg`,
-    contactPoint: {
-      '@type': 'ContactPoint',
-      contactType: 'customer service',
-      availableLanguage: 'German',
+    logo: {
+      '@type':  'ImageObject',
+      url:       `${origin}${APP_OG_IMAGE}`,
+      width:    '1200',
+      height:   '630',
     },
-    sameAs: Object.values(APP_SOCIALS).filter(v => v !== '#'),
+    contactPoint: {
+      '@type':           'ContactPoint',
+      email:              APP_CONTACT.email,
+      telephone:          APP_CONTACT.phone,
+      contactType:       'customer service',
+      availableLanguage: 'German',
+      areaServed:        'DE',
+    },
+    sameAs: Object.values(APP_SOCIALS).filter(v => v !== '#' && v !== ''),
   };
 
   const faqSchema = {

@@ -1,41 +1,75 @@
-# ShopRay
+# ShopRay — Online-Shop Template
 
-> A professional e-commerce shop template built with React, TypeScript, and Express.js.
+> Professionelles E-Commerce-Template für kleine und mittelständische Unternehmen in der EU.
 
-ShopRay is a fully featured online shop with a React frontend, Node.js/Express backend, and a separate admin panel. It is designed as a template for small to medium businesses in the EU, with full GDPR compliance, Stripe payment integration, and Supabase authentication.
+ShopRay ist ein vollständig eingerichtetes Online-Shop-System mit React-Frontend, Node.js/Express-Backend und separatem Admin-Panel. Gebaut für den deutschen und europäischen Markt — DSGVO-konform, Stripe-Zahlung, Supabase-Authentifizierung.
 
-## Key Features
+## Shop-Angebot
 
-- Product catalog with search, filtering, and category browsing
-- Shopping cart and Stripe-powered checkout (hosted payment page)
-- Customer accounts: order history, addresses, profile, wishlist, support tickets
-- Authentication: email/password, Google OAuth, two-factor authentication (TOTP), password reset
-- GDPR compliance: consent banner, data export (Art. 20), account deletion (Art. 17)
-- LMIV nutritional information for food and supplement products (EU food labeling regulation)
-- Admin panel: products, orders, customers, reviews, support tickets, shipping settings
-- 4 color themes × dark/light mode = 8 visual themes
-- Mobile-first responsive design
+- Produktkatalog mit Suche, Filter und Kategorien
+- Warenkorb und Checkout (Stripe Hosted Payment)
+- Kundenkonten: Bestellhistorie, Adressen, Profil, Wunschliste, Support-Tickets
+- Gastbestellung ohne Konto möglich
 
-## Pages
+## Versand & Lieferung
 
-- `/` — Homepage with featured products, categories, reviews, FAQ
-- `/shop` — Product search and filtering
-- `/kategorien` — Product categories
-- `/produkt/:slug` — Individual product detail with images, description, reviews, nutritional info
-- `/ueber-uns` — About the shop
-- `/faq` — Frequently asked questions
-- `/kontakt` — Contact form
-- `/versand` — Shipping information
-- `/impressum` — Legal imprint (German law)
-- `/datenschutz` — Privacy policy (GDPR)
-- `/agb` — Terms and conditions
-- `/widerruf` — Right of withdrawal
+- Standardlieferung: 3–5 Werktage
+- Expresslieferung: 1–2 Werktage
+- Kostenloser Versand ab 50 € Bestellwert
+- DHL-Integration für automatische Versandlabels
+- Sendungsverfolgung mit DHL-Tracking-Link
 
-## Technology
+## Rückgabe & Garantie
 
-Frontend: React 19, TypeScript, Vite, SCSS (7-1 architecture), Zustand
-Backend: Node.js, Express, TypeScript, Zod, Nodemailer
-Database: PostgreSQL via Supabase (self-hostable)
-Auth: Supabase Auth with MFA/TOTP and Google OAuth
-Payments: Stripe (hosted checkout page)
-Deployment: Vercel (3 separate projects — frontend, backend, admin)
+- 30 Tage Rückgaberecht ohne Angabe von Gründen
+- Kostenlose Retoure per Retourenlink
+- EU-Widerrufsrecht vollständig implementiert
+
+## Zahlung
+
+- Kreditkarte (Visa, Mastercard, Amex)
+- PayPal, Klarna, Apple Pay, Google Pay
+- Vollständige Stripe-Integration (PCI-DSS-konform)
+
+## Authentifizierung & Sicherheit
+
+- E-Mail/Passwort-Login
+- Google OAuth
+- 2-Faktor-Authentifizierung (TOTP)
+- DSGVO Art. 17 (Recht auf Löschung) und Art. 20 (Datenportabilität) implementiert
+
+## Technologie
+
+Frontend: React 19, TypeScript, Vite, SCSS
+Backend: Node.js, Express, TypeScript, Zod
+Datenbank: PostgreSQL via Supabase
+Authentifizierung: Supabase Auth (MFA/TOTP, Google OAuth)
+Zahlung: Stripe Hosted Checkout
+Deployment: Vercel (3 separate Projekte — Frontend, Backend, Admin)
+
+## Seiten
+
+- `/` — Startseite mit Produkten, Kategorien, Bewertungen, FAQ
+- `/shop` — Produktsuche und -filter
+- `/kategorien` — Produktkategorien
+- `/produkt/:slug` — Produktdetailseite mit Bilder, Beschreibung, Bewertungen
+- `/ueber-uns` — Über den Shop
+- `/faq` — Häufige Fragen
+- `/kontakt` — Kontaktformular
+- `/versand` — Versand- und Rückgabebedingungen
+- `/impressum` — Impressum (deutsches Recht)
+- `/datenschutz` — Datenschutzerklärung (DSGVO)
+- `/agb` — Allgemeine Geschäftsbedingungen
+- `/widerruf` — Widerrufsbelehrung
+
+## Admin-Panel
+
+- Produkte, Bestellungen, Kunden, Bewertungen, Support-Tickets
+- Team-Verwaltung (Mitarbeiter einladen)
+- Versand-Einstellungen und DHL-Label-Erstellung
+- Push-Benachrichtigungen
+- 2FA für Inhaber
+
+## Weitere Informationen
+
+Ausführliche technische Dokumentation: /llms-full.txt

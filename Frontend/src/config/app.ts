@@ -27,8 +27,15 @@ export const APP_DESCRIPTION =
 export const APP_TAGLINE =
   'Kuratierte Lifestyle-Objekte — ausgewählt für Menschen mit Geschmack.';
 
-/** Pfad zum OG-Bild (in /public ablegen) — wird auf Social Media angezeigt */
+/** Pfad zum OG-Bild (in /public ablegen) — wird auf Social Media angezeigt. PNG, 1200×630 px */
 export const APP_OG_IMAGE = '/og-image.png';
+
+/**
+ * Google Tag Manager Container-ID — z.B. 'GTM-XXXXXXX'
+ * Leer lassen ('') wenn nicht genutzt. Trägt automatisch GTM in alle Seiten ein.
+ * GA4, Meta Pixel, TikTok Pixel etc. danach über die GTM-Oberfläche konfigurieren.
+ */
+export const APP_GTM_ID = '';
 
 // ── FIRMA / RECHTSDATEN ──────────────────────────────────────────────────────
 // Werden automatisch in Impressum, Datenschutz und Widerrufsbelehrung eingesetzt.

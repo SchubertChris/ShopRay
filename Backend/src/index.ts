@@ -26,6 +26,7 @@ import adminPushRouter       from './routes/admin-push';
 import adminTicketMessagesRouter from './routes/admin-ticket-messages';
 import adminShippingRouter   from './routes/admin-shipping';
 import settingsRouter        from './routes/settings';
+import sitemapRouter         from './routes/sitemap';
 
 const app  = express();
 const PORT = process.env.PORT ?? 5000;
@@ -55,6 +56,7 @@ app.use('/api/categories', categoriesRouter);
 
 // ── Öffentliche Settings-Route ────────────────────────────────────────────────
 app.use('/api/settings', settingsRouter);
+app.use('/sitemap.xml',  sitemapRouter);
 
 // ── Admin Routes (JWT HttpOnly Cookie erforderlich) ───────────────────────────
 app.use('/api/admin', demoModeGuard);

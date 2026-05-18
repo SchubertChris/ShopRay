@@ -1,4 +1,5 @@
 export { Stars }        from './Stars';
+export { GtmScript }   from './GtmScript';
 export { ProductImage } from './ProductImage';
 export { ProductCard }  from './ProductCard';
 export { Toast } from './Toast';

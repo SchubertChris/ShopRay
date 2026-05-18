@@ -13,6 +13,7 @@ import { useAuth } from '@features/auth';
 import { Stars, SeoMeta, JsonLd, ProductCard } from '@components/ui';
 import { ROUTES } from '@config/routes';
 import { FEATURES } from '@config/features';
+import { APP_NAME, APP_URL, APP_CONTACT } from '@config/app';
 import { getErrorMessage } from '@/utils/errorMessage';
 
 const DEMO_LMIV: LmivInfo = {
@@ -116,6 +117,8 @@ export default function ProductDetailPage() {
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : null;
 
+  const origin = typeof window !== 'undefined' ? window.location.origin : APP_URL;
+
   const productSchema = {
     '@context': 'https://schema.org',
     '@type':    'Product',
@@ -127,9 +130,29 @@ export default function ProductDetailPage() {
       '@type':        'Offer',
       priceCurrency:  'EUR',
       price:           product.price,
+      url:            `${origin}/produkt/${product.slug}`,
       availability:   (product.stock ?? 0) > 0
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
+      seller: { '@type': 'Organization', name: APP_NAME },
+      shippingDetails: {
+        '@type': 'OfferShippingDetails',
+        shippingRate: { '@type': 'MonetaryAmount', currency: 'EUR', value: '0' },
+        shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'DE' },
+        deliveryTime: {
+          '@type':       'ShippingDeliveryTime',
+          handlingTime:  { '@type': 'QuantitativeValue', minValue: 0, maxValue: 1, unitCode: 'DAY' },
+          transitTime:   { '@type': 'QuantitativeValue', minValue: 2, maxValue: 5, unitCode: 'DAY' },
+        },
+      },
+      hasMerchantReturnPolicy: {
+        '@type':                  'MerchantReturnPolicy',
+        applicableCountry:        'DE',
+        returnPolicyCategory:     'https://schema.org/MerchantReturnFiniteReturnWindow',
+        merchantReturnDays:       30,
+        returnMethod:             'https://schema.org/ReturnByMail',
+        returnFees:               'https://schema.org/FreeReturn',
+      },
     },
     ...(avgRating && {
       aggregateRating: {
@@ -140,6 +163,38 @@ export default function ProductDetailPage() {
         worstRating:   '1',
       },
     }),
+    ...(reviews.length > 0 && {
+      review: reviews.slice(0, 5).map(r => ({
+        '@type':  'Review',
+        author:   { '@type': 'Person', name: r.userName },
+        reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: '5' },
+        reviewBody:   r.body,
+        datePublished: r.createdAt.split('T')[0],
+      })),
+    }),
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type':    'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Shop', item: `${origin}/shop` },
+      { '@type': 'ListItem', position: 2, name: product.category, item: `${origin}/shop?category=${encodeURIComponent(product.category)}` },
+      { '@type': 'ListItem', position: 3, name: product.name },
+    ],
+  };
+
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type':    'Organization',
+    name:        APP_NAME,
+    url:         origin,
+    contactPoint: {
+      '@type':           'ContactPoint',
+      email:              APP_CONTACT.email,
+      contactType:       'customer service',
+      availableLanguage: 'German',
+    },
   };
 
   return (
@@ -148,8 +203,12 @@ export default function ProductDetailPage() {
         title={product.name}
         description={product.description ?? `${product.name} kaufen — ${product.category}`}
         ogType="product"
+        ogImage={product.images?.[0] ?? undefined}
+        canonical={`/produkt/${product.slug}`}
       />
       <JsonLd data={productSchema} />
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={organizationSchema} />
 
       <section className="section">
         <div className="container">
