@@ -3,7 +3,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import multer  from 'multer';
 import crypto  from 'crypto';
 import { supabase }    from '../lib/supabase';
-import { requireAdmin } from '../middleware/adminAuth';
+import { requireAdmin, requireOwner } from '../middleware/adminAuth';
 import { validate, UUIDParam } from '../lib/validate';
 
 const router = Router();
@@ -84,7 +84,7 @@ const BulkRowSchema = z.object({
 router.use(requireAdmin);
 
 // POST /api/admin/products/bulk — Mehrere Produkte auf einmal anlegen
-router.post('/bulk', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.post('/bulk', requireOwner, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const rows = req.body;
     if (!Array.isArray(rows) || rows.length === 0) {
@@ -148,7 +148,7 @@ router.post('/bulk', async (req: Request, res: Response, next: NextFunction): Pr
 });
 
 // POST /api/admin/products/upload — Bild hochladen
-router.post('/upload', upload.single('image'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.post('/upload', requireOwner, upload.single('image'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const file = req.file;
     if (!file) { res.status(400).json({ error: 'Keine Datei empfangen.' }); return; }
@@ -183,7 +183,7 @@ router.get('/:id', validate(UUIDParam, 'params'), async (req: Request, res: Resp
 });
 
 // POST /api/admin/products — Produkt anlegen
-router.post('/', validate(ProductBodySchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.post('/', requireOwner, validate(ProductBodySchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const body = req.body as ProductBody;
 
@@ -208,7 +208,7 @@ router.post('/', validate(ProductBodySchema), async (req: Request, res: Response
 });
 
 // PUT /api/admin/products/:id — Produkt bearbeiten
-router.put('/:id', validate(UUIDParam, 'params'), validate(UpdateProductSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.put('/:id', requireOwner, validate(UUIDParam, 'params'), validate(UpdateProductSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const body = req.body as UpdateBody;
     const { id } = req.params;
@@ -234,7 +234,7 @@ router.put('/:id', validate(UUIDParam, 'params'), validate(UpdateProductSchema),
 });
 
 // DELETE /api/admin/products/:id — Produkt löschen
-router.delete('/:id', validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.delete('/:id', requireOwner, validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
 

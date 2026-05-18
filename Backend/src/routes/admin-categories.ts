@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { Router, Request, Response, NextFunction } from 'express';
 import { supabase }     from '../lib/supabase';
-import { requireAdmin } from '../middleware/adminAuth';
+import { requireAdmin, requireOwner } from '../middleware/adminAuth';
 import { validate, UUIDParam } from '../lib/validate';
 
 const router = Router();
@@ -31,7 +31,7 @@ router.get('/', async (_req: Request, res: Response, next: NextFunction): Promis
 });
 
 // POST /api/admin/categories — Kategorie anlegen
-router.post('/', validate(CategorySchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.post('/', requireOwner, validate(CategorySchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { name, order, image_url } = req.body as z.infer<typeof CategorySchema>;
 
@@ -60,7 +60,7 @@ router.post('/', validate(CategorySchema), async (req: Request, res: Response, n
 });
 
 // DELETE /api/admin/categories/:id — Kategorie löschen
-router.delete('/:id', validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.delete('/:id', requireOwner, validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { error } = await supabase
       .from('categories')

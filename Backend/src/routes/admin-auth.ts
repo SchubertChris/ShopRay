@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 import jwt    from 'jsonwebtoken';
 import { verifySync } from 'otplib';
 import { authRateLimit } from '../middleware/security';
-import { requireAdmin }  from '../middleware/adminAuth';
+import { requireAdmin, requireOwner }  from '../middleware/adminAuth';
 import { supabase }      from '../lib/supabase';
 import { sendMail, adminLoginAlertHtml } from '../lib/mailer';
 import { validate } from '../lib/validate';
@@ -109,7 +109,7 @@ router.post('/login', authRateLimit, validate(LoginSchema), async (req: Request,
     return;
   }
 
-  const token = jwt.sign({ role: 'admin' }, secret, { expiresIn: '24h' });
+  const token = jwt.sign({ role: 'owner' }, secret, { expiresIn: '24h' });
   setAdminCookie(res, token);
 
   // ── Login loggen + E-Mail-Alarm (fire-and-forget) ────────────────────────
@@ -161,7 +161,7 @@ router.post('/login/totp', authRateLimit, validate(TotpSchema), async (req: Requ
   const isProd = process.env.NODE_ENV === 'production';
   res.clearCookie('totpPending', { httpOnly: true, secure: isProd, sameSite: isProd ? 'none' : 'lax', path: '/' });
 
-  const sessionToken = jwt.sign({ role: 'admin' }, secret, { expiresIn: '24h' });
+  const sessionToken = jwt.sign({ role: 'owner' }, secret, { expiresIn: '24h' });
   setAdminCookie(res, sessionToken);
 
   // Login loggen
@@ -170,6 +170,56 @@ router.post('/login/totp', authRateLimit, validate(TotpSchema), async (req: Requ
   void supabase.from('admin_login_log').insert({ ip_address: ip, user_agent: userAgent, success: true });
 
   res.json({ ok: true, token: sessionToken });
+});
+
+const ModLoginSchema = z.object({
+  email:    z.string().email('Ungültige E-Mail.'),
+  password: z.string().min(1, 'Passwort fehlt.').max(200),
+});
+
+router.post('/login/mod', authRateLimit, validate(ModLoginSchema), async (req: Request, res: Response): Promise<void> => {
+  const { email, password } = req.body as z.infer<typeof ModLoginSchema>;
+  const ip = getClientIp(req);
+
+  const secret = process.env.JWT_SECRET;
+  if (!secret) { res.status(500).json({ error: 'JWT_SECRET fehlt.' }); return; }
+
+  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+  if (authError || !authData.user) {
+    void supabase.from('admin_login_log').insert({
+      ip_address: ip,
+      user_agent: (req.headers['user-agent'] ?? '').slice(0, 500),
+      success: false,
+    });
+    res.status(401).json({ error: 'Ungültige Anmeldedaten.' });
+    return;
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', authData.user.id)
+    .single();
+
+  if (profile?.role !== 'mod') {
+    res.status(403).json({ error: 'Kein Mitarbeiter-Zugriff.' });
+    return;
+  }
+
+  const token = jwt.sign(
+    { role: 'mod', userId: authData.user.id },
+    secret,
+    { expiresIn: '24h' }
+  );
+  setAdminCookie(res, token);
+
+  void supabase.from('admin_login_log').insert({
+    ip_address: ip,
+    user_agent: (req.headers['user-agent'] ?? '').slice(0, 500),
+    success: true,
+  });
+
+  res.json({ ok: true, token, role: 'mod' });
 });
 
 // POST /api/admin/logout
@@ -185,8 +235,8 @@ router.post('/logout', (_req: Request, res: Response): void => {
 });
 
 // GET /api/admin/check — prüft ob Sitzung noch gültig ist
-router.get('/check', requireAdmin, (_req: Request, res: Response): void => {
-  res.json({ ok: true });
+router.get('/check', requireAdmin, (req: Request, res: Response): void => {
+  res.json({ ok: true, role: req.adminRole ?? 'owner' });
 });
 
 // GET /api/admin/login-log — letzte 50 Login-Einträge (Admin-Session erforderlich)
@@ -204,6 +254,73 @@ router.get('/login-log', requireAdmin, async (_req: Request, res: Response): Pro
     console.error('[login-log] Supabase-Fehler:', err);
     res.status(500).json({ error: 'Protokoll konnte nicht geladen werden.' });
   }
+});
+
+const AddModSchema = z.object({
+  email: z.string().email('Ungültige E-Mail.'),
+});
+
+router.get('/mods', requireOwner, async (_req: Request, res: Response): Promise<void> => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, email, created_at')
+    .eq('role', 'mod')
+    .order('created_at', { ascending: false });
+
+  if (error) { res.status(500).json({ error: 'Laden fehlgeschlagen.' }); return; }
+  res.json(data ?? []);
+});
+
+router.post('/mods', requireOwner, validate(AddModSchema), async (req: Request, res: Response): Promise<void> => {
+  const { email } = req.body as z.infer<typeof AddModSchema>;
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('id, role, email')
+    .eq('email', email)
+    .single();
+
+  if (error || !profile) {
+    res.status(404).json({ error: 'Kein Nutzer mit dieser E-Mail gefunden. Der Nutzer muss sich zuerst im Shop registrieren.' });
+    return;
+  }
+
+  if (profile.role === 'owner' || profile.role === 'admin') {
+    res.status(400).json({ error: 'Dieser Nutzer ist bereits Inhaber/Admin.' });
+    return;
+  }
+
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ role: 'mod' })
+    .eq('id', profile.id);
+
+  if (updateError) { res.status(500).json({ error: 'Rolle konnte nicht gesetzt werden.' }); return; }
+
+  res.json({ ok: true, id: profile.id, email });
+});
+
+router.delete('/mods/:id', requireOwner, async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', id)
+    .single();
+
+  if (profile?.role !== 'mod') {
+    res.status(400).json({ error: 'Dieser Nutzer ist kein Mitarbeiter.' });
+    return;
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ role: 'customer' })
+    .eq('id', id);
+
+  if (error) { res.status(500).json({ error: 'Entfernen fehlgeschlagen.' }); return; }
+  res.json({ ok: true });
 });
 
 export default router;

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { Router, Request, Response, NextFunction } from 'express';
 import { supabase }     from '../lib/supabase';
-import { requireAdmin } from '../middleware/adminAuth';
+import { requireAdmin, requireOwner } from '../middleware/adminAuth';
 import { validate }     from '../lib/validate';
 
 const router = Router();
@@ -68,8 +68,8 @@ router.get('/shop', async (_req: Request, res: Response, next: NextFunction): Pr
   }
 });
 
-// PUT /api/admin/settings/shop — nur Admin
-router.put('/shop', requireAdmin, validate(ShopSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+// PUT /api/admin/settings/shop — nur Owner
+router.put('/shop', requireOwner, validate(ShopSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const body = req.body as z.infer<typeof ShopSchema>;
     const { data, error } = await supabase
@@ -128,8 +128,8 @@ router.get('/shipping', async (_req: Request, res: Response, next: NextFunction)
   }
 });
 
-// PUT /api/admin/settings/shipping — nur Admin
-router.put('/shipping', requireAdmin, validate(ShippingSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+// PUT /api/admin/settings/shipping — nur Owner
+router.put('/shipping', requireOwner, validate(ShippingSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const body = req.body as z.infer<typeof ShippingSchema>;
 

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { Router, Request, Response, NextFunction } from 'express';
 import { supabase }     from '../lib/supabase';
-import { requireAdmin } from '../middleware/adminAuth';
+import { requireAdmin, requireOwner } from '../middleware/adminAuth';
 import { validate, UUIDParam } from '../lib/validate';
 import { sendMail, accountBannedHtml } from '../lib/mailer';
 
@@ -81,7 +81,7 @@ router.get('/:id', validate(UUIDParam, 'params'), async (req: Request, res: Resp
 });
 
 // PATCH /api/admin/customers/:id/role — Rolle ändern
-router.patch('/:id/role', validate(UUIDParam, 'params'), validate(RoleSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.patch('/:id/role', requireOwner, validate(UUIDParam, 'params'), validate(RoleSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { role } = req.body as { role: UserRole };
 
@@ -107,7 +107,7 @@ const BanSchema = z.object({
 });
 
 // POST /api/admin/customers/:id/ban — Konto sperren
-router.post('/:id/ban', validate(UUIDParam, 'params'), validate(BanSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.post('/:id/ban', requireOwner, validate(UUIDParam, 'params'), validate(BanSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { reason, until } = req.body as { reason: string; until?: string };
@@ -186,7 +186,7 @@ router.post('/:id/ban', validate(UUIDParam, 'params'), validate(BanSchema), asyn
 });
 
 // POST /api/admin/customers/:id/unban — Kontosperre aufheben
-router.post('/:id/unban', validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.post('/:id/unban', requireOwner, validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -214,7 +214,7 @@ router.post('/:id/unban', validate(UUIDParam, 'params'), async (req: Request, re
 });
 
 // DELETE /api/admin/customers/:id — Kunden löschen (DSGVO-konform)
-router.delete('/:id', validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.delete('/:id', requireOwner, validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
 
