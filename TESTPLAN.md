@@ -1,5 +1,5 @@
 # ShopRay — Testplan
-Stand: 2026-05-18 (v3 — inkl. Bug-Fixes: SEPA, Zahlungsabbruch, Filter, Mobile, Kategorien, Shop-Settings)
+Stand: 2026-05-18 (v4 — inkl. Rollen-System: Owner/Mod Login, Guards, Sidebar, Team-Tab)
 
 ---
 
@@ -282,7 +282,44 @@ Hier prüfe ich zuerst ob echte Daten ankommen — kein Mock.
 
 ---
 
-### 13 — Demo-Modus
+### 13 — Admin: Rollen-System (Owner / Mod)
+
+**Vorbereitung:** Ein normaler Frontend-User muss existieren (z. B. via Registrierung). Dessen E-Mail für den Mod-Test verwenden.
+
+#### Owner-Login
+- [ ] Admin-Login → Tab „Inhaber" → Passwort eingeben → Dashboard
+- [ ] Sidebar zeigt „Inhaber" im Footer statt „Administrator"
+- [ ] Alle Nav-Items sichtbar: Dashboard, Produkte, Bestellungen, Kunden, Kategorien, Bewertungen, Tickets, Anfragen, **Einstellungen**
+- [ ] Einstellungen → Tab „Mitarbeiter" sichtbar
+- [ ] Produkt erstellen (`/products/new`) → erreichbar
+- [ ] Kategorien-Seite → erreichbar
+
+#### Mitarbeiter-Anlegen
+- [ ] Einstellungen → Mitarbeiter → E-Mail des Frontend-Users eingeben → „Hinzufügen"
+- [ ] User erscheint in der Mitarbeiter-Liste mit Datum
+- [ ] Doppeltes Hinzufügen desselben Users: bereits in Liste → kein Duplikat (sinnvoller Fehler)
+- [ ] Owner-Account als Mod hinzufügen → Fehlermeldung „bereits Inhaber/Admin"
+
+#### Mod-Login
+- [ ] Admin-Login → Tab „Mitarbeiter" → E-Mail + Passwort des Mod-Users eingeben → Dashboard
+- [ ] Sidebar zeigt „Mitarbeiter" im Footer
+- [ ] Nav: **Kategorien fehlt**, **Einstellungen fehlt** → nur erlaubte Items sichtbar
+- [ ] URL `/categories` direkt aufrufen → Redirect zu Dashboard
+- [ ] URL `/settings` direkt aufrufen → Redirect zu Dashboard
+- [ ] URL `/products/new` direkt aufrufen → Redirect zu Dashboard
+- [ ] Produkt-Liste: kein „Neues Produkt"-Button, kein „CSV importieren"-Button, kein Löschen-Button
+- [ ] Kunden-Liste: kein Ban-Button, kein Löschen-Button
+- [ ] Kunden-Detail: kein Ban/Unban/Löschen/Rolle-ändern-Button
+- [ ] Bewertungen: kein Löschen-Button (Freischalten/Ablehnen weiterhin sichtbar)
+- [ ] Bestellungen, Tickets, Anfragen: voll zugänglich
+
+#### Mod entfernen
+- [ ] Als Owner einloggen → Einstellungen → Mitarbeiter → Mod-User löschen → aus Liste entfernt
+- [ ] Mod-Login danach → 403 Fehlermeldung „Kein Mitarbeiter-Zugriff"
+
+---
+
+### 14 — Demo-Modus
 
 - [ ] `DEMO_MODE=true` in Backend `.env` setzen, Server neu starten
 - [ ] Admin-Login → funktioniert
@@ -292,7 +329,7 @@ Hier prüfe ich zuerst ob echte Daten ankommen — kein Mock.
 
 ---
 
-### 14 — Rechtliches & Content-Schutz
+### 15 — Rechtliches & Content-Schutz
 
 - [ ] Impressum, Datenschutz, AGB, Widerruf: alle Seiten erreichbar, kein Platzhalter-Text
 - [ ] Rechtsklick auf Produktbild → kein Browser-Kontextmenü
@@ -301,7 +338,7 @@ Hier prüfe ich zuerst ob echte Daten ankommen — kein Mock.
 
 ---
 
-### 15 — Mobil & Cross-Browser
+### 16 — Mobil & Cross-Browser
 
 - [ ] iOS Safari: nach Login kein Viewport-Zoom auf dem Dashboard
 - [ ] iOS Safari: kompletter Kaufprozess durchführbar
@@ -311,7 +348,7 @@ Hier prüfe ich zuerst ob echte Daten ankommen — kein Mock.
 
 ---
 
-### 16 — Candlescope: ShopRay-Vermarktung
+### 17 — Candlescope: ShopRay-Vermarktung
 
 Diese Tests prüfen die ShopRay-Präsentation auf candlescope.de (separate Vercel-App).
 
@@ -361,7 +398,7 @@ Diese Tests prüfen die ShopRay-Präsentation auf candlescope.de (separate Verce
 
 ---
 
-### 17 — Datenbank-Seed ausführen (vor dem End-Test)
+### 18 — Datenbank-Seed ausführen (vor dem End-Test)
 
 **Einmalig ausführen bevor alle Tests starten:**
 
@@ -373,7 +410,7 @@ Diese Tests prüfen die ShopRay-Präsentation auf candlescope.de (separate Verce
 
 ---
 
-### 18 — End-Test: Vollständiger Durchlauf
+### 19 — End-Test: Vollständiger Durchlauf
 
 Reihenfolge: genau so durchführen — jeder Schritt baut auf dem vorherigen auf.
 
@@ -464,7 +501,7 @@ Reihenfolge: genau so durchführen — jeder Schritt baut auf dem vorherigen auf
 
 ---
 
-### 19 — Pre-Launch Checkliste (vor Verkauf / Live-Betrieb)
+### 20 — Pre-Launch Checkliste (vor Verkauf / Live-Betrieb)
 
 Diese Punkte MÜSSEN erledigt sein bevor das Template an Kunden geht.
 
