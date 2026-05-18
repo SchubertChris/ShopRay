@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, X, Package, User, Mail, CreditCard, Search, Archive } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import type { OrderStatus } from '../../types/index';
@@ -43,6 +43,7 @@ function fmtDate(iso: string) {
 type ListViewMode = 'active' | 'archive';
 
 export default function OrdersPage() {
+  const navigate = useNavigate();
   const [orders, setOrders]       = useState<Awaited<ReturnType<typeof getAdminOrders>>['data']>([]);
   const [total, setTotal]         = useState(0);
   const [loading, setLoading]     = useState(true);
@@ -225,7 +226,7 @@ export default function OrdersPage() {
             <div
               key={o.id}
               className="admin-card"
-              onClick={() => setActiveId(prev => prev === o.id ? null : o.id)}
+              onClick={() => navigate(ROUTES.ORDERS.detail(o.id))}
             >
               <div className="admin-card__body">
                 <p className="admin-card__name">{o.order_number}</p>
