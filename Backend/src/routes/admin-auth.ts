@@ -316,16 +316,21 @@ router.put('/password', requireOwner, validate(ChangePasswordSchema), async (req
 // ── GET /api/admin/mods — aktive Mods + ausstehende Einladungen ───────────────
 router.get('/mods', requireOwner, async (_req: Request, res: Response): Promise<void> => {
   const [modsRes, pendingRes] = await Promise.all([
-    supabase.from('profiles').select('id, email, created_at').eq('role', 'mod').eq('must_change_password', false).order('created_at', { ascending: false }),
+    supabase.from('profiles').select('id, email, created_at').eq('role', 'mod').order('created_at', { ascending: false }),
     supabase.from('pending_mod_invites').select('id, email, invited_at').order('invited_at', { ascending: false }),
   ]);
 
   if (modsRes.error || pendingRes.error) {
+    console.error('[GET /mods] Supabase:', modsRes.error ?? pendingRes.error);
     res.status(500).json({ error: 'Laden fehlgeschlagen.' });
     return;
   }
 
-  res.json({ active: modsRes.data ?? [], pending: pendingRes.data ?? [] });
+  // Mods die noch in pending_mod_invites sind → noch kein eigenes Passwort gesetzt
+  const pendingEmails = new Set((pendingRes.data ?? []).map(p => p.email));
+  const activeMods    = (modsRes.data ?? []).filter(m => !pendingEmails.has(m.email));
+
+  res.json({ active: activeMods, pending: pendingRes.data ?? [] });
 });
 
 // ── POST /api/admin/mods — Mitarbeiter hinzufügen oder einladen ───────────────
