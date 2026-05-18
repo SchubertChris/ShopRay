@@ -1,6 +1,6 @@
 import { useState, useRef, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Zap, CheckCircle, Eye, EyeOff, Lock, Smartphone } from 'lucide-react';
+import { Shield, Zap, CheckCircle, Eye, EyeOff, Lock, Smartphone, Users } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import { ROUTES } from '@config/routes';
 
@@ -16,7 +16,15 @@ export default function LoginPage() {
   const [totpError,   setTotpError]   = useState('');
   const totpInputRef = useRef<HTMLInputElement>(null);
 
-  const { login, verifyTotp, requireTotp } = useAuthStore();
+  // Tab-Modus
+  const [loginMode, setLoginMode] = useState<'owner' | 'mod'>('owner');
+  const [modEmail,    setModEmail]    = useState('');
+  const [modPassword, setModPassword] = useState('');
+  const [modShowPw,   setModShowPw]   = useState(false);
+  const [modError,    setModError]    = useState('');
+  const [modLoading,  setModLoading]  = useState(false);
+
+  const { login, verifyTotp, loginMod, requireTotp } = useAuthStore();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent) => {
@@ -54,6 +62,21 @@ export default function LoginPage() {
       totpInputRef.current?.focus();
     } finally {
       setTotpLoading(false);
+    }
+  };
+
+  const handleModSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!modEmail || !modPassword) { setModError('Bitte E-Mail und Passwort eingeben.'); return; }
+    setModError('');
+    setModLoading(true);
+    try {
+      await loginMod(modEmail, modPassword);
+      navigate(ROUTES.DASHBOARD);
+    } catch (err) {
+      setModError(err instanceof Error ? err.message : 'Anmeldung fehlgeschlagen.');
+    } finally {
+      setModLoading(false);
     }
   };
 
@@ -107,6 +130,28 @@ export default function LoginPage() {
       <div className="login-form-panel">
         <div className="login-form-wrap">
 
+          {/* ── Tab-Switcher ── */}
+          {!requireTotp && (
+            <div className="login-tabs">
+              <button
+                type="button"
+                className={`login-tab${loginMode === 'owner' ? ' login-tab--active' : ''}`}
+                onClick={() => { setLoginMode('owner'); setError(''); setModError(''); }}
+              >
+                <Lock size={13} strokeWidth={2} />
+                Inhaber
+              </button>
+              <button
+                type="button"
+                className={`login-tab${loginMode === 'mod' ? ' login-tab--active' : ''}`}
+                onClick={() => { setLoginMode('mod'); setError(''); setModError(''); }}
+              >
+                <Users size={13} strokeWidth={2} />
+                Mitarbeiter
+              </button>
+            </div>
+          )}
+
           <div className="login-form__lock-icon" aria-hidden="true">
             {requireTotp
               ? <Smartphone size={22} strokeWidth={1.75} />
@@ -115,7 +160,7 @@ export default function LoginPage() {
           </div>
 
           {/* ── Passwort-Form ── */}
-          {!requireTotp && (
+          {!requireTotp && loginMode === 'owner' && (
             <form className="login-form" onSubmit={handleSubmit} noValidate>
               <p className="login-form__eyebrow">Admin-Bereich</p>
               <h2 className="login-form__title">Anmelden</h2>
@@ -215,6 +260,49 @@ export default function LoginPage() {
                 onClick={() => useAuthStore.setState({ requireTotp: false })}
               >
                 ← Zurück zur Passwort-Eingabe
+              </button>
+            </form>
+          )}
+
+          {/* ── Mitarbeiter-Form ── */}
+          {!requireTotp && loginMode === 'mod' && (
+            <form className="login-form" onSubmit={handleModSubmit} noValidate>
+              <p className="login-form__eyebrow">Mitarbeiter-Zugang</p>
+              <h2 className="login-form__title">Anmelden</h2>
+              <p className="login-form__sub">Eingeschränkter Zugriff für Teammitglieder.</p>
+              <div className="login-form__group">
+                <label htmlFor="mod-email">E-Mail-Adresse</label>
+                <input
+                  id="mod-email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="mitarbeiter@beispiel.de"
+                  value={modEmail}
+                  onChange={e => { setModEmail(e.target.value); if (modError) setModError(''); }}
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="login-form__group">
+                <label htmlFor="mod-password">Passwort</label>
+                <div className="login-form__input-wrap">
+                  <input
+                    id="mod-password"
+                    type={modShowPw ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    placeholder="••••••••••••"
+                    value={modPassword}
+                    onChange={e => { setModPassword(e.target.value); if (modError) setModError(''); }}
+                    required
+                  />
+                  <button type="button" className="login-form__pw-toggle" onClick={() => setModShowPw(v => !v)} tabIndex={-1}>
+                    {modShowPw ? <EyeOff size={15} strokeWidth={2} /> : <Eye size={15} strokeWidth={2} />}
+                  </button>
+                </div>
+              </div>
+              {modError && <div className="login-form__error"><Shield size={13} strokeWidth={2} />{modError}</div>}
+              <button className="login-form__submit" type="submit" disabled={modLoading}>
+                {modLoading ? <><span className="login-form__spinner" />Wird angemeldet…</> : 'Als Mitarbeiter anmelden'}
               </button>
             </form>
           )}

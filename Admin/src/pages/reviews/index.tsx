@@ -9,6 +9,7 @@ import {
 } from '../../api/adminApi';
 import ViewToggle from '../../components/ui/ViewToggle';
 import { useViewMode } from '../../hooks/useViewMode';
+import { useAuthStore } from '@stores/authStore';
 
 type VerifiedFilter = 'all' | 'pending' | 'verified';
 
@@ -40,6 +41,8 @@ function formatDate(iso: string) {
 }
 
 export default function ReviewsPage() {
+  const role = useAuthStore(s => s.role);
+  const isOwner = role === 'owner';
   const [reviews,  setReviews]  = useState<AdminReview[]>([]);
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
@@ -202,6 +205,7 @@ export default function ReviewsPage() {
                       <XCircle size={13} strokeWidth={2} />
                     </button>
                   )}
+                  {isOwner && (
                   <button
                     className="table-action table-action--danger"
                     title="Löschen"
@@ -210,6 +214,7 @@ export default function ReviewsPage() {
                   >
                     <Trash2 size={13} strokeWidth={2} />
                   </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -262,6 +267,7 @@ export default function ReviewsPage() {
                     Ablehnen
                   </button>
                 )}
+                {isOwner && (
                 <button
                   className="btn-icon btn-icon--danger"
                   onClick={() => handleDelete(review.id)}
@@ -271,6 +277,7 @@ export default function ReviewsPage() {
                   <Trash2 size={15} strokeWidth={2} />
                   Löschen
                 </button>
+                )}
               </div>
             </div>
           ))}

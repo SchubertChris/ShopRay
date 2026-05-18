@@ -52,7 +52,7 @@ export const adminLogout = () =>
   apiFetch<{ ok: boolean }>('/api/admin/logout', 'POST');
 
 export const adminCheck  = () =>
-  apiFetch<{ ok: boolean }>('/api/admin/check');
+  apiFetch<{ ok: boolean; role?: string }>('/api/admin/check');
 
 // ── Produkte ──────────────────────────────────────────────────────────────────
 
@@ -403,6 +403,26 @@ export const disable2fa = () =>
 
 export const loginTotp = (token: string) =>
   apiFetch<{ ok: boolean }>('/api/admin/login/totp', 'POST', { token });
+
+export const modLogin = (email: string, password: string) =>
+  apiFetch<{ ok: boolean; token: string; role: string }>('/api/admin/login/mod', 'POST', { email, password });
+
+// ── Mod-Management ────────────────────────────────────────────────────────────
+
+export interface ModUser {
+  id:         string;
+  email:      string;
+  created_at: string;
+}
+
+export const getMods = () =>
+  apiFetch<ModUser[]>('/api/admin/mods');
+
+export const addMod = (email: string) =>
+  apiFetch<{ ok: boolean; id: string; email: string }>('/api/admin/mods', 'POST', { email });
+
+export const removeMod = (id: string) =>
+  apiFetch<{ ok: boolean }>(`/api/admin/mods/${id}`, 'DELETE');
 
 // ── Kategorien ────────────────────────────────────────────────────────────────
 

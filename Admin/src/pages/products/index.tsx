@@ -10,6 +10,7 @@ import CsvImportModal from '../../components/ui/CsvImportModal';
 import { API_URL } from '../../api/adminApi';
 import ViewToggle from '../../components/ui/ViewToggle';
 import { useViewMode } from '../../hooks/useViewMode';
+import { useAuthStore } from '@stores/authStore';
 
 type Density = 'compact' | 'normal';
 const CATEGORIES: Array<'Alle' | ProductCategory> = ['Alle', 'Wohnen', 'Deko', 'Küche', 'Textilien', 'Kunst'];
@@ -17,6 +18,8 @@ const DENSITY_KEY = 'admin-product-density';
 
 export default function ProductsPage() {
   const navigate = useNavigate();
+  const role = useAuthStore(s => s.role);
+  const isOwner = role === 'owner';
 
   const [products, setProducts]             = useState<AdminProduct[]>([]);
   const [loading, setLoading]               = useState(true);
@@ -111,14 +114,18 @@ export default function ProductsPage() {
           </p>
         </div>
         <div className="page-header__actions">
+          {isOwner && (
           <button className="btn-secondary" onClick={() => setShowCsvModal(true)}>
             <Upload size={14} strokeWidth={2} />
             CSV importieren
           </button>
+          )}
+          {isOwner && (
           <Link to={ROUTES.PRODUCTS.NEW} className="btn-primary">
             <Plus size={15} strokeWidth={2} />
             Neues Produkt
           </Link>
+          )}
         </div>
       </div>
 
@@ -214,6 +221,7 @@ export default function ProductsPage() {
                       >
                         <Pencil size={13} strokeWidth={2} />
                       </Link>
+                      {isOwner && (
                       <button
                         className="table-action table-action--danger"
                         title="Löschen"
@@ -221,6 +229,7 @@ export default function ProductsPage() {
                       >
                         <Trash2 size={13} strokeWidth={2} />
                       </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -342,6 +351,7 @@ export default function ProductsPage() {
                           >
                             <Pencil size={13} strokeWidth={2} />
                           </Link>
+                          {isOwner && (
                           <button
                             className="table-action table-action--danger"
                             title="Löschen"
@@ -354,6 +364,7 @@ export default function ProductsPage() {
                               : <Trash2 size={13} strokeWidth={2} />
                             }
                           </button>
+                          )}
                         </div>
                       </td>
                     </tr>

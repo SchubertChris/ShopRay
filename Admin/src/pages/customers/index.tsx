@@ -11,6 +11,7 @@ import {
 } from '../../api/adminApi';
 import ViewToggle from '../../components/ui/ViewToggle';
 import { useViewMode } from '../../hooks/useViewMode';
+import { useAuthStore } from '@stores/authStore';
 
 function initials(name: string | null) {
   if (!name) return '?';
@@ -29,6 +30,8 @@ function handleExport(detail: AdminCustomerDetail) {
 }
 
 export default function CustomersPage() {
+  const role = useAuthStore(s => s.role);
+  const isOwner = role === 'owner';
   const [customers, setCustomers]       = useState<AdminCustomer[]>([]);
   const [total, setTotal]               = useState(0);
   const [loading, setLoading]           = useState(true);
@@ -260,7 +263,7 @@ export default function CustomersPage() {
                           >
                             <Download size={13} strokeWidth={2} />
                           </button>
-                          {c.banned_at ? (
+                          {isOwner && (c.banned_at ? (
                             <button
                               className="table-action"
                               title="Sperre aufheben"
@@ -276,7 +279,8 @@ export default function CustomersPage() {
                             >
                               <ShieldOff size={13} strokeWidth={2} />
                             </button>
-                          )}
+                          ))}
+                          {isOwner && (
                           <button
                             className="table-action table-action--danger"
                             title="Konto löschen (DSGVO Art. 17)"
@@ -284,6 +288,7 @@ export default function CustomersPage() {
                           >
                             <Trash2 size={13} strokeWidth={2} />
                           </button>
+                          )}
                         </div>
                       </td>
                     </tr>

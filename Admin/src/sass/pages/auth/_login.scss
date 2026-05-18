@@ -343,3 +343,42 @@
     font-size: 16px;
   }
 }
+
+// ── Login-Tabs (Inhaber / Mitarbeiter) ──────────────────────────────────────
+.login-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+  background: color-mix(in srgb, var(--clr-surface) 50%, transparent);
+  border-radius: 8px;
+  padding: 0.2rem;
+  border: 1px solid var(--clr-border, #333);
+}
+
+.login-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--clr-text-muted, #888);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover:not(.login-tab--active) {
+    color: var(--clr-text);
+    background: color-mix(in srgb, var(--clr-text) 5%, transparent);
+  }
+
+  &--active {
+    background: var(--clr-surface);
+    color: var(--clr-text);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+}

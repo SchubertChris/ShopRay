@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Save, Store, Mail, Truck, Lock, Tag, Trash2, Plus, ShieldCheck, Monitor, AlertTriangle, Loader2, CheckCircle2, Smartphone, QrCode, X, Bell, BellOff } from 'lucide-react';
+import { Save, Store, Mail, Truck, Lock, Tag, Trash2, Plus, ShieldCheck, Monitor, AlertTriangle, Loader2, CheckCircle2, Smartphone, QrCode, X, Bell, BellOff, Users } from 'lucide-react';
+import TeamTab from './tabs/TeamTab';
 import {
   getLoginLog, getShippingSettings, updateShippingSettings,
   getShopSettings, updateShopSettings,
@@ -9,7 +10,7 @@ import {
 } from '../../api/adminApi';
 import { usePushNotifications } from '../../hooks/usePushNotifications';
 
-type SettingsTab = 'shop' | 'smtp' | 'shipping' | 'categories' | 'security' | 'notifications';
+type SettingsTab = 'shop' | 'smtp' | 'shipping' | 'categories' | 'security' | 'notifications' | 'team';
 
 const TABS: Array<{ key: SettingsTab; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }> = [
   { key: 'shop',          label: 'Shop-Infos',          icon: Store    },
@@ -18,6 +19,7 @@ const TABS: Array<{ key: SettingsTab; label: string; icon: React.ComponentType<{
   { key: 'categories',    label: 'Kategorien',           icon: Tag      },
   { key: 'security',      label: 'Sicherheit',           icon: Lock     },
   { key: 'notifications', label: 'Benachrichtigungen',   icon: Bell     },
+  { key: 'team',          label: 'Mitarbeiter',           icon: Users    },
 ];
 
 export default function SettingsPage() {
@@ -56,6 +58,7 @@ export default function SettingsPage() {
           {tab === 'categories' && <CategoriesSettings />}
           {tab === 'security'      && <SecuritySettings />}
           {tab === 'notifications' && <NotificationSettings />}
+          {tab === 'team'          && <TeamTab />}
         </div>
       </div>
     </>

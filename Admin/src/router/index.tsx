@@ -21,6 +21,13 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return isAuthed ? <>{children}</> : <Navigate to={ROUTES.AUTH.LOGIN} replace />;
 }
 
+function RequireOwner({ children }: { children: React.ReactNode }) {
+  const role = useAuthStore(s => s.role);
+  if (role === null) return <Navigate to={ROUTES.AUTH.LOGIN} replace />;
+  if (role !== 'owner') return <Navigate to={ROUTES.DASHBOARD} replace />;
+  return <>{children}</>;
+}
+
 export const router = createBrowserRouter([
   {
     path:    ROUTES.AUTH.LOGIN,
@@ -36,8 +43,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true,               element: <DashboardPage />      },
       { path: 'products',          element: <ProductsPage />       },
-      { path: 'products/new',      element: <ProductFormPage />    },
-      { path: 'products/:id/edit', element: <ProductFormPage />    },
+      { path: 'products/new',      element: <RequireOwner><ProductFormPage /></RequireOwner>    },
+      { path: 'products/:id/edit', element: <RequireOwner><ProductFormPage /></RequireOwner>    },
       { path: 'orders',            element: <OrdersPage />         },
       { path: 'orders/:id',        element: <OrderDetailPage />    },
       { path: 'customers',         element: <CustomersPage />      },
@@ -45,8 +52,8 @@ export const router = createBrowserRouter([
       { path: 'support',            element: <SupportPage />        },
       { path: 'inquiries',         element: <InquiriesPage />      },
       { path: 'reviews',           element: <ReviewsPage />        },
-      { path: 'categories',        element: <CategoriesPage />     },
-      { path: 'settings',          element: <SettingsPage />       },
+      { path: 'categories',        element: <RequireOwner><CategoriesPage /></RequireOwner>     },
+      { path: 'settings',          element: <RequireOwner><SettingsPage /></RequireOwner>       },
     ],
   },
   {

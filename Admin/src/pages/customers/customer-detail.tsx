@@ -9,6 +9,7 @@ import {
 import type { OrderStatus } from '../../types/index';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import BanModal from '../../components/ui/BanModal';
+import { useAuthStore } from '@stores/authStore';
 
 const ROLE_LABELS: Record<UserRole, string> = {
   owner:    'Inhaber',
@@ -41,6 +42,8 @@ function formatPrice(n: string | number): string {
 export default function CustomerDetailPage() {
   const { id }   = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const adminRole = useAuthStore(s => s.role);
+  const isOwner = adminRole === 'owner';
 
   const [customer,  setCustomer]  = useState<AdminCustomerDetail | null>(null);
   const [loading,   setLoading]   = useState(true);
@@ -168,10 +171,12 @@ export default function CustomerDetailPage() {
             <Download size={14} strokeWidth={2} />
             Daten exportieren
           </button>
+          {isOwner && (
           <button className="btn-danger" onClick={() => setShowDeleteConfirm(true)} title="Konto löschen (DSGVO Art. 17)">
             <Trash2 size={14} strokeWidth={2} />
             Konto löschen
           </button>
+          )}
         </div>
       </div>
 
@@ -262,6 +267,7 @@ export default function CustomerDetailPage() {
         {/* ── Rechte Spalte ── */}
         <div>
           {/* Rollen-Verwaltung */}
+          {isOwner && (
           <div className="detail-card">
             <div className="detail-card__header">
               <ShieldCheck size={15} strokeWidth={1.75} />
@@ -290,6 +296,7 @@ export default function CustomerDetailPage() {
               </button>
             </div>
           </div>
+          )}
 
           {/* DSGVO-Bereich */}
           <div className="detail-card dsgvo-card">
@@ -310,6 +317,8 @@ export default function CustomerDetailPage() {
                   Exportieren
                 </button>
               </div>
+              {isOwner && (
+              <>
               <div className="dsgvo-divider" />
               <div className="dsgvo-action">
                 <div className="dsgvo-action__info">
@@ -324,10 +333,13 @@ export default function CustomerDetailPage() {
                   Löschen
                 </button>
               </div>
+              </>
+              )}
             </div>
           </div>
 
           {/* Konto-Status / Ban */}
+          {isOwner && (
           <div className="detail-card">
             <div className="detail-card__header">
               {customer.banned_at
@@ -389,6 +401,7 @@ export default function CustomerDetailPage() {
               )}
             </div>
           </div>
+          )}
         </div>
       </div>
 

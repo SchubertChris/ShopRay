@@ -293,3 +293,60 @@
     }
   }
 }
+
+// ── Team-Tab ─────────────────────────────────────────────────────────────────
+.team-add-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+
+  &__input { flex: 1; margin: 0; }
+  &__btn   { white-space: nowrap; align-self: flex-end; }
+}
+
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.team-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border, #333);
+  border-radius: 8px;
+
+  &__info {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--clr-text);
+    font-size: 0.875rem;
+  }
+
+  &__email { font-weight: 500; }
+
+  &__since {
+    font-size: 0.75rem;
+    color: var(--clr-text-muted, #888);
+  }
+}
+
+.settings-section {
+  &__title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    color: var(--clr-text);
+  }
+  &__desc {
+    font-size: 0.875rem;
+    color: var(--clr-text-muted, #888);
+    margin-bottom: 1.5rem;
+  }
+}

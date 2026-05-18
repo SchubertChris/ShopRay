@@ -61,6 +61,7 @@ const NAV: NavGroup[] = [
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { logout }  = useAuthStore();
+  const role        = useAuthStore(s => s.role);
   const navigate    = useNavigate();
   const badges      = useBadgeStore();
   const { setAll }  = useBadgeStore();
@@ -70,6 +71,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       .then(s => setAll({ pendingOrders: s.pendingOrders, openTickets: s.openTickets, newInquiries: s.newInquiries }))
       .catch(() => null);
   }, [setAll]);
+
+  const visibleNav = NAV.map(group => ({
+    ...group,
+    items: group.items.filter(item => {
+      if (role !== 'mod') return true;
+      const modHidden = [ROUTES.CATEGORIES, ROUTES.SETTINGS];
+      return !modHidden.includes(item.to as typeof modHidden[number]);
+    }),
+  })).filter(group => group.items.length > 0);
 
   const handleLogout = () => {
     logout();
@@ -92,7 +102,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="admin-sidebar__nav">
-          {NAV.map(group => (
+          {visibleNav.map(group => (
             <div key={group.section} className="admin-sidebar__section">
               <p className="admin-sidebar__section-label">{group.section}</p>
               {group.items.map(item => {
@@ -125,7 +135,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="admin-sidebar__avatar">AD</div>
           <div className="admin-sidebar__user-info">
             <p className="admin-sidebar__user-name">Admin</p>
-            <p className="admin-sidebar__user-role">Administrator</p>
+            <p className="admin-sidebar__user-role">
+              {role === 'mod' ? 'Mitarbeiter' : 'Inhaber'}
+            </p>
           </div>
           <button className="admin-sidebar__logout" onClick={handleLogout} title="Abmelden">
             <LogOut size={15} strokeWidth={1.75} />
