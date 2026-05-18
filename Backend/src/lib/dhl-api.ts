@@ -32,6 +32,13 @@ export async function createDhlShipment(req: DhlShipmentRequest): Promise<DhlShi
   const apiKey    = process.env.DHL_API_KEY ?? '';
   const billingNo = process.env.DHL_BILLING_NUMBER ?? '';
 
+  if (!apiKey || !billingNo) {
+    throw new Error(
+      'DHL nicht konfiguriert. Bitte DHL_API_KEY und DHL_BILLING_NUMBER in den Vercel Environment Variables setzen. ' +
+      'Für Tests: DHL_SANDBOX=true, DHL_BILLING_NUMBER=3333333333. Siehe SETUP.md → DHL.'
+    );
+  }
+
   const shipperName   = process.env.DHL_SHIPPER_NAME   ?? '';
   const shipperStreet = process.env.DHL_SHIPPER_STREET ?? '';
   const shipperZip    = process.env.DHL_SHIPPER_ZIP    ?? '';
