@@ -16,10 +16,13 @@
   }
 
   &__layout {
-    display: grid;
+    display:               grid;
     grid-template-columns: 1fr;
-    gap: 2rem;
-    align-items: start;
+    gap:                   2rem;
+    align-items:           start;
+    min-width:             0;
+
+    > * { min-width: 0; }
 
     @include respond-to('lg') {
       grid-template-columns: 1fr 340px;
@@ -156,11 +159,14 @@
 
 // ─── CART-SUMMARY ──────────────────────────────────────────────────────────
 .cart-summary {
-  background: var(--clr-secondary);
+  background:    var(--clr-secondary);
   border-radius: 20px;
-  padding: 1.75rem;
-  position: sticky;
-  top: 80px;
+  padding:       1.75rem;
+  position:      sticky;
+  top:           80px;
+  width:         100%;
+  box-sizing:    border-box;
+  min-width:     0;
 
   &__title {
     font-size: rem(18px);

@@ -12,6 +12,8 @@ body {
   // Kein versehentliches Markieren von UI-Elementen
   -webkit-user-select: none;
   user-select:         none;
+  // Verhindert horizontales Überlaufen ohne sticky-Elemente zu brechen
+  overflow-x: clip;
 }
 
 @keyframes spin {

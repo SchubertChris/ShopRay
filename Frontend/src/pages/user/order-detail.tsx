@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useOrderById, orderStatusLabel } from '@features/orders';
 import { SeoMeta } from '@components/ui';
 import { ROUTES } from '@config/routes';
+import { getProductImage } from '@config/images';
 import type { OrderStatus } from '@/types/order';
 
 const PAYMENT_LABELS: Record<string, string> = {
@@ -133,9 +134,12 @@ export default function OrderDetailPage() {
                 {order.items.map((item, i) => (
                   <div key={i} className="order-item">
                     <div className="order-item__thumb">
-                      {item.imageUrl && (
-                        <img src={item.imageUrl} alt={item.productName} loading="lazy" />
-                      )}
+                      <img
+                        src={item.imageUrl ?? getProductImage(item.productId)}
+                        alt={item.productName}
+                        loading="lazy"
+                        onContextMenu={e => e.preventDefault()}
+                      />
                     </div>
                     <div className="order-item__info">
                       <div className="order-item__name">{item.productName}</div>
