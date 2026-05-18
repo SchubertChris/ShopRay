@@ -65,6 +65,61 @@ Stand: 2026-05-18 (v4 — inkl. Rollen-System: Owner/Mod Login, Guards, Sidebar,
 
 ---
 
+## Test-Dateien (Ordner vorbereiten)
+
+Lege einen Ordner `test-dateien/` an und leg folgende Dateien rein:
+
+### Produktbilder (für Upload-Tests in Admin → Produkte)
+
+| Dateiname | Anforderung | Woher |
+|---|---|---|
+| `bild-ok.jpg` | Normales JPG/PNG/WebP, **unter 5 MB** | Beliebiges Produktfoto |
+| `bild-ok-2.png` | Zweites Bild (anderes Format), unter 5 MB | Für Galerie-Test |
+| `bild-zu-gross.jpg` | **Über 5 MB** JPG | z. B. unkomprimierte RAW-Konvertierung |
+| `bild-falsch.txt` | Textdatei mit `.txt` Endung | Einfach eine .txt umbenennen |
+
+Erlaubte Formate: **JPG, PNG, WebP, AVIF** — max. **5 MB** pro Bild.
+
+### CSV-Dateien (für Produkt-Bulk-Import)
+
+| Dateiname | Inhalt | Woher |
+|---|---|---|
+| `produkte-valid.csv` | Gültige CSV mit 3–5 Produkten | Direkt aus dem Admin-Modal herunterladen (Button „CSV-Vorlage herunterladen") |
+| `produkte-invalid.csv` | Falsche Spaltennamen | Vorlage öffnen, erste Zeile auf `foo,bar,baz` ändern |
+| `produkte-leer.csv` | Nur Header, keine Datenzeilen | Vorlage öffnen, nur Kopfzeile behalten |
+
+**Vorlage holen:** Admin → Produkte → „CSV importieren" → „CSV-Vorlage herunterladen" → als `produkte-valid.csv` speichern → 3 Zeilen Testdaten drin lassen.
+
+CSV-Pflichtfelder: `name, slug, description, price, category`
+
+Beispiel-Daten für die gültige CSV (ergänzen oder eigene nehmen):
+```
+name,slug,description,price,category,stock,old_price,badge,tax_rate
+Test Produkt A,test-produkt-a,Ein Testprodukt für den Import,19.99,Test,50,,NEU,19
+Test Produkt B,test-produkt-b,Zweites Testprodukt,34.99,Test,20,39.99,,19
+Test Produkt C,test-produkt-c,Drittes Testprodukt ungültig,,Test,10,,,19
+```
+(Zeile 3 hat kein `price` → wird als fehlerhaft markiert — guter Fehler-Test)
+
+### DHL-Test (nur Sandbox)
+
+Kein lokaler Datei-Ordner nötig — aber Voraussetzung vor dem Test:
+
+1. Auf [developer.dhl.com](https://developer.dhl.com) registrieren
+2. App anlegen → Produkt **„DHL Parcel DE Shipping Post & Parcel Germany"** aktivieren
+3. Sandbox-API-Key kopieren
+4. In Vercel → Backend → Environment Variables setzen:
+   - `DHL_SANDBOX=true`
+   - `DHL_API_KEY=<dein Sandbox-Key>`
+   - `DHL_BILLING_NUMBER=3333333333`
+   - `DHL_SHIPPER_NAME=Test Absender`
+   - `DHL_SHIPPER_STREET=Musterstraße 1`
+   - `DHL_SHIPPER_ZIP=12345`
+   - `DHL_SHIPPER_CITY=Musterstadt`
+5. Vercel Backend redeploy abwarten
+
+---
+
 ## Stripe Testkarten
 
 | Nummer | Ergebnis |

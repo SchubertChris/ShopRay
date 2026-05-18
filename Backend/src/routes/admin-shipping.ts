@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { Router, Request, Response, NextFunction } from 'express';
 import { supabase }        from '../lib/supabase';
-import { requireAdmin }    from '../middleware/adminAuth';
+import { requireAdmin, requireOwner } from '../middleware/adminAuth';
 import { validate, UUIDParam } from '../lib/validate';
 import { createDhlShipment }   from '../lib/dhl-api';
 
@@ -12,8 +12,8 @@ const LabelSchema = z.object({
   weight_g: z.number().int().min(1).max(31500, { message: 'Max. 31,5 kg (31500 g)' }),
 });
 
-// POST /api/admin/orders/:id/label — DHL-Label erstellen
-router.post('/:id/label', validate(UUIDParam, 'params'), validate(LabelSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+// POST /api/admin/orders/:id/label — DHL-Label erstellen (nur Owner)
+router.post('/:id/label', requireOwner, validate(UUIDParam, 'params'), validate(LabelSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { data: order, error: oErr } = await supabase
       .from('orders')

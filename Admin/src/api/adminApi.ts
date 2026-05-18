@@ -134,6 +134,25 @@ export const uploadProductImage = async (file: File): Promise<string> => {
   return url;
 };
 
+export interface BulkImportRow {
+  name:        string;
+  slug:        string;
+  description: string;
+  price:       number;
+  category:    string;
+  stock?:      number;
+  old_price?:  number | null;
+  badge?:      string;
+  tax_rate?:   number;
+  image_url?:  string;
+  highlights?: string;
+}
+
+export const bulkImportProducts = (rows: BulkImportRow[]) =>
+  apiFetch<{ ok: number; results: Array<{ row: number; status: 'ok' | 'error'; name?: string; error?: string }> }>(
+    '/api/admin/products/bulk', 'POST', rows,
+  );
+
 // ── Versandeinstellungen ──────────────────────────────────────────────────────
 
 export interface ShippingSettings {
@@ -415,14 +434,31 @@ export interface ModUser {
   created_at: string;
 }
 
+export interface PendingInvite {
+  id:         string;
+  email:      string;
+  invited_at: string;
+}
+
+export interface ModsResponse {
+  active:  ModUser[];
+  pending: PendingInvite[];
+}
+
 export const getMods = () =>
-  apiFetch<ModUser[]>('/api/admin/mods');
+  apiFetch<ModsResponse>('/api/admin/mods');
 
 export const addMod = (email: string) =>
-  apiFetch<{ ok: boolean; id: string; email: string }>('/api/admin/mods', 'POST', { email });
+  apiFetch<{ ok: boolean; invited: boolean; id?: string; email: string }>('/api/admin/mods', 'POST', { email });
 
 export const removeMod = (id: string) =>
   apiFetch<{ ok: boolean }>(`/api/admin/mods/${id}`, 'DELETE');
+
+export const cancelInvite = (id: string) =>
+  apiFetch<{ ok: boolean }>(`/api/admin/mods/invite/${id}`, 'DELETE');
+
+export const changeOwnerPassword = (currentPassword: string, newPassword: string) =>
+  apiFetch<{ ok: boolean }>('/api/admin/password', 'PUT', { currentPassword, newPassword });
 
 // ── Kategorien ────────────────────────────────────────────────────────────────
 

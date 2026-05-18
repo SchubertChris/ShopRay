@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import Papa from 'papaparse';
 import { Upload, X, CheckCircle, AlertCircle, Download, Loader2 } from 'lucide-react';
-import { API_URL } from '../../api/adminApi';
+import { bulkImportProducts } from '../../api/adminApi';
 
 interface CsvRow {
   name:        string;
@@ -112,13 +112,7 @@ export default function CsvImportModal({ onClose, onSuccess }: Props) {
         tax_rate:  row.tax_rate  ? parseFloat(row.tax_rate)  : 19,
       }));
 
-      const res  = await fetch(`${API_URL}/api/admin/products/bulk`, {
-        method:      'POST',
-        headers:     { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body:        JSON.stringify(payload),
-      });
-      const data = await res.json();
+      const data = await bulkImportProducts(payload);
       setResults(data.results);
       const okCount = data.ok ?? 0;
       if (okCount > 0) onSuccess(okCount);

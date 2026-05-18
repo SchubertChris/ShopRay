@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { supabase }     from '../lib/supabase';
-import { requireAdmin } from '../middleware/adminAuth';
-import { validate, UUIDParam } from '../lib/validate';
+import { supabase }                   from '../lib/supabase';
+import { requireAdmin, requireOwner } from '../middleware/adminAuth';
+import { validate, UUIDParam }        from '../lib/validate';
 
 const router = Router();
 
@@ -68,8 +68,8 @@ router.patch('/:id/reject', validate(UUIDParam, 'params'), async (req: Request, 
   }
 });
 
-// DELETE /api/admin/reviews/:id — Bewertung löschen
-router.delete('/:id', validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+// DELETE /api/admin/reviews/:id — Bewertung löschen (nur Owner)
+router.delete('/:id', requireOwner, validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { error } = await supabase
       .from('reviews')

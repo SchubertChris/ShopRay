@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Save, Store, Mail, Truck, Lock, Tag, Trash2, Plus, ShieldCheck, Monitor, AlertTriangle, Loader2, CheckCircle2, Smartphone, QrCode, X, Bell, BellOff, Users } from 'lucide-react';
+import { Save, Store, Mail, Truck, Lock, Tag, Trash2, Plus, ShieldCheck, Monitor, AlertTriangle, Loader2, CheckCircle2, Smartphone, QrCode, X, Bell, BellOff, Users, Eye, EyeOff } from 'lucide-react';
 import TeamTab from './tabs/TeamTab';
 import {
   getLoginLog, getShippingSettings, updateShippingSettings,
   getShopSettings, updateShopSettings,
   getCategories, createCategory, deleteCategory,
   get2faStatus, get2faSetup, confirm2fa, disable2fa, verify2fa,
+  changeOwnerPassword,
   type LoginLogEntry, type ShippingSettings, type ShopSettingsData, type Category,
 } from '../../api/adminApi';
 import { usePushNotifications } from '../../hooks/usePushNotifications';
@@ -543,6 +544,112 @@ function TwoFactorSettings() {
   );
 }
 
+// ── Passwort ändern ───────────────────────────────────────────────────────────
+function PasswordChangeForm() {
+  const [current,    setCurrent]    = useState('');
+  const [next,       setNext]       = useState('');
+  const [confirm,    setConfirm]    = useState('');
+  const [showCur,    setShowCur]    = useState(false);
+  const [showNew,    setShowNew]    = useState(false);
+  const [saving,     setSaving]     = useState(false);
+  const [saved,      setSaved]      = useState(false);
+  const [error,      setError]      = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSaved(false);
+
+    if (next.length < 8) { setError('Das neue Passwort muss mindestens 8 Zeichen haben.'); return; }
+    if (next !== confirm)  { setError('Die Passwörter stimmen nicht überein.'); return; }
+
+    setSaving(true);
+    try {
+      await changeOwnerPassword(current, next);
+      setSaved(true);
+      setCurrent(''); setNext(''); setConfirm('');
+      setTimeout(() => setSaved(false), 4000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form className="form-section" onSubmit={handleSubmit} noValidate>
+      <div className="form-section__head">
+        <h2 className="form-section__title">Admin-Passwort ändern</h2>
+        <p className="form-section__desc">
+          Das neue Passwort wird sicher in der Datenbank gespeichert.
+          Mindestens 8 Zeichen.
+        </p>
+      </div>
+
+      <div className="form-field">
+        <label className="form-label">Aktuelles Passwort</label>
+        <div className="form-input-wrap">
+          <input
+            type={showCur ? 'text' : 'password'}
+            className="form-input form-input--pw"
+            value={current}
+            onChange={e => setCurrent(e.target.value)}
+            autoComplete="current-password"
+            required
+          />
+          <button type="button" className="form-pw-toggle" onClick={() => setShowCur(v => !v)} tabIndex={-1}>
+            {showCur ? <EyeOff size={15} strokeWidth={2} /> : <Eye size={15} strokeWidth={2} />}
+          </button>
+        </div>
+      </div>
+
+      <div className="form-field">
+        <label className="form-label">Neues Passwort</label>
+        <div className="form-input-wrap">
+          <input
+            type={showNew ? 'text' : 'password'}
+            className="form-input form-input--pw"
+            value={next}
+            onChange={e => setNext(e.target.value)}
+            autoComplete="new-password"
+            minLength={8}
+            required
+          />
+          <button type="button" className="form-pw-toggle" onClick={() => setShowNew(v => !v)} tabIndex={-1}>
+            {showNew ? <EyeOff size={15} strokeWidth={2} /> : <Eye size={15} strokeWidth={2} />}
+          </button>
+        </div>
+        <p className="form-hint">Mindestens 8 Zeichen.</p>
+      </div>
+
+      <div className="form-field">
+        <label className="form-label">Neues Passwort bestätigen</label>
+        <input
+          type="password"
+          className="form-input"
+          value={confirm}
+          onChange={e => setConfirm(e.target.value)}
+          autoComplete="new-password"
+          required
+        />
+      </div>
+
+      {error && <p className="form-error-inline">{error}</p>}
+
+      <div className="form-actions">
+        <button className="btn-primary" type="submit" disabled={saving || !current || !next || !confirm}>
+          {saving
+            ? <><Loader2 size={14} strokeWidth={2} className="spin" />Speichert…</>
+            : saved
+              ? <><CheckCircle2 size={14} strokeWidth={2} />Gespeichert</>
+              : <><Save size={14} strokeWidth={2} />Passwort ändern</>
+          }
+        </button>
+      </div>
+    </form>
+  );
+}
+
 // ── Sicherheit ────────────────────────────────────────────────────────────────
 function SecuritySettings() {
   const [log,     setLog]     = useState<LoginLogEntry[]>([]);
@@ -578,34 +685,8 @@ function SecuritySettings() {
       {/* 2FA */}
       <TwoFactorSettings />
 
-      {/* Passwort-Info */}
-      <div className="form-section">
-        <div className="form-section__head">
-          <h2 className="form-section__title">Admin-Passwort</h2>
-          <p className="form-section__desc">Vor dem Go-Live unbedingt auf ein eigenes Passwort ändern.</p>
-        </div>
-        <div className="form-section__info">
-          Das Admin-Passwort wird als bcrypt-Hash in <code>Backend/.env</code> gespeichert.
-          Zum Ändern: <code>ADMIN_PASSWORD=neuesPasswort</code> temporär setzen, Hash generieren,
-          <code>ADMIN_PASSWORD_HASH</code> in Vercel aktualisieren und <code>ADMIN_PASSWORD</code> wieder entfernen.
-          Siehe SETUP.md für Details.
-        </div>
-        <div className="form-field">
-          <label className="form-label">Aktueller Passwort-Hash (nur lesbar)</label>
-          <input type="text" className="form-input form-input--mono" readOnly placeholder="$2b$12$…" />
-          <p className="form-hint">Wert aus Backend/.env — ADMIN_PASSWORD_HASH</p>
-        </div>
-        <div className="form-actions">
-          <a
-            href="SETUP.md"
-            className="btn-secondary"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            SETUP.md öffnen
-          </a>
-        </div>
-      </div>
+      {/* Passwort ändern */}
+      <PasswordChangeForm />
 
       {/* Login-Protokoll */}
       <div className="form-section">
