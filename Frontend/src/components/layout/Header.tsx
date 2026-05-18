@@ -86,13 +86,7 @@ export function Header() {
           </ul>
 
           <div className="nav__actions">
-            {isAuthenticated ? (
-              <>
-                <Link className="nav__account" to={ROUTES.ACCOUNT.DASHBOARD} aria-label="Mein Konto">
-                  <User size={20} strokeWidth={1.75} />
-                </Link>
-              </>
-            ) : (
+            {!isAuthenticated && (
               <Link className="nav__login-btn" to={ROUTES.AUTH.LOGIN}>
                 Anmelden
               </Link>

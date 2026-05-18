@@ -149,8 +149,6 @@
 
   &__burger {
     @extend %nav-icon-btn;
-
-    @include respond-to('lg') { display: none; }
   }
 
   // Mobile: nur Cart + Burger sichtbar — alles andere ist in der Mobile-Nav dupliziert
