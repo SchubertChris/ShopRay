@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Users, Trash2, Plus, Loader2, AlertCircle, UserCheck, Clock, Copy, Check, KeyRound } from 'lucide-react';
+import { Users, Trash2, Plus, Loader2, AlertCircle, UserCheck, Clock, Copy, Check, KeyRound, Mail } from 'lucide-react';
 import {
   getMods, addMod, removeMod, cancelInvite,
   type ModUser, type PendingInvite,
