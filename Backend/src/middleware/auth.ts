@@ -31,6 +31,21 @@ export async function requireAuth(
   next();
 }
 
+// Optionale Auth — setzt userId wenn JWT vorhanden, blockiert aber nicht
+export async function optionalAuth(
+  req:  AuthRequest,
+  res:  Response,
+  next: NextFunction,
+): Promise<void> {
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.slice(7);
+    const { data } = await supabase.auth.getUser(token);
+    if (data?.user) req.userId = data.user.id;
+  }
+  next();
+}
+
 // Admin-Only: prüft ob User die Admin-Rolle hat
 export async function requireAdmin(
   req:  AuthRequest,

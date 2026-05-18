@@ -7,6 +7,7 @@ export async function createOrder(payload: CheckoutPayload): Promise<CheckoutRes
     items:           payload.cartItems,
     shippingAddress: payload.shipping,
     paymentMethod:   payload.paymentMethod,
+    ...(payload.guestEmail ? { guestEmail: payload.guestEmail } : {}),
   });
   return data;
 }

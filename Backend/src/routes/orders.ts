@@ -3,7 +3,7 @@ import { Router, Response, NextFunction } from 'express';
 import Stripe from 'stripe';
 import { supabase } from '../lib/supabase';
 import { stripe }   from '../lib/stripe';
-import { requireAuth, AuthRequest } from '../middleware/auth';
+import { requireAuth, optionalAuth, AuthRequest } from '../middleware/auth';
 import { checkoutRateLimit } from '../middleware/security';
 import { validate, UUIDParam } from '../lib/validate';
 
@@ -33,9 +33,10 @@ const CheckoutSchema = z.object({
     country:   z.string().trim().max(100).optional(),
   }).optional(),
   paymentMethod: z.string().optional(),
+  guestEmail: z.string().trim().email('Ungültige E-Mail-Adresse').optional(),
 });
 
-type CheckoutBody = z.infer<typeof CheckoutSchema>;
+type CheckoutBody = z.infer<typeof CheckoutSchema> & { guestEmail?: string };
 
 // GET /api/orders — eigene Bestellungen
 router.get('/', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
@@ -73,10 +74,16 @@ router.get('/:id', requireAuth, validate(UUIDParam, 'params'), async (req: AuthR
   }
 });
 
-// POST /api/orders/checkout — Stripe Checkout Session
-router.post('/checkout', requireAuth, checkoutRateLimit, validate(CheckoutSchema), async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+// POST /api/orders/checkout — Stripe Checkout Session (Auth optional für Gastbestellungen)
+router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchema), async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { items, shippingAddress, paymentMethod } = req.body as CheckoutBody;
+    const { items, shippingAddress, paymentMethod, guestEmail } = req.body as CheckoutBody;
+
+    // Gäste müssen eine E-Mail angeben
+    if (!req.userId && !guestEmail) {
+      res.status(400).json({ error: 'Für Gastbestellungen ist eine E-Mail-Adresse erforderlich.' });
+      return;
+    }
 
     // Preise IMMER aus der Datenbank — Client-Preise werden ignoriert
     const productIds = [...new Set(items.map(i => i.productId))];
@@ -111,14 +118,18 @@ router.post('/checkout', requireAuth, checkoutRateLimit, validate(CheckoutSchema
 
     const orderNumber = `#${Date.now().toString().slice(-6)}`;
 
+    const addressWithEmail = shippingAddress
+      ? { ...shippingAddress, ...(guestEmail ? { email: guestEmail } : {}) }
+      : (guestEmail ? { email: guestEmail } : null);
+
     const { data: order, error: orderErr } = await supabase
       .from('orders')
       .insert({
-        user_id:          req.userId,
+        user_id:          req.userId ?? null,
         order_number:     orderNumber,
         status:           'pending',
         total:            (lineItems.reduce((s, i) => s + i.unitAmountCents * i.quantity, 0) / 100).toFixed(2),
-        shipping_address: shippingAddress ?? null,
+        shipping_address: addressWithEmail,
         payment_method:   paymentMethod ?? 'card',
       })
       .select()
@@ -142,6 +153,7 @@ router.post('/checkout', requireAuth, checkoutRateLimit, validate(CheckoutSchema
     const session = await stripe.checkout.sessions.create({
       payment_method_types: stripePaymentMethods,
       mode:                 'payment',
+      ...(guestEmail ? { customer_email: guestEmail } : {}),
       line_items: lineItems.map(({ product, quantity, unitAmountCents }) => ({
         price_data: {
           currency:     'eur',

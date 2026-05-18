@@ -260,6 +260,21 @@
   font-weight: 500;
 }
 
+// ─── GAST-HINWEIS ──────────────────────────────────────────────────────────
+.checkout-form__guest-hint {
+  font-size:   rem(12.5px);
+  color:       color-mix(in srgb, var(--clr-text) 50%, transparent);
+  margin-top:  0.625rem;
+}
+
+.checkout-form__guest-link {
+  color:           var(--clr-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:hover { opacity: 0.8; }
+}
+
 // ─── LEERER WARENKORB ──────────────────────────────────────────────────────
 .checkout-empty {
   display: flex;

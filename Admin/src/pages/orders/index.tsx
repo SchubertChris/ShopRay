@@ -320,23 +320,46 @@ export default function OrdersPage() {
                   <p className="order-detail__date">{fmtDate(detail.created_at)}</p>
                 </div>
 
-                {profile && (
-                  <div className="order-detail__section">
-                    <p className="order-detail__label">Kunde</p>
-                    {profile.name && (
-                      <div className="order-detail__row">
-                        <User size={13} strokeWidth={2} className="order-detail__icon" />
-                        <span>{profile.name}</span>
-                      </div>
-                    )}
-                    {profile.email && (
-                      <div className="order-detail__row">
-                        <Mail size={13} strokeWidth={2} className="order-detail__icon" />
-                        <a className="order-detail__link" href={`mailto:${profile.email}`}>{profile.email}</a>
-                      </div>
-                    )}
-                  </div>
-                )}
+                <div className="order-detail__section">
+                  <p className="order-detail__label">Kunde</p>
+                  {profile ? (
+                    <>
+                      {profile.name && (
+                        <div className="order-detail__row">
+                          <User size={13} strokeWidth={2} className="order-detail__icon" />
+                          <span>{profile.name}</span>
+                        </div>
+                      )}
+                      {profile.email && (
+                        <div className="order-detail__row">
+                          <Mail size={13} strokeWidth={2} className="order-detail__icon" />
+                          <a className="order-detail__link" href={`mailto:${profile.email}`}>{profile.email}</a>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {(addr?.firstName || addr?.lastName) && (
+                        <div className="order-detail__row">
+                          <User size={13} strokeWidth={2} className="order-detail__icon" />
+                          <span>{[addr?.firstName, addr?.lastName].filter(Boolean).join(' ')}</span>
+                          <span className="admin-table__muted" style={{ marginLeft: '0.35rem', fontSize: '0.7rem' }}>Gast</span>
+                        </div>
+                      )}
+                      {(addr as { email?: string } | undefined)?.email && (
+                        <div className="order-detail__row">
+                          <Mail size={13} strokeWidth={2} className="order-detail__icon" />
+                          <a className="order-detail__link" href={`mailto:${(addr as { email?: string }).email}`}>
+                            {(addr as { email?: string }).email}
+                          </a>
+                        </div>
+                      )}
+                      {!addr?.firstName && !(addr as { email?: string } | undefined)?.email && (
+                        <p className="admin-table__muted">Gast (keine Kontaktdaten)</p>
+                      )}
+                    </>
+                  )}
+                </div>
 
                 <div className="order-detail__section">
                   <p className="order-detail__label">Bestellung</p>

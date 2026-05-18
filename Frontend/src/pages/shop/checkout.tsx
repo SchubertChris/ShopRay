@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '@features/cart';
 import { createOrder } from '@features/checkout';
+import { useAuth } from '@features/auth';
 import { ProductImage, SeoMeta } from '@components/ui';
 import { ROUTES } from '@config/routes';
 import { getErrorMessage } from '@/utils/errorMessage';
@@ -18,6 +19,7 @@ interface ShippingForm {
   city:          string;
   country:       string;
   paymentMethod: PaymentMethod;
+  guestEmail:    string;
 }
 
 type FormErrors = Partial<Record<keyof ShippingForm, string>>;
@@ -82,25 +84,31 @@ const PAYMENT_METHODS: Array<{ value: PaymentMethod; label: string; sub: string;
 const INITIAL_FORM: ShippingForm = {
   firstName: '', lastName: '', street: '', zip: '', city: '', country: 'DE',
   paymentMethod: 'card',
+  guestEmail: '',
 };
 
 // ── VALIDATION ────────────────────────────────────────────────────────────────
 
-function validate(form: ShippingForm): FormErrors {
+function validate(form: ShippingForm, isGuest: boolean): FormErrors {
   const errors: FormErrors = {};
   if (!form.firstName.trim())       errors.firstName = 'Vorname erforderlich';
   if (!form.lastName.trim())        errors.lastName  = 'Nachname erforderlich';
   if (!form.street.trim())          errors.street    = 'Straße & Hausnummer erforderlich';
   if (!/^\d{4,10}$/.test(form.zip)) errors.zip      = 'Gültige Postleitzahl eingeben';
   if (!form.city.trim())            errors.city      = 'Stadt erforderlich';
+  if (isGuest) {
+    if (!form.guestEmail.trim())                         errors.guestEmail = 'E-Mail-Adresse erforderlich';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.guestEmail.trim())) errors.guestEmail = 'Ungültige E-Mail-Adresse';
+  }
   return errors;
 }
 
 // ── PAGE ──────────────────────────────────────────────────────────────────────
 
 export default function CheckoutPage() {
-  const { items, total } = useCart();
-
+  const { items, total }   = useCart();
+  const { isAuthenticated } = useAuth();
+  const isGuest             = !isAuthenticated;
 
   const [form,           setForm]           = useState<ShippingForm>(INITIAL_FORM);
   const [errors,         setErrors]         = useState<FormErrors>({});
@@ -132,7 +140,7 @@ export default function CheckoutPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    const validationErrors = validate(form);
+    const validationErrors = validate(form, isGuest);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
@@ -153,6 +161,7 @@ export default function CheckoutPage() {
         },
         paymentMethod: form.paymentMethod,
         cartItems: items.map(i => ({ productId: i.id, quantity: i.quantity })),
+        ...(isGuest && form.guestEmail ? { guestEmail: form.guestEmail } : {}),
       });
       // Weiterleitung zur Stripe-Hosted-Checkout-Seite
       // clearCart() wird erst auf der order-success Seite aufgerufen (nach abgeschlossener Zahlung)
@@ -216,9 +225,34 @@ export default function CheckoutPage() {
                 <p className="checkout-form__api-error">{apiError}</p>
               )}
 
+              {/* Gast-E-Mail */}
+              {isGuest && (
+                <div className="checkout-form__section">
+                  <h3 className="checkout-form__section-title">1. Deine E-Mail-Adresse</h3>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="co-guestemail">E-Mail für Bestellbestätigung</label>
+                    <input
+                      id="co-guestemail"
+                      className={`form-input${errors.guestEmail ? ' form-input--error' : ''}`}
+                      type="email"
+                      name="guestEmail"
+                      placeholder="deine@email.de"
+                      autoComplete="email"
+                      value={form.guestEmail}
+                      onChange={handleChange}
+                    />
+                    {errors.guestEmail && <span className="form-error">{errors.guestEmail}</span>}
+                  </div>
+                  <p className="checkout-form__guest-hint">
+                    Kein Konto? Kein Problem — du erhältst deine Bestellbestätigung per E-Mail.{' '}
+                    <Link to={ROUTES.AUTH.LOGIN} className="checkout-form__guest-link">Anmelden</Link>
+                  </p>
+                </div>
+              )}
+
               {/* Lieferadresse */}
               <div className="checkout-form__section">
-                <h3 className="checkout-form__section-title">1. Lieferadresse</h3>
+                <h3 className="checkout-form__section-title">{isGuest ? '2.' : '1.'} Lieferadresse</h3>
 
                 <div className="checkout-form__row">
                   <div className="form-group">
@@ -302,7 +336,7 @@ export default function CheckoutPage() {
 
               {/* Zahlungsmethode */}
               <div className="checkout-form__section">
-                <h3 className="checkout-form__section-title">2. Zahlungsmethode</h3>
+                <h3 className="checkout-form__section-title">{isGuest ? '3.' : '2.'} Zahlungsmethode</h3>
                 <div className="payment-methods">
                   {PAYMENT_METHODS.map(m => (
                     <label

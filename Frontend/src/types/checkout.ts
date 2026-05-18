@@ -7,6 +7,7 @@ export interface CheckoutPayload {
   shipping:      Address;
   paymentMethod: PaymentMethod;
   cartItems:     Array<{ productId: string; quantity: number }>;
+  guestEmail?:   string;
 }
 
 /** Backend-Antwort: Stripe-Checkout-URL zur Weiterleitung */
