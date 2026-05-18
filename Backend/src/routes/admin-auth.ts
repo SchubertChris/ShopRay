@@ -320,17 +320,22 @@ router.get('/mods', requireOwner, async (_req: Request, res: Response): Promise<
     supabase.from('pending_mod_invites').select('id, email, invited_at').order('invited_at', { ascending: false }),
   ]);
 
-  if (modsRes.error || pendingRes.error) {
-    console.error('[GET /mods] Supabase:', modsRes.error ?? pendingRes.error);
+  if (modsRes.error) {
+    console.error('[GET /mods] profiles-Fehler:', modsRes.error);
     res.status(500).json({ error: 'Laden fehlgeschlagen.' });
     return;
   }
 
-  // Mods die noch in pending_mod_invites sind → noch kein eigenes Passwort gesetzt
-  const pendingEmails = new Set((pendingRes.data ?? []).map(p => p.email));
+  // Bei pending_mod_invites-Fehler (z.B. fehlende Grants) graceful degradieren
+  if (pendingRes.error) {
+    console.error('[GET /mods] pending_mod_invites-Fehler (Migration 017 nötig?):', pendingRes.error);
+  }
+
+  const pendingData   = pendingRes.data ?? [];
+  const pendingEmails = new Set(pendingData.map(p => p.email));
   const activeMods    = (modsRes.data ?? []).filter(m => !pendingEmails.has(m.email));
 
-  res.json({ active: activeMods, pending: pendingRes.data ?? [] });
+  res.json({ active: activeMods, pending: pendingData });
 });
 
 // ── POST /api/admin/mods — Mitarbeiter hinzufügen oder einladen ───────────────

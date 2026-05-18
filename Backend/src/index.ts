@@ -28,6 +28,9 @@ import settingsRouter        from './routes/settings';
 const app  = express();
 const PORT = process.env.PORT ?? 5000;
 
+// Vercel / Proxy: X-Forwarded-For korrekt auflösen (Pflicht für express-rate-limit v7)
+app.set('trust proxy', 1);
+
 // ── Stripe Webhook braucht raw body — MUSS vor express.json() ────────────────
 app.use('/api/webhook/stripe', express.raw({ type: 'application/json' }));
 
