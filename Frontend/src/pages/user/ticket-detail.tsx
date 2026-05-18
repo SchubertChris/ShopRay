@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, FormEvent } from 'react';
+import { useRef, useEffect, useState, type FormEvent } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { SeoMeta } from '@components/ui';
 import { ROUTES } from '@config/routes';

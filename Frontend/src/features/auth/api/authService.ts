@@ -146,7 +146,7 @@ export async function getMfaStatus(): Promise<boolean> {
 export async function enrollTotp(): Promise<{ factorId: string; qrCode: string; secret: string }> {
   // Halbfertige (unverifizierte) Faktoren aus abgebrochenen Setups bereinigen
   const { data: existing } = await supabase.auth.mfa.listFactors();
-  const unverified = existing?.totp?.filter(f => f.status === 'unverified') ?? [];
+  const unverified = existing?.totp?.filter(f => (f.status as string) === 'unverified') ?? [];
   for (const f of unverified) {
     await supabase.auth.mfa.unenroll({ factorId: f.id });
   }

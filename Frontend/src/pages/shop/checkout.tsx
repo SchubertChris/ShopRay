@@ -99,7 +99,7 @@ function validate(form: ShippingForm): FormErrors {
 // ── PAGE ──────────────────────────────────────────────────────────────────────
 
 export default function CheckoutPage() {
-  const { items, total, clearCart } = useCart();
+  const { items, total } = useCart();
 
 
   const [form,           setForm]           = useState<ShippingForm>(INITIAL_FORM);
