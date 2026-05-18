@@ -399,7 +399,7 @@
     padding: 0.875rem 1rem;
     border-top: 1px solid color-mix(in srgb, var(--clr-primary) 10%, transparent);
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(62px, 1fr));
     gap: 0.5rem;
     flex-shrink: 0;
     opacity: 0;
