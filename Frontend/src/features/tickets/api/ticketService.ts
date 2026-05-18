@@ -3,16 +3,6 @@ import api from '@/api/axiosinstance';
 import type { PaginatedResponse } from '@/types/api';
 import type { Ticket, TicketCategory, TicketStatus, TicketPriority, TicketPayload, TicketMessage } from '../types/ticket.types';
 
-// Frontend-Kategorie → DB-Kategorie
-const CATEGORY_TO_DB: Record<string, string> = {
-  'Bestellung & Lieferung':  'order',
-  'Rückgabe & Reklamation': 'order',
-  'Zahlung & Rechnung':      'payment',
-  'Produkt & Qualität':      'product',
-  'Konto & Datenschutz':     'other',
-  'Sonstiges':               'other',
-};
-
 // DB-Kategorie → Frontend-Kategorie
 const CATEGORY_FROM_DB: Record<string, TicketCategory> = {
   order:   'Bestellung & Lieferung',
