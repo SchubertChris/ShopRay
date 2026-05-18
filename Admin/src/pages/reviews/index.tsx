@@ -13,6 +13,8 @@ import { useAuthStore } from '@stores/authStore';
 
 type VerifiedFilter = 'all' | 'pending' | 'verified';
 
+interface DeleteConfirm { id: string; title: string; }
+
 const TABS: Array<{ key: VerifiedFilter; label: string }> = [
   { key: 'all',      label: 'Alle'         },
   { key: 'pending',  label: 'Ausstehend'   },
@@ -47,7 +49,8 @@ export default function ReviewsPage() {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
   const [filter,   setFilter]   = useState<VerifiedFilter>('all');
-  const [busy,     setBusy]     = useState<string | null>(null);
+  const [busy,          setBusy]          = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirm | null>(null);
   const [viewMode, toggleViewMode] = useViewMode('admin-reviews-view');
 
   const fetchReviews = useCallback(async () => {
@@ -83,7 +86,15 @@ export default function ReviewsPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Bewertung wirklich löschen?')) return;
+    setBusy(null);
+    const review = reviews.find(r => r.id === id);
+    setDeleteConfirm({ id, title: review?.title ?? 'diese Bewertung' });
+  }
+
+  async function confirmDelete() {
+    if (!deleteConfirm) return;
+    const { id } = deleteConfirm;
+    setDeleteConfirm(null);
     setBusy(id);
     try {
       await deleteAdminReview(id);
@@ -281,6 +292,23 @@ export default function ReviewsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {deleteConfirm && (
+        <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
+          <div className="modal modal--sm" onClick={e => e.stopPropagation()}>
+            <div className="modal__header">
+              <h3 className="modal__title">Bewertung löschen</h3>
+            </div>
+            <div className="modal__body">
+              <p>„<strong>{deleteConfirm.title}</strong>" wirklich unwiderruflich löschen?</p>
+            </div>
+            <div className="modal__footer">
+              <button className="btn-secondary" onClick={() => setDeleteConfirm(null)}>Abbrechen</button>
+              <button className="btn-danger" onClick={confirmDelete}>Löschen</button>
+            </div>
+          </div>
         </div>
       )}
     </>

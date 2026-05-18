@@ -10,20 +10,24 @@ import {
   type LoginLogEntry, type ShippingSettings, type ShopSettingsData, type Category,
 } from '../../api/adminApi';
 import { usePushNotifications } from '../../hooks/usePushNotifications';
+import { useAuthStore } from '@stores/authStore';
 
 type SettingsTab = 'shop' | 'smtp' | 'shipping' | 'categories' | 'security' | 'notifications' | 'team';
 
-const TABS: Array<{ key: SettingsTab; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }> = [
+const ALL_TABS: Array<{ key: SettingsTab; label: string; ownerOnly?: boolean; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }> = [
   { key: 'shop',          label: 'Shop-Infos',          icon: Store    },
   { key: 'smtp',          label: 'E-Mail (SMTP)',        icon: Mail     },
   { key: 'shipping',      label: 'Versand',              icon: Truck    },
   { key: 'categories',    label: 'Kategorien',           icon: Tag      },
   { key: 'security',      label: 'Sicherheit',           icon: Lock     },
   { key: 'notifications', label: 'Benachrichtigungen',   icon: Bell     },
-  { key: 'team',          label: 'Mitarbeiter',           icon: Users    },
+  { key: 'team',          label: 'Mitarbeiter',          icon: Users,   ownerOnly: true },
 ];
 
 export default function SettingsPage() {
+  const role = useAuthStore(s => s.role);
+  const isOwner = role === 'owner';
+  const TABS = ALL_TABS.filter(t => !t.ownerOnly || isOwner);
   const [tab, setTab] = useState<SettingsTab>('shop');
 
   return (

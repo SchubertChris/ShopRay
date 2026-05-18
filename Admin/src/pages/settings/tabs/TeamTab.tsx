@@ -14,9 +14,12 @@ export default function TeamTab() {
   const [adding,     setAdding]     = useState(false);
   const [addError,   setAddError]   = useState<string | null>(null);
   const [addSuccess, setAddSuccess] = useState<string | null>(null);
-  const [removingId, setRemovingId] = useState<string | null>(null);
-  const [tempPw,     setTempPw]     = useState<{ email: string; pw: string } | null>(null);
-  const [copied,     setCopied]     = useState(false);
+  const [removingId,     setRemovingId]     = useState<string | null>(null);
+  const [tempPw,         setTempPw]         = useState<{ email: string; pw: string } | null>(null);
+  const [copied,         setCopied]         = useState(false);
+  const [removeConfirm,  setRemoveConfirm]  = useState<ModUser | null>(null);
+  const [cancelConfirm,  setCancelConfirm]  = useState<PendingInvite | null>(null);
+  const [removeError,    setRemoveError]    = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,27 +64,43 @@ export default function TeamTab() {
     }
   }
 
-  async function handleRemove(mod: ModUser) {
-    if (!confirm(`Mitarbeiter-Rechte von „${mod.email}" wirklich entziehen?`)) return;
+  function handleRemove(mod: ModUser) {
+    setRemoveError(null);
+    setRemoveConfirm(mod);
+  }
+
+  async function confirmRemove() {
+    if (!removeConfirm) return;
+    const mod = removeConfirm;
+    setRemoveConfirm(null);
     setRemovingId(mod.id);
+    setRemoveError(null);
     try {
       await removeMod(mod.id);
       setActive(prev => prev.filter(m => m.id !== mod.id));
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Entfernen fehlgeschlagen.');
+      setRemoveError(err instanceof Error ? err.message : 'Entfernen fehlgeschlagen.');
     } finally {
       setRemovingId(null);
     }
   }
 
-  async function handleCancelInvite(invite: PendingInvite) {
-    if (!confirm(`Einladung an „${invite.email}" wirklich zurückziehen?`)) return;
+  function handleCancelInvite(invite: PendingInvite) {
+    setRemoveError(null);
+    setCancelConfirm(invite);
+  }
+
+  async function confirmCancelInvite() {
+    if (!cancelConfirm) return;
+    const invite = cancelConfirm;
+    setCancelConfirm(null);
     setRemovingId(invite.id);
+    setRemoveError(null);
     try {
       await cancelInvite(invite.id);
       setPending(prev => prev.filter(i => i.id !== invite.id));
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Zurückziehen fehlgeschlagen.');
+      setRemoveError(err instanceof Error ? err.message : 'Zurückziehen fehlgeschlagen.');
     } finally {
       setRemovingId(null);
     }
@@ -99,6 +118,42 @@ export default function TeamTab() {
 
   return (
     <div className="settings-section">
+
+      {/* ── Mitarbeiter entfernen ── */}
+      {removeConfirm && (
+        <div className="modal-overlay" onClick={() => setRemoveConfirm(null)}>
+          <div className="modal modal--sm" onClick={e => e.stopPropagation()}>
+            <div className="modal__header">
+              <h3 className="modal__title">Mitarbeiter-Rechte entziehen</h3>
+            </div>
+            <div className="modal__body">
+              <p>Soll <strong>{removeConfirm.email}</strong> der Zugriff auf das Admin-Panel wirklich entzogen werden?</p>
+            </div>
+            <div className="modal__footer">
+              <button className="btn-secondary" onClick={() => setRemoveConfirm(null)}>Abbrechen</button>
+              <button className="btn-danger" onClick={confirmRemove}>Entziehen</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Einladung zurückziehen ── */}
+      {cancelConfirm && (
+        <div className="modal-overlay" onClick={() => setCancelConfirm(null)}>
+          <div className="modal modal--sm" onClick={e => e.stopPropagation()}>
+            <div className="modal__header">
+              <h3 className="modal__title">Einladung zurückziehen</h3>
+            </div>
+            <div className="modal__body">
+              <p>Die Einladung an <strong>{cancelConfirm.email}</strong> wirklich zurückziehen?</p>
+            </div>
+            <div className="modal__footer">
+              <button className="btn-secondary" onClick={() => setCancelConfirm(null)}>Abbrechen</button>
+              <button className="btn-danger" onClick={confirmCancelInvite}>Zurückziehen</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Startpasswort-Modal ── */}
       {tempPw && (
@@ -156,8 +211,9 @@ export default function TeamTab() {
         </button>
       </form>
 
-      {addError   && <p className="form-error-inline" style={{ marginTop: '0.5rem' }}>{addError}</p>}
-      {addSuccess && <p className="form-success-inline" style={{ marginTop: '0.5rem' }}>{addSuccess}</p>}
+      {addError    && <p className="form-error-inline"   style={{ marginTop: '0.5rem' }}>{addError}</p>}
+      {addSuccess  && <p className="form-success-inline" style={{ marginTop: '0.5rem' }}>{addSuccess}</p>}
+      {removeError && <p className="form-error-inline"   style={{ marginTop: '0.5rem' }}>{removeError}</p>}
 
       {/* Loading */}
       {loading && (
