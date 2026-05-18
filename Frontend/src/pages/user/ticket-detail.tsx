@@ -42,7 +42,7 @@ export default function TicketDetailPage() {
 
   if (!id) return <Navigate to={ROUTES.ACCOUNT.TICKETS} replace />;
 
-  const isClosed = ticket?.status === 'closed' || ticket?.status === 'resolved';
+  const isClosed = ticket?.status === 'closed';
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

@@ -1,4 +1,4 @@
-export type TicketStatus   = 'open' | 'in-progress' | 'resolved' | 'closed';
+export type TicketStatus   = 'open' | 'in-progress' | 'closed';
 export type TicketPriority = 'normal' | 'high' | 'urgent';
 export type TicketCategory =
   | 'Bestellung & Lieferung'

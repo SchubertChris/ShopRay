@@ -9,14 +9,12 @@ const TABS: { label: string; status: TicketStatus | 'all' }[] = [
   { label: 'Alle',           status: 'all' },
   { label: 'Offen',          status: 'open' },
   { label: 'In Bearbeitung', status: 'in-progress' },
-  { label: 'Gelöst',         status: 'resolved' },
   { label: 'Geschlossen',    status: 'closed' },
 ];
 
 const STATUS_LABEL: Record<TicketStatus, string> = {
   'open':        'Offen',
   'in-progress': 'In Bearbeitung',
-  'resolved':    'Gelöst',
   'closed':      'Geschlossen',
 };
 

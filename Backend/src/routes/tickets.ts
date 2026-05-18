@@ -38,18 +38,18 @@ router.post('/', optionalAuth, ticketRateLimit, validate(TicketSchema), async (r
     }
 
     const dbCategory = CATEGORY_MAP[category] ?? 'other';
-    const fullSubject = `[${priority}] ${subject}`;
 
     const { data: ticket, error } = await supabase
       .from('tickets')
       .insert({
         user_id:     req.userId ?? null,
         guest_email: req.userId ? null : (guestEmail ?? null),
-        subject:     fullSubject,
+        subject,
         message:     description,
         category:    dbCategory,
+        priority,
       })
-      .select('id, subject, status, created_at')
+      .select('id, subject, category, status, created_at')
       .single();
 
     if (error) throw error;
