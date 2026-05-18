@@ -53,7 +53,9 @@ export default function SupportPage() {
   const [chatInput,   setChatInput]   = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [chatSending, setChatSending] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollRef      = useRef<ReturnType<typeof setInterval> | null>(null);
+  const detailPanelRef = useRef<HTMLDivElement>(null);
+  const touchStartY  = useRef(-1);
 
   useEffect(() => {
     useBadgeStore.getState().clear('openTickets');
@@ -63,6 +65,39 @@ export default function SupportPage() {
       .catch(() => null)
       .finally(() => setLoading(false));
   }, []);
+
+  // Body-Scroll sperren wenn Detail-Panel oder Chat offen (Mobile Bottom Sheet)
+  useEffect(() => {
+    const open = !!(active || chatTicket);
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [active, chatTicket]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (detailPanelRef.current && detailPanelRef.current.scrollTop === 0)
+      touchStartY.current = e.touches[0].clientY;
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartY.current < 0 || !detailPanelRef.current) return;
+    const dy = e.touches[0].clientY - touchStartY.current;
+    if (dy > 0) {
+      detailPanelRef.current.style.transition = 'none';
+      detailPanelRef.current.style.transform  = `translateY(${dy}px)`;
+    }
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current < 0 || !detailPanelRef.current) return;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    touchStartY.current = -1;
+    if (dy > 100) {
+      detailPanelRef.current.style.transition = 'transform 0.22s ease';
+      detailPanelRef.current.style.transform  = 'translateY(100%)';
+      setTimeout(() => setActive(null), 220);
+    } else {
+      detailPanelRef.current.style.transition = 'transform 0.25s cubic-bezier(0.32,0.72,0,1)';
+      detailPanelRef.current.style.transform  = '';
+    }
+  };
 
   // Aktive = open + in_progress, Archiv = closed
   const byMode = viewMode === 'active'
@@ -279,6 +314,7 @@ export default function SupportPage() {
         </div>
       )}
 
+      {activeTicket && displayMode === 'table' && <div className="panel-backdrop" onClick={() => setActive(null)} />}
       {displayMode === 'table' && (
       <div className={`ticket-split${activeTicket ? ' has-detail' : ''}`}>
         <div className="ticket-list">
@@ -315,7 +351,13 @@ export default function SupportPage() {
         </div>
 
         {activeTicket && (
-          <div className="ticket-detail">
+          <div
+            className="ticket-detail"
+            ref={detailPanelRef}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <div className="ticket-detail__header">
               <p className="ticket-detail__id">Ticket #{activeTicket.id.slice(0, 8)}</p>
               <p className="ticket-detail__subject">{activeTicket.subject}</p>
@@ -387,6 +429,7 @@ export default function SupportPage() {
         </div>
       )}
 
+      {chatView && chatTicket && <div className="panel-backdrop" onClick={closeChat} />}
       {chatView && chatTicket && (
         <div className="admin-chat-panel">
           <div className="admin-chat-panel__header">
