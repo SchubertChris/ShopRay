@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { useProductSearch, type Product, type SortBy } from '@features/products';
+import { useProductSearch, useCategories, type Product, type SortBy } from '@features/products';
 import { ProductCard, Stars, ProductImage, SeoMeta } from '@components/ui';
 import { useCart } from '@features/cart';
 import { useNotifications } from '@features/notifications';
 import { useWishlist } from '@features/wishlist';
 import { ROUTES } from '@config/routes';
-
-const CATEGORY_FILTERS = ['Alle', 'Wohnen', 'Küche', 'Deko', 'Textilien', 'Kunst'] as const;
 
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
   { value: 'popularity',  label: 'Beliebtheit' },
@@ -20,15 +18,24 @@ export default function SearchPage() {
   const [searchParams] = useSearchParams();
   const urlCategory    = searchParams.get('category') ?? '';
   const urlFilter      = searchParams.get('filter');
-  const initialIdx     = CATEGORY_FILTERS.indexOf(urlCategory as typeof CATEGORY_FILTERS[number]);
 
   const urlSort    = searchParams.get('sort') as SortBy | null;
   const validSorts: SortBy[] = ['popularity', 'price-asc', 'price-desc', 'newest'];
   const initialSort = urlSort && validSorts.includes(urlSort) ? urlSort : 'popularity';
 
+  const { data: dbCategories } = useCategories();
+  const categoryFilters = ['Alle', ...dbCategories];
+
   const [query,        setQuery]        = useState('');
-  const [activeIdx,    setActiveIdx]    = useState(Math.max(0, initialIdx));
+  const [activeIdx,    setActiveIdx]    = useState(0);
   const [sortBy,       setSortBy]       = useState<SortBy>(initialSort);
+
+  // URL-Kategorie nach DB-Load auflösen
+  useEffect(() => {
+    if (!urlCategory || dbCategories.length === 0) return;
+    const idx = categoryFilters.indexOf(urlCategory);
+    if (idx > 0) setActiveIdx(idx);
+  }, [dbCategories, urlCategory]);
   const [quickView,    setQuickView]    = useState<Product | null>(null);
   const [visibleCount, setVisibleCount] = useState(24);
 
@@ -42,13 +49,12 @@ export default function SearchPage() {
   const isSale = urlFilter === 'sale';
   const isNew  = sortBy === 'newest';
 
-  const category       = activeIdx === 0 ? null : CATEGORY_FILTERS[activeIdx] as string;
+  const category       = activeIdx === 0 ? null : categoryFilters[activeIdx] ?? null;
   const { data: results } = useProductSearch(query, category, sortBy);
   const displayResults = isSale ? results.filter(p => p.discount !== null) : results;
   const visibleResults = displayResults.slice(0, visibleCount);
   const hasMore        = displayResults.length > visibleCount;
 
-  // Reset pagination when filters change
   useEffect(() => { setVisibleCount(24); }, [query, activeIdx, sortBy, isSale]);
 
   useEffect(() => {
@@ -63,7 +69,7 @@ export default function SearchPage() {
       document.querySelectorAll('[data-reveal]:not(.is-visible)').forEach(el => obs.observe(el));
     }, 50);
     return () => { clearTimeout(timer); obs?.disconnect(); };
-  }, [displayResults]);
+  }, [displayResults, visibleCount]);
 
   return (
     <>
@@ -128,7 +134,7 @@ export default function SearchPage() {
       {/* ── STICKY FILTER BAR ────────────────────────────────────────────── */}
       <div className="collection-filter">
         <div className="collection-filter__inner">
-          {CATEGORY_FILTERS.map((f, i) => (
+          {categoryFilters.map((f, i) => (
             <button
               key={f}
               className={`collection-filter__chip${activeIdx === i ? ' is-active' : ''}`}

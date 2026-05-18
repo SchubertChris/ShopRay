@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getProducts, getProductBySlug } from '../api/productService';
+import { getProducts, getProductBySlug, getCategories } from '../api/productService';
 import type { Product, SortBy } from '../types/product.types';
 
 export function useProducts() {
@@ -29,6 +29,20 @@ export function useProductBySlug(slug: string) {
       .catch(() => setData(null))
       .finally(() => setLoading(false));
   }, [slug]);
+
+  return { data, loading };
+}
+
+export function useCategories() {
+  const [data, setData]       = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getCategories()
+      .then(setData)
+      .catch(() => setData([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   return { data, loading };
 }

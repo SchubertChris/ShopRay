@@ -9,8 +9,9 @@ const router = Router();
 router.use(requireAdmin);
 
 const CategorySchema = z.object({
-  name:  z.string().trim().min(1, 'Name ist erforderlich').max(100),
-  order: z.number().int().min(0).optional().default(0),
+  name:      z.string().trim().min(1, 'Name ist erforderlich').max(100),
+  order:     z.number().int().min(0).optional().default(0),
+  image_url: z.string().url('Ungültige URL').optional().nullable(),
 });
 
 // GET /api/admin/categories — alle Kategorien
@@ -18,7 +19,7 @@ router.get('/', async (_req: Request, res: Response, next: NextFunction): Promis
   try {
     const { data, error } = await supabase
       .from('categories')
-      .select('id, name, "order", created_at')
+      .select('id, name, "order", image_url, created_at')
       .order('"order"', { ascending: true })
       .order('name',    { ascending: true });
 
@@ -32,7 +33,7 @@ router.get('/', async (_req: Request, res: Response, next: NextFunction): Promis
 // POST /api/admin/categories — Kategorie anlegen
 router.post('/', validate(CategorySchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { name, order } = req.body as z.infer<typeof CategorySchema>;
+    const { name, order, image_url } = req.body as z.infer<typeof CategorySchema>;
 
     const { data: existing } = await supabase
       .from('categories')
@@ -47,7 +48,7 @@ router.post('/', validate(CategorySchema), async (req: Request, res: Response, n
 
     const { data, error } = await supabase
       .from('categories')
-      .insert({ name, order })
+      .insert({ name, order, image_url: image_url ?? null })
       .select()
       .single();
 

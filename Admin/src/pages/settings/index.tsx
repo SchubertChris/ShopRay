@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { Save, Store, Mail, Truck, Lock, Tag, Trash2, Plus, ShieldCheck, Monitor, AlertTriangle, Loader2, CheckCircle2, Smartphone, QrCode, X, Bell, BellOff } from 'lucide-react';
 import {
   getLoginLog, getShippingSettings, updateShippingSettings,
+  getShopSettings, updateShopSettings,
   getCategories, createCategory, deleteCategory,
   get2faStatus, get2faSetup, confirm2fa, disable2fa, verify2fa,
-  type LoginLogEntry, type ShippingSettings, type Category,
+  type LoginLogEntry, type ShippingSettings, type ShopSettingsData, type Category,
 } from '../../api/adminApi';
 import { usePushNotifications } from '../../hooks/usePushNotifications';
 
@@ -63,41 +64,125 @@ export default function SettingsPage() {
 
 // ── Shop-Informationen ────────────────────────────────────────────────────────
 function ShopSettings() {
-  return (
+  type Form = Omit<ShopSettingsData, 'updated_at'>;
+
+  const [form,    setForm]    = useState<Form>({
+    name: '', description: '', url: '', email: '', phone: '',
+    street: '', zip: '', city: '', country: 'Deutschland', vat_id: '', tax_number: '',
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving,  setSaving]  = useState(false);
+  const [saved,   setSaved]   = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
+
+  useEffect(() => {
+    getShopSettings()
+      .then(d => setForm({ name: d.name, description: d.description, url: d.url, email: d.email, phone: d.phone, street: d.street, zip: d.zip, city: d.city, country: d.country, vat_id: d.vat_id, tax_number: d.tax_number }))
+      .catch(() => { /* Defaults bleiben */ })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const set = (field: keyof Form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm(prev => ({ ...prev, [field]: e.target.value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    setSaved(false);
+    try {
+      await updateShopSettings(form);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return (
     <div className="form-section">
+      <div className="page-loading"><Loader2 size={18} strokeWidth={1.5} className="spin" /><span>Lade Shop-Infos…</span></div>
+    </div>
+  );
+
+  return (
+    <form className="form-section" onSubmit={handleSubmit} noValidate>
       <div className="form-section__head">
         <h2 className="form-section__title">Shop-Informationen</h2>
         <p className="form-section__desc">Wird im Footer, in E-Mails und im Impressum angezeigt.</p>
       </div>
+
       <div className="form-field">
         <label className="form-label">Shop-Name</label>
-        <input type="text" className="form-input" defaultValue="ShopRay" />
+        <input type="text" className="form-input" value={form.name} onChange={set('name')} required maxLength={100} />
       </div>
       <div className="form-field">
         <label className="form-label">Beschreibung</label>
-        <input type="text" className="form-input" defaultValue="Dein nachhaltiger Online-Shop." />
+        <input type="text" className="form-input" value={form.description} onChange={set('description')} maxLength={500} />
       </div>
       <div className="form-row">
         <div className="form-field">
           <label className="form-label">Shop-URL</label>
-          <input type="url" className="form-input" defaultValue="https://deinshop.de" />
+          <input type="url" className="form-input" value={form.url} onChange={set('url')} />
         </div>
         <div className="form-field">
           <label className="form-label">Support-E-Mail</label>
-          <input type="email" className="form-input" defaultValue="hello@deinshop.de" />
+          <input type="email" className="form-input" value={form.email} onChange={set('email')} />
         </div>
       </div>
       <div className="form-field">
         <label className="form-label">Telefon (Impressum)</label>
-        <input type="tel" className="form-input" placeholder="+49 30 1234567" />
+        <input type="tel" className="form-input" value={form.phone} onChange={set('phone')} placeholder="+49 30 1234567" />
       </div>
+
+      <div className="form-section__head" style={{ marginTop: '1.5rem' }}>
+        <h3 className="form-section__title" style={{ fontSize: '0.9rem' }}>Adresse (Impressum)</h3>
+      </div>
+      <div className="form-field">
+        <label className="form-label">Straße & Hausnummer</label>
+        <input type="text" className="form-input" value={form.street} onChange={set('street')} />
+      </div>
+      <div className="form-row">
+        <div className="form-field form-field--narrow">
+          <label className="form-label">PLZ</label>
+          <input type="text" className="form-input" value={form.zip} onChange={set('zip')} maxLength={10} />
+        </div>
+        <div className="form-field">
+          <label className="form-label">Stadt</label>
+          <input type="text" className="form-input" value={form.city} onChange={set('city')} />
+        </div>
+      </div>
+      <div className="form-row">
+        <div className="form-field">
+          <label className="form-label">Land</label>
+          <input type="text" className="form-input" value={form.country} onChange={set('country')} />
+        </div>
+        <div className="form-field">
+          <label className="form-label">USt-IdNr.</label>
+          <input type="text" className="form-input form-input--mono" value={form.vat_id} onChange={set('vat_id')} placeholder="DE123456789" />
+        </div>
+      </div>
+      <div className="form-field">
+        <label className="form-label">Steuernummer</label>
+        <input type="text" className="form-input form-input--mono" value={form.tax_number} onChange={set('tax_number')} placeholder="12/345/67890" />
+      </div>
+
+      {error && <p className="form-error-inline">{error}</p>}
+
       <div className="form-actions">
-        <button className="btn-primary">
-          <Save size={14} strokeWidth={2} />
-          Speichern
+        <button className="btn-primary" type="submit" disabled={saving}>
+          {saving
+            ? <Loader2 size={14} strokeWidth={2} className="spin" />
+            : saved
+              ? <CheckCircle2 size={14} strokeWidth={2} />
+              : <Save size={14} strokeWidth={2} />
+          }
+          {saving ? 'Speichert…' : saved ? 'Gespeichert' : 'Speichern'}
         </button>
       </div>
-    </div>
+    </form>
   );
 }
 

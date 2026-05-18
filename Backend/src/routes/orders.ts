@@ -14,7 +14,7 @@ const PAYMENT_METHOD_MAP: Record<string, Stripe.Checkout.SessionCreateParams.Pay
   card:           ['card'],
   paypal:         ['paypal'],
   klarna:         ['klarna'],
-  'bank-transfer': ['sofort'],
+  'bank-transfer': ['sepa_debit'],
 };
 
 const CheckoutSchema = z.object({

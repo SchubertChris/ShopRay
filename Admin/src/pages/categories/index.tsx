@@ -11,9 +11,10 @@ export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading,    setLoading]    = useState(false);
   const [error,      setError]      = useState<string | null>(null);
-  const [newName,    setNewName]    = useState('');
-  const [newOrder,   setNewOrder]   = useState('0');
-  const [saving,     setSaving]     = useState(false);
+  const [newName,     setNewName]    = useState('');
+  const [newOrder,    setNewOrder]   = useState('0');
+  const [newImageUrl, setNewImageUrl] = useState('');
+  const [saving,      setSaving]     = useState(false);
   const [saveError,  setSaveError]  = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [viewMode, toggleViewMode] = useViewMode('admin-categories-view');
@@ -40,10 +41,11 @@ export default function CategoriesPage() {
     setSaving(true);
     setSaveError(null);
     try {
-      const created = await createCategory(name, parseInt(newOrder, 10) || 0);
+      const created = await createCategory(name, parseInt(newOrder, 10) || 0, newImageUrl.trim() || null);
       setCategories(prev => [...prev, created].sort((a, b) => a.order - b.order || a.name.localeCompare(b.name)));
       setNewName('');
       setNewOrder('0');
+      setNewImageUrl('');
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Erstellen fehlgeschlagen.');
     } finally {
@@ -110,7 +112,20 @@ export default function CategoriesPage() {
                 onChange={e => setNewOrder(e.target.value)}
               />
             </div>
-            <div className="cat-create__btn-wrap">
+          </div>
+          <div className="form-group" style={{ marginTop: '0.75rem' }}>
+            <label className="form-label" htmlFor="cat-image">Bild-URL (optional)</label>
+            <input
+              id="cat-image"
+              className="form-input"
+              type="url"
+              placeholder="https://…/kategorie.jpg"
+              value={newImageUrl}
+              onChange={e => setNewImageUrl(e.target.value)}
+            />
+          </div>
+          <div className="cat-create__row" style={{ marginTop: '0.75rem' }}>
+            <div className="cat-create__btn-wrap" style={{ marginLeft: 'auto' }}>
               <button className="cat-create__btn" type="submit" disabled={saving || !newName.trim()}>
                 <Plus size={15} strokeWidth={2.5} />
                 {saving ? 'Erstellen…' : 'Kategorie erstellen'}
@@ -150,7 +165,10 @@ export default function CategoriesPage() {
             <div key={cat.id} className="admin-card admin-card--centered">
               <div className="admin-card__body">
                 <div className="admin-card__avatar">
-                  <Tag size={22} strokeWidth={1.75} />
+                  {cat.image_url
+                    ? <img src={cat.image_url} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                    : <Tag size={22} strokeWidth={1.75} />
+                  }
                 </div>
                 <p className="admin-card__name">{cat.name}</p>
                 <p className="admin-card__meta">Reihenfolge #{cat.order}</p>

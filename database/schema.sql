@@ -92,6 +92,7 @@ CREATE TABLE IF NOT EXISTS public.categories (
   id         UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
   name       TEXT        NOT NULL UNIQUE,
   "order"    INTEGER     NOT NULL DEFAULT 0,
+  image_url  TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -268,6 +269,27 @@ INSERT INTO public.shipping_settings (id, standard, express, free_above, deliver
 VALUES (1, 4.90, 9.90, 50.00, '2–4 Werktage')
 ON CONFLICT (id) DO NOTHING;
 
+-- ── SHOP SETTINGS (Singleton-Tabelle) ───────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.shop_settings (
+  id          INTEGER     PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  name        TEXT        NOT NULL DEFAULT 'Mein Shop',
+  description TEXT        DEFAULT '',
+  url         TEXT        DEFAULT '',
+  email       TEXT        DEFAULT '',
+  phone       TEXT        DEFAULT '',
+  street      TEXT        DEFAULT '',
+  zip         TEXT        DEFAULT '',
+  city        TEXT        DEFAULT '',
+  country     TEXT        DEFAULT 'Deutschland',
+  vat_id      TEXT        DEFAULT '',
+  tax_number  TEXT        DEFAULT '',
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO public.shop_settings (id, name, description, url, email, country) VALUES
+  (1, 'ShopRay', 'Dein Online-Shop', 'https://deinshop.de', 'hello@deinshop.de', 'Deutschland')
+ON CONFLICT (id) DO NOTHING;
+
 -- ── ADMIN TOTP (2FA) ─────────────────────────────────────────────────────────
 -- Eine Zeile = 2FA aktiv; keine Zeile = 2FA deaktiviert
 CREATE TABLE IF NOT EXISTS public.admin_totp (
@@ -296,6 +318,7 @@ ALTER TABLE public.contact_inquiries  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_login_log   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shipping_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shop_settings     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_totp        ENABLE ROW LEVEL SECURITY;
 
 -- Profiles
@@ -335,6 +358,9 @@ CREATE POLICY "Versand lesen"    ON public.shipping_settings FOR SELECT USING (T
 CREATE POLICY "Versand schreiben" ON public.shipping_settings
   FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
 
+-- Shop Settings (öffentlich lesbar, nur Service-Role schreibt)
+CREATE POLICY "Shop-Infos öffentlich lesen" ON public.shop_settings FOR SELECT USING (TRUE);
+
 -- ── GRANTS ───────────────────────────────────────────────────────────────────
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 
@@ -343,6 +369,7 @@ GRANT SELECT ON public.products          TO anon, authenticated;
 GRANT SELECT ON public.categories        TO anon, authenticated;
 GRANT SELECT ON public.reviews           TO anon, authenticated;
 GRANT SELECT ON public.shipping_settings TO anon, authenticated;
+GRANT SELECT ON public.shop_settings     TO anon, authenticated;
 GRANT INSERT ON public.contact_inquiries TO anon, authenticated;
 
 -- Authentifizierte Nutzer
@@ -363,6 +390,7 @@ GRANT ALL ON public.tickets           TO service_role;
 GRANT ALL ON public.contact_inquiries TO service_role;
 GRANT ALL ON public.admin_login_log   TO service_role;
 GRANT ALL ON public.shipping_settings TO service_role;
+GRANT ALL ON public.shop_settings     TO service_role;
 GRANT ALL ON public.admin_totp          TO service_role;
 GRANT ALL ON public.push_subscriptions  TO service_role;
 

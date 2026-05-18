@@ -19,6 +19,7 @@ const STATUS_TABS: Array<{ key: OrderStatus | 'all'; label: string }> = [
   { key: 'delivered',      label: 'Zugestellt'       },
   { key: 'cancelled',      label: 'Storniert'        },
   { key: 'payment_failed', label: 'Zahlung fehlg.'  },
+  { key: 'refunded',       label: 'Erstattet'       },
 ];
 
 const STATUS_LABELS: Record<string, string> = {
@@ -71,6 +72,13 @@ export default function OrdersPage() {
       .then(setDetail)
       .catch(() => null)
       .finally(() => setDetailLoading(false));
+  }, [activeId]);
+
+  // Body-Scroll sperren wenn Bottom Sheet auf Mobile offen ist
+  useEffect(() => {
+    if (activeId) document.body.style.overflow = 'hidden';
+    else          document.body.style.overflow = '';
+    return ()   => { document.body.style.overflow = ''; };
   }, [activeId]);
 
   const handleTouchStart = (e: React.TouchEvent) => {

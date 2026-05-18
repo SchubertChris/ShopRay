@@ -150,6 +150,29 @@ export const getShippingSettings = () =>
 export const updateShippingSettings = (data: Omit<ShippingSettings, 'updated_at'>) =>
   apiFetch<ShippingSettings>('/api/admin/settings/shipping', 'PUT', data);
 
+// ── Shop-Einstellungen ────────────────────────────────────────────────────────
+
+export interface ShopSettingsData {
+  name:        string;
+  description: string;
+  url:         string;
+  email:       string;
+  phone:       string;
+  street:      string;
+  zip:         string;
+  city:        string;
+  country:     string;
+  vat_id:      string;
+  tax_number:  string;
+  updated_at:  string;
+}
+
+export const getShopSettings = () =>
+  apiFetch<ShopSettingsData>('/api/settings/shop');
+
+export const updateShopSettings = (data: Omit<ShopSettingsData, 'updated_at'>) =>
+  apiFetch<ShopSettingsData>('/api/admin/settings/shop', 'PUT', data);
+
 // ── Sicherheit / Login-Protokoll ─────────────────────────────────────────────
 
 export interface LoginLogEntry {
@@ -387,14 +410,15 @@ export interface Category {
   id:         string;
   name:       string;
   order:      number;
+  image_url:  string | null;
   created_at: string;
 }
 
 export const getCategories    = () =>
   apiFetch<Category[]>('/api/admin/categories');
 
-export const createCategory   = (name: string, order?: number) =>
-  apiFetch<Category>('/api/admin/categories', 'POST', { name, order: order ?? 0 });
+export const createCategory   = (name: string, order?: number, image_url?: string | null) =>
+  apiFetch<Category>('/api/admin/categories', 'POST', { name, order: order ?? 0, image_url: image_url ?? null });
 
 export const deleteCategory   = (id: string) =>
   apiFetch<{ success: boolean }>(`/api/admin/categories/${id}`, 'DELETE');

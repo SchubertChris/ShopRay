@@ -40,6 +40,32 @@ export async function getProducts(): Promise<Product[]> {
   return (data as Record<string, unknown>[]).map(mapProduct);
 }
 
+export interface CategoryInfo {
+  name:      string;
+  order:     number;
+  image_url: string | null;
+}
+
+export async function getCategories(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('categories')
+    .select('name, "order"')
+    .order('"order"', { ascending: true })
+    .order('name',    { ascending: true });
+  if (error) throw error;
+  return (data as { name: string }[]).map(c => c.name);
+}
+
+export async function getCategoriesWithImages(): Promise<CategoryInfo[]> {
+  const { data, error } = await supabase
+    .from('categories')
+    .select('name, "order", image_url')
+    .order('"order"', { ascending: true })
+    .order('name',    { ascending: true });
+  if (error) throw error;
+  return (data as CategoryInfo[]);
+}
+
 export async function getProductBySlug(slug: string): Promise<Product> {
   const { data, error } = await supabase
     .from('products')

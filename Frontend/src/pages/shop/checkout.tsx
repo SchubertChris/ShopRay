@@ -68,12 +68,12 @@ const PAYMENT_METHODS: Array<{ value: PaymentMethod; label: string; sub: string;
   },
   {
     value: 'bank-transfer',
-    label: 'Sofortüberweisung',
-    sub: 'Online-Banking',
+    label: 'SEPA-Lastschrift',
+    sub: 'Direkt vom Bankkonto',
     logo: (
       <svg width="48" height="30" viewBox="0 0 48 30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <rect width="48" height="30" rx="4" fill="#EF3340" />
-        <text x="5" y="21" fontFamily="Arial,sans-serif" fontSize="11" fontWeight="700" fill="#FFFFFF" letterSpacing="-0.3">SOFORT</text>
+        <rect width="48" height="30" rx="4" fill="#003399" />
+        <text x="7" y="21" fontFamily="Arial,sans-serif" fontSize="11" fontWeight="700" fill="#FFFFFF" letterSpacing="-0.3">SEPA</text>
       </svg>
     ),
   },
@@ -154,8 +154,8 @@ export default function CheckoutPage() {
         paymentMethod: form.paymentMethod,
         cartItems: items.map(i => ({ productId: i.id, quantity: i.quantity })),
       });
-      clearCart();
       // Weiterleitung zur Stripe-Hosted-Checkout-Seite
+      // clearCart() wird erst auf der order-success Seite aufgerufen (nach abgeschlossener Zahlung)
       window.location.href = result.checkoutUrl;
     } catch (err) {
       setApiError(getErrorMessage(err));
