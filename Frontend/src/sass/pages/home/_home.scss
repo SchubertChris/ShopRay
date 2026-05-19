@@ -336,20 +336,19 @@
   backdrop-filter:      blur(32px) saturate(1.6);
   -webkit-backdrop-filter: blur(32px) saturate(1.6);
 
-  // Dark mode: weißer Schleier macht den Blur gegen dunklen Hintergrund sichtbar
-  background:   rgba(255, 255, 255, 0.07);
-  border:       1px solid rgba(255, 255, 255, 0.10);
+  background:      rgba(255, 255, 255, 0.10);
+  border:          1px solid rgba(255, 255, 255, 0.22);
   box-shadow:
-    0 4px 48px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 8px 40px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  will-change:     transform; // erzwingt GPU-Layer — Safari backdrop-filter fix
 
-  // Light mode: etwas mehr Opazität + warmer Tint mit der Akzentfarbe
   [data-theme$="-light"] & {
-    background:   rgba(255, 255, 255, 0.13);
-    border-color: rgba(255, 255, 255, 0.18);
+    background:   rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.30);
     box-shadow:
-      0 4px 48px rgba(0, 0, 0, 0.50),
-      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      0 8px 40px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22);
   }
 
   @include respond-to('lg') {
@@ -457,6 +456,7 @@ $slot-vis:    5;   // sichtbare EintrÃ¤ge
   &__frame {
     position: relative;
     flex:     1;
+    z-index:  0;
   }
 
   // Glass-Overlay auf dem aktiven (mittleren) Item
@@ -470,17 +470,18 @@ $slot-vis:    5;   // sichtbare EintrÃ¤ge
     border-radius:           0.75rem;
     backdrop-filter:         blur(28px) saturate(1.6);
     -webkit-backdrop-filter: blur(28px) saturate(1.6);
-    background:              rgba(255, 255, 255, 0.07);
-    border:                  1px solid rgba(255, 255, 255, 0.12);
+    background:              rgba(255, 255, 255, 0.10);
+    border:                  1px solid rgba(255, 255, 255, 0.22);
     box-shadow:
-      0 2px 24px rgba(0, 0, 0, 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      0 4px 24px rgba(0, 0, 0, 0.40),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
     pointer-events:          none;
+    will-change:             transform;
     z-index:                 2;
 
     [data-theme$=”-light”] & {
-      background:   rgba(255, 255, 255, 0.13);
-      border-color: rgba(255, 255, 255, 0.20);
+      background:   rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.30);
     }
   }
 
