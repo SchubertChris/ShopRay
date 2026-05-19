@@ -258,7 +258,7 @@ router.get('/check', requireAdmin, (req: Request, res: Response): void => {
 });
 
 // ── GET /api/admin/login-log ──────────────────────────────────────────────────
-router.get('/login-log', requireAdmin, async (_req: Request, res: Response): Promise<void> => {
+router.get('/login-log', requireOwner, async (_req: Request, res: Response): Promise<void> => {
   try {
     const { data, error } = await supabase
       .from('admin_login_log')

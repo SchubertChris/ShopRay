@@ -4,7 +4,7 @@ import jwt            from 'jsonwebtoken';
 import { generateSecret, verifySync, generateURI } from 'otplib';
 import QRCode from 'qrcode';
 import { supabase }                               from '../lib/supabase';
-import { requireAdmin, requireAdminOrSetup2FA }   from '../middleware/adminAuth';
+import { requireAdmin, requireOwner, requireAdminOrSetup2FA }   from '../middleware/adminAuth';
 import { validate }                               from '../lib/validate';
 import { sendMail, adminLoginAlertHtml }          from '../lib/mailer';
 
@@ -125,8 +125,8 @@ router.post('/verify', requireAdmin, validate(VerifySchema), async (req: Request
   }
 });
 
-// DELETE /api/admin/2fa — 2FA deaktivieren
-router.delete('/', requireAdmin, async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+// DELETE /api/admin/2fa — 2FA deaktivieren (nur Owner)
+router.delete('/', requireOwner, async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { error } = await supabase.from('admin_totp').delete().neq('id', 0);
     if (error) throw error;
