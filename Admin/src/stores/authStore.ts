@@ -26,10 +26,12 @@ export const useAuthStore = create<AuthState>()((set) => ({
 
   login: async (password: string) => {
     const result = await adminLogin(password);
-    if (result.token) setAdminToken(result.token);
     if (result.requireTotp) {
+      // Pending-Token temporär speichern — wird als Bearer an /login/totp gesendet
+      if (result.pendingToken) setAdminToken(result.pendingToken);
       set({ requireTotp: true });
     } else {
+      if (result.token) setAdminToken(result.token);
       set({ isAuthed: true, requireTotp: false, role: 'owner' });
     }
   },

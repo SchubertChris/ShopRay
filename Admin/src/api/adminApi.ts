@@ -29,7 +29,6 @@ async function apiFetch<T>(
 
   const res = await fetch(`${API_URL}${path}`, {
     method,
-    credentials: 'include', // Cookie als Fallback für Desktop
     headers,
     body: isFormData ? body : body !== undefined ? JSON.stringify(body) : undefined,
   });
@@ -46,7 +45,7 @@ async function apiFetch<T>(
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 export const adminLogin  = (password: string) =>
-  apiFetch<{ ok: boolean; requireTotp?: boolean; token?: string }>('/api/admin/login', 'POST', { password });
+  apiFetch<{ ok: boolean; requireTotp?: boolean; token?: string; pendingToken?: string }>('/api/admin/login', 'POST', { password });
 
 export const adminLogout = () =>
   apiFetch<{ ok: boolean }>('/api/admin/logout', 'POST');
@@ -360,7 +359,6 @@ export async function downloadOrderInvoice(id: string): Promise<void> {
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   const res = await fetch(`${API_URL}/api/admin/orders/${id}/invoice`, {
-    credentials: 'include',
     headers,
   });
 

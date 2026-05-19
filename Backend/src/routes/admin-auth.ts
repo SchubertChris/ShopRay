@@ -136,20 +136,11 @@ router.post('/login', authRateLimit, validate(LoginSchema), async (req: Request,
 
   if ((totpCount ?? 0) > 0) {
     const pendingToken = jwt.sign({ totpPending: true }, secret, { expiresIn: '5m' });
-    const isProd = process.env.NODE_ENV === 'production';
-    res.cookie('totpPending', pendingToken, {
-      httpOnly: true,
-      secure:   isProd,
-      sameSite: isProd ? 'none' : 'lax',
-      maxAge:   TOTP_PENDING_MAX_AGE,
-      path:     '/',
-    });
-    res.json({ ok: true, requireTotp: true });
+    res.json({ ok: true, requireTotp: true, pendingToken });
     return;
   }
 
   const token = jwt.sign({ role: 'owner' }, secret, { expiresIn: '24h' });
-  setAdminCookie(res, token);
 
   const userAgent = (req.headers['user-agent'] ?? '').slice(0, 500);
   const date      = new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });
@@ -174,7 +165,9 @@ router.post('/login/totp', authRateLimit, validate(TotpSchema), async (req: Requ
   const secret = process.env.JWT_SECRET;
   if (!secret) { res.status(500).json({ error: 'JWT_SECRET fehlt.' }); return; }
 
-  const pendingRaw = (req.cookies as Record<string, string>)['totpPending'];
+  const authHeader  = req.headers['authorization'];
+  const pendingRaw  = authHeader?.startsWith('Bearer ') ? authHeader.slice(7)
+    : (req.cookies as Record<string, string | undefined>)['totpPending'];
   if (!pendingRaw) { res.status(401).json({ error: 'Kein Pending-Token. Bitte zuerst Passwort eingeben.' }); return; }
 
   try {
@@ -190,11 +183,7 @@ router.post('/login/totp', authRateLimit, validate(TotpSchema), async (req: Requ
   const { valid: isValid } = verifySync({ token: totpCode, secret: totpRow.secret });
   if (!isValid) { res.status(401).json({ error: 'Ungültiger TOTP-Code.' }); return; }
 
-  const isProd = process.env.NODE_ENV === 'production';
-  res.clearCookie('totpPending', { httpOnly: true, secure: isProd, sameSite: isProd ? 'none' : 'lax', path: '/' });
-
   const sessionToken = jwt.sign({ role: 'owner' }, secret, { expiresIn: '24h' });
-  setAdminCookie(res, sessionToken);
 
   const ip        = getClientIp(req);
   const userAgent = (req.headers['user-agent'] ?? '').slice(0, 500);
@@ -249,7 +238,6 @@ router.post('/login/mod', authRateLimit, validate(ModLoginSchema), async (req: R
   }
 
   const token = jwt.sign({ role: 'mod', userId: authData.user.id }, secret, { expiresIn: '24h' });
-  setAdminCookie(res, token);
 
   void supabase.from('admin_login_log').insert({
     ip_address: ip,
