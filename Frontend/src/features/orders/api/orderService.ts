@@ -86,14 +86,21 @@ export async function cancelOrder(id: string): Promise<void> {
   }
 }
 
-export async function requestReturn(id: string, reason: string): Promise<ReturnRequest> {
+export interface ReturnItem {
+  productId:   string;
+  productName: string;
+  quantity:    number;
+  price:       string;
+}
+
+export async function requestReturn(id: string, reason: string, returnItems?: ReturnItem[]): Promise<ReturnRequest> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Nicht eingeloggt');
 
   const res = await fetch(`/api/orders/${id}/return`, {
     method:  'POST',
     headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ reason }),
+    body:    JSON.stringify({ reason, ...(returnItems ? { returnItems } : {}) }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({})) as { error?: string };

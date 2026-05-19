@@ -82,8 +82,16 @@ router.get('/:id', requireAuth, validate(UUIDParam, 'params'), async (req: AuthR
   }
 });
 
+const ReturnItemSchema = z.object({
+  productId:   z.string().uuid(),
+  productName: z.string(),
+  quantity:    z.number().int().min(1),
+  price:       z.string(),
+});
+
 const ReturnReasonSchema = z.object({
-  reason: z.string().trim().min(5, 'Bitte gib einen Grund an (min. 5 Zeichen).').max(1000),
+  reason:      z.string().trim().min(5, 'Bitte gib einen Grund an (min. 5 Zeichen).').max(1000),
+  returnItems: z.array(ReturnItemSchema).min(1, 'Mindestens ein Artikel muss ausgewählt sein.').optional(),
 });
 
 // POST /api/orders/:id/cancel — Bestellung stornieren (nur pending/paid)
@@ -133,7 +141,7 @@ router.post('/:id/cancel', requireAuth, validate(UUIDParam, 'params'), async (re
 // POST /api/orders/:id/return — Rücksendung beantragen (nur delivered, max. 30 Tage)
 router.post('/:id/return', requireAuth, validate(UUIDParam, 'params'), validate(ReturnReasonSchema), async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { reason } = req.body as z.infer<typeof ReturnReasonSchema>;
+    const { reason, returnItems } = req.body as z.infer<typeof ReturnReasonSchema>;
 
     const { data: order, error: oErr } = await supabase
       .from('orders')
@@ -170,7 +178,7 @@ router.post('/:id/return', requireAuth, validate(UUIDParam, 'params'), validate(
 
     const { data: returnReq, error: rErr } = await supabase
       .from('return_requests')
-      .insert({ order_id: req.params.id, user_id: req.userId, reason })
+      .insert({ order_id: req.params.id, user_id: req.userId, reason, return_items: returnItems ?? null })
       .select('id, status, created_at')
       .single();
 

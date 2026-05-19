@@ -623,3 +623,51 @@
     font-size: 16px;
   }
 }
+
+// ─── STATISCHER TEXT IN FORMULAREN ────────────────────────────────────────
+.form-static-text {
+  font-size:  rem(13.5px);
+  color:      var(--clr-text);
+  line-height: 1.5;
+  padding:    0.5rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--clr-text) 6%, transparent);
+  margin-bottom: 0.25rem;
+}
+
+// ─── RÜCKSENDE-ARTIKEL-LISTE (Admin Modal) ────────────────────────────────
+.return-items-list {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.375rem;
+  margin-top:     0.25rem;
+
+  &__row {
+    display:       flex;
+    align-items:   center;
+    gap:           0.625rem;
+    padding:       0.4rem 0.625rem;
+    border-radius: 6px;
+    background:    color-mix(in srgb, var(--clr-text) 3%, transparent);
+    font-size:     rem(13px);
+  }
+
+  &__name {
+    flex:       1;
+    font-weight: 500;
+    min-width:  0;
+    overflow:   hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__qty {
+    opacity: 0.5;
+    white-space: nowrap;
+  }
+
+  &__price {
+    font-weight: 600;
+    color:       var(--clr-primary);
+    white-space: nowrap;
+  }
+}

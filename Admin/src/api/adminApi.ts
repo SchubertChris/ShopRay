@@ -636,17 +636,25 @@ export const getAdminStats = () =>
 
 export type ReturnStatus = 'requested' | 'approved' | 'rejected' | 'label_sent' | 'received' | 'refunded';
 
+export interface ReturnItemData {
+  productId:   string;
+  productName: string;
+  quantity:    number;
+  price:       string;
+}
+
 export interface AdminReturnRequest {
-  id:         string;
-  order_id:   string;
-  user_id:    string | null;
-  reason:     string;
-  status:     ReturnStatus;
-  label_url:  string | null;
-  admin_note: string | null;
-  created_at: string;
-  updated_at: string;
-  orders:     { order_number: string; total: number; user_id: string | null } | null;
+  id:           string;
+  order_id:     string;
+  user_id:      string | null;
+  reason:       string;
+  status:       ReturnStatus;
+  label_url:    string | null;
+  admin_note:   string | null;
+  return_items: ReturnItemData[] | null;
+  created_at:   string;
+  updated_at:   string;
+  orders:       { order_number: string; total: number; user_id: string | null } | null;
 }
 
 export const getReturnRequests = () =>

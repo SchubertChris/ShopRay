@@ -7,6 +7,7 @@ import {
   updateReturnRequest,
   type AdminReturnRequest,
   type ReturnStatus,
+  type ReturnItemData,
 } from '../../api/adminApi';
 
 const STATUS_LABELS: Record<ReturnStatus, string> = {
@@ -232,6 +233,21 @@ export default function ReturnsPage() {
                 <label className="form-label">Grund des Kunden</label>
                 <p className="form-static-text">{editing.reason}</p>
               </div>
+
+              {editing.return_items && editing.return_items.length > 0 && (
+                <div className="form-group">
+                  <label className="form-label">Zurückzusendende Artikel</label>
+                  <div className="return-items-list">
+                    {(editing.return_items as ReturnItemData[]).map((item, i) => (
+                      <div key={i} className="return-items-list__row">
+                        <span className="return-items-list__name">{item.productName}</span>
+                        <span className="return-items-list__qty">× {item.quantity}</span>
+                        <span className="return-items-list__price">{(parseFloat(item.price) * item.quantity).toFixed(2)} €</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="form-group">
                 <label className="form-label">Status</label>

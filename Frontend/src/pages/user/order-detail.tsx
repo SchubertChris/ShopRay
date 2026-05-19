@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useOrderById, orderStatusLabel, cancelOrder, requestReturn } from '@features/orders';
+import type { ReturnItem } from '@features/orders';
 import { SeoMeta } from '@components/ui';
 import { ROUTES } from '@config/routes';
 import { getProductImage } from '@config/images';
@@ -64,6 +65,7 @@ export default function OrderDetailPage() {
 
   const [showReturnForm,   setShowReturnForm]   = useState(false);
   const [returnReason,     setReturnReason]     = useState(RETURN_REASONS[0]);
+  const [selectedItems,    setSelectedItems]    = useState<Set<string>>(new Set());
   const [submittingReturn, setSubmittingReturn] = useState(false);
   const [returnError,      setReturnError]      = useState<string | null>(null);
 
@@ -82,13 +84,37 @@ export default function OrderDetailPage() {
     }
   }
 
+  function openReturnForm() {
+    if (!order) return;
+    setSelectedItems(new Set(order.items.map(i => i.productId)));
+    setReturnReason(RETURN_REASONS[0]);
+    setReturnError(null);
+    setShowReturnForm(true);
+  }
+
+  function toggleItem(productId: string) {
+    setSelectedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
+      return next;
+    });
+  }
+
   async function handleReturnSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!id) return;
+    if (!id || !order) return;
+    if (selectedItems.size === 0) {
+      setReturnError('Bitte wähle mindestens einen Artikel aus.');
+      return;
+    }
     setSubmittingReturn(true);
     setReturnError(null);
     try {
-      await requestReturn(id, returnReason);
+      const returnItems: ReturnItem[] = order.items
+        .filter(i => selectedItems.has(i.productId))
+        .map(i => ({ productId: i.productId, productName: i.productName, quantity: i.quantity, price: i.price }));
+      await requestReturn(id, returnReason, returnItems);
       setShowReturnForm(false);
       void refetch();
     } catch (err) {
@@ -316,7 +342,7 @@ export default function OrderDetailPage() {
                 {canReturn && (
                   <button
                     className="btn btn--outline btn--sm"
-                    onClick={() => setShowReturnForm(true)}
+                    onClick={openReturnForm}
                   >
                     Rücksendung beantragen
                   </button>
@@ -359,14 +385,32 @@ export default function OrderDetailPage() {
       )}
 
       {/* ── Rücksendungs-Dialog ── */}
-      {showReturnForm && (
+      {showReturnForm && order && (
         <div className="modal-overlay" onClick={() => !submittingReturn && setShowReturnForm(false)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             <h2 className="modal-box__title">Rücksendung beantragen</h2>
             <p className="modal-box__text">
-              Wähle den Grund für deine Rücksendung. Wir senden dir anschließend ein kostenloses Rücksendeetikett per E-Mail.
+              Wähle die Artikel aus, die du zurücksenden möchtest. Wir senden dir ein kostenloses Rücksendeetikett per E-Mail.
             </p>
             <form onSubmit={handleReturnSubmit}>
+              <div className="form-group">
+                <label className="form-label">Artikel auswählen</label>
+                <div className="return-item-list">
+                  {order.items.map(item => (
+                    <label key={item.productId} className="return-item-check">
+                      <input
+                        type="checkbox"
+                        checked={selectedItems.has(item.productId)}
+                        onChange={() => toggleItem(item.productId)}
+                        disabled={submittingReturn}
+                      />
+                      <span className="return-item-check__name">{item.productName}</span>
+                      <span className="return-item-check__qty">× {item.quantity}</span>
+                      <span className="return-item-check__price">{(parseFloat(item.price) * item.quantity).toFixed(2)} €</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
               <div className="form-group">
                 <label className="form-label">Rückgabegrund</label>
                 <select
@@ -393,7 +437,7 @@ export default function OrderDetailPage() {
                 <button
                   type="submit"
                   className="btn btn--primary btn--sm"
-                  disabled={submittingReturn}
+                  disabled={submittingReturn || selectedItems.size === 0}
                 >
                   {submittingReturn ? 'Wird beantragt…' : 'Rücksendung beantragen'}
                 </button>
