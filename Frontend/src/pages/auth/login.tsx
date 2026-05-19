@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth, login, completeMfaLogin, MfaRequiredError } from '@features/auth';
+import { useCart } from '@features/cart';
 import { SeoMeta, IconGoogle } from '@components/ui';
 import { ROUTES } from '@config/routes';
 import { APP_NAME } from '@config/app';
@@ -19,8 +20,11 @@ export default function LoginPage() {
   const { setAuth }  = useAuth();
   const navigate     = useNavigate();
   const location     = useLocation();
-  const from         = (location.state as { from?: { pathname: string } } | null)?.from?.pathname
-    ?? ROUTES.ACCOUNT.DASHBOARD;
+  const cartItems    = useCart(s => s.items);
+
+  const fromState = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? null;
+  const postLoginDest = () =>
+    fromState ?? (cartItems.length > 0 ? ROUTES.SHOP.CART : ROUTES.ACCOUNT.DASHBOARD);
 
   // Credentials
   const [email,    setEmail]    = useState('');
@@ -43,7 +47,7 @@ export default function LoginPage() {
     try {
       const response = await login({ email, password });
       setAuth(response.user, response.token);
-      navigate(from, { replace: true });
+      navigate(postLoginDest(), { replace: true });
     } catch (err) {
       if (err instanceof MfaRequiredError) {
         setMfaPending({ factorId: err.factorId, challengeId: err.challengeId });
@@ -65,7 +69,7 @@ export default function LoginPage() {
     try {
       const response = await completeMfaLogin(mfaPending.factorId, mfaPending.challengeId, totpCode);
       setAuth(response.user, response.token);
-      navigate(from, { replace: true });
+      navigate(postLoginDest(), { replace: true });
     } catch (err) {
       setError(getErrorMessage(err) || 'Ungültiger Code. Bitte erneut versuchen.');
       setTotpCode('');
@@ -84,7 +88,7 @@ export default function LoginPage() {
       completeMfaLogin(mfaPending.factorId, mfaPending.challengeId, val)
         .then(response => {
           setAuth(response.user, response.token);
-          navigate(from, { replace: true });
+          navigate(postLoginDest(), { replace: true });
         })
         .catch(err => {
           setError(getErrorMessage(err) || 'Ungültiger Code. Bitte erneut versuchen.');
