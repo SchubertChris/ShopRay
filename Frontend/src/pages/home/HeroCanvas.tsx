@@ -5,33 +5,30 @@ const GAP         = 36;
 const RADIUS_VMIN = 30;
 const SPEED_IN    = 0.45;
 const SPEED_OUT   = 0.6;
-const REST_SCALE  = 0.22;
-const MIN_HOVER   = 0.6;
-const MAX_HOVER   = 1.25;
+const REST_SCALE  = 0.16;
+const MIN_HOVER   = 0.48;
+const MAX_HOVER   = 0.92;
 const WAVE_SPEED  = 1100;
 const WAVE_WIDTH  = 170;
 
-// Palette tuned for ShopRay's dark hero — sage greens, warm golds, soft neutrals
 type SolidColor    = { type: 'solid';    value: string };
 type GradientColor = { type: 'gradient'; stops: [string, string] };
 type ColorDef      = SolidColor | GradientColor;
 type ShapeType     = 'circle' | 'bag' | 'star';
 
-const PALETTE: ColorDef[] = [
-  { type: 'solid', value: '#7fa99a' },
-  { type: 'solid', value: '#b8d4c8' },
-  { type: 'solid', value: '#c4a265' },
-  { type: 'solid', value: '#8fada4' },
-  { type: 'solid', value: '#e0cba8' },
-  { type: 'solid', value: '#6b9e8c' },
-  { type: 'solid', value: '#d4b896' },
-  { type: 'solid', value: '#a3c4b7' },
-  { type: 'gradient', stops: ['#4a6b5d', '#a3c4b7'] },
-  { type: 'gradient', stops: ['#7fa99a', '#c4a265'] },
-  { type: 'gradient', stops: ['#b8d4c8', '#e0cba8'] },
-  { type: 'gradient', stops: ['#6b9e8c', '#8fada4'] },
-  { type: 'gradient', stops: ['#c4a265', '#e0cba8'] },
-];
+function buildThemePalette(): ColorDef[] {
+  const s       = getComputedStyle(document.documentElement);
+  const primary = s.getPropertyValue('--clr-primary').trim() || '#779c8d';
+  const accent  = s.getPropertyValue('--clr-accent').trim()  || '#4e7e6c';
+  return [
+    { type: 'solid',    value: primary },
+    { type: 'solid',    value: primary },
+    { type: 'solid',    value: primary },
+    { type: 'solid',    value: accent  },
+    { type: 'gradient', stops: [primary, accent]  as [string, string] },
+    { type: 'gradient', stops: [accent,  primary] as [string, string] },
+  ];
+}
 
 const SHAPE_TYPES: ShapeType[] = ['circle', 'bag', 'star', 'star'];
 
@@ -51,10 +48,13 @@ function durationToFactor(seconds: number) {
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export function HeroCanvas() {
+interface HeroCanvasProps { themeKey?: string; }
+
+export function HeroCanvas({ themeKey }: HeroCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    const PALETTE = buildThemePalette();
     const canvasEl = canvasRef.current;
     if (!canvasEl) return;
     const canvas = canvasEl; // narrowed — no null in closure functions
@@ -315,7 +315,7 @@ export function HeroCanvas() {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('click',       onClick);
     };
-  }, []);
+  }, [themeKey]);
 
   return <canvas ref={canvasRef} className="hero-canvas" aria-hidden="true" />;
 }

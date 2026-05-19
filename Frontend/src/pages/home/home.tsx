@@ -200,7 +200,7 @@ export default function HomePage() {
       {/* ── EDITORIAL HERO ──────────────────────────────────────────────────── */}
       <section className="editorial-hero">
         <div className="editorial-hero__bg" aria-hidden="true" />
-        <HeroCanvas />
+        <HeroCanvas themeKey={`${palette}-${mode}`} />
 
         <div className="editorial-hero__inner">
           <div className="editorial-hero__content">
