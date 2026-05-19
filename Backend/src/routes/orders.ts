@@ -68,7 +68,114 @@ router.get('/:id', requireAuth, validate(UUIDParam, 'params'), async (req: AuthR
       res.status(404).json({ error: 'Bestellung nicht gefunden' });
       return;
     }
-    res.json(data);
+
+    // Rücksendungsantrag für diese Bestellung mitliefern (falls vorhanden)
+    const { data: returnReq } = await supabase
+      .from('return_requests')
+      .select('id, status, label_url, created_at')
+      .eq('order_id', req.params.id)
+      .maybeSingle();
+
+    res.json({ ...data, return_request: returnReq ?? null });
+  } catch (err) {
+    next(err);
+  }
+});
+
+const ReturnReasonSchema = z.object({
+  reason: z.string().trim().min(5, 'Bitte gib einen Grund an (min. 5 Zeichen).').max(1000),
+});
+
+// POST /api/orders/:id/cancel — Bestellung stornieren (nur pending/paid)
+router.post('/:id/cancel', requireAuth, validate(UUIDParam, 'params'), async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { data: order, error: oErr } = await supabase
+      .from('orders')
+      .select('id, status, stripe_payment_intent_id, order_items(product_id, quantity)')
+      .eq('id', req.params.id)
+      .eq('user_id', req.userId!)
+      .single();
+
+    if (oErr || !order) { res.status(404).json({ error: 'Bestellung nicht gefunden.' }); return; }
+
+    if (!['pending', 'paid'].includes(order.status as string)) {
+      res.status(409).json({ error: 'Diese Bestellung kann nicht mehr storniert werden. Bitte nutze die Rücksendeoption.' });
+      return;
+    }
+
+    // Stripe-Erstattung wenn bereits bezahlt
+    if (order.status === 'paid' && order.stripe_payment_intent_id) {
+      await stripe.refunds.create({ payment_intent: order.stripe_payment_intent_id as string });
+    }
+
+    await supabase
+      .from('orders')
+      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+      .eq('id', req.params.id);
+
+    // Lagerbestand zurückbuchen (non-blocking)
+    const items = (order.order_items as Array<{ product_id: string; quantity: number }>) ?? [];
+    void (async () => {
+      for (const item of items) {
+        const { data: prod } = await supabase.from('products').select('stock').eq('id', item.product_id).single();
+        if (prod) {
+          await supabase.from('products').update({ stock: (prod.stock as number) + item.quantity }).eq('id', item.product_id);
+        }
+      }
+    })().catch(e => console.error('Stock-Rückbuchung fehlgeschlagen:', e));
+
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/orders/:id/return — Rücksendung beantragen (nur delivered, max. 30 Tage)
+router.post('/:id/return', requireAuth, validate(UUIDParam, 'params'), validate(ReturnReasonSchema), async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { reason } = req.body as z.infer<typeof ReturnReasonSchema>;
+
+    const { data: order, error: oErr } = await supabase
+      .from('orders')
+      .select('id, status, created_at, user_id')
+      .eq('id', req.params.id)
+      .eq('user_id', req.userId!)
+      .single();
+
+    if (oErr || !order) { res.status(404).json({ error: 'Bestellung nicht gefunden.' }); return; }
+
+    if (order.status !== 'delivered') {
+      res.status(409).json({ error: 'Rücksendungen sind nur für gelieferte Bestellungen möglich.' });
+      return;
+    }
+
+    // 30-Tage-Rückgabefenster
+    const daysSince = (Date.now() - new Date(order.created_at as string).getTime()) / 86_400_000;
+    if (daysSince > 30) {
+      res.status(409).json({ error: 'Das Rückgabefenster (30 Tage nach Kauf) ist abgelaufen.' });
+      return;
+    }
+
+    // Doppel-Antrag verhindern
+    const { data: existing } = await supabase
+      .from('return_requests')
+      .select('id')
+      .eq('order_id', req.params.id)
+      .maybeSingle();
+
+    if (existing) {
+      res.status(409).json({ error: 'Für diese Bestellung wurde bereits eine Rücksendung beantragt.' });
+      return;
+    }
+
+    const { data: returnReq, error: rErr } = await supabase
+      .from('return_requests')
+      .insert({ order_id: req.params.id, user_id: req.userId, reason })
+      .select('id, status, created_at')
+      .single();
+
+    if (rErr || !returnReq) throw rErr;
+    res.status(201).json({ ok: true, returnRequest: returnReq });
   } catch (err) {
     next(err);
   }

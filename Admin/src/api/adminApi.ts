@@ -631,3 +631,29 @@ export interface AdminStats {
 
 export const getAdminStats = () =>
   apiFetch<AdminStats>('/api/admin/stats');
+
+// ── Rücksendungen (Return Requests) ──────────────────────────────────────────
+
+export type ReturnStatus = 'requested' | 'approved' | 'rejected' | 'label_sent' | 'received' | 'refunded';
+
+export interface AdminReturnRequest {
+  id:         string;
+  order_id:   string;
+  user_id:    string | null;
+  reason:     string;
+  status:     ReturnStatus;
+  label_url:  string | null;
+  admin_note: string | null;
+  created_at: string;
+  updated_at: string;
+  orders:     { order_number: string; total: number; user_id: string | null } | null;
+}
+
+export const getReturnRequests = () =>
+  apiFetch<AdminReturnRequest[]>('/api/admin/orders/return-requests');
+
+export const updateReturnRequest = (
+  id:   string,
+  data: { status: ReturnStatus; label_url?: string | null; admin_note?: string | null },
+) =>
+  apiFetch<AdminReturnRequest>(`/api/admin/orders/return-requests/${id}`, 'PATCH', data);

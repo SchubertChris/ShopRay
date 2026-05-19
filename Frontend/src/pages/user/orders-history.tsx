@@ -65,13 +65,20 @@ export default function OrdersPage() {
         Bestellungen <span className="orders-history__count">({orders.length})</span>
       </h2>
       <div className="list-feed">
-        {visibleOrders.map(o => (
+        {visibleOrders.map(o => {
+          const thumb = o.items[0]?.imageUrl ?? null;
+          return (
           <Link key={o.id} to={ROUTES.ACCOUNT.orderDetail(o.id)} className="order-card order-card--clickable">
-            <div className="order-card__thumb order-card__thumb--placeholder" />
+            <div className="order-card__thumb">
+              {thumb
+                ? <img src={thumb} alt={o.items[0]?.productName} onContextMenu={e => e.preventDefault()} />
+                : <span className="order-card__thumb-letter">{o.orderNumber?.[0] ?? '#'}</span>
+              }
+            </div>
             <div className="order-card__info">
-              <div className="order-card__name">Bestellung #{o.id}</div>
+              <div className="order-card__name">Bestellung #{o.orderNumber || o.id.slice(0, 8)}</div>
               <div className="order-card__meta">
-                {new Date(o.createdAt).toLocaleDateString('de-DE')} · {o.items.length} Artikel
+                {new Date(o.createdAt).toLocaleDateString('de-DE')} · {o.items.length} {o.items.length === 1 ? 'Artikel' : 'Artikel'}
               </div>
             </div>
             <span className={`order-status order-status--${o.status}`}>
@@ -79,7 +86,8 @@ export default function OrdersPage() {
             </span>
             <div className="order-card__price">{o.total.toFixed(2)} €</div>
           </Link>
-        ))}
+          );
+        })}
       </div>
       <Pagination page={page} totalPages={totalPages} onPage={setPage} />
     </div>

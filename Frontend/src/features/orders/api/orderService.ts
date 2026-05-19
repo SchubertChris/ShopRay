@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { Order, OrderItem } from '@/types/order';
+import type { Order, OrderItem, ReturnRequest } from '@/types/order';
 
 function mapItem(raw: Record<string, unknown>): OrderItem {
   return {
@@ -12,10 +12,20 @@ function mapItem(raw: Record<string, unknown>): OrderItem {
   };
 }
 
+function mapReturnRequest(raw: Record<string, unknown>): ReturnRequest {
+  return {
+    id:        String(raw.id ?? ''),
+    status:    (raw.status as ReturnRequest['status']) ?? 'requested',
+    label_url: (raw.label_url as string | null) ?? null,
+    createdAt: String(raw.created_at ?? ''),
+  };
+}
+
 function mapOrder(raw: Record<string, unknown>): Order {
   const rawItems = Array.isArray(raw.order_items)
     ? (raw.order_items as Record<string, unknown>[])
     : [];
+  const rawReturn = raw.return_request as Record<string, unknown> | null;
   return {
     id:              String(raw.id ?? ''),
     orderNumber:     String(raw.order_number ?? ''),
@@ -29,6 +39,7 @@ function mapOrder(raw: Record<string, unknown>): Order {
     trackingNumber:  (raw.tracking_number as string | null) ?? null,
     customerNote:    (raw.customer_note as string | null) ?? null,
     stripeSessionId: (raw.stripe_session_id as string | null) ?? null,
+    returnRequest:   rawReturn ? mapReturnRequest(rawReturn) : null,
     createdAt:       String(raw.created_at ?? ''),
     updatedAt:       String(raw.updated_at ?? ''),
   };
@@ -59,4 +70,35 @@ export async function getOrderById(id: string): Promise<Order> {
     .single();
   if (error) throw error;
   return mapOrder(data as Record<string, unknown>);
+}
+
+export async function cancelOrder(id: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Nicht eingeloggt');
+
+  const res = await fetch(`/api/orders/${id}/cancel`, {
+    method:  'POST',
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(body.error ?? 'Stornierung fehlgeschlagen.');
+  }
+}
+
+export async function requestReturn(id: string, reason: string): Promise<ReturnRequest> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Nicht eingeloggt');
+
+  const res = await fetch(`/api/orders/${id}/return`, {
+    method:  'POST',
+    headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ reason }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(body.error ?? 'Rücksendung konnte nicht beantragt werden.');
+  }
+  const { returnRequest } = await res.json() as { returnRequest: Record<string, unknown> };
+  return mapReturnRequest(returnRequest);
 }

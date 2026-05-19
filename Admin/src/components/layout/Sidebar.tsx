@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import {
   LayoutDashboard, Package, ShoppingCart, Users,
   MessageSquare, Settings, LogOut, ChevronRight, Mail,
-  Star, Tag,
+  Star, Tag, RotateCcw,
 } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import { useBadgeStore } from '@stores/badgeStore';
@@ -40,6 +40,7 @@ const NAV: NavGroup[] = [
       { to: ROUTES.PRODUCTS.LIST,    icon: Package,         label: 'Produkte'                                       },
       { to: ROUTES.ORDERS.LIST,      icon: ShoppingCart,    label: 'Bestellungen', badgeKey: 'pendingOrders' },
       { to: ROUTES.CUSTOMERS.LIST,   icon: Users,           label: 'Kunden'                                         },
+      { to: ROUTES.RETURNS,          icon: RotateCcw,       label: 'Rücksendungen'                                  },
       { to: ROUTES.CATEGORIES,       icon: Tag,             label: 'Kategorien'                                     },
       { to: ROUTES.REVIEWS,          icon: Star,            label: 'Bewertungen'                                    },
     ],

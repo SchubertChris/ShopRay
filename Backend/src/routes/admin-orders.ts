@@ -38,6 +38,69 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
   }
 });
 
+// ── RETURN REQUESTS (müssen VOR /:id stehen, sonst matcht Express den Wildcard) ──
+
+const ReturnStatusSchema = z.object({
+  status:     z.enum(['requested','approved','rejected','label_sent','received','refunded']),
+  label_url:  z.string().url().optional().nullable(),
+  admin_note: z.string().max(2000).optional().nullable(),
+});
+
+// GET /api/admin/orders/return-requests — alle Rücksendeanträge
+router.get('/return-requests', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { data, error } = await supabase
+      .from('return_requests')
+      .select('*, orders(order_number, total, user_id)')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    res.json(data ?? []);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/admin/orders/return-requests/:id — Status + Label aktualisieren
+router.patch('/return-requests/:id', validate(UUIDParam, 'params'), validate(ReturnStatusSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { status, label_url, admin_note } = req.body as z.infer<typeof ReturnStatusSchema>;
+
+    const { data, error } = await supabase
+      .from('return_requests')
+      .update({ status, label_url: label_url ?? null, admin_note: admin_note ?? null, updated_at: new Date().toISOString() })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    if (!data) { res.status(404).json({ error: 'Antrag nicht gefunden.' }); return; }
+
+    // Kunden benachrichtigen wenn Label bereit
+    if (status === 'label_sent' && label_url) {
+      const { data: orderData } = await supabase
+        .from('orders')
+        .select('user_id, order_number')
+        .eq('id', (data as Record<string, unknown>).order_id as string)
+        .single();
+      if (orderData?.user_id) {
+        const { data: authData } = await supabase.auth.admin.getUserById(String(orderData.user_id));
+        const email = authData?.user?.email;
+        if (email) {
+          void sendMail({
+            to:      email,
+            subject: `Rücksendeetikett für Bestellung ${orderData.order_number as string}`,
+            html:    `<p>Hallo,<br><br>dein Rücksendeetikett für Bestellung <strong>${orderData.order_number as string}</strong> ist fertig.<br><br><a href="${label_url}">Etikett herunterladen →</a><br><br>Klebe das Etikett auf das Paket und gib es in einer Postfiliale ab. Nach Eingang des Pakets bearbeiten wir deine Rückerstattung.</p>`,
+          }).catch(e => console.error('Return-Label-Mail fehlgeschlagen:', e));
+        }
+      }
+    }
+
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/admin/orders/:id — einzelne Bestellung mit Items und Kundendaten
 router.get('/:id', validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {

@@ -76,6 +76,25 @@
   &:hover { filter: brightness(1.1); }
 }
 
+.btn--outline {
+  background: transparent;
+  color: var(--clr-text);
+  border: 1.5px solid var(--clr-accent);
+
+  &:hover { background: var(--clr-accent); }
+}
+
+.btn--outline-danger {
+  background: transparent;
+  color: var(--clr-error);
+  border: 1.5px solid color-mix(in srgb, var(--clr-error) 40%, transparent);
+
+  &:hover {
+    background: color-mix(in srgb, var(--clr-error) 10%, transparent);
+    border-color: var(--clr-error);
+  }
+}
+
 // ─── GRÖßEN ────────────────────────────────────────────────────────────────
 .btn--sm {
   padding: 0.45rem 0.9rem;

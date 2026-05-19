@@ -243,3 +243,39 @@
 
   strong { display: block; opacity: 1; font-weight: 600; font-size: rem(15px); margin-bottom: 0.25rem; }
 }
+
+// ─── AKTIONS-BUTTONS (Stornieren / Rücksendung) ────────────────────────────
+.order-actions {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.625rem;
+}
+
+// ─── RÜCKSENDUNGS-KARTE ────────────────────────────────────────────────────
+.detail-card--return {
+  border: 1.5px solid color-mix(in srgb, var(--clr-warning) 35%, transparent);
+  background: color-mix(in srgb, var(--clr-warning) 5%, var(--clr-secondary));
+}
+
+.return-status {
+  display:     flex;
+  align-items: center;
+  gap:         0.5rem;
+  font-size:   rem(13.5px);
+  color:       var(--clr-text);
+  margin:      0 0 1rem;
+
+  &__dot {
+    width:         8px;
+    height:        8px;
+    border-radius: 50%;
+    flex-shrink:   0;
+
+    &--requested  { background: var(--clr-warning); }
+    &--approved   { background: var(--clr-info); }
+    &--rejected   { background: var(--clr-error); }
+    &--label_sent { background: var(--clr-primary); }
+    &--received   { background: var(--clr-success); }
+    &--refunded   { background: var(--clr-success); }
+  }
+}

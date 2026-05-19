@@ -16,6 +16,7 @@ export const ROUTES = {
     LIST:   '/customers',
     detail: (id: string | number) => `/customers/${id}`,
   },
+  RETURNS:  '/returns',
   SUPPORT: {
     TICKETS: '/support',
   },

@@ -28,6 +28,14 @@ export interface OrderItem {
   imageUrl?:   string | null;
 }
 
+/** Rücksendungsantrag — vom Backend im Order-Detail mitgeliefert */
+export interface ReturnRequest {
+  id:        string;
+  status:    'requested' | 'approved' | 'rejected' | 'label_sent' | 'received' | 'refunded';
+  label_url: string | null;
+  createdAt: string;
+}
+
 /** Vollständige Bestellung */
 export interface Order {
   id:               string;
@@ -42,6 +50,7 @@ export interface Order {
   trackingNumber?:  string | null;
   customerNote?:    string | null;
   stripeSessionId?: string | null;
+  returnRequest?:   ReturnRequest | null;
   createdAt:        string;
   updatedAt:        string;
 }
