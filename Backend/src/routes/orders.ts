@@ -89,7 +89,7 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
     const productIds = [...new Set(items.map(i => i.productId))];
     const { data: dbProducts, error: dbErr } = await supabase
       .from('products')
-      .select('id, name, price, image_url, tax_rate')
+      .select('id, name, price, image_url, tax_rate, stock')
       .in('id', productIds)
       .eq('active', true);
 
@@ -101,8 +101,16 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
     const productMap = new Map(dbProducts.map(p => [p.id, p]));
 
     for (const item of items) {
-      if (!productMap.has(item.productId)) {
+      const product = productMap.get(item.productId);
+      if (!product) {
         res.status(400).json({ error: `Produkt ${item.productId} nicht gefunden.` });
+        return;
+      }
+      if ((product.stock as number) < item.quantity) {
+        res.status(409).json({
+          error: `"${product.name as string}" ist nicht mehr ausreichend auf Lager.`,
+          code:  'OUT_OF_STOCK',
+        });
         return;
       }
     }

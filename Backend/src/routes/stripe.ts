@@ -128,6 +128,24 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction): 
           });
         }
 
+        // Lagerbestand für alle bestellten Artikel abziehen (non-blocking)
+        const orderItems = order.order_items as Array<{ product_id: string; quantity: number }>;
+        void (async () => {
+          for (const item of orderItems) {
+            const { data: prod } = await supabase
+              .from('products')
+              .select('stock')
+              .eq('id', item.product_id)
+              .single();
+            if (prod) {
+              await supabase
+                .from('products')
+                .update({ stock: Math.max(0, (prod.stock as number) - item.quantity) })
+                .eq('id', item.product_id);
+            }
+          }
+        })().catch(e => console.error('Stock-Update fehlgeschlagen:', e));
+
         // Push-Benachrichtigung an alle Admin-Geräte (non-blocking)
         sendPushToAll({
           title: `Neue Bestellung ${order.order_number}`,
