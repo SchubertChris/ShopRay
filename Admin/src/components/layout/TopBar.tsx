@@ -1,4 +1,4 @@
-import { Menu, Bell, Sun, Moon } from 'lucide-react';
+import { Menu, Bell, Sun, Moon, RefreshCw } from 'lucide-react';
 import { useTheme } from '../../providers/ThemeProvider';
 
 interface TopBarProps {
@@ -21,6 +21,10 @@ export function TopBar({ onMenuClick, title }: TopBarProps) {
       </div>
 
       <div className="admin-topbar__right">
+        <button className="admin-topbar__btn" onClick={() => window.location.reload()} title="Seite neu laden">
+          <RefreshCw size={18} strokeWidth={1.75} />
+        </button>
+
         <button className="admin-topbar__btn" onClick={toggleMode} title="Theme wechseln">
           {mode === 'light'
             ? <Moon size={18} strokeWidth={1.75} />
