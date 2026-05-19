@@ -237,6 +237,16 @@
 // CSS-Animation scrollt exakt eine Liste (6 Ã— 64px = 384px) dann nahtloser Loop.
 // Die mittlere Position (3. von oben) wird durch den Pfeil-Zeiger markiert.
 
+// ─── HERO CANVAS ──────────────────────────────────────────────────────────
+
+.hero-canvas {
+  position:       absolute;
+  inset:          0;
+  z-index:        0;
+  pointer-events: none;
+  opacity:        0.45;
+}
+
 $slot-item-h: 64px;
 $slot-items:  6;   // CATEGORIES.length
 $slot-vis:    5;   // sichtbare EintrÃ¤ge

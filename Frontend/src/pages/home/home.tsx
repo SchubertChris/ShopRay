@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { HeroCanvas } from './HeroCanvas';
 import { Link } from 'react-router-dom';
 import { useCart } from '@features/cart';
 import { useNotifications } from '@features/notifications';
@@ -191,9 +192,10 @@ export default function HomePage() {
       {/* ── EDITORIAL HERO ──────────────────────────────────────────────────── */}
       <section className="editorial-hero">
         <div className="editorial-hero__bg" aria-hidden="true" />
+        <HeroCanvas />
 
         <div className="editorial-hero__inner">
-          <div className="editorial-hero__content">
+          <div className="editorial-hero__content" data-shape-mask>
             <span className="editorial-hero__pill">Sommer 2026 — Neue Kollektion</span>
             <h1 className="editorial-hero__title">
               Designed<br /><em>to last.</em>
