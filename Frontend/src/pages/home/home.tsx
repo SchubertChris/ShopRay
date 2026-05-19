@@ -273,15 +273,18 @@ export default function HomePage() {
               <span className="hero-slot__label">Kollektionen</span>
               <div className="hero-slot__arrow" />
             </div>
-            <div className="hero-slot__window">
-              <div className="hero-slot__track" aria-hidden="true">
-                {[...categories, ...categories, ...categories].map((cat, i) => (
-                  <div key={i} className="hero-slot__item">
-                    <span className="hero-slot__num">{cat.num}</span>
-                    <span className="hero-slot__name">{cat.name}</span>
-                    <span className="hero-slot__count">{cat.count}</span>
-                  </div>
-                ))}
+            <div className="hero-slot__frame">
+              <div className="hero-slot__active-glass" aria-hidden="true" />
+              <div className="hero-slot__window">
+                <div className="hero-slot__track" aria-hidden="true">
+                  {[...categories, ...categories, ...categories].map((cat, i) => (
+                    <div key={i} className="hero-slot__item">
+                      <span className="hero-slot__num">{cat.num}</span>
+                      <span className="hero-slot__name">{cat.name}</span>
+                      <span className="hero-slot__count">{cat.count}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

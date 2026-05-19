@@ -333,8 +333,8 @@
   gap:                  1.5rem;
   padding:              2rem 1.75rem;
   border-radius:        1.25rem;
-  backdrop-filter:      blur(20px) saturate(1.5);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter:      blur(32px) saturate(1.6);
+  -webkit-backdrop-filter: blur(32px) saturate(1.6);
 
   // Dark mode: weißer Schleier macht den Blur gegen dunklen Hintergrund sichtbar
   background:   rgba(255, 255, 255, 0.07);
@@ -415,7 +415,7 @@ $slot-vis:    5;   // sichtbare EintrÃ¤ge
     font-weight:    700;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color:          color-mix(in srgb, var(--clr-on-dark) 28%, transparent);
+    color:          color-mix(in srgb, var(--clr-on-dark) 60%, transparent);
     white-space:    nowrap;
     padding-top:    0.5rem;
   }
@@ -452,10 +452,42 @@ $slot-vis:    5;   // sichtbare EintrÃ¤ge
     }
   }
 
-  // â”€â”€ Sichtfenster (rechte Spalte) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Frame: relativer Anker für das Glass-Overlay ─────────────────────────
+
+  &__frame {
+    position: relative;
+    flex:     1;
+  }
+
+  // Glass-Overlay auf dem aktiven (mittleren) Item
+  // außerhalb von __window → nicht von overflow:hidden + mask-image betroffen
+  &__active-glass {
+    position:                absolute;
+    top:                     #{2 * $slot-item-h};
+    left:                    -0.5rem;
+    right:                   -0.5rem;
+    height:                  #{$slot-item-h};
+    border-radius:           0.75rem;
+    backdrop-filter:         blur(28px) saturate(1.6);
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
+    background:              rgba(255, 255, 255, 0.07);
+    border:                  1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+      0 2px 24px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    pointer-events:          none;
+    z-index:                 2;
+
+    [data-theme$=”-light”] & {
+      background:   rgba(255, 255, 255, 0.13);
+      border-color: rgba(255, 255, 255, 0.20);
+    }
+  }
+
+  // ── Sichtfenster (rechte Spalte) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   &__window {
-    flex:        1;
+    width:       100%;
     height:      #{$slot-vis * $slot-item-h};
     overflow:    hidden;
 
