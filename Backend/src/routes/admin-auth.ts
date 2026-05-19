@@ -374,14 +374,22 @@ router.post('/mods', requireOwner, validate(AddModSchema), async (req: Request, 
   }
 
   if (profile) {
-    // Account existiert → Rolle direkt setzen (eigenes Passwort bleibt)
+    // Account existiert → Rolle setzen + neues Startpasswort generieren
+    const tempPassword = generateTempPassword();
+
+    const { error: pwError } = await supabase.auth.admin.updateUserById(profile.id, {
+      password: tempPassword,
+    });
+    if (pwError) { res.status(500).json({ error: 'Passwort konnte nicht zurückgesetzt werden.' }); return; }
+
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ role: 'mod' })
+      .update({ role: 'mod', must_change_password: true })
       .eq('id', profile.id);
-
     if (updateError) { res.status(500).json({ error: 'Rolle konnte nicht gesetzt werden.' }); return; }
-    res.json({ ok: true, invited: false, id: profile.id, email });
+
+    await supabase.from('pending_mod_invites').insert({ email });
+    res.json({ ok: true, invited: true, tempPassword, id: profile.id, email });
     return;
   }
 
