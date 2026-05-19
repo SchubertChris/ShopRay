@@ -227,6 +227,68 @@ $card-shadow-hover: (
     margin-top: auto;
     padding-top: 1rem;
   }
+
+  // ── Ausverkauft-Diagonal-Banner ──────────────────────────────────────────
+  &__sold-out {
+    position:    absolute;
+    inset:       0;
+    z-index:     3;
+    overflow:    hidden;
+    pointer-events: none;
+
+    span {
+      position:        absolute;
+      top:             28px;
+      left:            -38px;
+      width:           160px;
+      padding:         5px 0;
+      background:      rgba(10, 10, 12, 0.82);
+      backdrop-filter: blur(4px);
+      color:           rgba(255, 255, 255, 0.88);
+      font-size:       rem(10px);
+      font-weight:     700;
+      letter-spacing:  0.14em;
+      text-transform:  uppercase;
+      text-align:      center;
+      transform:       rotate(-45deg);
+      box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  // ── Sold-Out-Zustand der gesamten Karte ─────────────────────────────────
+  &--sold-out {
+    cursor: default;
+
+    &:hover {
+      transform:  none;
+      box-shadow: $card-shadow-rest;
+    }
+
+    .product-card__image-wrap img {
+      filter:  blur(2.5px) grayscale(35%);
+      opacity: 0.72;
+      transform: scale(1.02);
+    }
+
+    &:hover .product-card__image-wrap img {
+      transform: scale(1.02);
+    }
+
+    .product-card__atc-btn {
+      opacity:        0.45;
+      cursor:         not-allowed;
+      background:     var(--clr-secondary);
+      color:          color-mix(in srgb, var(--clr-text) 55%, transparent);
+      box-shadow:     none;
+      letter-spacing: 0.02em;
+    }
+
+    .product-card__price {
+      opacity: 0.5;
+    }
+  }
 }
 
 // ─── DARK MODE — tiefere Schatten, gedämpfter Highlight, Primary-Glow ──────

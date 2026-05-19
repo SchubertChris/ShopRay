@@ -24,6 +24,8 @@ export function ProductCard({ product: p, skeleton, revealDelay, onQuickView }: 
   const isInWishlist = useWishlist(state => state.ids.includes(p.id));
   const toggle       = useWishlist(state => state.toggle);
 
+  const isOutOfStock = (p.stock ?? 1) === 0;
+
   if (skeleton) {
     return (
       <div className="product-card">
@@ -40,11 +42,16 @@ export function ProductCard({ product: p, skeleton, revealDelay, onQuickView }: 
 
   return (
     <div
-      className="product-card"
+      className={`product-card${isOutOfStock ? ' product-card--sold-out' : ''}`}
       {...(revealDelay ? { 'data-reveal': '', 'data-delay': String(revealDelay) } : {})}
     >
       <div className="product-card__image-wrap">
-        {p.discount && <span className="product-card__discount">{p.discount}</span>}
+        {isOutOfStock && (
+          <div className="product-card__sold-out" aria-hidden="true">
+            <span>Ausverkauft</span>
+          </div>
+        )}
+        {p.discount && !isOutOfStock && <span className="product-card__discount">{p.discount}</span>}
         {FEATURES.wishlist && (
           <button
             className={`product-card__wish-btn${isInWishlist ? ' is-active' : ''}`}
@@ -87,9 +94,15 @@ export function ProductCard({ product: p, skeleton, revealDelay, onQuickView }: 
         </p>
 
         <div className="product-card__actions">
-          <button className="btn btn--primary" onClick={() => { addItem(p); notify({ type: 'success', title: 'In den Warenkorb gelegt', message: p.name, action: { label: 'Zum Warenkorb', href: '/cart' } }); }}>
-            In den Warenkorb
-          </button>
+          {isOutOfStock ? (
+            <button className="btn btn--primary product-card__atc-btn" disabled aria-disabled="true">
+              Nicht verfügbar
+            </button>
+          ) : (
+            <button className="btn btn--primary product-card__atc-btn" onClick={() => { addItem(p); notify({ type: 'success', title: 'In den Warenkorb gelegt', message: p.name, action: { label: 'Zum Warenkorb', href: '/cart' } }); }}>
+              In den Warenkorb
+            </button>
+          )}
           {onQuickView && (
             <button className="btn btn--secondary product-card__qv-btn" onClick={() => onQuickView(p)} aria-label="Schnellansicht">
               Ansehen
