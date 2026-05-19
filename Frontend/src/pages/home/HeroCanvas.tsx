@@ -55,10 +55,12 @@ export function HeroCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const canvasEl = canvasRef.current;
+    if (!canvasEl) return;
+    const canvas = canvasEl; // narrowed — no null in closure functions
+    const rawCtx = canvas.getContext('2d');
+    if (!rawCtx) return;
+    const ctx = rawCtx; // narrowed — no null in closure functions
 
     // ── Types ─────────────────────────────────────────────────────────────
     interface Shape {
