@@ -7,7 +7,7 @@ const SPEED_IN    = 0.45;
 const SPEED_OUT   = 0.6;
 const REST_SCALE  = 0.22;
 const MIN_HOVER   = 0.6;
-const MAX_HOVER   = 1.65;
+const MAX_HOVER   = 1.25;
 const WAVE_SPEED  = 1100;
 const WAVE_WIDTH  = 170;
 
@@ -15,7 +15,7 @@ const WAVE_WIDTH  = 170;
 type SolidColor    = { type: 'solid';    value: string };
 type GradientColor = { type: 'gradient'; stops: [string, string] };
 type ColorDef      = SolidColor | GradientColor;
-type ShapeType     = 'circle' | 'pill' | 'star';
+type ShapeType     = 'circle' | 'bag' | 'star';
 
 const PALETTE: ColorDef[] = [
   { type: 'solid', value: '#7fa99a' },
@@ -33,7 +33,7 @@ const PALETTE: ColorDef[] = [
   { type: 'gradient', stops: ['#c4a265', '#e0cba8'] },
 ];
 
-const SHAPE_TYPES: ShapeType[] = ['circle', 'pill', 'star', 'star'];
+const SHAPE_TYPES: ShapeType[] = ['circle', 'bag', 'star', 'star'];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function rnd(min: number, max: number) { return Math.random() * (max - min) + min; }
@@ -95,10 +95,27 @@ export function HeroCanvas() {
       ctx.fill();
     }
 
-    function drawPill(size: number) {
-      const w = size * 0.48, h = size;
+    function drawShoppingBag(size: number) {
+      const bw  = size * 0.76;
+      const bh  = size * 0.52;
+      const top = -size * 0.06;
+      const hr  = size * 0.155; // handle radius
+
+      // Body
       ctx.beginPath();
-      ctx.roundRect(-w, -h, w * 2, h * 2, w);
+      ctx.roundRect(-bw / 2, top, bw, bh, size * 0.09);
+      ctx.fill();
+
+      // Left handle — upward D (arc from right→top→left, then closePath seals base)
+      ctx.beginPath();
+      ctx.arc(-bw * 0.21, top, hr, 0, Math.PI, true);
+      ctx.closePath();
+      ctx.fill();
+
+      // Right handle
+      ctx.beginPath();
+      ctx.arc(bw * 0.21, top, hr, 0, Math.PI, true);
+      ctx.closePath();
       ctx.fill();
     }
 
@@ -117,9 +134,9 @@ export function HeroCanvas() {
 
     function drawShape(s: Shape) {
       switch (s.type) {
-        case 'circle': drawCircle(s.size / 1.5);              break;
-        case 'pill':   drawPill(s.size / 1.4);                break;
-        case 'star':   drawStar(s.size, s.points, s.innerRatio); break;
+        case 'circle': drawCircle(s.size / 1.5);                 break;
+        case 'bag':    drawShoppingBag(s.size);                   break;
+        case 'star':   drawStar(s.size, s.points, s.innerRatio);  break;
       }
     }
 

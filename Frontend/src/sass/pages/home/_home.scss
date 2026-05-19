@@ -319,13 +319,36 @@
   mix-blend-mode:  screen;
 }
 
-$slot-item-h: 64px;
+$slot-item-h: 82px;
 $slot-items:  6;   // CATEGORIES.length
 $slot-vis:    5;   // sichtbare EintrÃ¤ge
 
+// Hold 73 % → schnell überwechseln 27 % — smooth but decisive
 @keyframes hero-slot-scroll {
-  from { transform: translateY(0); }
-  to   { transform: translateY(#{-($slot-items * $slot-item-h)}); }
+  0%     { transform: translateY(0); }
+  12.2%  { transform: translateY(0);
+            animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1); }
+  16.67% { transform: translateY(#{-$slot-item-h * 1}); }
+
+  29.2%  { transform: translateY(#{-$slot-item-h * 1});
+            animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1); }
+  33.34% { transform: translateY(#{-$slot-item-h * 2}); }
+
+  46.0%  { transform: translateY(#{-$slot-item-h * 2});
+            animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1); }
+  50.01% { transform: translateY(#{-$slot-item-h * 3}); }
+
+  62.7%  { transform: translateY(#{-$slot-item-h * 3});
+            animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1); }
+  66.68% { transform: translateY(#{-$slot-item-h * 4}); }
+
+  79.35% { transform: translateY(#{-$slot-item-h * 4});
+            animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1); }
+  83.35% { transform: translateY(#{-$slot-item-h * 5}); }
+
+  95.85% { transform: translateY(#{-$slot-item-h * 5});
+            animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1); }
+  100%   { transform: translateY(#{-$slot-item-h * 6}); }
 }
 
 .hero-slot {
@@ -415,7 +438,7 @@ $slot-vis:    5;   // sichtbare EintrÃ¤ge
   // â”€â”€ Scrollender Track â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   &__track {
-    animation:   hero-slot-scroll #{$slot-items * 2s} steps(#{$slot-items}, start) infinite;
+    animation:   hero-slot-scroll #{$slot-items * 3s} linear infinite;
     will-change: transform;
   }
 
@@ -433,26 +456,26 @@ $slot-vis:    5;   // sichtbare EintrÃ¤ge
 
   &__num {
     font-family:    monospace;
-    font-size:      0.58rem;
+    font-size:      0.68rem;
     font-weight:    700;
     letter-spacing: 0.1em;
     color:          var(--clr-primary);
     flex-shrink:    0;
-    min-width:      20px;
+    min-width:      24px;
   }
 
   &__name {
-    font-size:      1.05rem;
+    font-size:      1.3rem;
     font-weight:    700;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
     color:          var(--clr-on-dark);
     flex:           1;
   }
 
   &__count {
-    font-size:      0.68rem;
+    font-size:      0.72rem;
     font-weight:    500;
-    color:          color-mix(in srgb, var(--clr-on-dark) 30%, transparent);
+    color:          color-mix(in srgb, var(--clr-on-dark) 32%, transparent);
     font-family:    monospace;
   }
 }
