@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Zap, CheckCircle, Eye, EyeOff, Lock, Smartphone, Users, KeyRound, QrCode } from 'lucide-react';
+import { Shield, Zap, CheckCircle, Eye, EyeOff, Lock, Smartphone, Users, KeyRound, QrCode, Copy, Check, ExternalLink } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import { ROUTES } from '@config/routes';
 
@@ -39,10 +39,11 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   // Forced 2FA Setup State
-  const [setup2FAData,    setSetup2FAData]    = useState<{ secret: string; qrCode: string } | null>(null);
+  const [setup2FAData,    setSetup2FAData]    = useState<{ secret: string; qrCode: string; otpAuthUrl: string } | null>(null);
   const [setup2FACode,    setSetup2FACode]    = useState('');
   const [setup2FALoading, setSetup2FALoading] = useState(false);
   const [setup2FAError,   setSetup2FAError]   = useState('');
+  const [secretCopied,    setSecretCopied]    = useState(false);
   const setup2FAInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -221,12 +222,48 @@ export default function LoginPage() {
 
               {setup2FAData && (
                 <>
-                  <div style={{ textAlign: 'center', margin: '1rem 0' }}>
+                  {/* QR-Code (Desktop: mit zweitem Gerät scannen) */}
+                  <div className="setup2fa-qr">
                     <img
                       src={setup2FAData.qrCode}
                       alt="QR-Code für 2FA"
-                      style={{ width: 180, height: 180, borderRadius: 8 }}
+                      className="setup2fa-qr__img"
                     />
+                    <p className="setup2fa-qr__hint">Mit zweitem Gerät (Handy) scannen</p>
+                  </div>
+
+                  {/* Mobile-Optionen */}
+                  <div className="setup2fa-mobile">
+                    <p className="setup2fa-mobile__label">Auf diesem Gerät?</p>
+                    <div className="setup2fa-mobile__actions">
+                      {/* otpauth:// Link — öffnet Authenticator-App direkt */}
+                      <a
+                        href={setup2FAData.otpAuthUrl}
+                        className="btn-secondary setup2fa-mobile__btn"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink size={13} strokeWidth={2} />
+                        In App öffnen
+                      </a>
+
+                      {/* Secret kopieren — für manuelle Eingabe in der App */}
+                      <button
+                        type="button"
+                        className="btn-secondary setup2fa-mobile__btn"
+                        onClick={() => {
+                          void navigator.clipboard.writeText(setup2FAData.secret).then(() => {
+                            setSecretCopied(true);
+                            setTimeout(() => setSecretCopied(false), 2500);
+                          });
+                        }}
+                      >
+                        {secretCopied
+                          ? <><Check size={13} strokeWidth={2.5} />Kopiert!</>
+                          : <><Copy  size={13} strokeWidth={2}   />Secret kopieren</>
+                        }
+                      </button>
+                    </div>
+                    <p className="setup2fa-mobile__secret">{setup2FAData.secret}</p>
                   </div>
 
                   <div className="login-form__group">

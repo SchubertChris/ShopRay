@@ -443,3 +443,66 @@
     .pw-criteria__item--ok & { opacity: 1; }
   }
 }
+
+// ── 2FA Setup Screen ──────────────────────────────────────────────────────────
+.setup2fa-qr {
+  text-align: center;
+  margin:     1rem 0 0.5rem;
+
+  &__img {
+    width:         176px;
+    height:        176px;
+    border-radius: 10px;
+    border:        2px solid var(--clr-secondary);
+  }
+
+  &__hint {
+    font-size:  rem(11.5px);
+    color:      color-mix(in srgb, var(--clr-text) 40%, transparent);
+    margin-top: 0.4rem;
+  }
+}
+
+.setup2fa-mobile {
+  background:    color-mix(in srgb, var(--clr-primary) 5%, transparent);
+  border:        1px solid color-mix(in srgb, var(--clr-primary) 20%, transparent);
+  border-radius: 10px;
+  padding:       0.875rem 1rem;
+  margin-bottom: 0.75rem;
+
+  &__label {
+    font-size:   rem(11px);
+    font-weight: 700;
+    color:       color-mix(in srgb, var(--clr-text) 50%, transparent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin:      0 0 0.625rem;
+  }
+
+  &__actions {
+    display: flex;
+    gap:     0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.625rem;
+  }
+
+  &__btn {
+    display:     flex;
+    align-items: center;
+    gap:         0.35rem;
+    font-size:   rem(12.5px);
+    padding:     0.4rem 0.75rem;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+
+  &__secret {
+    font-family:    monospace;
+    font-size:      rem(11px);
+    color:          color-mix(in srgb, var(--clr-text) 55%, transparent);
+    word-break:     break-all;
+    margin:         0;
+    letter-spacing: 0.08em;
+  }
+}
+
