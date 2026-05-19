@@ -5,9 +5,9 @@ const GAP         = 36;
 const RADIUS_VMIN = 30;
 const SPEED_IN    = 0.45;
 const SPEED_OUT   = 0.6;
-const REST_SCALE  = 0.08;
-const MIN_HOVER   = 0.85;
-const MAX_HOVER   = 2.8;
+const REST_SCALE  = 0.22;
+const MIN_HOVER   = 1.1;
+const MAX_HOVER   = 3.2;
 const WAVE_SPEED  = 1100;
 const WAVE_WIDTH  = 170;
 
