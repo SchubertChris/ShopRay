@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 const TIMEOUT_MS = 30 * 60 * 1000; // 30 Minuten
 
 export function useInactivityTimeout(onTimeout: () => void) {
-  const timerRef    = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef    = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const callbackRef = useRef(onTimeout);
   callbackRef.current = onTimeout;
 
