@@ -56,7 +56,6 @@ const RETURN_STATUS_LABELS: Record<ReturnRequest['status'], string> = {
 
 export default function OrderDetailPage() {
   const { id }                   = useParams<{ id: string }>();
-  const navigate                 = useNavigate();
   const { data: order, loading, error, refetch } = useOrderById(id ?? '');
 
   const [cancelling,       setCancelling]       = useState(false);

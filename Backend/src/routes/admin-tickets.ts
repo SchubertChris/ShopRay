@@ -30,10 +30,17 @@ router.get('/', requireAdmin, async (_req: Request, res: Response, next: NextFun
 router.patch('/:id/reply', requireAdmin, validate(ReplySchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { reply, status } = req.body as z.infer<typeof ReplySchema>;
+    const ticketId = req.params.id;
+
+    // In ticket_messages schreiben — damit der Kunde die Antwort im Chat sieht
+    await supabase
+      .from('ticket_messages')
+      .insert({ ticket_id: ticketId, sender: 'admin', text: reply });
+
     const { data, error } = await supabase
       .from('tickets')
       .update({ reply, status, replied_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-      .eq('id', req.params.id)
+      .eq('id', ticketId)
       .select('id, status, replied_at')
       .single();
 
