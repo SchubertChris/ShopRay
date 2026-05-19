@@ -195,15 +195,42 @@ export default function HomePage() {
         <HeroCanvas />
 
         <div className="editorial-hero__inner">
-          <div className="editorial-hero__content" data-shape-mask>
-            <span className="editorial-hero__pill">Sommer 2026 — Neue Kollektion</span>
+          <div className="editorial-hero__content">
+
+            <span
+              className="editorial-hero__pill hero-fade"
+              style={{ '--fd': '0s' } as React.CSSProperties}
+            >
+              Sommer 2026 — Neue Kollektion
+            </span>
+
             <h1 className="editorial-hero__title">
-              Designed<br /><em>to last.</em>
+              <span className="hero-word">
+                <span className="hero-word__inner" style={{ '--wd': '0.18s' } as React.CSSProperties}>
+                  Designed
+                </span>
+              </span>
+              <br />
+              <em>
+                <span className="hero-word">
+                  <span className="hero-word__inner" style={{ '--wd': '0.36s' } as React.CSSProperties}>
+                    to last.
+                  </span>
+                </span>
+              </em>
             </h1>
-            <p className="editorial-hero__sub">
+
+            <p
+              className="editorial-hero__sub hero-fade"
+              style={{ '--fd': '0.55s' } as React.CSSProperties}
+            >
               Nachhaltige Wohnprodukte für ein bewusstes Leben. Von der Materialwahl bis zur plastikfreien Verpackung — jedes Detail durchdacht.
             </p>
-            <div className="editorial-hero__ctas">
+
+            <div
+              className="editorial-hero__ctas hero-fade"
+              style={{ '--fd': '0.72s' } as React.CSSProperties}
+            >
               <button
                 className="btn btn--primary btn--lg"
                 onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
@@ -214,7 +241,11 @@ export default function HomePage() {
                 {cartCount > 0 ? `Warenkorb (${cartCount})` : 'Warenkorb'}
               </button>
             </div>
-            <div className="hero-social">
+
+            <div
+              className="hero-social hero-fade"
+              style={{ '--fd': '0.9s' } as React.CSSProperties}
+            >
               <div className="hero-avatars">
                 {(['A', 'L', 'S', 'M'] as const).map((l, i) => {
                   const avatarUrl = getAvatarImage(i);
@@ -232,6 +263,7 @@ export default function HomePage() {
                 <span>4.9 · über 2.400 Kunden</span>
               </div>
             </div>
+
           </div>
 
           <div className="hero-slot" aria-label="Produktkategorien">

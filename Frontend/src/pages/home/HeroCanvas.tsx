@@ -6,8 +6,8 @@ const RADIUS_VMIN = 30;
 const SPEED_IN    = 0.45;
 const SPEED_OUT   = 0.6;
 const REST_SCALE  = 0.22;
-const MIN_HOVER   = 1.1;
-const MAX_HOVER   = 3.2;
+const MIN_HOVER   = 0.6;
+const MAX_HOVER   = 1.65;
 const WAVE_SPEED  = 1100;
 const WAVE_WIDTH  = 170;
 

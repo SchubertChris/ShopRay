@@ -24,6 +24,37 @@
   50%       { opacity: 0.9; transform: scaleY(1); }
 }
 
+@keyframes hero-reveal {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hero-word-slide {
+  from { transform: translateY(108%); }
+  to   { transform: translateY(0); }
+}
+
+// Staggered fade-up für Hero-Elemente (Pill, Sub, CTAs, Social)
+.hero-fade {
+  opacity:          0;
+  animation:        hero-reveal 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay:  var(--fd, 0s);
+}
+
+// Wort-für-Wort Clip-Reveal auf dem Hero-Title
+.hero-word {
+  display:        inline-block;
+  overflow:       hidden;
+  vertical-align: bottom;
+  line-height:    inherit;
+
+  &__inner {
+    display:          inline-block;
+    animation:        hero-word-slide 0.95s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay:  var(--wd, 0s);
+  }
+}
+
 // â”€â”€â”€ SCROLL REVEAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 [data-reveal] {
@@ -81,6 +112,7 @@
       position: absolute;
       inset:    0;
       background:
+        linear-gradient(105deg, color-mix(in srgb, var(--clr-dark-surface) 62%, transparent) 0%, transparent 52%),
         radial-gradient(ellipse 60% 50% at 80% 30%, color-mix(in srgb, var(--clr-primary) 20%, transparent), transparent 70%),
         radial-gradient(ellipse 40% 60% at 15% 70%, color-mix(in srgb, var(--clr-accent) 12%, transparent), transparent 70%),
         var(--img-hero-home-overlay, transparent);
@@ -139,6 +171,7 @@
     letter-spacing: -0.04em;
     color:          var(--clr-on-dark);
     margin:         0;
+    text-shadow:    0 2px 28px rgba(0, 0, 0, 0.5);
 
     em {
       font-style:  italic;
@@ -155,7 +188,42 @@
     margin:      0;
   }
 
-  &__ctas { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  &__ctas { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+
+  // Hero-spezifische Button-Overrides
+  .btn--primary {
+    background:   var(--clr-on-dark);
+    color:        var(--clr-dark-surface);
+    border-color: var(--clr-on-dark);
+    font-weight:  700;
+
+    &:hover {
+      background:   color-mix(in srgb, var(--clr-on-dark) 86%, transparent);
+      border-color: color-mix(in srgb, var(--clr-on-dark) 86%, transparent);
+    }
+  }
+
+  .btn--ghost {
+    background:      transparent;
+    border:          none;
+    padding-left:    0;
+    padding-right:   0;
+    color:           color-mix(in srgb, var(--clr-on-dark) 60%, transparent);
+    letter-spacing:  0.02em;
+    @include transition(color);
+
+    &::after {
+      content:    ' →';
+      display:    inline-block;
+      transition: transform 0.22s ease;
+    }
+
+    &:hover {
+      background:  transparent;
+      color:       var(--clr-on-dark);
+      &::after { transform: translateX(5px); }
+    }
+  }
 
   // Right: numbered feature list â€” hidden on mobile
   &__list {
