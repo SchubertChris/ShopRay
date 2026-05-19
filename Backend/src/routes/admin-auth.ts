@@ -305,7 +305,7 @@ router.put('/password', requireOwner, validate(ChangePasswordSchema), async (req
 // ── GET /api/admin/mods — aktive Mods + ausstehende Einladungen ───────────────
 router.get('/mods', requireOwner, async (_req: Request, res: Response): Promise<void> => {
   const [modsRes, pendingRes] = await Promise.all([
-    supabase.from('profiles').select('id, email, created_at').eq('role', 'mod').order('created_at', { ascending: false }),
+    supabase.from('profiles').select('id, email, created_at, must_change_password').eq('role', 'mod').order('created_at', { ascending: false }),
     supabase.from('pending_mod_invites').select('id, email, invited_at').order('invited_at', { ascending: false }),
   ]);
 
@@ -315,16 +315,32 @@ router.get('/mods', requireOwner, async (_req: Request, res: Response): Promise<
     return;
   }
 
-  // Bei pending_mod_invites-Fehler (z.B. fehlende Grants) graceful degradieren
   if (pendingRes.error) {
     console.error('[GET /mods] pending_mod_invites-Fehler (Migration 017 nötig?):', pendingRes.error);
   }
 
-  const pendingData   = pendingRes.data ?? [];
-  const pendingEmails = new Set(pendingData.map(p => p.email));
-  const activeMods    = (modsRes.data ?? []).filter(m => !pendingEmails.has(m.email));
+  const inviteMap  = new Map((pendingRes.data ?? []).map(p => [p.email, p]));
+  const allMods    = modsRes.data ?? [];
 
-  res.json({ active: activeMods, pending: pendingData });
+  // Wahrheitsquelle: must_change_password (nicht pending_mod_invites-Präsenz)
+  const activeMods  = allMods
+    .filter(m => !m.must_change_password)
+    .map(m => ({ id: m.id, email: m.email, created_at: m.created_at }));
+
+  const pendingMods = allMods
+    .filter(m => m.must_change_password)
+    .map(m => {
+      const invite = inviteMap.get(m.email ?? '');
+      return { id: invite?.id ?? m.id, email: m.email ?? '', invited_at: invite?.invited_at ?? m.created_at };
+    });
+
+  // Veraltete pending_mod_invites-Einträge für bereits-aktive Mods bereinigen
+  const staleEmails = activeMods.map(m => m.email).filter(e => inviteMap.has(e ?? ''));
+  if (staleEmails.length > 0) {
+    void supabase.from('pending_mod_invites').delete().in('email', staleEmails);
+  }
+
+  res.json({ active: activeMods, pending: pendingMods });
 });
 
 // ── POST /api/admin/mods — Mitarbeiter hinzufügen oder einladen ───────────────
