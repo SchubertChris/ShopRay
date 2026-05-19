@@ -120,7 +120,7 @@
     overflow-y:    auto;
     border-radius: 20px 20px 0 0;
     border-bottom: none;
-    z-index:       300;
+    z-index:       400; // muss über panel-backdrop (399) liegen
     transform:     translateY(0);
     transition:    transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
 
@@ -224,7 +224,7 @@
     border-radius: 20px 20px 0 0;
     border-bottom: none;
     max-height:    85dvh;
-    z-index:       300;
+    z-index:       400; // muss über panel-backdrop (399) liegen
 
     &::before {
       content:       '';

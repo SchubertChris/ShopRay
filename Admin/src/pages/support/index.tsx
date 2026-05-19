@@ -66,12 +66,12 @@ export default function SupportPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Body-Scroll sperren wenn Detail-Panel oder Chat offen (Mobile Bottom Sheet)
+  // Body-Scroll nur in Table-Modus sperren (Grid-Modus hat kein Bottom-Sheet)
   useEffect(() => {
-    const open = !!(active || chatTicket);
+    const open = !!((active && displayMode === 'table') || chatTicket);
     document.body.style.overflow = open ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
-  }, [active, chatTicket]);
+  }, [active, chatTicket, displayMode]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (detailPanelRef.current && detailPanelRef.current.scrollTop === 0)

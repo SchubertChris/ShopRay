@@ -12,7 +12,7 @@ router.get('/', requireAdmin, async (_req: Request, res: Response, next: NextFun
     const [ordersRes, revenueRes, customersRes, productsRes, pendingRes, openTicketsRes, newInquiriesRes, recentOrdersRes] =
       await Promise.all([
         supabase.from('orders').select('*', { count: 'exact', head: true }),
-        supabase.from('orders').select('total').eq('status', 'paid').gte('paid_at', since30d),
+        supabase.from('orders').select('total').not('status', 'in', '("cancelled","refunded")').gte('created_at', since30d),
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('products').select('*', { count: 'exact', head: true }).eq('active', true),
         supabase.from('orders').select('*', { count: 'exact', head: true }).in('status', ['pending', 'paid']),
