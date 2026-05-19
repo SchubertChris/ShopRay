@@ -99,7 +99,14 @@ export function ProductCard({ product: p, skeleton, revealDelay, onQuickView }: 
               Nicht verfügbar
             </button>
           ) : (
-            <button className="btn btn--primary product-card__atc-btn" onClick={() => { addItem(p); notify({ type: 'success', title: 'In den Warenkorb gelegt', message: p.name, action: { label: 'Zum Warenkorb', href: '/cart' } }); }}>
+            <button className="btn btn--primary product-card__atc-btn" onClick={() => {
+              const result = addItem(p);
+              if (result.ok) {
+                notify({ type: 'success', title: 'In den Warenkorb gelegt', message: p.name, action: { label: 'Zum Warenkorb', href: '/cart' } });
+              } else {
+                notify({ type: 'error', title: result.reason ?? 'Nicht verfügbar' });
+              }
+            }}>
               In den Warenkorb
             </button>
           )}

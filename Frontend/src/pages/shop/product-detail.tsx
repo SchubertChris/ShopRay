@@ -109,8 +109,18 @@ export default function ProductDetailPage() {
   }
 
   function handleAddToCart() {
-    for (let i = 0; i < qty; i++) addItem(product!);
-    notify({ type: 'success', title: 'In den Warenkorb gelegt', message: product!.name, action: { label: 'Zum Warenkorb', href: '/cart' } });
+    let blocked = false;
+    for (let i = 0; i < qty; i++) {
+      const result = addItem(product!);
+      if (!result.ok) {
+        notify({ type: 'error', title: result.reason ?? 'Nicht verfügbar' });
+        blocked = true;
+        break;
+      }
+    }
+    if (!blocked) {
+      notify({ type: 'success', title: 'In den Warenkorb gelegt', message: product!.name, action: { label: 'Zum Warenkorb', href: '/cart' } });
+    }
   }
 
   const avgRating  = reviews.length > 0

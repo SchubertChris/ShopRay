@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ShoppingCart, X } from 'lucide-react';
 import { useCart } from '@features/cart';
+import { useNotifications } from '@features/notifications';
 import { ProductImage, SeoMeta } from '@components/ui';
 import { ROUTES } from '@config/routes';
 
@@ -8,6 +9,7 @@ export default function CartPage() {
   const items          = useCart(s => s.items);
   const updateQuantity = useCart(s => s.updateQuantity);
   const removeItem     = useCart(s => s.removeItem);
+  const notify         = useNotifications(s => s.notify);
 
   const subtotal  = items.reduce((sum, i) => sum + parseFloat(i.price) * i.quantity, 0);
   const cartCount = items.reduce((sum, i) => sum + i.quantity, 0);
@@ -44,7 +46,10 @@ export default function CartPage() {
                         <div className="cart-item__qty">
                           <button onClick={() => updateQuantity(item.id, -1)} aria-label="Weniger">−</button>
                           <span>{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item.id, +1)} aria-label="Mehr">+</button>
+                          <button onClick={() => {
+                            const result = updateQuantity(item.id, +1);
+                            if (!result.ok) notify({ type: 'error', title: result.reason ?? 'Nicht verfügbar' });
+                          }} aria-label="Mehr">+</button>
                         </div>
                       </div>
                     </div>
