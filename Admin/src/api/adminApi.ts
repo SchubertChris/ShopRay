@@ -385,6 +385,11 @@ export const updateOrderStatus = (id: string, status: string) =>
     `/api/admin/orders/${id}/status`, 'PATCH', { status },
   );
 
+export const refundOrder = (id: string) =>
+  apiFetch<{ ok: boolean; refundId: string; status: string }>(
+    `/api/admin/orders/${id}/refund`, 'POST',
+  );
+
 export async function downloadOrderInvoice(id: string): Promise<void> {
   const token = getAdminToken();
   const headers: Record<string, string> = {};

@@ -100,9 +100,12 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction): 
         const { data: order, error } = await supabase
           .from('orders')
           .update({
-            status:            'paid',
-            stripe_session_id: session.id,
-            paid_at:           new Date().toISOString(),
+            status:                    'paid',
+            stripe_session_id:         session.id,
+            stripe_payment_intent_id:  typeof session.payment_intent === 'string'
+              ? session.payment_intent
+              : (session.payment_intent as Stripe.PaymentIntent | null)?.id ?? null,
+            paid_at:                   new Date().toISOString(),
           })
           .eq('id', orderId)
           .select('*, order_items(*), profiles(name, email)')

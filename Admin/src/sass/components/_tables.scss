@@ -115,6 +115,13 @@
 
   &__row--clickable { cursor: pointer; }
 
+  &__row--stock-out td {
+    background: color-mix(in srgb, var(--clr-error) 5%, transparent);
+  }
+  &__row--stock-out:hover td {
+    background: color-mix(in srgb, var(--clr-error) 9%, transparent);
+  }
+
   tr.is-selected td {
     background: color-mix(in srgb, var(--clr-primary) 6%, transparent);
   }
@@ -267,6 +274,9 @@
 }
 
 .stock-badge {
+  display:     inline-flex;
+  align-items: center;
+  gap:         0.25rem;
   font-size:   rem(12px);
   font-weight: 600;
   color:       var(--clr-success);

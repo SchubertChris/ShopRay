@@ -1,9 +1,11 @@
 import { z } from 'zod';
 import { Router, Request, Response, NextFunction } from 'express';
 import { supabase }     from '../lib/supabase';
-import { requireAdmin } from '../middleware/adminAuth';
+import { stripe }       from '../lib/stripe';
+import { requireAdmin, requireOwner } from '../middleware/adminAuth';
 import { validate, UUIDParam } from '../lib/validate';
 import { generateInvoicePdf }  from '../lib/invoice-pdf';
+import { sendMail }     from '../lib/mailer';
 
 const router = Router();
 router.use(requireAdmin);
@@ -156,6 +158,74 @@ router.get('/:id/invoice', validate(UUIDParam, 'params'), async (req: Request, r
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="Rechnung_${invoiceNumber}.pdf"`);
     res.send(pdfBuffer);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/admin/orders/:id/refund — automatische Stripe-Erstattung (nur Owner)
+router.post('/:id/refund', requireOwner, validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { data: order, error: oErr } = await supabase
+      .from('orders')
+      .select('*, order_items(*)')
+      .eq('id', req.params.id)
+      .single();
+
+    if (oErr || !order) { res.status(404).json({ error: 'Bestellung nicht gefunden.' }); return; }
+
+    const refundableStatuses = ['paid', 'shipped', 'delivered'];
+    if (!refundableStatuses.includes(order.status as string)) {
+      res.status(409).json({ error: `Status "${order.status as string}" kann nicht erstattet werden.` });
+      return;
+    }
+
+    const paymentIntentId = order.stripe_payment_intent_id as string | null;
+    if (!paymentIntentId) {
+      res.status(409).json({ error: 'Keine Stripe-Payment-Intent-ID gefunden — manuelle Erstattung erforderlich.' });
+      return;
+    }
+
+    // Stripe-Erstattung auslösen
+    const refund = await stripe.refunds.create({ payment_intent: paymentIntentId });
+
+    if (refund.status !== 'succeeded' && refund.status !== 'pending') {
+      res.status(502).json({ error: `Stripe-Erstattung fehlgeschlagen: ${refund.status}` });
+      return;
+    }
+
+    // Order-Status auf refunded setzen
+    await supabase
+      .from('orders')
+      .update({ status: 'refunded', updated_at: new Date().toISOString() })
+      .eq('id', req.params.id);
+
+    // Lagerbestand zurückbuchen
+    const items = (order.order_items as Array<{ product_id: string; quantity: number }>) ?? [];
+    void (async () => {
+      for (const item of items) {
+        const { data: prod } = await supabase.from('products').select('stock').eq('id', item.product_id).single();
+        if (prod) {
+          await supabase.from('products').update({ stock: (prod.stock as number) + item.quantity }).eq('id', item.product_id);
+        }
+      }
+    })().catch(e => console.error('Stock-Rückbuchung fehlgeschlagen:', e));
+
+    // Kunden-E-Mail (non-blocking)
+    if (order.user_id) {
+      void supabase.auth.admin.getUserById(String(order.user_id)).then(({ data }) => {
+        const email = data?.user?.email;
+        if (email) {
+          void sendMail({
+            to:      email,
+            subject: `Erstattung für Bestellung ${order.order_number as string}`,
+            html:    `<p>Hallo,<br><br>deine Bestellung <strong>${order.order_number as string}</strong> wurde erstattet. Der Betrag erscheint in 5–10 Werktagen auf deinem Konto.</p>`,
+          }).catch(e => console.error('Erstattungs-Mail fehlgeschlagen:', e));
+        }
+      });
+    }
+
+    res.json({ ok: true, refundId: refund.id, status: refund.status });
   } catch (err) {
     next(err);
   }

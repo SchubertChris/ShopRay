@@ -348,4 +348,14 @@
     -webkit-box-orient:    vertical;
     overflow:              hidden;
   }
+
+  // Ausverkaufte Produkte: rote Randfarbe
+  &--stock-out {
+    border-color: color-mix(in srgb, var(--clr-error) 40%, transparent);
+
+    &:hover {
+      border-color: color-mix(in srgb, var(--clr-error) 65%, transparent);
+      box-shadow:   0 4px 20px color-mix(in srgb, var(--clr-error) 12%, transparent);
+    }
+  }
 }

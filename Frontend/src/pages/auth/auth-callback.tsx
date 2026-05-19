@@ -39,7 +39,9 @@ export default function AuthCallbackPage() {
         session.access_token,
       );
 
-      navigate(ROUTES.ACCOUNT.DASHBOARD, { replace: true });
+      const dest = sessionStorage.getItem('sr-post-login') ?? ROUTES.ACCOUNT.DASHBOARD;
+      sessionStorage.removeItem('sr-post-login');
+      navigate(dest, { replace: true });
     }
 
     void handleCallback();

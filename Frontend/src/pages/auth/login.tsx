@@ -122,10 +122,13 @@ export default function LoginPage() {
               <button
                 type="button"
                 className="social-btn"
-                onClick={() => supabase.auth.signInWithOAuth({
-                  provider: 'google',
-                  options: { redirectTo: `${window.location.origin}${ROUTES.AUTH.CALLBACK}` },
-                })}
+                onClick={() => {
+                  sessionStorage.setItem('sr-post-login', postLoginDest());
+                  void supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: { redirectTo: `${window.location.origin}${ROUTES.AUTH.CALLBACK}` },
+                  });
+                }}
               >
                 <IconGoogle size={20} /> Mit Google anmelden
               </button>

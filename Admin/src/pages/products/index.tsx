@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Trash2, AlertCircle, Loader2, Pencil, Upload } from 'lucide-react';
+import { Plus, Search, Trash2, AlertCircle, Loader2, Pencil, Upload, AlertTriangle } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import { deleteProduct, toggleProductActive } from '../../api/adminApi';
 import type { AdminProduct } from '../../api/adminApi';
@@ -100,6 +100,9 @@ export default function ProductsPage() {
     return matchSearch && matchCat;
   });
 
+  const stockRank = (p: AdminProduct) => p.stock === 0 ? 0 : p.stock <= 5 ? 1 : 2;
+  const sorted = [...filtered].sort((a, b) => stockRank(a) - stockRank(b));
+
   const formatPrice = (value: number) =>
     value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -190,8 +193,8 @@ export default function ProductsPage() {
                   </div>
                 </div>
               ))
-            : filtered.map(p => (
-                <div key={p.id} className="admin-card" onDoubleClick={() => handleRowDoubleClick(p.id)}>
+            : sorted.map(p => (
+                <div key={p.id} className={`admin-card${p.stock === 0 ? ' admin-card--stock-out' : ''}`} onDoubleClick={() => handleRowDoubleClick(p.id)}>
                   <div className="admin-card__img">
                     {p.image_url
                       ? <img src={p.image_url} alt={p.name} onContextMenu={e => e.preventDefault()} />
@@ -203,6 +206,7 @@ export default function ProductsPage() {
                     <p className="admin-card__meta">{p.category}</p>
                     <div className="admin-card__status-row">
                       <span className={`stock-badge${p.stock === 0 ? ' stock-badge--out' : p.stock <= 5 ? ' stock-badge--low' : ''}`}>
+                        {p.stock <= 5 && p.stock > 0 && <AlertTriangle size={11} strokeWidth={2.5} />}
                         {p.stock === 0 ? 'Ausverkauft' : `${p.stock} Stk.`}
                       </span>
                       <span className={`status-badge status-badge--toggle ${p.active ? 'status-badge--active' : 'status-badge--inactive'}`}>
@@ -285,12 +289,13 @@ export default function ProductsPage() {
                     </td>
                   </tr>
                 ) : (
-                  filtered.map(p => (
+                  sorted.map(p => (
                     <tr
                       key={p.id}
                       className={[
                         'admin-table__row--clickable',
                         deletingId === p.id ? 'admin-table__row--deleting' : '',
+                        p.stock === 0 ? 'admin-table__row--stock-out' : '',
                       ].filter(Boolean).join(' ')}
                       onDoubleClick={() => handleRowDoubleClick(p.id)}
                     >
@@ -318,6 +323,7 @@ export default function ProductsPage() {
                       </td>
                       <td>
                         <span className={`stock-badge${p.stock === 0 ? ' stock-badge--out' : p.stock <= 5 ? ' stock-badge--low' : ''}`}>
+                          {p.stock <= 5 && p.stock > 0 && <AlertTriangle size={11} strokeWidth={2.5} />}
                           {p.stock === 0 ? 'Ausverkauft' : `${p.stock} Stk.`}
                         </span>
                       </td>

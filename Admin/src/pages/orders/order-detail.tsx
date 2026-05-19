@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Package, User, MapPin, Clock, Loader2, AlertTriangle, Truck, Download, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Save, Package, User, MapPin, Clock, Loader2, AlertTriangle, Truck, Download, ExternalLink, RotateCcw } from 'lucide-react';
 import { ROUTES } from '@config/routes';
-import { getAdminOrder, updateOrderStatus, downloadOrderInvoice, type AdminOrder, type ShippingAddress } from '../../api/adminApi';
+import { getAdminOrder, updateOrderStatus, downloadOrderInvoice, refundOrder, type AdminOrder, type ShippingAddress } from '../../api/adminApi';
 import ShippingLabelModal  from '../../components/ui/ShippingLabelModal';
 import AddressEditModal    from '../../components/ui/AddressEditModal';
+import ConfirmDialog       from '../../components/ui/ConfirmDialog';
+import { useAuthStore }    from '../../stores/authStore';
 import type { OrderStatus } from '../../types/index';
 
 const STATUS_OPTIONS: Array<{ value: OrderStatus; label: string }> = [
@@ -42,15 +44,20 @@ export default function OrderDetailPage() {
   const { id }   = useParams<{ id: string }>();
   const navigate = useNavigate();
 
+  const role = useAuthStore(s => s.role);
+
   const [order,   setOrder]   = useState<AdminOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
   const [status,  setStatus]  = useState<OrderStatus>('pending');
   const [saving,  setSaving]  = useState(false);
-  const [saved,          setSaved]          = useState(false);
+  const [saved,           setSaved]           = useState(false);
   const [invoiceLoading,  setInvoiceLoading]  = useState(false);
   const [showLabelModal,  setShowLabelModal]  = useState(false);
   const [showAddressEdit, setShowAddressEdit] = useState(false);
+  const [showRefundConfirm, setShowRefundConfirm] = useState(false);
+  const [refunding,         setRefunding]         = useState(false);
+  const [refundError,       setRefundError]        = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -78,6 +85,22 @@ export default function OrderDetailPage() {
       setStatus(order.status as OrderStatus);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRefund = async () => {
+    if (!id) return;
+    setRefunding(true);
+    setRefundError(null);
+    try {
+      await refundOrder(id);
+      setOrder(prev => prev ? { ...prev, status: 'refunded' } : prev);
+      setStatus('refunded');
+    } catch (err) {
+      setRefundError(err instanceof Error ? err.message : 'Erstattung fehlgeschlagen.');
+    } finally {
+      setRefunding(false);
+      setShowRefundConfirm(false);
     }
   };
 
@@ -136,6 +159,20 @@ export default function OrderDetailPage() {
           <p className="page-header__sub">{formatDate(order.created_at)}</p>
         </div>
         <div className="page-header__actions">
+          {role === 'owner' && ['paid', 'shipped', 'delivered'].includes(order.status) && (
+            <button
+              className="btn-danger"
+              onClick={() => setShowRefundConfirm(true)}
+              disabled={refunding}
+              title="Automatische Stripe-Erstattung auslösen"
+            >
+              {refunding
+                ? <Loader2 size={14} strokeWidth={2} className="spin" />
+                : <RotateCcw size={14} strokeWidth={2} />
+              }
+              {refunding ? 'Wird erstattet…' : 'Rückerstattung'}
+            </button>
+          )}
           <button
             className="btn-secondary"
             onClick={handleDownloadInvoice}
@@ -404,6 +441,18 @@ export default function OrderDetailPage() {
           }}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={showRefundConfirm}
+        title="Rückerstattung auslösen?"
+        description={`Bestellung ${order.order_number} wird über Stripe vollständig erstattet. Der Betrag erscheint in 5–10 Werktagen beim Kunden. Lagerbestand wird automatisch zurückgebucht.${refundError ? ` — Fehler: ${refundError}` : ''}`}
+        confirmLabel={refunding ? 'Wird erstattet…' : 'Jetzt erstatten'}
+        cancelLabel="Abbrechen"
+        variant="danger"
+        loading={refunding}
+        onConfirm={handleRefund}
+        onCancel={() => { setShowRefundConfirm(false); setRefundError(null); }}
+      />
     </>
   );
 }
