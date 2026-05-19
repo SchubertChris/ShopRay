@@ -1,6 +1,6 @@
-import { useState, useRef, type FormEvent } from 'react';
+import { useState, useRef, useEffect, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Zap, CheckCircle, Eye, EyeOff, Lock, Smartphone, Users, KeyRound } from 'lucide-react';
+import { Shield, Zap, CheckCircle, Eye, EyeOff, Lock, Smartphone, Users, KeyRound, QrCode } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import { ROUTES } from '@config/routes';
 
@@ -35,8 +35,41 @@ export default function LoginPage() {
   const [modError,    setModError]    = useState('');
   const [modLoading,  setModLoading]  = useState(false);
 
-  const { login, verifyTotp, loginMod, submitNewModPassword, requireTotp, mustChangePassword } = useAuthStore();
+  const { login, verifyTotp, loginMod, submitNewModPassword, setupForcedTwoFactor, confirmForcedTwoFactor, requireTotp, requireSetup2FA, mustChangePassword } = useAuthStore();
   const navigate = useNavigate();
+
+  // Forced 2FA Setup State
+  const [setup2FAData,    setSetup2FAData]    = useState<{ secret: string; qrCode: string } | null>(null);
+  const [setup2FACode,    setSetup2FACode]    = useState('');
+  const [setup2FALoading, setSetup2FALoading] = useState(false);
+  const [setup2FAError,   setSetup2FAError]   = useState('');
+  const setup2FAInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!requireSetup2FA) return;
+    setSetup2FALoading(true);
+    setupForcedTwoFactor()
+      .then(data => { setSetup2FAData(data); setTimeout(() => setup2FAInputRef.current?.focus(), 100); })
+      .catch(err  => setSetup2FAError(err instanceof Error ? err.message : 'Fehler beim Laden.'))
+      .finally(()  => setSetup2FALoading(false));
+  }, [requireSetup2FA, setupForcedTwoFactor]);
+
+  const handleSetup2FASubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!setup2FAData || setup2FACode.length !== 6) return;
+    setSetup2FAError('');
+    setSetup2FALoading(true);
+    try {
+      await confirmForcedTwoFactor(setup2FAData.secret, setup2FACode);
+      navigate(ROUTES.DASHBOARD);
+    } catch (err) {
+      setSetup2FAError(err instanceof Error ? err.message : 'Fehler beim Einrichten.');
+      setSetup2FACode('');
+      setup2FAInputRef.current?.focus();
+    } finally {
+      setSetup2FALoading(false);
+    }
+  };
 
   // Force-Change-Password State (nach Mod-Login mit Startpasswort)
   const [newPw,       setNewPw]       = useState('');
@@ -167,8 +200,80 @@ export default function LoginPage() {
       <div className="login-form-panel">
         <div className="login-form-wrap">
 
+          {/* ── Forced 2FA Setup (Owner, kein 2FA eingerichtet) ── */}
+          {requireSetup2FA && (
+            <form className="login-form" onSubmit={handleSetup2FASubmit} noValidate>
+              <div className="login-form__lock-icon" aria-hidden="true">
+                <QrCode size={22} strokeWidth={1.75} />
+              </div>
+              <p className="login-form__eyebrow">Sicherheitspflicht</p>
+              <h2 className="login-form__title">2FA einrichten</h2>
+              <p className="login-form__sub">
+                Der Admin-Bereich erfordert Zwei-Faktor-Authentifizierung.
+                Scanne den QR-Code mit Google Authenticator oder einer kompatiblen App.
+              </p>
+
+              {setup2FALoading && !setup2FAData && (
+                <div className="page-loading" style={{ marginBlock: '1rem' }}>
+                  <span className="login-form__spinner" style={{ width: 24, height: 24 }} />
+                </div>
+              )}
+
+              {setup2FAData && (
+                <>
+                  <div style={{ textAlign: 'center', margin: '1rem 0' }}>
+                    <img
+                      src={setup2FAData.qrCode}
+                      alt="QR-Code für 2FA"
+                      style={{ width: 180, height: 180, borderRadius: 8 }}
+                    />
+                  </div>
+
+                  <div className="login-form__group">
+                    <label htmlFor="setup-totp">Bestätigungscode (6 Ziffern)</label>
+                    <input
+                      id="setup-totp"
+                      ref={setup2FAInputRef}
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      placeholder="000000"
+                      maxLength={6}
+                      value={setup2FACode}
+                      onChange={e => {
+                        const v = e.target.value.replace(/\D/g, '').slice(0, 6);
+                        setSetup2FACode(v);
+                        if (setup2FAError) setSetup2FAError('');
+                      }}
+                      className="login-form__totp-input"
+                      required
+                    />
+                  </div>
+
+                  {setup2FAError && (
+                    <div className="login-form__error">
+                      <Shield size={13} strokeWidth={2} />
+                      {setup2FAError}
+                    </div>
+                  )}
+
+                  <button
+                    className="login-form__submit"
+                    type="submit"
+                    disabled={setup2FALoading || setup2FACode.length !== 6}
+                  >
+                    {setup2FALoading
+                      ? <><span className="login-form__spinner" />Wird aktiviert…</>
+                      : '2FA aktivieren & anmelden'
+                    }
+                  </button>
+                </>
+              )}
+            </form>
+          )}
+
           {/* ── Force-Change-Password (Mitarbeiter, erster Login) ── */}
-          {mustChangePassword && (
+          {!requireSetup2FA && mustChangePassword && (
             <form className="login-form" onSubmit={handlePasswordChange} noValidate>
               <div className="login-form__lock-icon" aria-hidden="true">
                 <KeyRound size={22} strokeWidth={1.75} />
@@ -251,7 +356,7 @@ export default function LoginPage() {
           )}
 
           {/* ── Tab-Switcher ── */}
-          {!requireTotp && !mustChangePassword && (
+          {!requireSetup2FA && !requireTotp && !mustChangePassword && (
             <div className="login-tabs">
               <button
                 type="button"
@@ -272,7 +377,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          {!mustChangePassword && (
+          {!requireSetup2FA && !mustChangePassword && (
           <div className="login-form__lock-icon" aria-hidden="true">
             {requireTotp
               ? <Smartphone size={22} strokeWidth={1.75} />
@@ -282,7 +387,7 @@ export default function LoginPage() {
           )}
 
           {/* ── Passwort-Form ── */}
-          {!requireTotp && !mustChangePassword && loginMode === 'owner' && (
+          {!requireSetup2FA && !requireTotp && !mustChangePassword && loginMode === 'owner' && (
             <form className="login-form" onSubmit={handleSubmit} noValidate>
               <p className="login-form__eyebrow">Admin-Bereich</p>
               <h2 className="login-form__title">Anmelden</h2>
@@ -333,7 +438,7 @@ export default function LoginPage() {
           )}
 
           {/* ── TOTP-Form ── */}
-          {requireTotp && !mustChangePassword && (
+          {!requireSetup2FA && requireTotp && !mustChangePassword && (
             <form className="login-form" onSubmit={handleTotpSubmit} noValidate>
               <p className="login-form__eyebrow">2-Faktor-Authentifizierung</p>
               <h2 className="login-form__title">Code eingeben</h2>
@@ -387,7 +492,7 @@ export default function LoginPage() {
           )}
 
           {/* ── Mitarbeiter-Form ── */}
-          {!requireTotp && !mustChangePassword && loginMode === 'mod' && (
+          {!requireSetup2FA && !requireTotp && !mustChangePassword && loginMode === 'mod' && (
             <form className="login-form" onSubmit={handleModSubmit} noValidate>
               <p className="login-form__eyebrow">Mitarbeiter-Zugang</p>
               <h2 className="login-form__title">Anmelden</h2>

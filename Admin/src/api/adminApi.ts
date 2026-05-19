@@ -2,13 +2,17 @@
 // Lokal: VITE_API_URL=http://localhost:5000
 export const API_URL = (import.meta.env.VITE_API_URL as string) ?? '';
 
-// ── Session-Token (sessionStorage) ──────────────────────────────────────────────
-// Primäre Auth-Methode: Authorization: Bearer <token>
-// Cookie bleibt als Fallback für Desktop-Browser gesetzt
-const TOKEN_KEY = 'adminToken';
-export const getAdminToken  = ()              => sessionStorage.getItem(TOKEN_KEY);
-export const setAdminToken  = (t: string)     => sessionStorage.setItem(TOKEN_KEY, t);
-export const clearAdminToken = ()             => sessionStorage.removeItem(TOKEN_KEY);
+// ── Session-Token (sessionStorage) ───────────────────────────────────────────
+const TOKEN_KEY       = 'adminToken';
+const SETUP_TOKEN_KEY = 'adminSetupToken';
+
+export const getAdminToken   = ()          => sessionStorage.getItem(TOKEN_KEY);
+export const setAdminToken   = (t: string) => sessionStorage.setItem(TOKEN_KEY, t);
+export const clearAdminToken = ()          => sessionStorage.removeItem(TOKEN_KEY);
+
+export const getSetupToken   = ()          => sessionStorage.getItem(SETUP_TOKEN_KEY);
+export const setSetupToken   = (t: string) => sessionStorage.setItem(SETUP_TOKEN_KEY, t);
+export const clearSetupToken = ()          => sessionStorage.removeItem(SETUP_TOKEN_KEY);
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -33,6 +37,10 @@ async function apiFetch<T>(
     body: isFormData ? body : body !== undefined ? JSON.stringify(body) : undefined,
   });
 
+  // Sliding Renewal: neuer Token im Header → sofort übernehmen
+  const renewed = res.headers.get('X-New-Token');
+  if (renewed) setAdminToken(renewed);
+
   if (!res.ok) {
     const json = await res.json().catch(() => ({}));
     throw new Error((json as { error?: string }).error ?? `HTTP ${res.status}`);
@@ -45,7 +53,31 @@ async function apiFetch<T>(
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 export const adminLogin  = (password: string) =>
-  apiFetch<{ ok: boolean; requireTotp?: boolean; token?: string; pendingToken?: string }>('/api/admin/login', 'POST', { password });
+  apiFetch<{ ok: boolean; requireTotp?: boolean; requireSetup2FA?: boolean; token?: string; pendingToken?: string; setupToken?: string }>('/api/admin/login', 'POST', { password });
+
+// ── Forced 2FA Setup (mit kurzlebigem Setup-Token als Bearer) ─────────────────
+async function setup2FAFetch<T>(path: string, method: HttpMethod = 'GET', body?: unknown): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const token = getSetupToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${API_URL}${path}`, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}));
+    throw new Error((json as { error?: string }).error ?? `HTTP ${res.status}`);
+  }
+  const text = await res.text();
+  return (text ? JSON.parse(text) : {}) as T;
+}
+
+export const get2faSetupForced   = () =>
+  setup2FAFetch<{ secret: string; qrCode: string; otpAuthUrl: string }>('/api/admin/2fa/setup');
+
+export const confirm2faForced    = (secret: string, token: string) =>
+  setup2FAFetch<{ ok: boolean; token?: string }>('/api/admin/2fa/confirm', 'POST', { secret, token });
 
 export const adminLogout = () =>
   apiFetch<{ ok: boolean }>('/api/admin/logout', 'POST');

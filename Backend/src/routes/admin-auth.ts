@@ -45,7 +45,7 @@ const StrongPasswordSchema = z.object({
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const TOTP_PENDING_MAX_AGE = 5 * 60 * 1000; // 5 Minuten
-const SESSION_MAX_AGE      = 24 * 60 * 60 * 1000; // 24 Stunden
+const SESSION_MAX_AGE      = 8 * 60 * 60 * 1000;  // 8 Stunden
 const LOCKOUT_MAX_ATTEMPTS = 5;
 const LOCKOUT_WINDOW_MS    = 15 * 60 * 1000; // 15 Minuten
 
@@ -134,29 +134,15 @@ router.post('/login', authRateLimit, validate(LoginSchema), async (req: Request,
     .from('admin_totp')
     .select('*', { count: 'exact', head: true });
 
-  if ((totpCount ?? 0) > 0) {
-    const pendingToken = jwt.sign({ totpPending: true }, secret, { expiresIn: '5m' });
-    res.json({ ok: true, requireTotp: true, pendingToken });
+  if ((totpCount ?? 0) === 0) {
+    // Kein 2FA eingerichtet → Setup erzwingen (kurzzeitiger Token nur für /2fa/setup + /2fa/confirm)
+    const setupToken = jwt.sign({ mustSetup2FA: true }, secret, { expiresIn: '15m' });
+    res.json({ ok: true, requireSetup2FA: true, setupToken });
     return;
   }
 
-  const token = jwt.sign({ role: 'owner' }, secret, { expiresIn: '24h' });
-
-  const userAgent = (req.headers['user-agent'] ?? '').slice(0, 500);
-  const date      = new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });
-  void supabase.from('admin_login_log').insert({ ip_address: ip, user_agent: userAgent, success: true });
-
-  const ownerEmail = process.env.SMTP_FROM_EMAIL;
-  const adminUrl   = process.env.ADMIN_URL ?? 'https://shopray-admin.vercel.app';
-  if (ownerEmail) {
-    void sendMail({
-      to:      ownerEmail,
-      subject: `⚠️ Admin-Login bei ShopRay — ${date}`,
-      html:    adminLoginAlertHtml({ ip, userAgent, date, adminUrl }),
-    }).catch(() => null);
-  }
-
-  res.json({ ok: true, token });
+  const pendingToken = jwt.sign({ totpPending: true }, secret, { expiresIn: '5m' });
+  res.json({ ok: true, requireTotp: true, pendingToken });
 });
 
 // ── POST /api/admin/login/totp ────────────────────────────────────────────────
@@ -183,11 +169,22 @@ router.post('/login/totp', authRateLimit, validate(TotpSchema), async (req: Requ
   const { valid: isValid } = verifySync({ token: totpCode, secret: totpRow.secret });
   if (!isValid) { res.status(401).json({ error: 'Ungültiger TOTP-Code.' }); return; }
 
-  const sessionToken = jwt.sign({ role: 'owner' }, secret, { expiresIn: '24h' });
+  const sessionToken = jwt.sign({ role: 'owner' }, secret, { expiresIn: '8h' });
 
   const ip        = getClientIp(req);
   const userAgent = (req.headers['user-agent'] ?? '').slice(0, 500);
+  const date      = new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });
   void supabase.from('admin_login_log').insert({ ip_address: ip, user_agent: userAgent, success: true });
+
+  const ownerEmail = process.env.SMTP_FROM_EMAIL;
+  const adminUrl   = process.env.ADMIN_URL ?? 'https://shopray-admin.vercel.app';
+  if (ownerEmail) {
+    void sendMail({
+      to:      ownerEmail,
+      subject: `⚠️ Admin-Login bei ShopRay — ${date}`,
+      html:    adminLoginAlertHtml({ ip, userAgent, date, adminUrl }),
+    }).catch(() => null);
+  }
 
   res.json({ ok: true, token: sessionToken });
 });
@@ -237,7 +234,7 @@ router.post('/login/mod', authRateLimit, validate(ModLoginSchema), async (req: R
     return;
   }
 
-  const token = jwt.sign({ role: 'mod', userId: authData.user.id }, secret, { expiresIn: '24h' });
+  const token = jwt.sign({ role: 'mod', userId: authData.user.id }, secret, { expiresIn: '8h' });
 
   void supabase.from('admin_login_log').insert({
     ip_address: ip,
