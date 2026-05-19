@@ -392,31 +392,51 @@ $slot-vis:    5;   // sichtbare EintrÃ¤ge
   display: none;
 
   @include respond-to('lg') {
-    display:     flex;
-    align-items: flex-start;
-    gap:         1rem;
+    display:        flex;
+    flex-direction: column;
+    align-items:    stretch;
   }
 
   // â”€â”€ Rail (linke Spalte mit Label + Pfeil) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   &__rail {
-    position:       relative;
-    flex-shrink:    0;
-    width:          72px;
-    height:         #{$slot-vis * $slot-item-h};
+    position:    relative;
+    flex-shrink: 0;
+    width:       40px;
+    height:      #{$slot-vis * $slot-item-h};
+  }
+
+  // Prominenter Header über dem Slot
+  &__header {
     display:        flex;
-    flex-direction: column;
+    align-items:    baseline;
+    gap:            0.6rem;
+    margin-bottom:  0.75rem;
   }
 
   &__label {
     display:        block;
-    font-size:      0.58rem;
+    font-size:      0.95rem;
     font-weight:    700;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    color:          color-mix(in srgb, var(--clr-on-dark) 60%, transparent);
+    color:          var(--clr-on-dark);
     white-space:    nowrap;
-    padding-top:    0.5rem;
+  }
+
+  &__label-count {
+    font-size:      0.65rem;
+    font-weight:    500;
+    letter-spacing: 0.06em;
+    color:          color-mix(in srgb, var(--clr-on-dark) 40%, transparent);
+    white-space:    nowrap;
+  }
+
+  // Rail + Frame nebeneinander
+  &__body {
+    display:     flex;
+    align-items: flex-start;
+    gap:         1rem;
   }
 
   // Pfeil: horizontale Linie + Dreieck, positioniert mittig (3. Item)
@@ -475,9 +495,19 @@ $slot-vis:    5;   // sichtbare EintrÃ¤ge
     box-shadow:
       0 4px 24px rgba(0, 0, 0, 0.40),
       inset 0 1px 0 rgba(255, 255, 255, 0.16);
-    pointer-events:          none;
+    pointer-events:          auto;
+    cursor:                  pointer;
     will-change:             transform;
     z-index:                 2;
+    @include transition(background, border-color, box-shadow);
+
+    &:hover {
+      background:   rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.35);
+      box-shadow:
+        0 6px 32px rgba(0, 0, 0, 0.50),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    }
 
     [data-theme$=”-light”] & {
       background:   rgba(255, 255, 255, 0.18);

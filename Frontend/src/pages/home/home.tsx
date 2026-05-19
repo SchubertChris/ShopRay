@@ -59,6 +59,7 @@ export default function HomePage() {
 
   const [themeDockOpen, setThemeDockOpen] = useState(false);
   const [drawerOpen,    setDrawerOpen]    = useState(false);
+  const [slotIdx,       setSlotIdx]       = useState(2); // mittleres Item im 5er-Fenster
   const [quickView,     setQuickView]     = useState<Product | null>(null);
   const [toast,         setToast]         = useState<ToastState>({ visible: false, message: '', type: 'success' });
   const [skeletons,     setSkeletons]     = useState(true);
@@ -69,6 +70,13 @@ export default function HomePage() {
     const t = setTimeout(() => setSkeletons(false), 1600);
     return () => clearTimeout(t);
   }, []);
+
+  // Slot-Index in sync mit der CSS-Animation halten (3s pro Item)
+  useEffect(() => {
+    if (!categories.length) return;
+    const id = setInterval(() => setSlotIdx(i => (i + 1) % categories.length), 3000);
+    return () => clearInterval(id);
+  }, [categories.length]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -269,21 +277,31 @@ export default function HomePage() {
           </div>
 
           <div className="hero-slot" aria-label="Produktkategorien">
-            <div className="hero-slot__rail" aria-hidden="true">
+            <div className="hero-slot__header">
               <span className="hero-slot__label">Kollektionen</span>
-              <div className="hero-slot__arrow" />
+              <span className="hero-slot__label-count">{categories.length} Bereiche</span>
             </div>
-            <div className="hero-slot__frame">
-              <div className="hero-slot__active-glass" aria-hidden="true" />
-              <div className="hero-slot__window">
-                <div className="hero-slot__track" aria-hidden="true">
-                  {[...categories, ...categories, ...categories].map((cat, i) => (
-                    <div key={i} className="hero-slot__item">
-                      <span className="hero-slot__num">{cat.num}</span>
-                      <span className="hero-slot__name">{cat.name}</span>
-                      <span className="hero-slot__count">{cat.count}</span>
-                    </div>
-                  ))}
+
+            <div className="hero-slot__body">
+              <div className="hero-slot__rail" aria-hidden="true">
+                <div className="hero-slot__arrow" />
+              </div>
+              <div className="hero-slot__frame">
+                <Link
+                  to={`${ROUTES.SHOP.CATEGORIES}?id=${categories[slotIdx % Math.max(categories.length, 1)]?.id ?? ''}`}
+                  className="hero-slot__active-glass"
+                  aria-label={`${categories[slotIdx % Math.max(categories.length, 1)]?.name ?? 'Kategorie'} entdecken`}
+                />
+                <div className="hero-slot__window">
+                  <div className="hero-slot__track" aria-hidden="true">
+                    {[...categories, ...categories, ...categories].map((cat, i) => (
+                      <div key={i} className="hero-slot__item">
+                        <span className="hero-slot__num">{cat.num}</span>
+                        <span className="hero-slot__name">{cat.name}</span>
+                        <span className="hero-slot__count">{cat.count}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
