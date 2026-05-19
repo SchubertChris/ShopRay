@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertCircle, ExternalLink, CheckCircle2, XCircle, Truck, Package2 } from 'lucide-react';
+import { AlertCircle, ExternalLink, CheckCircle2, Package2, Archive } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import {
   getReturnRequests,
@@ -19,31 +19,35 @@ const STATUS_LABELS: Record<ReturnStatus, string> = {
   refunded:   'Erstattet',
 };
 
-const STATUS_TABS: Array<{ key: ReturnStatus | 'all'; label: string }> = [
-  { key: 'all',        label: 'Alle'              },
-  { key: 'requested',  label: 'Beantragt'         },
-  { key: 'approved',   label: 'Genehmigt'         },
-  { key: 'label_sent', label: 'Etikett gesendet'  },
-  { key: 'received',   label: 'Eingegangen'       },
-  { key: 'refunded',   label: 'Erstattet'         },
-  { key: 'rejected',   label: 'Abgelehnt'         },
+const ACTIVE_STATUSES:  ReturnStatus[] = ['requested', 'approved', 'label_sent', 'received'];
+const ARCHIVE_STATUSES: ReturnStatus[] = ['refunded', 'rejected'];
+
+const ACTIVE_TABS: Array<{ key: ReturnStatus | 'all'; label: string }> = [
+  { key: 'all',        label: 'Alle'             },
+  { key: 'requested',  label: 'Beantragt'        },
+  { key: 'approved',   label: 'Genehmigt'        },
+  { key: 'label_sent', label: 'Etikett gesendet' },
+  { key: 'received',   label: 'Eingegangen'      },
 ];
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
+type ViewMode = 'active' | 'archive';
+
 export default function ReturnsPage() {
-  const [returns, setReturns]   = useState<AdminReturnRequest[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [error,   setError]     = useState<string | null>(null);
-  const [tab,     setTab]       = useState<ReturnStatus | 'all'>('all');
-  const [editing, setEditing]   = useState<AdminReturnRequest | null>(null);
+  const [returns,  setReturns]  = useState<AdminReturnRequest[]>([]);
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('active');
+  const [tab,      setTab]      = useState<ReturnStatus | 'all'>('all');
+  const [editing,  setEditing]  = useState<AdminReturnRequest | null>(null);
   const [labelUrl,  setLabelUrl]  = useState('');
   const [adminNote, setAdminNote] = useState('');
   const [newStatus, setNewStatus] = useState<ReturnStatus>('approved');
-  const [saving,  setSaving]    = useState(false);
-  const [saveErr, setSaveErr]   = useState<string | null>(null);
+  const [saving,   setSaving]   = useState(false);
+  const [saveErr,  setSaveErr]  = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -60,7 +64,21 @@ export default function ReturnsPage() {
 
   useEffect(() => { void load(); }, [load]);
 
-  const filtered = tab === 'all' ? returns : returns.filter(r => r.status === tab);
+  // Nach View-Mode filtern
+  const byMode = viewMode === 'active'
+    ? returns.filter(r => ACTIVE_STATUSES.includes(r.status))
+    : returns.filter(r => ARCHIVE_STATUSES.includes(r.status));
+
+  // Innerhalb des Modes nochmal nach Tab filtern
+  const filtered = tab === 'all' ? byMode : byMode.filter(r => r.status === tab);
+
+  const activeCount  = returns.filter(r => ACTIVE_STATUSES.includes(r.status)).length;
+  const archiveCount = returns.filter(r => ARCHIVE_STATUSES.includes(r.status)).length;
+
+  function switchView(mode: ViewMode) {
+    setViewMode(mode);
+    setTab('all');
+  }
 
   function openEdit(r: AdminReturnRequest) {
     setEditing(r);
@@ -99,27 +117,46 @@ export default function ReturnsPage() {
             {loading ? 'Lädt…' : `${returns.length} Anfrage${returns.length !== 1 ? 'n' : ''} insgesamt`}
           </p>
         </div>
-      </div>
-
-      {/* Status-Tabs */}
-      <div className="filter-bar">
-        <div className="filter-bar__tabs">
-          {STATUS_TABS.map(t => (
-            <button
-              key={t.key}
-              className={`filter-bar__tab${tab === t.key ? ' is-active' : ''}`}
-              onClick={() => setTab(t.key)}
-            >
-              {t.label}
-              {t.key !== 'all' && (
-                <span className="filter-bar__tab-count">
-                  {returns.filter(r => r.status === t.key).length}
-                </span>
-              )}
-            </button>
-          ))}
+        <div className="page-header__actions">
+          <button
+            className={`filter-bar__tab${viewMode === 'active' ? ' is-active' : ''}`}
+            onClick={() => switchView('active')}
+          >
+            Aktiv
+            {activeCount > 0 && <span className="tab-nav__count">{activeCount}</span>}
+          </button>
+          <button
+            className={`filter-bar__tab${viewMode === 'archive' ? ' is-active' : ''}`}
+            onClick={() => switchView('archive')}
+          >
+            <Archive size={13} strokeWidth={2} />
+            Archiv
+            {archiveCount > 0 && <span className="tab-nav__count">{archiveCount}</span>}
+          </button>
         </div>
       </div>
+
+      {/* Status-Tabs (nur im Aktiv-Modus) */}
+      {viewMode === 'active' && (
+        <div className="filter-bar">
+          <div className="filter-bar__tabs">
+            {ACTIVE_TABS.map(t => (
+              <button
+                key={t.key}
+                className={`filter-bar__tab${tab === t.key ? ' is-active' : ''}`}
+                onClick={() => setTab(t.key)}
+              >
+                {t.label}
+                {t.key !== 'all' && (
+                  <span className="filter-bar__tab-count">
+                    {returns.filter(r => r.status === t.key).length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="data-card data-card--error">
@@ -161,7 +198,7 @@ export default function ReturnsPage() {
                   <tr>
                     <td colSpan={5} className="admin-table__empty">
                       <Package2 size={18} strokeWidth={1.5} />
-                      Keine Rücksendeanträge
+                      {viewMode === 'active' ? 'Keine aktiven Rücksendeanträge' : 'Keine archivierten Einträge'}
                     </td>
                   </tr>
                 ) : filtered.map(r => (
@@ -188,13 +225,15 @@ export default function ReturnsPage() {
                     <td className="admin-table__muted">{fmtDate(r.created_at)}</td>
                     <td>
                       <div className="table-actions">
-                        <button
-                          className="table-action"
-                          title="Bearbeiten"
-                          onClick={() => openEdit(r)}
-                        >
-                          <CheckCircle2 size={14} strokeWidth={2} />
-                        </button>
+                        {viewMode === 'active' && (
+                          <button
+                            className="table-action"
+                            title="Bearbeiten"
+                            onClick={() => openEdit(r)}
+                          >
+                            <CheckCircle2 size={14} strokeWidth={2} />
+                          </button>
+                        )}
                         {r.label_url && (
                           <a
                             className="table-action"
@@ -263,16 +302,21 @@ export default function ReturnsPage() {
                 </select>
                 {newStatus === 'refunded' && (
                   <p className="form-hint form-hint--warning">
-                    ⚡ Stripe-Erstattung wird automatisch ausgelöst. Betrag: {
-                      editing.return_items && editing.return_items.length > 0
-                        ? `${editing.return_items.reduce((s, i) => s + parseFloat(i.price) * i.quantity, 0).toFixed(2)} €`
-                        : `${editing.orders?.total?.toFixed(2) ?? '?'} €`
-                    } — E-Mail an Kunden wird gesendet.
+                    ⚡ Stripe-Erstattung wird automatisch ausgelöst. Betrag:{' '}
+                    {editing.return_items && editing.return_items.length > 0
+                      ? `${editing.return_items.reduce((s, i) => s + parseFloat(i.price) * i.quantity, 0).toFixed(2)} €`
+                      : `${editing.orders?.total?.toFixed(2) ?? '?'} €`
+                    } — Ticket + E-Mail an Kunden.
+                  </p>
+                )}
+                {newStatus === 'approved' && editing.status !== 'approved' && (
+                  <p className="form-hint form-hint--warning">
+                    Kunde erhält automatisch ein Ticket + E-Mail mit der Genehmigung.
                   </p>
                 )}
                 {newStatus === 'rejected' && (
                   <p className="form-hint form-hint--warning">
-                    Ablehnungsgrund in der internen Notiz ergänzen — wird an Kunden gesendet.
+                    Ablehnungsgrund in der internen Notiz ergänzen — wird an Kunden gesendet (Ticket + E-Mail).
                   </p>
                 )}
               </div>
@@ -287,7 +331,7 @@ export default function ReturnsPage() {
                   onChange={e => setLabelUrl(e.target.value)}
                   disabled={saving}
                 />
-                <p className="form-hint">Wird dem Kunden per E-Mail gesendet wenn Status auf „Etikett gesendet" gesetzt wird.</p>
+                <p className="form-hint">Wird dem Kunden per E-Mail + Ticket gesendet wenn Status auf „Etikett gesendet" gesetzt wird.</p>
               </div>
 
               <div className="form-group">
@@ -298,7 +342,7 @@ export default function ReturnsPage() {
                   value={adminNote}
                   onChange={e => setAdminNote(e.target.value)}
                   disabled={saving}
-                  placeholder="Nur intern sichtbar…"
+                  placeholder="Nur intern sichtbar… (bei Ablehnung: Begründung für Kunden)"
                 />
               </div>
 

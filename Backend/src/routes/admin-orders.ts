@@ -148,33 +148,79 @@ router.patch('/return-requests/:id', validate(UUIDParam, 'params'), validate(Ret
     if (upErr) throw upErr;
     if (!updated) { res.status(404).json({ error: 'Antrag nicht gefunden.' }); return; }
 
-    // ── E-Mails an Kunden ──────────────────────────────────────────────────
-    const needsMail = (status === 'label_sent' && label_url) || status === 'refunded' || status === 'rejected';
-    if (needsMail && order?.user_id) {
-      const { data: authData } = await supabase.auth.admin.getUserById(String(order.user_id));
-      const email = authData?.user?.email;
-      const orderNr = String(order.order_number ?? '');
+    // ── Benachrichtigungen + automatisches Ticket ──────────────────────────
+    const userId  = order?.user_id ? String(order.user_id) : null;
+    const orderNr = String(order?.order_number ?? '');
 
-      if (email) {
-        let subject = '';
-        let html    = '';
+    const notifyStatuses = ['approved', 'rejected', 'label_sent', 'refunded'] as const;
+    type NotifyStatus = typeof notifyStatuses[number];
+    const shouldNotify = (notifyStatuses as readonly string[]).includes(status) &&
+      (status !== 'label_sent' || !!label_url);
 
-        if (status === 'label_sent' && label_url) {
-          subject = `Rücksendeetikett für Bestellung ${orderNr}`;
-          html    = `<p>Hallo,<br><br>dein Rücksendeetikett für Bestellung <strong>${orderNr}</strong> ist fertig.<br><br><a href="${label_url}">Etikett herunterladen →</a><br><br>Klebe das Etikett auf das Paket und gib es in einer Postfiliale ab. Nach Eingang des Pakets bearbeiten wir deine Rückerstattung.</p>`;
-        } else if (status === 'refunded') {
-          subject = `Rückerstattung für Bestellung ${orderNr} bestätigt`;
-          html    = `<p>Hallo,<br><br>deine Rückerstattung für Bestellung <strong>${orderNr}</strong> wurde veranlasst.<br><br>Der Betrag wird in 3–5 Werktagen auf deinem ursprünglichen Zahlungsmittel gutgeschrieben.<br><br>Bei Fragen melde dich jederzeit bei uns.</p>`;
-        } else if (status === 'rejected') {
-          subject = `Rücksendung für Bestellung ${orderNr} abgelehnt`;
-          html    = `<p>Hallo,<br><br>leider konnten wir deine Rücksendeanfrage für Bestellung <strong>${orderNr}</strong> nicht genehmigen.<br><br>${admin_note ? `Begründung: ${admin_note}<br><br>` : ''}Bei Fragen wende dich bitte an unseren Support.</p>`;
+    if (shouldNotify && userId) {
+      void (async () => {
+        try {
+          const { data: authData } = await supabase.auth.admin.getUserById(userId);
+          const email = authData?.user?.email ?? null;
+
+          type Notification = { subject: string; text: string; html: string };
+          const n: Notification | null = (() => {
+            const s = status as NotifyStatus;
+            if (s === 'approved') return {
+              subject: `Rücksendung für Bestellung ${orderNr} genehmigt`,
+              text:    `Deine Rücksendeanfrage für Bestellung ${orderNr} wurde genehmigt. Wir schicken dir in Kürze ein Rücksendeetikett per E-Mail.`,
+              html:    `<p>Hallo,<br><br>deine Rücksendeanfrage für Bestellung <strong>${orderNr}</strong> wurde <strong>genehmigt</strong>.<br><br>Du erhältst in Kürze ein kostenloses Rücksendeetikett per E-Mail. Klebe es auf das Paket und gib es in einer Postfiliale ab.</p>`,
+            };
+            if (s === 'rejected') return {
+              subject: `Rücksendung für Bestellung ${orderNr} abgelehnt`,
+              text:    `Deine Rücksendeanfrage für Bestellung ${orderNr} wurde leider abgelehnt.${admin_note ? ` Begründung: ${admin_note}` : ''}`,
+              html:    `<p>Hallo,<br><br>leider konnten wir deine Rücksendeanfrage für Bestellung <strong>${orderNr}</strong> nicht genehmigen.<br><br>${admin_note ? `Begründung: ${admin_note}<br><br>` : ''}Bei Fragen wende dich bitte an unseren Support.</p>`,
+            };
+            if (s === 'label_sent') return {
+              subject: `Rücksendeetikett für Bestellung ${orderNr}`,
+              text:    `Dein Rücksendeetikett für Bestellung ${orderNr} ist fertig: ${label_url}`,
+              html:    `<p>Hallo,<br><br>dein Rücksendeetikett für Bestellung <strong>${orderNr}</strong> ist fertig.<br><br><a href="${label_url ?? ''}">Etikett herunterladen →</a><br><br>Klebe das Etikett auf das Paket und gib es in einer Postfiliale ab. Nach Eingang des Pakets bearbeiten wir deine Rückerstattung.</p>`,
+            };
+            if (s === 'refunded') return {
+              subject: `Rückerstattung für Bestellung ${orderNr} bestätigt`,
+              text:    `Deine Rückerstattung für Bestellung ${orderNr} wurde veranlasst. Der Betrag wird in 3–5 Werktagen gutgeschrieben.`,
+              html:    `<p>Hallo,<br><br>deine Rückerstattung für Bestellung <strong>${orderNr}</strong> wurde veranlasst.<br><br>Der Betrag wird in 3–5 Werktagen auf deinem ursprünglichen Zahlungsmittel gutgeschrieben.<br><br>Bei Fragen melde dich jederzeit bei uns.</p>`,
+            };
+            return null;
+          })();
+
+          if (!n) return;
+
+          // 1. Automatisches geschlossenes Ticket als Nachweis im User-Account
+          const { data: ticket } = await supabase
+            .from('tickets')
+            .insert({
+              user_id:  userId,
+              subject:  n.subject,
+              message:  n.text,
+              category: 'order',
+              status:   'closed',
+              reply:    n.text,
+              replied_at: new Date().toISOString(),
+            })
+            .select('id')
+            .single();
+
+          if (ticket?.id) {
+            await supabase
+              .from('ticket_messages')
+              .insert({ ticket_id: ticket.id, sender: 'admin', text: n.text });
+          }
+
+          // 2. E-Mail zusätzlich versenden
+          if (email) {
+            void sendMail({ to: email, subject: n.subject, html: n.html })
+              .catch(e => console.error('Return-Status-Mail fehlgeschlagen:', e));
+          }
+        } catch (e) {
+          console.error('Return-Benachrichtigung fehlgeschlagen:', e);
         }
-
-        if (subject) {
-          void sendMail({ to: email, subject, html })
-            .catch(e => console.error('Return-Status-Mail fehlgeschlagen:', e));
-        }
-      }
+      })();
     }
 
     res.json(updated);
