@@ -128,7 +128,7 @@ STRIPE_WEBHOOK_SECRET=whsec_xxxx            # Stripe Webhook Signing Secret
 # ── Admin-Auth ────────────────────────────────────────────────────────────────
 JWT_SECRET=ein-sehr-langer-zufaelliger-string
 ADMIN_PASSWORD_HASH=$2b$12$...              # bcrypt-Hash deines Admin-Passworts
-ADMIN_URL=https://admin.deinshop.de
+ADMIN_URL=https://admin.deinshop.de         # Admin-Panel-URL — MUSS exakt stimmen!
 
 # ── URLs ──────────────────────────────────────────────────────────────────────
 CLIENT_URL=https://deinshop.de              # Shop-URL (für Stripe Redirect nach Zahlung)
@@ -824,6 +824,24 @@ In Vercel: **Settings → Domains → Add** → Domain eintragen → DNS-Einträ
 
 Wenn `/api/health` nicht `{"status":"ok"}` zurückgibt, prüfe die Umgebungsvariablen im Vercel Backend-Projekt.
 
+### Häufige Fehler nach dem Deployment
+
+**CORS-Fehler im Admin ("Access-Control-Allow-Origin fehlt")**
+
+Ursache: `ADMIN_URL` oder `CLIENT_URL` im Backend-Projekt stimmen nicht exakt mit der echten URL überein.
+
+Lösung:
+1. Vercel → **Backend-Projekt → Settings → Environment Variables**
+2. `ADMIN_URL` auf die exakte URL des Admin-Panels setzen (z.B. `https://admin.deinshop.de`)
+3. `CLIENT_URL` auf die exakte URL des Shops setzen (z.B. `https://deinshop.de`)
+4. Backend neu deployen (Vercel → **Deployments → Redeploy**)
+
+> **Tipp:** Vercel erstellt bei jedem Deployment auch eine Preview-URL (z.B. `shopray-admin-xxxx.vercel.app`). Das Admin-Panel erlaubt automatisch alle `*.vercel.app`-Unterdomains — du musst also nur deine eigene Domain in `ADMIN_URL` eintragen.
+
+**Admin-Login schlägt fehl (500)**
+
+Prüfe ob `JWT_SECRET` und `ADMIN_PASSWORD_HASH` in den Vercel Umgebungsvariablen gesetzt sind (Abschnitt 17).
+
 ### Schritt 6 — Demo-Modus (optional)
 
 Wenn du ShopRay als Demo präsentieren möchtest ohne dass Änderungen dauerhaft gespeichert werden:
@@ -897,6 +915,160 @@ SUPABASE_URL=https://supabase.deineserver.de
 | **PayPal** | Breite Akzeptanz |
 | **Lemon Squeezy** | Übernimmt EU-VAT, ideal für digitale Produkte |
 | **Paddle** | Merchant of Record, automatische Steuerabwicklung |
+
+---
+
+## 21. Marketing, SEO & GEO einrichten
+
+Alle Marketing- und SEO-Einstellungen werden in **einer zentralen Datei** konfiguriert:
+`Frontend/src/config/app.ts`
+
+Danach Vercel neu deployen — alles wird automatisch aktiv.
+
+---
+
+### Google Tag Manager (GTM) — empfohlen
+
+GTM ist der einfachste Weg um **alle** Marketing-Tools einzubinden:
+Google Analytics 4, Meta/Facebook Pixel, TikTok Pixel, LinkedIn Insight, Hotjar — alles ohne Code-Änderung direkt über die GTM-Oberfläche.
+
+**Schritt 1 — GTM-Konto anlegen:**
+1. [tagmanager.google.com](https://tagmanager.google.com) aufrufen
+2. Neues Konto → Container-Typ: **Web**
+3. Die Container-ID notieren — sie sieht so aus: `GTM-XXXXXXX`
+
+**Schritt 2 — ID in `app.ts` eintragen:**
+```typescript
+// Frontend/src/config/app.ts
+export const APP_GTM_ID = 'GTM-XXXXXXX';  // ← deine ID hier
+```
+
+**Schritt 3 — Deployen und prüfen:**
+Nach dem Deploy in Google Tag Manager → Vorschau → deine Shop-URL testen.
+
+**Danach in GTM konfigurieren (ohne Code):**
+- **Google Analytics 4:** Tag → Google Analytics → GA4-Konfiguration → Mess-ID eintragen
+- **Meta Pixel:** Tag → Benutzerdefinierter HTML → Meta Pixel Code einfügen
+- **TikTok Pixel:** genauso als benutzerdefinierter HTML-Tag
+
+> Solange `APP_GTM_ID` leer ist (`''`), wird kein GTM-Code geladen — kein Performance-Einfluss.
+
+---
+
+### Google Search Console — kostenlos, wichtig
+
+Damit Google deinen Shop indexiert und du siehst wie er rankt.
+
+**Einrichten:**
+1. [search.google.com/search-console](https://search.google.com/search-console) aufrufen
+2. Property hinzufügen → deine Shop-Domain eingeben
+3. Verifizierung per **DNS-Eintrag** (einfachste Methode — bei deinem Domain-Anbieter)
+4. Sitemap einreichen:
+
+```
+https://deine-api-domain.de/sitemap.xml
+```
+
+Die Sitemap wird **automatisch vom Backend generiert** — alle aktiven Produkte sind immer aktuell enthalten. Du musst sie nicht manuell pflegen.
+
+> **Wichtig:** In `Frontend/public/robots.txt` die Sitemap-URL auf deine echte Backend-Domain anpassen:
+> ```
+> Sitemap: https://api.dein-shop.de/sitemap.xml
+> ```
+
+---
+
+### SEO — was automatisch passiert
+
+ShopRay setzt automatisch für jede Seite:
+
+| Was | Wo sichtbar |
+|---|---|
+| Seiten-Titel (`<title>`) | Browser-Tab + Google-Suchergebnis |
+| Meta-Beschreibung | Google-Snippet unter dem Link |
+| Open Graph Tags | Facebook, LinkedIn, WhatsApp Vorschau |
+| Twitter/X Card | Twitter Vorschau |
+| Canonical URL | Verhindert Duplicate Content |
+| Produktfoto als Vorschaubild | Social-Media-Share von Produktseiten |
+| Kategorie-Name im Titel | z.B. "Küche | Dein Shop" statt "Alle Produkte" |
+
+**JSON-LD Structured Data (für Google & AI-Suchen):**
+| Schema | Seite | Effekt |
+|---|---|---|
+| `Product` + `Offer` | Produktseiten | Google Shopping-Integration, Preis im Suchergebnis |
+| `AggregateRating` | Produktseiten | ⭐⭐⭐⭐⭐ Sterne im Google-Suchergebnis |
+| `Review` | Produktseiten | Einzelne Bewertungen für KI-Suchen |
+| `BreadcrumbList` | Produktseiten | Breadcrumb im Google-Suchergebnis |
+| `shippingDetails` | Produktseiten | Lieferzeit + kostenloser Versand in Google Shopping |
+| `MerchantReturnPolicy` | Produktseiten | "30 Tage kostenlose Rückgabe" direkt in Google |
+| `Organization` | Startseite | Markenidentität für KI + Google Knowledge Panel |
+| `WebSite` + `SearchAction` | Startseite | Google Sitelinks-Suche |
+| `FAQPage` | Startseite | FAQ direkt im Google-Suchergebnis aufklappbar |
+
+---
+
+### OG-Bild einrichten (Social-Media-Vorschau)
+
+Das OG-Bild erscheint wenn jemand einen Link zu deinem Shop teilt — auf Facebook, WhatsApp, LinkedIn etc.
+
+**Anforderungen:**
+- Format: **PNG oder JPG** (kein SVG — wird von Social Media nicht unterstützt)
+- Größe: **1200 × 630 Pixel**
+- Dateiname: `og-image.png`
+- Ablageort: `Frontend/public/og-image.png`
+
+Die Datei mit deinem Shop-Logo und -Design erstellen und in `public/` ablegen.
+In `app.ts` ist der Pfad bereits korrekt eingetragen: `APP_OG_IMAGE = '/og-image.png'`
+
+> Auf **Produktseiten** wird automatisch das erste Produktfoto als Vorschaubild verwendet — kein manueller Eingriff nötig.
+
+---
+
+### Social-Media-Links einrichten
+
+In `Frontend/src/config/app.ts` die echten URLs eintragen:
+
+```typescript
+export const APP_SOCIALS = {
+  instagram: 'https://instagram.com/dein-shop',
+  x:         'https://x.com/dein-shop',
+  facebook:  'https://facebook.com/dein-shop',
+  youtube:   '',           // leer lassen wenn nicht vorhanden
+  tiktok:    '',
+};
+```
+
+Leere Strings (`''`) werden im Footer ausgeblendet. Platzhalter `'#'` zeigen den Icon trotzdem — lieber leer lassen.
+
+---
+
+### GEO — Auffindbarkeit in KI-Suchen (ChatGPT, Perplexity, Bing Copilot)
+
+GEO (Generative Engine Optimization) sorgt dafür dass KI-Suchmaschinen deinen Shop korrekt verstehen, zitieren und empfehlen.
+
+ShopRay liefert dafür zwei Dateien:
+
+**`/llms.txt`** — Kurzübersicht für KI-Crawler
+- Produktangebot, Versand, Zahlung, Rückgabe
+- Wird von ChatGPT, Perplexity & Co. automatisch gelesen
+
+**`/llms-full.txt`** — Vollständiger Kontext
+- Technische Architektur, Rechtliches, SEO-Infos
+- Für tiefere AI-Verarbeitung
+
+**Was du anpassen solltest:**
+Beide Dateien in `Frontend/public/` öffnen und die Platzhalter-Texte (Versandzeitraum, Rückgabefrist, Produktkategorien) auf deinen echten Shop anpassen. Je genauer die Infos, desto besser zitieren KI-Suchen deinen Shop.
+
+---
+
+### Google Shopping (optional)
+
+Mit dem korrekten `Product`-Schema auf Produktseiten ist dein Shop bereits für **Google Shopping Actions** vorbereitet. Um auch in der Shopping-Tab zu erscheinen:
+
+1. [Google Merchant Center](https://merchants.google.com) Konto anlegen
+2. Domain verifizieren
+3. Produktfeed einrichten — die Sitemap (`/sitemap.xml`) kann als Ausgangspunkt dienen
+4. Alternativ: In GTM den **Google Ads Conversion-Tracking**-Tag einrichten
 
 ---
 
