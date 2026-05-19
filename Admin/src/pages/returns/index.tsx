@@ -261,6 +261,20 @@ export default function ReturnsPage() {
                     <option key={s} value={s}>{STATUS_LABELS[s]}</option>
                   ))}
                 </select>
+                {newStatus === 'refunded' && (
+                  <p className="form-hint form-hint--warning">
+                    ⚡ Stripe-Erstattung wird automatisch ausgelöst. Betrag: {
+                      editing.return_items && editing.return_items.length > 0
+                        ? `${editing.return_items.reduce((s, i) => s + parseFloat(i.price) * i.quantity, 0).toFixed(2)} €`
+                        : `${editing.orders?.total?.toFixed(2) ?? '?'} €`
+                    } — E-Mail an Kunden wird gesendet.
+                  </p>
+                )}
+                {newStatus === 'rejected' && (
+                  <p className="form-hint form-hint--warning">
+                    Ablehnungsgrund in der internen Notiz ergänzen — wird an Kunden gesendet.
+                  </p>
+                )}
               </div>
 
               <div className="form-group">

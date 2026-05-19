@@ -65,37 +65,119 @@ router.patch('/return-requests/:id', validate(UUIDParam, 'params'), validate(Ret
   try {
     const { status, label_url, admin_note } = req.body as z.infer<typeof ReturnStatusSchema>;
 
-    const { data, error } = await supabase
+    // Antrag mit Order-Daten laden (für Stripe + Email)
+    const { data: returnReq, error: rrErr } = await supabase
+      .from('return_requests')
+      .select('*, orders(order_number, total, user_id, stripe_payment_intent_id, order_items(product_id, quantity))')
+      .eq('id', req.params.id)
+      .single();
+
+    if (rrErr || !returnReq) { res.status(404).json({ error: 'Antrag nicht gefunden.' }); return; }
+
+    const rr   = returnReq as Record<string, unknown>;
+    const order = rr.orders as Record<string, unknown> | null;
+
+    // ── Refund-Logik wenn Status → "refunded" ──────────────────────────────
+    if (status === 'refunded' && order?.stripe_payment_intent_id) {
+      const paymentIntentId = order.stripe_payment_intent_id as string;
+      const orderTotal      = parseFloat(String(order.total ?? '0'));
+
+      // Rückerstattungsbetrag berechnen
+      const returnItems = rr.return_items as Array<{ productId: string; quantity: number; price: string }> | null;
+      let refundAmountCents: number;
+
+      if (returnItems && returnItems.length > 0) {
+        // Teilrückerstattung: Summe der zurückgeschickten Artikel
+        const itemsTotal = returnItems.reduce(
+          (sum, item) => sum + parseFloat(item.price) * item.quantity,
+          0
+        );
+        refundAmountCents = Math.round(itemsTotal * 100);
+      } else {
+        // Vollrückerstattung
+        refundAmountCents = Math.round(orderTotal * 100);
+      }
+
+      // Stripe-Erstattung auslösen (non-blocking, Fehler werden geloggt)
+      try {
+        await stripe.refunds.create({
+          payment_intent: paymentIntentId,
+          amount:         refundAmountCents,
+        });
+
+        // Bestellstatus auf "refunded" setzen (nur bei Vollerstattung)
+        const allItemsReturned = !returnItems || returnItems.length === 0 ||
+          (order.order_items as Array<unknown>).length === returnItems.length;
+        if (allItemsReturned) {
+          await supabase
+            .from('orders')
+            .update({ status: 'refunded', updated_at: new Date().toISOString() })
+            .eq('id', String(rr.order_id));
+        }
+
+        // Lagerbestand für zurückgeschickte Artikel zurückbuchen (non-blocking)
+        const itemsToRestore = returnItems ?? (order.order_items as Array<{ product_id: string; quantity: number }>);
+        void (async () => {
+          for (const item of itemsToRestore) {
+            const pid = (item as Record<string, unknown>).productId ?? (item as Record<string, unknown>).product_id;
+            if (!pid) continue;
+            const { data: prod } = await supabase.from('products').select('stock').eq('id', pid as string).single();
+            if (prod) {
+              await supabase.from('products')
+                .update({ stock: (prod.stock as number) + item.quantity })
+                .eq('id', pid as string);
+            }
+          }
+        })().catch(e => console.error('Stock-Rückbuchung nach Refund fehlgeschlagen:', e));
+
+      } catch (stripeErr) {
+        console.error('Stripe-Refund fehlgeschlagen:', stripeErr);
+        res.status(502).json({ error: 'Stripe-Erstattung fehlgeschlagen. Bitte manuell im Stripe-Dashboard erstatten.' });
+        return;
+      }
+    }
+
+    // Antrag aktualisieren
+    const { data: updated, error: upErr } = await supabase
       .from('return_requests')
       .update({ status, label_url: label_url ?? null, admin_note: admin_note ?? null, updated_at: new Date().toISOString() })
       .eq('id', req.params.id)
       .select()
       .single();
 
-    if (error) throw error;
-    if (!data) { res.status(404).json({ error: 'Antrag nicht gefunden.' }); return; }
+    if (upErr) throw upErr;
+    if (!updated) { res.status(404).json({ error: 'Antrag nicht gefunden.' }); return; }
 
-    // Kunden benachrichtigen wenn Label bereit
-    if (status === 'label_sent' && label_url) {
-      const { data: orderData } = await supabase
-        .from('orders')
-        .select('user_id, order_number')
-        .eq('id', (data as Record<string, unknown>).order_id as string)
-        .single();
-      if (orderData?.user_id) {
-        const { data: authData } = await supabase.auth.admin.getUserById(String(orderData.user_id));
-        const email = authData?.user?.email;
-        if (email) {
-          void sendMail({
-            to:      email,
-            subject: `Rücksendeetikett für Bestellung ${orderData.order_number as string}`,
-            html:    `<p>Hallo,<br><br>dein Rücksendeetikett für Bestellung <strong>${orderData.order_number as string}</strong> ist fertig.<br><br><a href="${label_url}">Etikett herunterladen →</a><br><br>Klebe das Etikett auf das Paket und gib es in einer Postfiliale ab. Nach Eingang des Pakets bearbeiten wir deine Rückerstattung.</p>`,
-          }).catch(e => console.error('Return-Label-Mail fehlgeschlagen:', e));
+    // ── E-Mails an Kunden ──────────────────────────────────────────────────
+    const needsMail = (status === 'label_sent' && label_url) || status === 'refunded' || status === 'rejected';
+    if (needsMail && order?.user_id) {
+      const { data: authData } = await supabase.auth.admin.getUserById(String(order.user_id));
+      const email = authData?.user?.email;
+      const orderNr = String(order.order_number ?? '');
+
+      if (email) {
+        let subject = '';
+        let html    = '';
+
+        if (status === 'label_sent' && label_url) {
+          subject = `Rücksendeetikett für Bestellung ${orderNr}`;
+          html    = `<p>Hallo,<br><br>dein Rücksendeetikett für Bestellung <strong>${orderNr}</strong> ist fertig.<br><br><a href="${label_url}">Etikett herunterladen →</a><br><br>Klebe das Etikett auf das Paket und gib es in einer Postfiliale ab. Nach Eingang des Pakets bearbeiten wir deine Rückerstattung.</p>`;
+        } else if (status === 'refunded') {
+          subject = `Rückerstattung für Bestellung ${orderNr} bestätigt`;
+          html    = `<p>Hallo,<br><br>deine Rückerstattung für Bestellung <strong>${orderNr}</strong> wurde veranlasst.<br><br>Der Betrag wird in 3–5 Werktagen auf deinem ursprünglichen Zahlungsmittel gutgeschrieben.<br><br>Bei Fragen melde dich jederzeit bei uns.</p>`;
+        } else if (status === 'rejected') {
+          subject = `Rücksendung für Bestellung ${orderNr} abgelehnt`;
+          html    = `<p>Hallo,<br><br>leider konnten wir deine Rücksendeanfrage für Bestellung <strong>${orderNr}</strong> nicht genehmigen.<br><br>${admin_note ? `Begründung: ${admin_note}<br><br>` : ''}Bei Fragen wende dich bitte an unseren Support.</p>`;
+        }
+
+        if (subject) {
+          void sendMail({ to: email, subject, html })
+            .catch(e => console.error('Return-Status-Mail fehlgeschlagen:', e));
         }
       }
     }
 
-    res.json(data);
+    res.json(updated);
   } catch (err) {
     next(err);
   }
