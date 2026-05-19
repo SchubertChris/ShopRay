@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertCircle, ExternalLink, CheckCircle2, Package2, Archive } from 'lucide-react';
+import { AlertCircle, ExternalLink, CheckCircle2, Package2, Archive, CreditCard } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import {
   getReturnRequests,
@@ -32,6 +32,20 @@ const ACTIVE_TABS: Array<{ key: ReturnStatus | 'all'; label: string }> = [
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+const PAYMENT_LABELS: Record<string, string> = {
+  card:        'Kreditkarte',
+  paypal:      'PayPal',
+  klarna:      'Klarna',
+  sofort:      'Sofort',
+  apple_pay:   'Apple Pay',
+  google_pay:  'Google Pay',
+  sepa_debit:  'SEPA-Lastschrift',
+};
+function fmtPayment(m: string | null | undefined) {
+  if (!m) return '—';
+  return PAYMENT_LABELS[m] ?? m;
 }
 
 type ViewMode = 'active' | 'archive';
@@ -271,6 +285,14 @@ export default function ReturnsPage() {
               <div className="form-group">
                 <label className="form-label">Grund des Kunden</label>
                 <p className="form-static-text">{editing.reason}</p>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">
+                  <CreditCard size={13} strokeWidth={2} style={{ display: 'inline', marginRight: '0.3rem', verticalAlign: 'middle' }} />
+                  Zahlungsart
+                </label>
+                <p className="form-static-text">{fmtPayment(editing.orders?.payment_method)}</p>
               </div>
 
               {editing.return_items && editing.return_items.length > 0 && (

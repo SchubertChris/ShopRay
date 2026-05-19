@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2, RefreshCw, Loader2, AlertCircle, Tag } from 'lucide-react';
+import { Plus, Trash2, Loader2, AlertCircle, Tag } from 'lucide-react';
 import {
   getCategories, createCategory, deleteCategory,
   type Category,
@@ -75,10 +75,6 @@ export default function CategoriesPage() {
           <p className="page-header__sub">{categories.length} {categories.length === 1 ? 'Kategorie' : 'Kategorien'} vorhanden</p>
         </div>
         <div className="page-header__actions">
-          <button className="btn-secondary" onClick={fetchCategories} disabled={loading} title="Aktualisieren">
-            <RefreshCw size={15} strokeWidth={2} />
-            Aktualisieren
-          </button>
           <ViewToggle mode={viewMode} onToggle={toggleViewMode} />
         </div>
       </div>

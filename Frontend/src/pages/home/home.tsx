@@ -196,6 +196,7 @@ export default function HomePage() {
 
         <div className="editorial-hero__inner">
           <div className="editorial-hero__content">
+          <div className="hero-glass">
 
             <span
               className="editorial-hero__pill hero-fade"
@@ -264,6 +265,7 @@ export default function HomePage() {
               </div>
             </div>
 
+          </div>{/* hero-glass */}
           </div>
 
           <div className="hero-slot" aria-label="Produktkategorien">

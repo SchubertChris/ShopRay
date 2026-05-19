@@ -42,11 +42,13 @@
 }
 
 // Wort-für-Wort Clip-Reveal auf dem Hero-Title
+// padding-bottom schafft Raum für Unterlängen (g, p, y) damit overflow:hidden sie nicht abschneidet
 .hero-word {
   display:        inline-block;
   overflow:       hidden;
   vertical-align: bottom;
   line-height:    inherit;
+  padding-bottom: 0.18em;
 
   &__inner {
     display:          inline-block;
@@ -138,7 +140,7 @@
     }
   }
 
-  &__content { display: flex; flex-direction: column; gap: 1.5rem; }
+  &__content { display: flex; flex-direction: column; gap: 0; }
 
   &__pill {
     display:        inline-flex;
@@ -317,6 +319,42 @@
   pointer-events:  none;
   opacity:         0.6;
   mix-blend-mode:  screen;
+}
+
+// ─── HERO GLASS ───────────────────────────────────────────────────────────────
+// Frosted-glass container für den Hero-Content-Block.
+// Farb-Token immer aus dem dark-surface Kontext (Hero ist immer dunkel),
+// aber Transparenz + Sättigung passen sich ans Mode-Attribut an.
+
+.hero-glass {
+  position:             relative;
+  display:              flex;
+  flex-direction:       column;
+  gap:                  1.5rem;
+  padding:              2rem 1.75rem;
+  border-radius:        1.25rem;
+  backdrop-filter:      blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+
+  // Dark mode: weißer Schleier macht den Blur gegen dunklen Hintergrund sichtbar
+  background:   rgba(255, 255, 255, 0.07);
+  border:       1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 4px 48px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  // Light mode: etwas mehr Opazität + warmer Tint mit der Akzentfarbe
+  [data-theme$="-light"] & {
+    background:   rgba(255, 255, 255, 0.13);
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow:
+      0 4px 48px rgba(0, 0, 0, 0.50),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  @include respond-to('lg') {
+    padding: 2.5rem 2.25rem;
+  }
 }
 
 $slot-item-h: 82px;

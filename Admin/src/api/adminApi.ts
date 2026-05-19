@@ -361,15 +361,17 @@ export interface AdminOrder {
   profile:         AdminOrderProfile | null;
   invoice_number:  string | null;
   tracking_number: string | null;
+  payment_method:  string | null;
 }
 
 export interface AdminOrderListItem {
-  id:           string;
-  order_number: string;
-  status:       string;
-  total:        number;
-  created_at:   string;
-  user_id:      string | null;
+  id:             string;
+  order_number:   string;
+  status:         string;
+  total:          number;
+  created_at:     string;
+  user_id:        string | null;
+  payment_method: string | null;
 }
 
 export const getAdminOrders = (page = 1, limit = 50) =>
@@ -654,7 +656,7 @@ export interface AdminReturnRequest {
   return_items: ReturnItemData[] | null;
   created_at:   string;
   updated_at:   string;
-  orders:       { order_number: string; total: number; user_id: string | null } | null;
+  orders:       { order_number: string; total: number; user_id: string | null; payment_method: string | null } | null;
 }
 
 export const getReturnRequests = () =>

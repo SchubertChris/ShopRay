@@ -27,7 +27,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
 
     const { data, error, count } = await supabase
       .from('orders')
-      .select('id, order_number, status, total, created_at, user_id', { count: 'exact' })
+      .select('id, order_number, status, total, created_at, user_id, payment_method', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(from, from + limit - 1);
 
@@ -51,7 +51,7 @@ router.get('/return-requests', async (req: Request, res: Response, next: NextFun
   try {
     const { data, error } = await supabase
       .from('return_requests')
-      .select('*, orders(order_number, total, user_id)')
+      .select('*, orders(order_number, total, user_id, payment_method)')
       .order('created_at', { ascending: false });
     if (error) throw error;
     res.json(data ?? []);

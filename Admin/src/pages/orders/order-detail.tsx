@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Package, User, MapPin, Clock, Loader2, AlertTriangle, Truck, Download, ExternalLink, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Save, Package, User, MapPin, Clock, Loader2, AlertTriangle, Truck, Download, ExternalLink, RotateCcw, CreditCard } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import { getAdminOrder, updateOrderStatus, downloadOrderInvoice, refundOrder, type AdminOrder, type ShippingAddress } from '../../api/adminApi';
 import ShippingLabelModal  from '../../components/ui/ShippingLabelModal';
@@ -38,6 +38,20 @@ function formatDate(iso: string): string {
 
 function formatPrice(n: number): string {
   return n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+const PAYMENT_LABELS: Record<string, string> = {
+  card:        'Kreditkarte',
+  paypal:      'PayPal',
+  klarna:      'Klarna',
+  sofort:      'Sofort',
+  apple_pay:   'Apple Pay',
+  google_pay:  'Google Pay',
+  sepa_debit:  'SEPA-Lastschrift',
+};
+function fmtPayment(m: string | null | undefined) {
+  if (!m) return '—';
+  return PAYMENT_LABELS[m] ?? m;
 }
 
 export default function OrderDetailPage() {
@@ -264,6 +278,13 @@ export default function OrderDetailPage() {
               <div className="order-summary__row order-summary__row--total">
                 <span>Gesamt</span>
                 <span>€ {formatPrice(order.total)}</span>
+              </div>
+              <div className="order-summary__row">
+                <span className="order-summary__payment-label">
+                  <CreditCard size={12} strokeWidth={2} />
+                  Zahlungsart
+                </span>
+                <span>{fmtPayment(order.payment_method)}</span>
               </div>
             </div>
           </div>

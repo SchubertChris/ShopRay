@@ -40,6 +40,20 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE');
 }
 
+const PAYMENT_LABELS: Record<string, string> = {
+  card:        'Kreditkarte',
+  paypal:      'PayPal',
+  klarna:      'Klarna',
+  sofort:      'Sofort',
+  apple_pay:   'Apple Pay',
+  google_pay:  'Google Pay',
+  sepa_debit:  'SEPA-Lastschrift',
+};
+function fmtPayment(m: string | null | undefined) {
+  if (!m) return '—';
+  return PAYMENT_LABELS[m] ?? m;
+}
+
 type ListViewMode = 'active' | 'archive';
 
 export default function OrdersPage() {
@@ -239,7 +253,7 @@ export default function OrdersPage() {
               </div>
               <div className="admin-card__footer">
                 <span className="admin-card__price">{fmt(Number(o.total))}</span>
-                <span className="admin-card__meta">{fmtDate(o.created_at)}</span>
+                <span className="admin-card__meta">{fmtPayment(o.payment_method)} · {fmtDate(o.created_at)}</span>
               </div>
             </div>
           ))}
@@ -264,6 +278,7 @@ export default function OrdersPage() {
                     <th>Bestellung</th>
                     <th>Kunde</th>
                     <th>Betrag</th>
+                    <th>Zahlung</th>
                     <th>Status</th>
                     <th>Datum</th>
                   </tr>
@@ -281,6 +296,7 @@ export default function OrdersPage() {
                       </td>
                       <td><p className="admin-table__primary">{o.user_id ?? '—'}</p></td>
                       <td><strong>{fmt(o.total)}</strong></td>
+                      <td className="admin-table__muted">{fmtPayment(o.payment_method)}</td>
                       <td>
                         <span className={`status-badge status-badge--${o.status}`}>
                           {STATUS_LABELS[o.status] ?? o.status}
@@ -370,6 +386,10 @@ export default function OrdersPage() {
                   <div className="order-detail__total">
                     <span className="order-detail__total-label">Gesamtbetrag</span>
                     <span className="order-detail__total-value">{fmt(detail.total)}</span>
+                  </div>
+                  <div className="order-detail__row">
+                    <CreditCard size={13} strokeWidth={2} className="order-detail__icon" />
+                    <span>{fmtPayment(detail.payment_method)}</span>
                   </div>
                   {addr && (
                     <div className="order-detail__row">
