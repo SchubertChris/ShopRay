@@ -7,11 +7,15 @@ const ALLOWED_ORIGINS = [
   'http://localhost:5174',
 ].filter(Boolean) as string[];
 
+// Vercel Preview-URLs für eigene Projekte erlauben
+const VERCEL_PREVIEW_PATTERN = /^https:\/\/shopray(-[a-z0-9-]+)?\.vercel\.app$/;
+
 export const corsMiddleware = cors({
   origin: (origin, callback) => {
     // curl / server-to-server haben kein origin
     if (!origin) return callback(null, true);
     if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    if (VERCEL_PREVIEW_PATTERN.test(origin)) return callback(null, true);
     callback(new Error(`CORS: Origin ${origin} nicht erlaubt`));
   },
   credentials: true,
