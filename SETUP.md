@@ -1,6 +1,6 @@
 # ShopRay — Setup Guide
 
-**Version:** 1.7.0 | **Letzte Aktualisierung:** 2026-05-17
+**Version:** 1.8.0 | **Letzte Aktualisierung:** 2026-05-20
 
 Dieser Guide führt dich Schritt für Schritt durch die Einrichtung deines ShopRay-Templates —
 von der Installation bis zum fertigen, live geschalteten Shop.
@@ -220,8 +220,10 @@ Führe die Migrationen **der Reihe nach** aus — jede als eigene Query im SQL E
 | `database/migration_011_user_ban.sql` | Kunden-Sperrsystem (Ban/Unban) |
 | `database/migration_012_push_subscriptions.sql` | Push-Benachrichtigungen (Web Push) |
 | `database/migration_013_invoice_label.sql` | Rechnungsnummern + DHL-Tracking-Spalten |
+| `database/migration_025_discount_codes.sql` | Gutscheincodes-System |
+| `database/migration_026_product_variants.sql` | Produktvarianten (Größe, Farbe, eigener Lagerbestand pro Variante) |
 
-> **Reihenfolge wichtig:** Führe die Migrationen immer in der Reihenfolge 001 → 002 → … → 013 aus.
+> **Reihenfolge wichtig:** Führe die Migrationen immer in der angezeigten Reihenfolge aus.
 
 ### Was passiert automatisch
 
@@ -658,6 +660,53 @@ Produkte werden über den **Admin-Bereich** angelegt (empfohlen) oder direkt per
 2. Alle Felder ausfüllen: Name, Preis, Beschreibung, Bilder, Kategorie
 3. Auf **"Speichern"** klicken — das Produkt ist sofort im Shop sichtbar
 
+### Produktvarianten einrichten (Größe, Farbe, Material …)
+
+Wenn dein Produkt in verschiedenen Ausführungen erhältlich ist (z.B. Größen S/M/L oder Farben Rot/Blau), kannst du Varianten anlegen. Jede Variante hat ihren eigenen Lagerbestand.
+
+**Voraussetzung:** Migration 026 muss ausgeführt sein (siehe Abschnitt 4).
+
+**So geht's:**
+
+1. Ein bestehendes Produkt öffnen: Admin-Panel → **Produkte → Produkt bearbeiten**
+2. Auf der rechten Seite findest du den Bereich **"Varianten"**
+3. Klicke auf **"Optionsgruppe hinzufügen"** — z.B. „Größe"
+4. Trage die Werte ein (z.B. S, M, L, XL) und bestätige jeden Wert mit Enter
+5. Weitere Optionsgruppen hinzufügen (z.B. „Farbe" → Rot, Blau) — bis zu 3 Gruppen möglich
+6. Klicke auf **"SKU-Matrix generieren"** — das System erstellt automatisch alle Kombinationen (z.B. S/Rot, S/Blau, M/Rot, …)
+7. Für jede Kombination Lagerbestand und optional einen Preisaufschlag eintragen
+8. Auf **"Varianten speichern"** klicken
+
+**Was passiert im Shop:**
+- Der Kunde sieht Auswahlfelder für jede Optionsgruppe
+- Ausverkaufte Kombinationen werden automatisch durchgestrichen
+- Der Preis passt sich sofort an wenn du einen Preisaufschlag gesetzt hast
+- Jede Variante hat ihren eigenen Lagerbestand — wird nach einer Bestellung automatisch abgezogen
+
+**Kein Variantensystem nötig?** Produkte ohne Varianten funktionieren genauso wie bisher — das Feature ist vollständig optional.
+
+### Gutscheincodes anlegen
+
+Mit Gutscheincodes kannst du Rabatte für Kunden erstellen. Ein Code kann prozentual (z.B. 10 % auf die Bestellsumme) oder als Festbetrag (z.B. 5 € Rabatt) konfiguriert werden.
+
+**Voraussetzung:** Migration 025 muss ausgeführt sein (siehe Abschnitt 4).
+
+**So geht's:**
+
+1. Admin-Panel → **Gutscheincodes → Neuer Code**
+2. Folgende Felder ausfüllen:
+   - **Code** — z.B. `SOMMER10` (Kunden geben diesen Code im Checkout ein, Groß-/Kleinschreibung egal)
+   - **Typ** — Prozent (%) oder Festbetrag (€)
+   - **Wert** — z.B. 10 für 10 % oder 5 für 5 €
+   - **Mindestbestellwert** — z.B. 30 € (optional, 0 = kein Minimum)
+   - **Max. Einlösungen** — wie oft darf der Code insgesamt eingelöst werden (leer = unbegrenzt)
+   - **Gültig bis** — optionales Ablaufdatum
+3. Auf **"Speichern"** klicken
+
+**Was passiert im Shop:** Der Kunde tippt den Code im Checkout ein — der Rabatt wird sofort angezeigt und vom Bestellbetrag abgezogen. Nach einer erfolgreichen Zahlung wird der Einlösungszähler automatisch erhöht.
+
+---
+
 ### Option B — Seed-Daten (für Tests)
 
 Im Ordner `database/seed.sql` liegt eine Datei mit Beispielprodukten. Diese kannst du einmalig im SQL Editor ausführen um den Shop mit Testdaten zu befüllen.
@@ -705,11 +754,14 @@ Der Admin-Bereich ist ein separates Projekt (`Admin/`) und läuft unabhängig vo
 | Bereich | Funktion |
 |---|---|
 | **Dashboard** | Umsatz, Bestellungen, Kunden auf einen Blick — Klick auf Bestellung öffnet Details |
-| **Produkte** | Anlegen, bearbeiten, Bilder hochladen, CSV-Massenimport |
+| **Dashboard** | Umsatz, Bestellungen, Kunden auf einen Blick — Klick auf Bestellung öffnet Details |
+| **Analytics** | Umsatz- und Bestellungsverlauf als Diagramm, Top-Produkte, Bestellstatus-Verteilung, KPI-Karten — für 7, 30 oder 90 Tage |
+| **Produkte** | Anlegen, bearbeiten, Bilder hochladen, CSV-Massenimport, Varianten (Größe/Farbe/…) |
 | **Bestellungen** | Status verwalten, Rechnung als PDF herunterladen, DHL-Versandlabel erstellen |
 | **Kunden** | Kundenliste, Bestellhistorie, DSGVO-Export (Art. 20), Kunden sperren (Ban) |
 | **Kategorien** | Kategorien anlegen, Reihenfolge festlegen, löschen |
 | **Bewertungen** | Freischalten, ablehnen oder löschen — mit Tab-Filter |
+| **Gutscheincodes** | Rabattcodes anlegen (Prozent oder Festbetrag), Gültigkeitsdauer, Mindestbestellwert, max. Einlösungen |
 | **Support** | Eingehende Kontaktanfragen und Tickets beantworten |
 | **Einstellungen → Versand** | Versandkosten, Gratisversand-Grenze, Lieferzeit live konfigurieren |
 | **Einstellungen → Sicherheit** | Login-Protokoll — jeder Admin-Login wird aufgezeichnet |
