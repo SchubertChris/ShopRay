@@ -49,6 +49,10 @@ ALTER TABLE public.admin_notification_reads  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_tasks               ENABLE ROW LEVEL SECURITY;
 
 -- Service-Role hat vollen Zugriff (Backend nutzt Service-Role-Key)
+DROP POLICY IF EXISTS "service_notifications_all"      ON public.admin_notifications;
+DROP POLICY IF EXISTS "service_notification_reads_all" ON public.admin_notification_reads;
+DROP POLICY IF EXISTS "service_tasks_all"              ON public.admin_tasks;
+
 CREATE POLICY "service_notifications_all"
   ON public.admin_notifications FOR ALL TO service_role
   USING (true) WITH CHECK (true);
@@ -60,3 +64,8 @@ CREATE POLICY "service_notification_reads_all"
 CREATE POLICY "service_tasks_all"
   ON public.admin_tasks FOR ALL TO service_role
   USING (true) WITH CHECK (true);
+
+-- Grants (Backend-Zugriff via service_role)
+GRANT ALL ON public.admin_notifications      TO service_role;
+GRANT ALL ON public.admin_notification_reads TO service_role;
+GRANT ALL ON public.admin_tasks              TO service_role;

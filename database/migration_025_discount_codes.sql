@@ -25,9 +25,13 @@ ALTER TABLE orders
 -- RLS: nur Service-Role darf schreiben (Backend nutzt service role)
 ALTER TABLE discount_codes ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Service role full access on discount_codes" ON discount_codes;
 CREATE POLICY "Service role full access on discount_codes"
   ON discount_codes
   FOR ALL
   TO service_role
   USING (true)
   WITH CHECK (true);
+
+-- Grants (Backend-Zugriff via service_role)
+GRANT ALL ON public.discount_codes TO service_role;
