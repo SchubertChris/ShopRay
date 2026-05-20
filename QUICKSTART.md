@@ -17,15 +17,13 @@ Ausführlichere Erklärungen findest du in SETUP.md / SETUP.en.md.
 
 1. Neues Projekt erstellen (Region: Frankfurt für DSGVO)
 2. Warten bis Projekt bereit ist (~2 Min)
-3. **SQL Editor** öffnen → Inhalt von `database/schema.sql` einfügen → **Run**
-4. Migrations der Reihe nach ausführen — jeweils **New query** → Inhalt einfügen → **Run**:
-   - `database/migration_002_admin_login_log.sql`
-   - `database/migration_003_product_images.sql`
-   - `database/migration_005_shipping_settings.sql`
-5. **Settings → API** öffnen und notieren:
+3. **SQL Editor** öffnen → Inhalt von `database/schema.sql` vollständig einfügen → **Run**
+   - Enthält alle Tabellen, Funktionen und Berechtigungen in einem Schritt
+   - Wenn Supabase fragt „Enable RLS?" → **Run and enable RLS** wählen
+4. **Settings → API** öffnen und notieren:
    - Project URL
-   - `anon` Key
-   - `service_role` Key
+   - `anon` Key (für Frontend + Admin)
+   - `service_role` Key (nur für Backend!)
 
 ---
 
