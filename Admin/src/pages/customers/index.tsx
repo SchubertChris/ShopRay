@@ -49,7 +49,7 @@ export default function CustomersPage() {
 
   useEffect(() => {
     setLoading(true);
-    getAdminCustomers(1, 200)
+    getAdminCustomers(1, 100)
       .then(res => { setCustomers(res.data); setTotal(res.total); })
       .catch(() => null)
       .finally(() => setLoading(false));
