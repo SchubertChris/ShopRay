@@ -274,6 +274,8 @@ export interface LoginLogEntry {
   ip_address: string;
   user_agent: string | null;
   success:    boolean;
+  role:       string | null;
+  email:      string | null;
 }
 
 export const getLoginLog = () =>

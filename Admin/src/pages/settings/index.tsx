@@ -730,6 +730,7 @@ function SecuritySettings() {
           <div className="security-log">
             <div className="security-log__head">
               <span>Zeitpunkt</span>
+              <span>Benutzer</span>
               <span>IP-Adresse</span>
               <span>Browser</span>
               <span>Status</span>
@@ -737,6 +738,10 @@ function SecuritySettings() {
             {log.map(entry => (
               <div key={entry.id} className="security-log__row">
                 <span className="security-log__date">{formatDate(entry.created_at)}</span>
+                <span className="security-log__user">
+                  {entry.email ?? (entry.role === 'owner' ? 'Owner' : '—')}
+                  {entry.role && <em className={`security-log__role security-log__role--${entry.role}`}>{entry.role}</em>}
+                </span>
                 <span className="security-log__ip">{entry.ip_address}</span>
                 <span className="security-log__ua">{parseUserAgent(entry.user_agent)}</span>
                 <span className={`security-log__status security-log__status--${entry.success ? 'ok' : 'fail'}`}>
