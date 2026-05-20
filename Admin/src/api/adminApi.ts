@@ -773,8 +773,10 @@ export interface AdminReturnRequest {
   orders:       { order_number: string; total: number; user_id: string | null; payment_method: string | null } | null;
 }
 
-export const getReturnRequests = () =>
-  apiFetch<AdminReturnRequest[]>('/api/admin/orders/return-requests');
+export const getReturnRequests = (page = 1, limit = 200) =>
+  apiFetch<{ data: AdminReturnRequest[]; total: number; page: number; limit: number }>(
+    `/api/admin/orders/return-requests?page=${page}&limit=${limit}`,
+  );
 
 export const updateReturnRequest = (
   id:   string,

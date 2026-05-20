@@ -67,8 +67,8 @@ export default function ReturnsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await getReturnRequests();
-      setReturns(data);
+      const res = await getReturnRequests();
+      setReturns(res.data);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Laden fehlgeschlagen');
     } finally {
