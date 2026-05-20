@@ -101,6 +101,14 @@ app.use((_req, res) => {
 // ── Error Handler (muss als letztes registriert werden) ──────────────────────
 app.use(errorHandler);
 
+// ── Startup-Validierung ───────────────────────────────────────────────────────
+if (!process.env.SHOP_VAT_ID && !process.env.SHOP_TAX_NUMBER) {
+  console.warn('[config] WARNUNG: Weder SHOP_VAT_ID noch SHOP_TAX_NUMBER gesetzt — Pflichtangaben nach § 14 Abs. 4 UStG fehlen in Rechnungen!');
+}
+if (!process.env.JWT_SECRET) {
+  throw new Error('[config] FEHLER: JWT_SECRET muss in den Umgebungsvariablen gesetzt sein!');
+}
+
 app.listen(PORT, () => {
   console.log(`ShopRay Backend läuft auf http://localhost:${PORT}`);
 });

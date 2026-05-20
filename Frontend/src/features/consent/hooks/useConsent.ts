@@ -50,6 +50,15 @@ export const useConsent = create<ConsentStore>()(
       open:  () => set({ isOpen: true }),
       close: () => set({ isOpen: false }),
     }),
-    { name: 'sr-consent' },
+    {
+      name: 'sr-consent',
+      onRehydrateStorage: () => (state) => {
+        if (!state?.decidedAt) return;
+        const THREE_YEARS = 3 * 365.25 * 24 * 60 * 60 * 1000;
+        if (Date.now() - new Date(state.decidedAt).getTime() > THREE_YEARS) {
+          state.reset();
+        }
+      },
+    },
   ),
 );

@@ -43,6 +43,7 @@ export default function TicketNewPage() {
     description: '',
     guestEmail:  '',
   });
+  const [guestConsent, setGuestConsent] = useState(false);
   const [sending, setSending]   = useState(false);
   const [sent, setSent]         = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -54,6 +55,10 @@ export default function TicketNewPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (isGuest && !guestConsent) {
+      setApiError('Bitte stimme der Verarbeitung deiner E-Mail-Adresse zu.');
+      return;
+    }
     setSending(true);
     setApiError(null);
     try {
@@ -133,6 +138,20 @@ export default function TicketNewPage() {
                 required
               />
             </div>
+            <label className="ticket-form__consent">
+              <input
+                type="checkbox"
+                className="ticket-form__consent-check"
+                checked={guestConsent}
+                onChange={e => setGuestConsent(e.target.checked)}
+                required
+              />
+              <span className="ticket-form__consent-text">
+                Ich stimme zu, dass meine E-Mail-Adresse zur Bearbeitung meiner Anfrage gespeichert und genutzt wird.
+                Details findest du in unserer{' '}
+                <Link to={ROUTES.INFO.PRIVACY} className="ticket-form__guest-link">Datenschutzerklärung</Link>.
+              </span>
+            </label>
             <p className="ticket-form__guest-hint">
               Kein Konto? Kein Problem.{' '}
               <Link to={ROUTES.AUTH.LOGIN} className="ticket-form__guest-link">Anmelden</Link>

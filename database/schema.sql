@@ -107,8 +107,38 @@ INSERT INTO public.categories (name, "order") VALUES
   ('Kunst',     4)
 ON CONFLICT (name) DO NOTHING;
 
+-- ── INVOICE SEQUENCE (GoBD / § 14 UStG — atomare, lückenlose Nummerierung) ───
+CREATE TABLE IF NOT EXISTS public.invoice_sequences (
+  prefix   TEXT    NOT NULL,
+  year     INTEGER NOT NULL,
+  last_seq INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (prefix, year)
+);
+
+CREATE OR REPLACE FUNCTION public.next_invoice_number(
+  p_prefix TEXT,
+  p_year   INTEGER
+) RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_seq INTEGER;
+BEGIN
+  INSERT INTO public.invoice_sequences (prefix, year, last_seq)
+  VALUES (p_prefix, p_year, 1)
+  ON CONFLICT (prefix, year)
+  DO UPDATE SET last_seq = invoice_sequences.last_seq + 1
+  RETURNING last_seq INTO v_seq;
+
+  RETURN p_prefix || '-' || p_year || '-' || LPAD(v_seq::TEXT, 5, '0');
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.next_invoice_number(TEXT, INTEGER) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION public.next_invoice_number(TEXT, INTEGER) TO service_role;
+
 -- ── ORDERS ───────────────────────────────────────────────────────────────────
-CREATE SEQUENCE IF NOT EXISTS public.invoice_seq START 1;
 
 CREATE TABLE IF NOT EXISTS public.orders (
   id                        UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -594,6 +624,7 @@ GRANT ALL ON public.product_skus            TO service_role;
 GRANT ALL ON public.admin_notifications     TO service_role;
 GRANT ALL ON public.admin_notification_reads TO service_role;
 GRANT ALL ON public.admin_tasks             TO service_role;
+GRANT SELECT, INSERT, UPDATE ON public.invoice_sequences TO service_role;
 
 -- Varianten: Kunden dürfen lesen
 GRANT SELECT ON public.variant_options       TO anon, authenticated;

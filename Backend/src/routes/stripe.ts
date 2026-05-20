@@ -20,9 +20,9 @@ async function generateInvoiceAndSend(orderId: string, customerEmail: string): P
 
   const prefix = process.env.INVOICE_PREFIX ?? 'RE';
   const year   = new Date().getFullYear();
-  const count  = await supabase.from('orders').select('id', { count: 'exact', head: true }).not('invoice_number', 'is', null);
-  const seq    = (count.count ?? 0) + 1;
-  const invoiceNumber = `${prefix}-${year}-${String(seq).padStart(5, '0')}`;
+  const { data: invoiceData, error: invoiceError } = await supabase.rpc('next_invoice_number', { p_prefix: prefix, p_year: year });
+  if (invoiceError || !invoiceData) throw new Error('Rechnungsnummer konnte nicht generiert werden');
+  const invoiceNumber = invoiceData as string;
 
   await supabase.from('orders').update({ invoice_number: invoiceNumber }).eq('id', orderId);
 

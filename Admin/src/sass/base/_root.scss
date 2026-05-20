@@ -7,6 +7,9 @@
   --clr-error-dark: #dc2626;
   --clr-success:    #22c55e;
   --clr-warning:    #f59e0b;
+  --clr-info:       #3b82f6;
+  --clr-purple:     #8b5cf6;
+  --clr-border:     color-mix(in srgb, var(--clr-text) 12%, transparent);
 
   // Sidebar ist immer dunkel — theme-unabhängig
   --sidebar-bg:       #0f1110;

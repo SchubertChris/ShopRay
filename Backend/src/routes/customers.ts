@@ -90,12 +90,31 @@ router.get('/me/export', requireAuth, async (req: AuthRequest, res: Response, ne
 router.delete('/me', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     // Bestelldaten anonymisieren (§ 147 AO — Aufbewahrungspflicht)
-    await supabase
+    // shipping_address wird auf {"anonymized":true} reduziert — Name + Adresse entfernt
+    const { data: userOrders } = await supabase
       .from('orders')
-      .update({ user_id: null, customer_note: '[gelöscht]' })
+      .select('id')
       .eq('user_id', req.userId!);
 
+    if (userOrders && userOrders.length > 0) {
+      for (const order of userOrders) {
+        await supabase
+          .from('orders')
+          .update({
+            user_id:          null,
+            customer_note:    '[gelöscht]',
+            shipping_address: { anonymized: true },
+          })
+          .eq('id', order.id);
+      }
+    }
+
     await supabase.from('tickets').delete().eq('user_id', req.userId!);
+    // Reviews anonymisieren (DSGVO Art. 17 — Text ist personenbezogen)
+    await supabase
+      .from('reviews')
+      .update({ user_id: null, body: '[gelöscht]', title: '[gelöscht]' })
+      .eq('user_id', req.userId!);
     await supabase.from('profiles').delete().eq('id', req.userId!);
     await supabase.auth.admin.deleteUser(req.userId!);
 

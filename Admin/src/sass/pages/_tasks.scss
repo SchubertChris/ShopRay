@@ -152,7 +152,7 @@
   @include transition(border-color);
 
   &--open        { border-left: 3px solid var(--clr-border); }
-  &--in_progress { border-left: 3px solid #f59e0b; }
+  &--in_progress { border-left: 3px solid var(--clr-warning); }
   &--done        { border-left: 3px solid var(--clr-success); opacity: 0.7; }
   &--overdue     { border-left: 3px solid var(--clr-error) !important; }
 
@@ -173,8 +173,8 @@
     letter-spacing: 0.05em;
 
     &--low    { background: color-mix(in srgb, var(--clr-text) 8%, transparent);   color: color-mix(in srgb, var(--clr-text) 50%, transparent); }
-    &--normal { background: color-mix(in srgb, #3b82f6 12%, transparent);           color: #3b82f6; }
-    &--high   { background: color-mix(in srgb, #f59e0b 12%, transparent);           color: #f59e0b; }
+    &--normal { background: color-mix(in srgb, var(--clr-info) 12%, transparent);    color: var(--clr-info); }
+    &--high   { background: color-mix(in srgb, var(--clr-warning) 12%, transparent); color: var(--clr-warning); }
     &--urgent { background: color-mix(in srgb, var(--clr-error) 12%, transparent);  color: var(--clr-error); }
   }
 

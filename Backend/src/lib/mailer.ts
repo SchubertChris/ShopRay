@@ -239,3 +239,49 @@ export function contactNotificationHtml(params: {
     </div>
   `;
 }
+
+export function modInviteHtml(params: {
+  shopName:     string;
+  adminUrl:     string;
+  tempPassword: string;
+  email:        string;
+}): string {
+  return `
+    <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#111">
+      <div style="background:#111;border-radius:12px 12px 0 0;padding:24px 28px">
+        <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#888">${params.shopName}</p>
+        <h2 style="margin:8px 0 0;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.03em">Du wurdest eingeladen</h2>
+      </div>
+      <div style="border:1px solid #e5e5e5;border-top:none;border-radius:0 0 12px 12px;padding:28px">
+        <p style="margin:0 0 20px;font-size:15px;color:#444;line-height:1.6">
+          Du wurdest als Mitarbeiter im Admin-Bereich von <strong>${params.shopName}</strong> eingerichtet.
+          Melde dich mit deinen Zugangsdaten an und ändere das Passwort beim ersten Login.
+        </p>
+
+        <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px">
+          <tr>
+            <td style="padding:10px 12px;background:#f8f8f8;font-weight:600;width:130px;border-bottom:1px solid #eee;border-radius:6px 0 0 0">E-Mail</td>
+            <td style="padding:10px 12px;border-bottom:1px solid #eee;font-family:monospace;color:#222">${params.email}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 12px;background:#f8f8f8;font-weight:600;border-radius:0 0 0 6px">Startpasswort</td>
+            <td style="padding:10px 12px;font-family:monospace;font-size:16px;font-weight:700;color:#111;letter-spacing:0.05em">${params.tempPassword}</td>
+          </tr>
+        </table>
+
+        <p style="margin:0 0 20px;font-size:13px;color:#e53e3e;font-weight:600">
+          Bitte ändere dein Passwort sofort nach dem ersten Login — das Startpasswort ist temporär.
+        </p>
+
+        <a href="${params.adminUrl}/login"
+           style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:11px 22px;border-radius:8px;font-size:14px;font-weight:700">
+          Zum Admin-Login →
+        </a>
+
+        <p style="margin:24px 0 0;font-size:12px;color:#aaa;line-height:1.6">
+          Diese E-Mail wurde automatisch gesendet. Bewahre sie sicher auf.
+        </p>
+      </div>
+    </div>
+  `;
+}

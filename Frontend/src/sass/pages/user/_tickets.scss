@@ -436,6 +436,29 @@
   &:hover { opacity: 0.8; }
 }
 
+.ticket-form__consent {
+  display:     flex;
+  gap:         0.625rem;
+  align-items: flex-start;
+  cursor:      pointer;
+  margin-top:  0.5rem;
+}
+
+.ticket-form__consent-check {
+  flex-shrink:   0;
+  margin-top:    0.15rem;
+  width:         1rem;
+  height:        1rem;
+  accent-color:  var(--clr-primary);
+  cursor:        pointer;
+}
+
+.ticket-form__consent-text {
+  font-size:   rem(12.5px);
+  line-height: 1.5;
+  color:       color-mix(in srgb, var(--clr-text) 70%, transparent);
+}
+
 // ── Sende-State ─────────────────────────────────────────────────────────────
 
 .ticket-sent {

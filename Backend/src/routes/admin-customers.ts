@@ -9,6 +9,11 @@ const router = Router();
 
 router.use(requireAdmin);
 
+const CustomerQuerySchema = z.object({
+  page:  z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
+
 const VALID_ROLES = ['owner', 'admin', 'mod', 'customer'] as const;
 type UserRole = typeof VALID_ROLES[number];
 
@@ -17,11 +22,10 @@ const RoleSchema = z.object({
 });
 
 // GET /api/admin/customers — alle Profile (paginated)
-router.get('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.get('/', validate(CustomerQuerySchema, 'query'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const page  = Math.max(1, parseInt(String(req.query.page ?? '1'), 10));
-    const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? '50'), 10)));
-    const from  = (page - 1) * limit;
+    const { page, limit } = req.query as unknown as z.infer<typeof CustomerQuerySchema>;
+    const from = (page - 1) * limit;
 
     const { data, error, count } = await supabase
       .from('profiles')

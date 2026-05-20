@@ -6,7 +6,7 @@ import { verifySync } from 'otplib';
 import { authRateLimit }                from '../middleware/security';
 import { requireAdmin, requireOwner }   from '../middleware/adminAuth';
 import { supabase }                     from '../lib/supabase';
-import { sendMail, adminLoginAlertHtml } from '../lib/mailer';
+import { sendMail, adminLoginAlertHtml, modInviteHtml } from '../lib/mailer';
 import { validate }                     from '../lib/validate';
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
@@ -67,15 +67,22 @@ function setAdminCookie(res: Response, token: string): void {
 }
 
 function generateTempPassword(): string {
+  const { randomInt } = require('node:crypto') as typeof import('node:crypto');
   const upper   = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const lower   = 'abcdefghijklmnopqrstuvwxyz';
   const digits  = '0123456789';
   const special = '!@#$%&*';
   const all     = upper + lower + digits + special;
-  const pick = (s: string) => s[Math.floor(Math.random() * s.length)];
+  const pick = (s: string) => s[randomInt(s.length)];
   const required = [pick(upper), pick(lower), pick(digits), pick(special)];
   const rest = Array.from({ length: 8 }, () => pick(all));
-  return [...required, ...rest].sort(() => Math.random() - 0.5).join('');
+  // Fisher-Yates mit randomInt (kryptografisch sicher)
+  const arr = [...required, ...rest];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = randomInt(i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr.join('');
 }
 
 // Liest Passwort-Hash: zuerst aus admin_config (DB), Fallback auf Env-Var
@@ -396,6 +403,16 @@ router.post('/mods', requireOwner, validate(AddModSchema), async (req: Request, 
     if (updateError) { res.status(500).json({ error: 'Rolle konnte nicht gesetzt werden.' }); return; }
 
     await supabase.from('pending_mod_invites').insert({ email });
+
+    // Startpasswort per E-Mail direkt an den Mod senden
+    const adminUrl = process.env.ADMIN_URL ?? '';
+    const shopName = process.env.SMTP_FROM_NAME ?? 'Shop';
+    void sendMail({
+      to:      email,
+      subject: `Du wurdest als Mitarbeiter eingeladen — ${shopName}`,
+      html:    modInviteHtml({ shopName, adminUrl, tempPassword, email }),
+    }).catch(() => null);
+
     res.json({ ok: true, invited: true, tempPassword, id: profile.id, email });
     return;
   }
@@ -420,6 +437,16 @@ router.post('/mods', requireOwner, validate(AddModSchema), async (req: Request, 
   );
 
   await supabase.from('pending_mod_invites').insert({ email });
+
+  // Startpasswort per E-Mail direkt an den Mod senden
+  const adminUrl2 = process.env.ADMIN_URL ?? '';
+  const shopName2 = process.env.SMTP_FROM_NAME ?? 'Shop';
+  void sendMail({
+    to:      email,
+    subject: `Du wurdest als Mitarbeiter eingeladen — ${shopName2}`,
+    html:    modInviteHtml({ shopName: shopName2, adminUrl: adminUrl2, tempPassword, email }),
+  }).catch(() => null);
+
   res.json({ ok: true, invited: true, tempPassword, email });
 });
 

@@ -17,9 +17,14 @@ export function errorHandler(
 
   console.error(`[${new Date().toISOString()}] ${statusCode} — ${err.message}`);
 
+  // 5xx: generische Nachricht — keine internen Details an den Client
+  const clientMessage = statusCode >= 500
+    ? 'Interner Serverfehler'
+    : (err.message ?? 'Unbekannter Fehler');
+
   res.status(statusCode).json({
-    error:   err.message ?? 'Interner Serverfehler',
-    code:    err.code,
+    error: clientMessage,
+    code:  err.code,
     ...(isDev ? { stack: err.stack } : {}),
   });
 }

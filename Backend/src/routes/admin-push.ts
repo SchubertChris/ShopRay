@@ -42,11 +42,14 @@ router.post('/subscribe', requireAdmin, validate(SubscribeSchema), async (req: R
   }
 });
 
+const UnsubscribeSchema = z.object({
+  endpoint: z.string().url().max(2000),
+});
+
 // DELETE /api/admin/push/subscribe — Subscription entfernen
-router.delete('/subscribe', requireAdmin, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.delete('/subscribe', requireAdmin, validate(UnsubscribeSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const endpoint = req.body?.endpoint as string | undefined;
-    if (!endpoint) { res.status(400).json({ error: 'endpoint fehlt' }); return; }
+    const { endpoint } = req.body as z.infer<typeof UnsubscribeSchema>;
 
     await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint);
     res.json({ ok: true });
