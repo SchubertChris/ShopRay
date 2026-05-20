@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { User, Bell, ShoppingCart, Menu, X, LogOut, Sun, Moon } from 'lucide-react';
 import { ROUTES } from '@config/routes';
-import { FEATURES } from '@config/features';
 import { APP_NAME } from '@config/app';
 import { useCart } from '@features/cart';
 import { useAuth, logout } from '@features/auth';
