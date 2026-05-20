@@ -1,6 +1,6 @@
 -- ══════════════════════════════════════════════════════════════════════════════
 -- ShopRay — Vollständiges Datenbankschema (konsolidiert)
--- Stand: 2026-05-19 — enthält alle Änderungen aus Migrations 001–023
+-- Stand: 2026-05-20 — enthält alle Änderungen aus Migrations 001–028
 -- ══════════════════════════════════════════════════════════════════════════════
 --
 -- FRISCHE INSTALLATION (Neukunde):
@@ -127,6 +127,8 @@ CREATE TABLE IF NOT EXISTS public.orders (
   invoice_number            TEXT          UNIQUE,
   tracking_number           TEXT,
   label_b64                 TEXT,
+  discount_code             TEXT,
+  discount_amount           NUMERIC(10,2),
   created_at                TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_at                TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
@@ -146,6 +148,7 @@ CREATE TABLE IF NOT EXISTS public.order_items (
   quantity     INTEGER       NOT NULL CHECK (quantity > 0),
   price        NUMERIC(10,2) NOT NULL,
   image_url    TEXT,
+  sku_id       UUID,
   created_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
@@ -161,6 +164,7 @@ CREATE TABLE IF NOT EXISTS public.return_requests (
                           CHECK (status IN ('requested','approved','rejected','label_sent','received','refunded')),
   label_url   TEXT,
   admin_note  TEXT,
+  return_items JSONB,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -303,7 +307,9 @@ CREATE TABLE IF NOT EXISTS public.admin_login_log (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   ip_address TEXT        NOT NULL,
   user_agent TEXT,
-  success    BOOLEAN     NOT NULL DEFAULT TRUE
+  success    BOOLEAN     NOT NULL DEFAULT TRUE,
+  role       TEXT,
+  email      TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_admin_login_log_created_at
@@ -334,6 +340,87 @@ CREATE TABLE IF NOT EXISTS public.admin_config (
   updated_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ── DISCOUNT CODES ───────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.discount_codes (
+  id         UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+  code       TEXT          NOT NULL,
+  type       TEXT          NOT NULL CHECK (type IN ('percent', 'fixed')),
+  value      NUMERIC(10,2) NOT NULL CHECK (value > 0),
+  min_order  NUMERIC(10,2) NOT NULL DEFAULT 0,
+  max_uses   INTEGER,
+  uses       INTEGER       NOT NULL DEFAULT 0,
+  active     BOOLEAN       NOT NULL DEFAULT TRUE,
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ   NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS discount_codes_code_idx ON public.discount_codes (lower(code));
+
+-- ── PRODUKTVARIANTEN ─────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.variant_options (
+  id         UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID    NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  name       TEXT    NOT NULL,
+  position   INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS public.variant_option_values (
+  id        UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
+  option_id UUID    NOT NULL REFERENCES public.variant_options(id) ON DELETE CASCADE,
+  value     TEXT    NOT NULL,
+  position  INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS public.product_skus (
+  id           UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id   UUID          NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  combination  JSONB         NOT NULL,
+  stock        INTEGER       NOT NULL DEFAULT 0,
+  price_offset NUMERIC(10,2) NOT NULL DEFAULT 0,
+  sku_code     TEXT,
+  active       BOOLEAN       NOT NULL DEFAULT TRUE,
+  created_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+);
+
+-- sku_id FK nachrüsten (nach product_skus-Tabelle)
+-- (in CREATE TABLE order_items bereits als Spalte definiert, FK hier setzen)
+ALTER TABLE public.order_items
+  ADD CONSTRAINT order_items_sku_id_fkey
+  FOREIGN KEY (sku_id) REFERENCES public.product_skus(id) ON DELETE SET NULL
+  NOT VALID;
+
+-- ── ADMIN NOTIFICATION CENTER ─────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.admin_notifications (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  type       TEXT        NOT NULL,
+  title      TEXT        NOT NULL,
+  body       TEXT,
+  link       TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.admin_notification_reads (
+  notification_id UUID NOT NULL REFERENCES public.admin_notifications(id) ON DELETE CASCADE,
+  user_key        TEXT NOT NULL,
+  read_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (notification_id, user_key)
+);
+
+-- ── AUFGABEN-SYSTEM ───────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.admin_tasks (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  title       TEXT        NOT NULL,
+  description TEXT,
+  assigned_to UUID,
+  priority    TEXT        NOT NULL DEFAULT 'normal'
+                          CHECK (priority IN ('low','normal','high','urgent')),
+  status      TEXT        NOT NULL DEFAULT 'open'
+                          CHECK (status IN ('open','in_progress','done')),
+  due_date    DATE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- ════════════════════════════════════════════════════════════════════════════
 -- ROW LEVEL SECURITY (RLS)
 -- ════════════════════════════════════════════════════════════════════════════
@@ -352,7 +439,14 @@ ALTER TABLE public.shipping_settings  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shop_settings      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_totp         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_login_log    ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.push_subscriptions       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.discount_codes           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.variant_options          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.variant_option_values    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.product_skus             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_notifications      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_notification_reads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_tasks              ENABLE ROW LEVEL SECURITY;
 
 -- Profiles
 DO $$ BEGIN CREATE POLICY "Eigenes Profil lesen"   ON public.profiles FOR SELECT USING (auth.uid() = id);
@@ -426,6 +520,32 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE POLICY "Shop-Infos öffentlich lesen" ON public.shop_settings FOR SELECT USING (TRUE);
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- Discount Codes (nur service_role)
+DO $$ BEGIN CREATE POLICY "service_discount_codes" ON public.discount_codes FOR ALL TO service_role USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- Varianten (Kunden dürfen lesen, Backend darf alles)
+DO $$ BEGIN CREATE POLICY "anon_read_variant_options" ON public.variant_options FOR SELECT USING (TRUE);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "anon_read_variant_option_values" ON public.variant_option_values FOR SELECT USING (TRUE);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "anon_read_product_skus" ON public.product_skus FOR SELECT USING (active = TRUE);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "service_variant_options" ON public.variant_options FOR ALL TO service_role USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "service_variant_option_values" ON public.variant_option_values FOR ALL TO service_role USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "service_product_skus" ON public.product_skus FOR ALL TO service_role USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- Notification Center + Tasks (nur service_role)
+DO $$ BEGIN CREATE POLICY "service_notifications_all" ON public.admin_notifications FOR ALL TO service_role USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "service_notification_reads_all" ON public.admin_notification_reads FOR ALL TO service_role USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "service_tasks_all" ON public.admin_tasks FOR ALL TO service_role USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- ════════════════════════════════════════════════════════════════════════════
 -- GRANTS
 -- ════════════════════════════════════════════════════════════════════════════
@@ -465,8 +585,20 @@ GRANT ALL ON public.shop_settings       TO service_role;
 GRANT ALL ON public.admin_totp          TO service_role;
 GRANT ALL ON public.admin_login_log     TO service_role;
 GRANT ALL ON public.push_subscriptions  TO service_role;
-GRANT ALL ON public.pending_mod_invites TO service_role;
-GRANT ALL ON public.admin_config        TO service_role;
+GRANT ALL ON public.pending_mod_invites     TO service_role;
+GRANT ALL ON public.admin_config            TO service_role;
+GRANT ALL ON public.discount_codes          TO service_role;
+GRANT ALL ON public.variant_options         TO service_role;
+GRANT ALL ON public.variant_option_values   TO service_role;
+GRANT ALL ON public.product_skus            TO service_role;
+GRANT ALL ON public.admin_notifications     TO service_role;
+GRANT ALL ON public.admin_notification_reads TO service_role;
+GRANT ALL ON public.admin_tasks             TO service_role;
+
+-- Varianten: Kunden dürfen lesen
+GRANT SELECT ON public.variant_options       TO anon, authenticated;
+GRANT SELECT ON public.variant_option_values TO anon, authenticated;
+GRANT SELECT ON public.product_skus          TO anon, authenticated;
 
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated, service_role;
 
@@ -505,3 +637,16 @@ CREATE TRIGGER set_updated_at_return_requests
 
 -- Ticket-Chat für Kunden-Frontend in Echtzeit
 ALTER PUBLICATION supabase_realtime ADD TABLE public.ticket_messages;
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- INDEXES (neue Tabellen 024–028)
+-- ════════════════════════════════════════════════════════════════════════════
+
+CREATE INDEX IF NOT EXISTS idx_admin_notifications_created_at
+  ON public.admin_notifications (created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_admin_notification_reads_user_key
+  ON public.admin_notification_reads (user_key);
+
+CREATE INDEX IF NOT EXISTS idx_admin_tasks_status_assigned
+  ON public.admin_tasks (status, assigned_to);
