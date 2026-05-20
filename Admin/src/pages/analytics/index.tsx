@@ -4,7 +4,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
-import { RefreshCw, Loader2, AlertCircle, TrendingUp, ShoppingCart, Package, Tag } from 'lucide-react';
+import { Loader2, AlertCircle, TrendingUp, ShoppingCart, Package, Tag } from 'lucide-react';
 import { getAnalytics, type AnalyticsData } from '../../api/adminApi';
 
 type Period = 7 | 30 | 90;
@@ -144,10 +144,6 @@ export default function AnalyticsPage() {
               </button>
             ))}
           </div>
-          <button className="btn-secondary" onClick={load} disabled={loading} title="Aktualisieren">
-            <RefreshCw size={15} strokeWidth={2} />
-            Aktualisieren
-          </button>
         </div>
       </div>
 
