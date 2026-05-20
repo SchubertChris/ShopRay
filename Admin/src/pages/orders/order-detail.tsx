@@ -251,7 +251,10 @@ export default function OrderDetailPage() {
                   <tr key={item.id}>
                     <td>
                       <div className="order-item-row">
-                        <div className="order-item-row__thumb" />
+                        {item.image_url
+                          ? <img className="order-item-row__thumb" src={item.image_url} alt={item.product_name} />
+                          : <div className="order-item-row__thumb order-item-row__thumb--placeholder"><Package size={14} strokeWidth={1.5} /></div>
+                        }
                         <span className="admin-table__primary">{item.product_name}</span>
                       </div>
                     </td>

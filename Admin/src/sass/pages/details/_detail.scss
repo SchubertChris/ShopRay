@@ -69,6 +69,14 @@
     border-radius: 6px;
     background:    var(--clr-secondary);
     flex-shrink:   0;
+    object-fit:    cover;
+
+    &--placeholder {
+      display:         flex;
+      align-items:     center;
+      justify-content: center;
+      color:           color-mix(in srgb, var(--clr-text) 30%, transparent);
+    }
   }
 }
 
