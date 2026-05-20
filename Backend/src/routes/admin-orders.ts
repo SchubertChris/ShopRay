@@ -20,7 +20,7 @@ const StatusSchema = z.object({
 
 const OrderQuerySchema = z.object({
   page:   z.coerce.number().int().min(1).default(1),
-  limit:  z.coerce.number().int().min(1).max(100).default(50),
+  limit:  z.coerce.number().int().min(1).max(500).default(50),
   status: z.enum(VALID_STATUSES).optional(),
   search: z.string().trim().max(100).optional(),
 });
@@ -54,7 +54,7 @@ const ReturnStatusSchema = z.object({
 
 const ReturnQuerySchema = z.object({
   page:  z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(50),
+  limit: z.coerce.number().int().min(1).max(500).default(50),
 });
 
 // GET /api/admin/orders/return-requests — alle Rücksendeanträge

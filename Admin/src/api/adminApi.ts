@@ -346,7 +346,7 @@ export interface AdminCustomerDetail extends AdminCustomer {
   gdprVersion: string;
 }
 
-export const getAdminCustomers = (page = 1, limit = 50) =>
+export const getAdminCustomers = (page = 1, limit = 200) =>
   apiFetch<{ data: AdminCustomer[]; total: number; page: number; limit: number }>(
     `/api/admin/customers?page=${page}&limit=${limit}`,
   );
@@ -420,7 +420,7 @@ export interface AdminOrderListItem {
   payment_method: string | null;
 }
 
-export const getAdminOrders = (page = 1, limit = 50) =>
+export const getAdminOrders = (page = 1, limit = 200) =>
   apiFetch<{ data: AdminOrderListItem[]; total: number; page: number; limit: number }>(
     `/api/admin/orders?page=${page}&limit=${limit}`,
   );
@@ -648,7 +648,7 @@ export interface AdminReview {
   profiles:   { name: string | null; email: string | null } | null;
 }
 
-export const getAdminReviews = (page = 1, limit = 50, verified?: boolean) => {
+export const getAdminReviews = (page = 1, limit = 200, verified?: boolean) => {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (verified !== undefined) params.set('verified', String(verified));
   return apiFetch<{ data: AdminReview[]; total: number; page: number; limit: number }>(
@@ -773,7 +773,7 @@ export interface AdminReturnRequest {
   orders:       { order_number: string; total: number; user_id: string | null; payment_method: string | null } | null;
 }
 
-export const getReturnRequests = (page = 1, limit = 100) =>
+export const getReturnRequests = (page = 1, limit = 200) =>
   apiFetch<{ data: AdminReturnRequest[]; total: number; page: number; limit: number }>(
     `/api/admin/orders/return-requests?page=${page}&limit=${limit}`,
   );

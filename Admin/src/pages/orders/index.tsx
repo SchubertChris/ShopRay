@@ -74,7 +74,7 @@ export default function OrdersPage() {
   useEffect(() => {
     useBadgeStore.getState().clear('pendingOrders');
     setLoading(true);
-    getAdminOrders(1, 100)
+    getAdminOrders()
       .then(res => { setOrders(res.data); setTotal(res.total); })
       .catch(() => null)
       .finally(() => setLoading(false));

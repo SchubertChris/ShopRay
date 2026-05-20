@@ -58,7 +58,7 @@ export default function ReviewsPage() {
     setError(null);
     try {
       const verifiedParam = filter === 'verified' ? true : filter === 'pending' ? false : undefined;
-      const res = await getAdminReviews(1, 100, verifiedParam);
+      const res = await getAdminReviews(1, undefined, verifiedParam);
       setReviews(res.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Laden fehlgeschlagen.');
