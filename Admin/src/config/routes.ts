@@ -23,5 +23,7 @@ export const ROUTES = {
   INQUIRIES:  '/inquiries',
   REVIEWS:    '/reviews',
   CATEGORIES: '/categories',
+  DISCOUNTS:  '/discounts',
+  ANALYTICS:  '/analytics',
   SETTINGS:   '/settings',
 } as const;

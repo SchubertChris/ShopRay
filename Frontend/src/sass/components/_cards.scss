@@ -150,6 +150,12 @@ $card-shadow-hover: (
     color: var(--clr-text);
     opacity: 0.5;
     margin-bottom: 0.5rem;
+
+    &-link {
+      display: contents;
+      color: inherit;
+      &:hover { opacity: 0.75; }
+    }
   }
 
   // PAngV: MwSt.-Hinweis

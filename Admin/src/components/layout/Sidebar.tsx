@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import {
   LayoutDashboard, Package, ShoppingCart, Users,
   MessageSquare, Settings, LogOut, ChevronRight, Mail,
-  Star, Tag, RotateCcw,
+  Star, Tag, RotateCcw, TicketPercent, BarChart2,
 } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import { useBadgeStore } from '@stores/badgeStore';
@@ -31,7 +31,8 @@ const NAV: NavGroup[] = [
   {
     section: 'Übersicht',
     items: [
-      { to: ROUTES.DASHBOARD,        icon: LayoutDashboard, label: 'Dashboard' },
+      { to: ROUTES.DASHBOARD,        icon: LayoutDashboard, label: 'Dashboard'   },
+      { to: ROUTES.ANALYTICS,        icon: BarChart2,       label: 'Analytics'   },
     ],
   },
   {
@@ -43,6 +44,7 @@ const NAV: NavGroup[] = [
       { to: ROUTES.RETURNS,          icon: RotateCcw,       label: 'Rücksendungen'                                  },
       { to: ROUTES.CATEGORIES,       icon: Tag,             label: 'Kategorien'                                     },
       { to: ROUTES.REVIEWS,          icon: Star,            label: 'Bewertungen'                                    },
+      { to: ROUTES.DISCOUNTS,        icon: TicketPercent,   label: 'Gutscheincodes'                                 },
     ],
   },
   {

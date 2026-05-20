@@ -497,6 +497,74 @@ export const cancelInvite = (id: string) =>
 export const changeOwnerPassword = (currentPassword: string, newPassword: string) =>
   apiFetch<{ ok: boolean }>('/api/admin/password', 'PUT', { currentPassword, newPassword });
 
+// ── Gutscheincodes ────────────────────────────────────────────────────────────
+
+export interface DiscountCode {
+  id:         string;
+  code:       string;
+  type:       'percent' | 'fixed';
+  value:      number;
+  min_order:  number;
+  max_uses:   number | null;
+  uses:       number;
+  active:     boolean;
+  expires_at: string | null;
+  created_at: string;
+}
+
+export type DiscountCodeInput = Omit<DiscountCode, 'id' | 'uses' | 'created_at'>;
+
+export const getDiscountCodes = () =>
+  apiFetch<DiscountCode[]>('/api/admin/discounts');
+
+export const createDiscountCode = (data: DiscountCodeInput) =>
+  apiFetch<DiscountCode>('/api/admin/discounts', 'POST', data);
+
+export const updateDiscountCode = (id: string, data: Partial<DiscountCodeInput>) =>
+  apiFetch<DiscountCode>(`/api/admin/discounts/${id}`, 'PUT', data);
+
+export const deleteDiscountCode = (id: string) =>
+  apiFetch<{ success: boolean }>(`/api/admin/discounts/${id}`, 'DELETE');
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+
+export interface RevenueDay {
+  date:    string;
+  revenue: number;
+  orders:  number;
+}
+
+export interface TopProduct {
+  name:     string;
+  revenue:  number;
+  quantity: number;
+}
+
+export interface StatusBreakdown {
+  status: string;
+  count:  number;
+}
+
+export interface AnalyticsKpi {
+  periodRevenue:  number;
+  allTimeRevenue: number;
+  avgOrderValue:  number;
+  totalOrders:    number;
+  paidOrders:     number;
+  discountTotal:  number;
+}
+
+export interface AnalyticsData {
+  period:          number;
+  revenueByDay:    RevenueDay[];
+  topProducts:     TopProduct[];
+  statusBreakdown: StatusBreakdown[];
+  kpi:             AnalyticsKpi;
+}
+
+export const getAnalytics = (period: 7 | 30 | 90 = 30) =>
+  apiFetch<AnalyticsData>(`/api/admin/analytics?period=${period}`);
+
 export const changeModPassword = (newPassword: string, name: string) =>
   apiFetch<{ ok: boolean }>('/api/admin/mods/change-password', 'PUT', { newPassword, name });
 

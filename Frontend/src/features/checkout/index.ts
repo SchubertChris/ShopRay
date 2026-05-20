@@ -1,1 +1,1 @@
-export { createOrder } from './api/checkoutService';
+export { createOrder, validateDiscountCode } from './api/checkoutService';

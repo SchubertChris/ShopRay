@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { User, Heart, ShoppingCart, Menu, X, LogOut, Sun, Moon } from 'lucide-react';
+import { User, Bell, ShoppingCart, Menu, X, LogOut, Sun, Moon } from 'lucide-react';
 import { ROUTES } from '@config/routes';
 import { FEATURES } from '@config/features';
 import { APP_NAME } from '@config/app';
@@ -21,11 +21,13 @@ export function Header() {
   const { isAuthenticated, clearAuth } = useAuth();
   const { mode, toggleMode } = useTheme();
   const navigate                   = useNavigate();
-  const [scrolled, setScrolled]    = useState(false);
-  const [hidden,   setHidden]      = useState(false);
-  const [mobileNav, setMobileNav] = useState(false);
-  const lastScrollY               = useRef(0);
-  const location                  = useLocation();
+  const [scrolled,   setScrolled]   = useState(false);
+  const [hidden,     setHidden]     = useState(false);
+  const [mobileNav,  setMobileNav]  = useState(false);
+  const [notifOpen,  setNotifOpen]  = useState(false);
+  const lastScrollY                 = useRef(0);
+  const notifRef                    = useRef<HTMLDivElement>(null);
+  const location                    = useLocation();
 
   // Nav bleibt auf /shop immer sichtbar (Filterleiste würde sonst verdeckt)
   const ALWAYS_VISIBLE_PATHS = [ROUTES.SHOP.SEARCH];
@@ -57,6 +59,18 @@ export function Header() {
     document.body.style.overflow = mobileNav ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [mobileNav]);
+
+  // Notif-Dropdown bei Außen-Klick schließen
+  useEffect(() => {
+    if (!notifOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [notifOpen]);
 
   const close = () => setMobileNav(false);
 
@@ -92,11 +106,29 @@ export function Header() {
               </Link>
             )}
 
-            {/* OPTIONAL — Schalter: src/config/features.ts → wishlist */}
-            {FEATURES.wishlist && (
-              <Link className="nav__cart" to={ROUTES.ACCOUNT.WISHLIST} aria-label="Wunschliste">
-                <Heart size={20} strokeWidth={1.75} />
-              </Link>
+            {isAuthenticated && (
+              <div className="nav__notif" ref={notifRef}>
+                <button
+                  className="nav__notif-btn"
+                  onClick={() => setNotifOpen(o => !o)}
+                  aria-label="Benachrichtigungen"
+                  aria-expanded={notifOpen}
+                >
+                  <Bell size={20} strokeWidth={1.75} />
+                </button>
+
+                {notifOpen && (
+                  <div className="nav__notif-dropdown" role="dialog" aria-label="Benachrichtigungen">
+                    <div className="nav__notif-header">
+                      <span>Benachrichtigungen</span>
+                    </div>
+                    <div className="nav__notif-empty">
+                      <Bell size={28} strokeWidth={1.25} />
+                      <p>Keine neuen Benachrichtigungen</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             <button
@@ -195,16 +227,15 @@ export function Header() {
               )}
             </Link>
 
-            {/* OPTIONAL — Schalter: src/config/features.ts → wishlist */}
-            {FEATURES.wishlist && (
+            {isAuthenticated && (
               <Link
-                to={ROUTES.ACCOUNT.WISHLIST}
+                to={ROUTES.ACCOUNT.DASHBOARD}
                 className="mobile-nav__action"
                 onClick={close}
-                aria-label="Wunschliste"
+                aria-label="Benachrichtigungen"
               >
-                <Heart size={22} strokeWidth={1.75} />
-                <span className="mobile-nav__action-label">Wunschliste</span>
+                <Bell size={22} strokeWidth={1.75} />
+                <span className="mobile-nav__action-label">Glocke</span>
               </Link>
             )}
 

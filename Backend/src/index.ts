@@ -25,6 +25,9 @@ import adminStatsRouter      from './routes/admin-stats';
 import adminPushRouter       from './routes/admin-push';
 import adminTicketMessagesRouter from './routes/admin-ticket-messages';
 import adminShippingRouter   from './routes/admin-shipping';
+import discountsRouter       from './routes/discounts';
+import adminDiscountsRouter  from './routes/admin-discounts';
+import adminAnalyticsRouter  from './routes/admin-analytics';
 import settingsRouter        from './routes/settings';
 import sitemapRouter         from './routes/sitemap';
 
@@ -55,6 +58,7 @@ app.use('/api/tickets',    ticketsRouter);
 app.use('/api/categories', categoriesRouter);
 
 // ── Öffentliche Settings-Route ────────────────────────────────────────────────
+app.use('/api/discounts', discountsRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/sitemap.xml',  sitemapRouter);
 
@@ -72,6 +76,8 @@ app.use('/api/admin/tickets',     adminTicketsRouter);
 app.use('/api/admin/tickets',     adminTicketMessagesRouter);
 app.use('/api/admin/stats',       adminStatsRouter);
 app.use('/api/admin/push',        adminPushRouter);
+app.use('/api/admin/discounts',   adminDiscountsRouter);
+app.use('/api/admin/analytics',  adminAnalyticsRouter);
 app.use('/api/admin/settings',    settingsRouter);
 
 // ── Favicon ───────────────────────────────────────────────────────────────────

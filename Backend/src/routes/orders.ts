@@ -33,10 +33,11 @@ const CheckoutSchema = z.object({
     country:   z.string().trim().max(100).optional(),
   }).optional(),
   paymentMethod: z.string().optional(),
-  guestEmail: z.string().trim().email('Ungültige E-Mail-Adresse').optional(),
+  guestEmail:    z.string().trim().email('Ungültige E-Mail-Adresse').optional(),
+  discountCode:  z.string().trim().max(50).optional(),
 });
 
-type CheckoutBody = z.infer<typeof CheckoutSchema> & { guestEmail?: string };
+type CheckoutBody = z.infer<typeof CheckoutSchema> & { guestEmail?: string; discountCode?: string };
 
 // GET /api/orders — eigene Bestellungen
 router.get('/', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
@@ -192,7 +193,7 @@ router.post('/:id/return', requireAuth, validate(UUIDParam, 'params'), validate(
 // POST /api/orders/checkout — Stripe Checkout Session (Auth optional für Gastbestellungen)
 router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchema), async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { items, shippingAddress, paymentMethod, guestEmail } = req.body as CheckoutBody;
+    const { items, shippingAddress, paymentMethod, guestEmail, discountCode } = req.body as CheckoutBody;
 
     // Gäste müssen eine E-Mail angeben
     if (!req.userId && !guestEmail) {
@@ -239,6 +240,38 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
       };
     });
 
+    const subtotalCents = lineItems.reduce((s, i) => s + i.unitAmountCents * i.quantity, 0);
+
+    // Gutscheincode validieren (falls angegeben)
+    let discountAmount = 0;
+    let resolvedCode: string | null = null;
+
+    if (discountCode) {
+      const { data: dc } = await supabase
+        .from('discount_codes')
+        .select('id, code, type, value, min_order, max_uses, uses, active, expires_at')
+        .eq('active', true)
+        .filter('code', 'ilike', discountCode)
+        .single();
+
+      if (dc) {
+        const orderTotal = subtotalCents / 100;
+        const expired    = dc.expires_at && new Date(dc.expires_at as string) < new Date();
+        const exhausted  = dc.max_uses !== null && (dc.uses as number) >= (dc.max_uses as number);
+        const tooSmall   = orderTotal < (dc.min_order as number);
+
+        if (!expired && !exhausted && !tooSmall) {
+          resolvedCode = (dc.code as string).toUpperCase();
+          if (dc.type === 'percent') {
+            discountAmount = Math.round(orderTotal * (dc.value as number) / 100 * 100) / 100;
+          } else {
+            discountAmount = Math.min(dc.value as number, orderTotal);
+          }
+        }
+      }
+    }
+
+    const orderTotal = Math.max(0, subtotalCents / 100 - discountAmount);
     const orderNumber = `#${Date.now().toString().slice(-6)}`;
 
     const addressWithEmail = shippingAddress
@@ -251,9 +284,11 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
         user_id:          req.userId ?? null,
         order_number:     orderNumber,
         status:           'pending',
-        total:            (lineItems.reduce((s, i) => s + i.unitAmountCents * i.quantity, 0) / 100).toFixed(2),
+        total:            orderTotal.toFixed(2),
         shipping_address: addressWithEmail,
         payment_method:   paymentMethod ?? 'card',
+        discount_code:    resolvedCode,
+        discount_amount:  discountAmount > 0 ? discountAmount.toFixed(2) : null,
       })
       .select()
       .single();
@@ -273,10 +308,24 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
 
     const stripePaymentMethods = PAYMENT_METHOD_MAP[paymentMethod ?? 'card'] ?? ['card'];
 
+    // Stripe-Rabatt-Coupon ephemer erstellen (nur wenn Rabatt vorhanden)
+    let stripeCouponId: string | undefined;
+    if (discountAmount > 0) {
+      const coupon = await stripe.coupons.create({
+        amount_off: Math.round(discountAmount * 100),
+        currency:   'eur',
+        name:       resolvedCode ?? 'Rabatt',
+        duration:   'once',
+        max_redemptions: 1,
+      });
+      stripeCouponId = coupon.id;
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: stripePaymentMethods,
       mode:                 'payment',
       ...(guestEmail ? { customer_email: guestEmail } : {}),
+      ...(stripeCouponId ? { discounts: [{ coupon: stripeCouponId }] } : {}),
       line_items: lineItems.map(({ product, quantity, unitAmountCents }) => ({
         price_data: {
           currency:     'eur',
@@ -285,7 +334,7 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
         },
         quantity,
       })),
-      metadata:    { orderId: order.id },
+      metadata:    { orderId: order.id, discountCode: resolvedCode ?? '' },
       success_url: `${process.env.CLIENT_URL}/order-success?order=${order.id}`,
       cancel_url:  `${process.env.CLIENT_URL}/cart`,
     });

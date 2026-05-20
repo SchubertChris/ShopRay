@@ -149,6 +149,24 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction): 
           }
         })().catch(e => console.error('Stock-Update fehlgeschlagen:', e));
 
+        // Gutschein-Verwendungszähler hochsetzen (non-blocking)
+        const usedCode = session.metadata?.discountCode;
+        if (usedCode) {
+          void (async () => {
+            const { data: dc } = await supabase
+              .from('discount_codes')
+              .select('id, uses')
+              .filter('code', 'ilike', usedCode)
+              .single();
+            if (dc) {
+              await supabase
+                .from('discount_codes')
+                .update({ uses: (dc.uses as number) + 1 })
+                .eq('id', dc.id);
+            }
+          })().catch(e => console.error('Discount uses update fehlgeschlagen:', e));
+        }
+
         // Push-Benachrichtigung an alle Admin-Geräte (non-blocking)
         sendPushToAll({
           title: `Neue Bestellung ${order.order_number}`,

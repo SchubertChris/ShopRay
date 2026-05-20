@@ -402,5 +402,122 @@
 
       span:last-child { color: var(--clr-primary); }
     }
+
+    &--discount {
+      opacity: 1;
+      color: #10b981;
+      font-weight: 600;
+    }
+  }
+
+  &__shipping--free {
+    color: #10b981;
+    font-weight: 600;
+  }
+}
+
+// ─── GUTSCHEINCODE-BLOCK ───────────────────────────────────────────────────
+.checkout-discount {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--clr-background);
+
+  &__row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  &__input {
+    flex:          1;
+    padding:       0.5rem 0.75rem;
+    border:        1px solid var(--clr-border, rgba(255,255,255,0.1));
+    border-radius: 8px;
+    background:    var(--clr-background);
+    color:         var(--clr-text);
+    font-size:     rem(13px);
+    font-family:   'Courier New', Courier, monospace;
+    font-weight:   600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition:    border-color 0.15s;
+
+    &:focus {
+      outline:      none;
+      border-color: var(--clr-primary);
+    }
+
+    &::placeholder {
+      font-family:    inherit;
+      text-transform: none;
+      font-weight:    400;
+      letter-spacing: 0;
+      opacity:        0.4;
+    }
+
+    &:disabled { opacity: 0.6; }
+  }
+
+  &__apply {
+    padding:       0.5rem 1rem;
+    border:        none;
+    border-radius: 8px;
+    background:    var(--clr-primary);
+    color:         #fff;
+    font-size:     rem(13px);
+    font-weight:   600;
+    cursor:        pointer;
+    white-space:   nowrap;
+    transition:    opacity 0.15s;
+
+    &:hover:not(:disabled) { opacity: 0.85; }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+
+  &__error {
+    margin-top: 0.375rem;
+    font-size:  rem(12px);
+    color:      var(--clr-error, #ef4444);
+  }
+
+  &__applied {
+    display:     flex;
+    align-items: center;
+    gap:         0.625rem;
+    padding:     0.5rem 0.75rem;
+    border-radius: 8px;
+    background:  color-mix(in srgb, #10b981 12%, transparent);
+    border:      1px solid color-mix(in srgb, #10b981 25%, transparent);
+  }
+
+  &__applied-code {
+    display:     flex;
+    align-items: center;
+    gap:         0.375rem;
+    font-size:   rem(13px);
+    font-weight: 700;
+    color:       #10b981;
+    font-family: 'Courier New', Courier, monospace;
+    letter-spacing: 0.05em;
+    flex:        1;
+  }
+
+  &__applied-amount {
+    font-size:   rem(13px);
+    font-weight: 700;
+    color:       #10b981;
+  }
+
+  &__remove {
+    border:       none;
+    background:   none;
+    color:        #10b981;
+    font-size:    rem(18px);
+    line-height:  1;
+    cursor:       pointer;
+    padding:      0 0.25rem;
+    opacity:      0.7;
+    transition:   opacity 0.15s;
+
+    &:hover { opacity: 1; }
   }
 }

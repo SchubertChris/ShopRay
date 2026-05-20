@@ -19,6 +19,7 @@ export async function getReviews(productId: string): Promise<Review[]> {
     .from('reviews')
     .select('*, profiles(name)')
     .eq('product_id', productId)
+    .eq('verified', true)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data as Record<string, unknown>[]).map(mapReview);

@@ -1,20 +1,22 @@
 import { useState, useRef, useCallback } from 'react';
 import Papa from 'papaparse';
-import { Upload, X, CheckCircle, AlertCircle, Download, Loader2 } from 'lucide-react';
+import { Upload, X, CheckCircle, AlertCircle, Download, Loader2, Copy } from 'lucide-react';
 import { bulkImportProducts } from '../../api/adminApi';
 
 interface CsvRow {
-  name:        string;
-  slug:        string;
-  description: string;
-  price:       string;
-  category:    string;
-  stock?:      string;
-  old_price?:  string;
-  badge?:      string;
-  tax_rate?:   string;
-  image_url?:  string;
-  highlights?: string;
+  name:             string;
+  slug:             string;
+  description:      string;
+  price:            string;
+  category:         string;
+  stock?:           string;
+  old_price?:       string;
+  badge?:           string;
+  tax_rate?:        string;
+  image_url?:       string;
+  highlights?:      string;
+  certifications?:  string;
+  discount?:        string;
 }
 
 interface PreviewRow extends CsvRow {
@@ -38,10 +40,31 @@ interface Props {
 const REQUIRED = ['name', 'slug', 'description', 'price', 'category'];
 
 const TEMPLATE_CSV = [
-  'name,slug,description,price,category,stock,old_price,badge,tax_rate,image_url,highlights',
-  'Whey Protein Vanille,whey-protein-vanille,Hochwertiges Whey Protein mit Vanillegeschmack,39.99,Protein,100,49.99,NEU,19,,Hochwertig;Schnell löslich',
-  'Vitamin D3 2000 IE,vitamin-d3-2000,Vitamin D3 Kapseln für Knochen und Immunsystem,12.99,Vitamine & Mineralien,200,,,7,,',
+  'name,slug,description,price,category,stock,old_price,badge,tax_rate,image_url,highlights,certifications,discount',
+  'Whey Protein Vanille,whey-protein-vanille,Hochwertiges Whey Protein mit Vanillegeschmack,39.99,Protein,100,49.99,NEU,19,,Hochwertig;Schnell löslich;Vegan,Bio;Laborgeprüft,-20%',
+  'Vitamin D3 2000 IE,vitamin-d3-2000,Vitamin D3 Kapseln für Knochen und Immunsystem,12.99,Vitamine & Mineralien,200,,,7,,,Bio-zertifiziert,',
 ].join('\n');
+
+const AI_PROMPT = `Erstelle eine CSV-Tabelle mit Produktdaten.
+Verwende exakt diese Kopfzeile (erste Zeile):
+name,slug,description,price,category,stock,old_price,badge,tax_rate,highlights,certifications,discount
+
+Regeln:
+- name: Produktname auf Deutsch
+- slug: Kleinbuchstaben, Bindestriche, keine Umlaute (z.B. "bio-hanf-protein")
+- description: 1–2 Sätze Produktbeschreibung
+- price: Dezimalzahl ohne Währung (z.B. 29.99)
+- category: Kategoriename (z.B. "Protein", "Vitamine", "Snacks")
+- stock: Ganzzahl (z.B. 150)
+- old_price: Dezimalzahl oder leer lassen
+- badge: "NEU", "SALE", "BESTSELLER" oder leer lassen
+- tax_rate: 19 (Standard) oder 7 (Lebensmittel/Bücher)
+- highlights: Vorteile mit ; getrennt (z.B. "Hochwertig;Vegan;Schnell löslich")
+- certifications: Siegel mit ; getrennt (z.B. "Bio;Vegan;Laborgeprüft") oder leer lassen
+- discount: Rabatttext wie "-20%" oder leer lassen
+
+Erstelle [ANZAHL] Produkte für einen [BRANCHE/THEMA]-Shop.
+Ausgabe: Nur die CSV-Daten, keine Erklärungen.`;
 
 function validateRow(row: CsvRow, index: number): PreviewRow {
   const errors: string[] = [];
@@ -70,7 +93,16 @@ export default function CsvImportModal({ onClose, onSuccess }: Props) {
   const [importing, setImporting] = useState(false);
   const [results,   setResults]   = useState<ImportResult[] | null>(null);
   const [dragOver,  setDragOver]  = useState(false);
+  const [copied,    setCopied]    = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  async function copyPrompt() {
+    try {
+      await navigator.clipboard.writeText(AI_PROMPT);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch { /* ignore */ }
+  }
 
   const parseFile = useCallback((file: File) => {
     setFileName(file.name);
@@ -144,12 +176,23 @@ export default function CsvImportModal({ onClose, onSuccess }: Props) {
         {/* Body */}
         <div className="csv-modal__body">
 
-          {/* Vorlage herunterladen */}
+          {/* Vorlage / KI-Prompt */}
           {!preview && (
-            <button className="csv-template-btn" onClick={downloadTemplate}>
-              <Download size={14} strokeWidth={2} />
-              CSV-Vorlage herunterladen
-            </button>
+            <div className="csv-actions">
+              <button className="csv-template-btn" onClick={downloadTemplate}>
+                <Download size={14} strokeWidth={2} />
+                Vorlage herunterladen
+              </button>
+              <button
+                className={`csv-ai-btn${copied ? ' csv-ai-btn--copied' : ''}`}
+                onClick={copyPrompt}
+              >
+                {copied
+                  ? <><CheckCircle size={14} strokeWidth={2} /> Kopiert!</>
+                  : <><Copy size={14} strokeWidth={1.75} /> KI-Prompt kopieren</>
+                }
+              </button>
+            </div>
           )}
 
           {/* Drop Zone */}

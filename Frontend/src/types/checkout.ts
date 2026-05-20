@@ -8,6 +8,16 @@ export interface CheckoutPayload {
   paymentMethod: PaymentMethod;
   cartItems:     Array<{ productId: string; quantity: number }>;
   guestEmail?:   string;
+  discountCode?: string;
+}
+
+export interface DiscountValidation {
+  valid:          boolean;
+  code:           string;
+  type:           'percent' | 'fixed';
+  value:          number;
+  discountAmount: number;
+  finalTotal:     number;
 }
 
 /** Backend-Antwort: Stripe-Checkout-URL zur Weiterleitung */

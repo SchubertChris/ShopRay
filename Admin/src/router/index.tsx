@@ -16,6 +16,8 @@ import ReviewsPage            from '@pages/reviews/index';
 import CategoriesPage         from '@pages/categories/index';
 import SettingsPage           from '@pages/settings/index';
 import ReturnsPage            from '@pages/returns/index';
+import DiscountsPage          from '@pages/discounts/index';
+import AnalyticsPage          from '@pages/analytics/index';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const isAuthed = useAuthStore(s => s.isAuthed);
@@ -55,6 +57,8 @@ export const router = createBrowserRouter([
       { path: 'inquiries',         element: <InquiriesPage />      },
       { path: 'reviews',           element: <ReviewsPage />        },
       { path: 'categories',        element: <RequireOwner><CategoriesPage /></RequireOwner>     },
+      { path: 'discounts',         element: <DiscountsPage />        },
+      { path: 'analytics',         element: <AnalyticsPage />        },
       { path: 'settings',          element: <RequireOwner><SettingsPage /></RequireOwner>       },
     ],
   },

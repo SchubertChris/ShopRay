@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import { Search, ChevronLeft, Heart, CheckCircle2, Check, ExternalLink, FileText } from 'lucide-react';
@@ -52,7 +52,9 @@ export default function ProductDetailPage() {
   const toggle         = useWishlist(state => state.toggle);
   const { isAuthenticated } = useAuth();
   const [qty,       setQty]       = useState(1);
-  const [activeTab, setActiveTab] = useState<Tab>('details');
+  const [activeTab, setActiveTab] = useState<Tab>(
+    () => window.location.hash === '#reviews' ? 'reviews' : 'details'
+  );
 
   const { data: reviews, loading: reviewsLoading, refetch: refetchReviews } = useReviews(product?.id ?? '');
   const { data: related } = useRelatedProducts(product?.id ?? '', product?.category ?? '');
@@ -63,6 +65,17 @@ export default function ProductDetailPage() {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewSuccess, setReviewSuccess] = useState(false);
   const [reviewError,   setReviewError]   = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!productLoading && window.location.hash === '#reviews') {
+      document.getElementById('product-reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [productLoading]);
+
+  function goToReviews() {
+    setActiveTab('reviews');
+    document.getElementById('product-reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   async function handleReviewSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -248,7 +261,14 @@ export default function ProductDetailPage() {
                 <p className="product-info__category">{product.category}</p>
                 <h1 className="product-info__title">{product.name}</h1>
 
-                <div className="product-info__rating">
+                <div
+                  className={`product-info__rating${FEATURES.reviews ? ' product-info__rating--link' : ''}`}
+                  onClick={FEATURES.reviews ? goToReviews : undefined}
+                  role={FEATURES.reviews ? 'button' : undefined}
+                  tabIndex={FEATURES.reviews ? 0 : undefined}
+                  onKeyDown={FEATURES.reviews ? (e) => { if (e.key === 'Enter' || e.key === ' ') goToReviews(); } : undefined}
+                  aria-label={FEATURES.reviews ? 'Zu den Bewertungen scrollen' : undefined}
+                >
                   <Stars rating={product.rating} size={16} />
                   <span className="product-info__rating-count">({product.reviews} Bewertungen)</span>
                 </div>
@@ -320,7 +340,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* ── Tabs ─────────────────────────────────────────────────── */}
-            <div className="product-tabs">
+            <div className="product-tabs" id="product-reviews">
               <div className="product-tabs__nav">
                 <button
                   className={`product-tabs__tab${activeTab === 'details' ? ' product-tabs__tab--active' : ''}`}

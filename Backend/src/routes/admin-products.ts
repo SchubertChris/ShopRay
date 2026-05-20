@@ -78,6 +78,8 @@ const BulkRowSchema = z.object({
   tax_rate:         z.coerce.number().min(0).max(100).optional().default(19),
   image_url:        z.string().url().max(2000).nullable().optional(),
   highlights:       z.string().trim().max(2000).optional(), // semicolon-separated
+  certifications:   z.string().trim().max(2000).optional(), // semicolon-separated
+  discount:         z.string().trim().max(20).nullable().optional(),
 });
 
 // Alle Routen erfordern Admin-Session
@@ -117,10 +119,11 @@ router.post('/bulk', requireOwner, async (req: Request, res: Response, next: Nex
         badge:            d.badge ?? null,
         tax_rate:         d.tax_rate,
         image_url:        d.image_url ?? null,
-        highlights:       d.highlights ? d.highlights.split(';').map(s => s.trim()).filter(Boolean) : [],
+        highlights:       d.highlights       ? d.highlights.split(';').map(s => s.trim()).filter(Boolean)       : [],
+        certifications:   d.certifications   ? d.certifications.split(';').map(s => s.trim()).filter(Boolean)   : [],
+        discount:         d.discount ?? null,
         active:           true,
         images:           [],
-        certifications:   [],
         dealer_links:     [],
         documents:        [],
         _row:             i + 1,

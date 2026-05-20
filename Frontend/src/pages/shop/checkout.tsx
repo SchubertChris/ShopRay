@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '@features/cart';
-import { createOrder } from '@features/checkout';
+import { createOrder, validateDiscountCode } from '@features/checkout';
 import { useAuth } from '@features/auth';
 import { ProductImage, SeoMeta } from '@components/ui';
 import { ROUTES } from '@config/routes';
 import { getErrorMessage } from '@/utils/errorMessage';
-import type { PaymentMethod } from '@/types/checkout';
+import type { PaymentMethod, DiscountValidation } from '@/types/checkout';
 import { API_BASE } from '@config/api';
 
 // ── TYPES ─────────────────────────────────────────────────────────────────────
@@ -116,6 +116,13 @@ export default function CheckoutPage() {
   const [apiError,       setApiError]       = useState<string | null>(null);
   const [shippingConfig, setShippingConfig] = useState<ShippingConfig>({ standard: 4.90, free_above: 50 });
 
+  // Gutscheincode
+  const [discountInput,      setDiscountInput]      = useState('');
+  const [discountValidating, setDiscountValidating] = useState(false);
+  const [discountError,      setDiscountError]      = useState<string | null>(null);
+  const [discount,           setDiscount]           = useState<DiscountValidation | null>(null);
+  const discountInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     fetch(`${API_BASE}/settings/shipping`)
       .then(r => r.ok ? r.json() : null)
@@ -125,9 +132,32 @@ export default function CheckoutPage() {
       .catch(() => { /* Fallback-Werte bleiben */ });
   }, []);
 
-  const cartTotal  = total().toFixed(2);
-  const shipping   = shippingConfig.free_above > 0 && parseFloat(cartTotal) >= shippingConfig.free_above ? 0 : shippingConfig.standard;
-  const grandTotal = (parseFloat(cartTotal) + shipping).toFixed(2);
+  const cartTotal      = total().toFixed(2);
+  const shipping       = shippingConfig.free_above > 0 && parseFloat(cartTotal) >= shippingConfig.free_above ? 0 : shippingConfig.standard;
+  const discountAmount = discount?.discountAmount ?? 0;
+  const grandTotal     = Math.max(0, parseFloat(cartTotal) + shipping - discountAmount).toFixed(2);
+
+  async function handleApplyDiscount() {
+    const code = discountInput.trim().toUpperCase();
+    if (!code) return;
+    setDiscountValidating(true);
+    setDiscountError(null);
+    setDiscount(null);
+    try {
+      const result = await validateDiscountCode(code, parseFloat(cartTotal) + shipping);
+      setDiscount(result);
+    } catch (err) {
+      setDiscountError(getErrorMessage(err));
+    } finally {
+      setDiscountValidating(false);
+    }
+  }
+
+  function handleRemoveDiscount() {
+    setDiscount(null);
+    setDiscountInput('');
+    setDiscountError(null);
+  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const { name, value } = e.target;
@@ -160,8 +190,9 @@ export default function CheckoutPage() {
           country:   form.country,
         },
         paymentMethod: form.paymentMethod,
-        cartItems: items.map(i => ({ productId: i.id, quantity: i.quantity })),
-        ...(isGuest && form.guestEmail ? { guestEmail: form.guestEmail } : {}),
+        cartItems:     items.map(i => ({ productId: i.id, quantity: i.quantity })),
+        ...(isGuest && form.guestEmail ? { guestEmail:   form.guestEmail  } : {}),
+        ...(discount                   ? { discountCode: discount.code     } : {}),
       });
       // Weiterleitung zur Stripe-Hosted-Checkout-Seite
       // clearCart() wird erst auf der order-success Seite aufgerufen (nach abgeschlossener Zahlung)
@@ -389,6 +420,58 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
+              {/* Gutscheincode */}
+              <div className="checkout-discount">
+                {!discount ? (
+                  <>
+                    <div className="checkout-discount__row">
+                      <input
+                        ref={discountInputRef}
+                        className="checkout-discount__input"
+                        type="text"
+                        placeholder="Gutscheincode"
+                        value={discountInput}
+                        onChange={e => { setDiscountInput(e.target.value.toUpperCase()); setDiscountError(null); }}
+                        onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleApplyDiscount())}
+                        maxLength={50}
+                        disabled={discountValidating}
+                      />
+                      <button
+                        type="button"
+                        className="checkout-discount__apply"
+                        onClick={handleApplyDiscount}
+                        disabled={discountValidating || !discountInput.trim()}
+                      >
+                        {discountValidating ? '…' : 'Einlösen'}
+                      </button>
+                    </div>
+                    {discountError && (
+                      <p className="checkout-discount__error">{discountError}</p>
+                    )}
+                  </>
+                ) : (
+                  <div className="checkout-discount__applied">
+                    <span className="checkout-discount__applied-code">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      {discount.code}
+                    </span>
+                    <span className="checkout-discount__applied-amount">
+                      − {discountAmount.toFixed(2)} €
+                    </span>
+                    <button
+                      type="button"
+                      className="checkout-discount__remove"
+                      onClick={handleRemoveDiscount}
+                      aria-label="Gutschein entfernen"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <div className="checkout-overview__totals">
                 <div className="checkout-overview__row">
                   <span>Zwischensumme</span>
@@ -400,6 +483,12 @@ export default function CheckoutPage() {
                     {shipping === 0 ? 'Kostenlos' : `${shipping.toFixed(2)} €`}
                   </span>
                 </div>
+                {discount && (
+                  <div className="checkout-overview__row checkout-overview__row--discount">
+                    <span>Rabatt ({discount.code})</span>
+                    <span>− {discountAmount.toFixed(2)} €</span>
+                  </div>
+                )}
                 <div className="checkout-overview__row checkout-overview__row--total">
                   <span>Gesamt</span>
                   <span>{grandTotal} €</span>

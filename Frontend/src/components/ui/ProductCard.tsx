@@ -44,6 +44,14 @@ export function ProductCard({ product: p, skeleton, revealDelay, onQuickView }: 
     <div
       className={`product-card${isOutOfStock ? ' product-card--sold-out' : ''}`}
       {...(revealDelay ? { 'data-reveal': '', 'data-delay': String(revealDelay) } : {})}
+      onDoubleClick={() => {
+        if (!FEATURES.wishlist) return;
+        toggle(p.id);
+        notify({
+          type:  'wishlist',
+          title: isInWishlist ? 'Von Wunschliste entfernt' : 'Zur Wunschliste hinzugefügt',
+        });
+      }}
     >
       <div className="product-card__image-wrap">
         {isOutOfStock && (
@@ -80,7 +88,14 @@ export function ProductCard({ product: p, skeleton, revealDelay, onQuickView }: 
         </h4>
 
         <div className="product-card__rating">
-          <Stars rating={p.rating} />
+          <Link
+            to={ROUTES.SHOP.product(p.slug) + '#reviews'}
+            className="product-card__rating-link"
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`${p.reviews} Bewertungen lesen`}
+          >
+            <Stars rating={p.rating} />
+          </Link>
           <span>({p.reviews})</span>
         </div>
 

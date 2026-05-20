@@ -108,6 +108,11 @@
 
     &-stars { color: var(--clr-star); font-size: rem(14px); letter-spacing: 0.05em; }
     &-count { font-size: rem(13px); color: var(--clr-text); opacity: 0.5; }
+
+    &--link {
+      cursor: pointer;
+      &:hover { opacity: 0.8; }
+    }
   }
 
   &__price {
