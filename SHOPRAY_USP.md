@@ -152,7 +152,7 @@ Damit der Käufer realistische Erwartungen hat:
 | RBAC mit Owner + Mod-Rollen | Kein Abandoned-Cart-Recovery |
 | 2FA für Kunden und Admin | Kein POS (Point of Sale / Ladenkasse) |
 | Dark/Light Mode + Paletten | Kein B2B-Modus (keine Staffelpreise, keine Firmenkonten) |
-| Web Push / PWA | Kein Gutschein-/Rabattcode-System |
+| Web Push / PWA | Kein Abandoned-Cart-Recovery per E-Mail |
 | KI-gestützter CSV-Import | Ein-Personen-Projekt — Bus-Faktor vorhanden |
 | Kein monatlicher Plattformausfall-Risiko | Kein Analytics-Dashboard (kein Traffic, keine Conversion-Rate) |
 
