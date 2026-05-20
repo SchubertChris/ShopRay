@@ -1,3 +1,6 @@
+@use '../abstracts/mixins' as *;
+@use '../abstracts/functions' as *;
+
 // ── Tasks Page ────────────────────────────────────────────────────────────────
 
 .tasks-page {

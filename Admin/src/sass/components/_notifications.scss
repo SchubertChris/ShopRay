@@ -1,3 +1,6 @@
+@use '../abstracts/mixins' as *;
+@use '../abstracts/functions' as *;
+
 // ── Notification Dropdown ──────────────────────────────────────────────────────
 
 .notif-dropdown {
