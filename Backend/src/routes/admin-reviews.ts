@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { Router, Request, Response, NextFunction } from 'express';
 import { supabase }                   from '../lib/supabase';
 import { requireAdmin, requireOwner } from '../middleware/adminAuth';
@@ -7,13 +8,17 @@ const router = Router();
 
 router.use(requireAdmin);
 
+const ReviewQuerySchema = z.object({
+  page:     z.coerce.number().int().min(1).default(1),
+  limit:    z.coerce.number().int().min(1).max(100).default(50),
+  verified: z.enum(['true', 'false']).optional(),
+});
+
 // GET /api/admin/reviews — alle Bewertungen (paginated, optional filter)
-router.get('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.get('/', validate(ReviewQuerySchema, 'query'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const page     = Math.max(1, parseInt(String(req.query.page  ?? '1'),  10));
-    const limit    = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? '50'), 10)));
-    const from     = (page - 1) * limit;
-    const verified = req.query.verified; // 'true' | 'false' | undefined
+    const { page, limit, verified } = req.query as unknown as z.infer<typeof ReviewQuerySchema>;
+    const from = (page - 1) * limit;
 
     let query = supabase
       .from('reviews')

@@ -18,11 +18,17 @@ const StatusSchema = z.object({
   status: z.enum(VALID_STATUSES, { errorMap: () => ({ message: 'Ungültiger Status.' }) }),
 });
 
+const OrderQuerySchema = z.object({
+  page:   z.coerce.number().int().min(1).default(1),
+  limit:  z.coerce.number().int().min(1).max(100).default(50),
+  status: z.enum(VALID_STATUSES).optional(),
+  search: z.string().trim().max(100).optional(),
+});
+
 // GET /api/admin/orders — alle Bestellungen (paginated)
-router.get('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.get('/', validate(OrderQuerySchema, 'query'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const page  = Math.max(1, parseInt(String(req.query.page ?? '1'), 10));
-    const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? '50'), 10)));
+    const { page, limit } = req.query as unknown as z.infer<typeof OrderQuerySchema>;
     const from  = (page - 1) * limit;
 
     const { data, error, count } = await supabase
