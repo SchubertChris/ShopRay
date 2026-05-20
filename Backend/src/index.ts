@@ -28,6 +28,7 @@ import adminShippingRouter   from './routes/admin-shipping';
 import discountsRouter       from './routes/discounts';
 import adminDiscountsRouter  from './routes/admin-discounts';
 import adminAnalyticsRouter  from './routes/admin-analytics';
+import adminVariantsRouter   from './routes/admin-variants';
 import settingsRouter        from './routes/settings';
 import sitemapRouter         from './routes/sitemap';
 
@@ -78,6 +79,7 @@ app.use('/api/admin/stats',       adminStatsRouter);
 app.use('/api/admin/push',        adminPushRouter);
 app.use('/api/admin/discounts',   adminDiscountsRouter);
 app.use('/api/admin/analytics',  adminAnalyticsRouter);
+app.use('/api/admin/products',   adminVariantsRouter);
 app.use('/api/admin/settings',    settingsRouter);
 
 // ── Favicon ───────────────────────────────────────────────────────────────────

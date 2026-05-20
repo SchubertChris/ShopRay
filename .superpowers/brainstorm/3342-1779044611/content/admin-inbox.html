@@ -1,0 +1,55 @@
+<h2>Wie sieht der Admin den Live-Chat?</h2>
+<p class="subtitle">Wo und wie beantwortet der Admin eingehende Chats?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Eigene Seite /admin/chats</h3>
+      <p>Neuer Menüpunkt im Admin. Split-View: links die Chat-Liste, rechts das aktive Gespräch. Komplett getrennt vom Ticket-System.</p>
+      <div style="margin-top:12px;background:#0f172a;border-radius:10px;padding:10px;display:grid;grid-template-columns:140px 1fr;gap:8px;height:100px;">
+        <div style="background:#1e293b;border-radius:6px;padding:8px;">
+          <div style="font-size:9px;color:#6366f1;font-weight:700;margin-bottom:6px;">CHATS (3)</div>
+          <div style="background:#6366f1;border-radius:4px;padding:4px 6px;font-size:9px;color:#fff;margin-bottom:3px;">Max M. · Online</div>
+          <div style="padding:4px 6px;font-size:9px;color:#64748b;margin-bottom:3px;">Lisa K. · 2 Min</div>
+          <div style="padding:4px 6px;font-size:9px;color:#64748b;">Tom B. · 8 Min</div>
+        </div>
+        <div style="background:#1e293b;border-radius:6px;padding:8px;display:flex;flex-direction:column;justify-content:space-between;">
+          <div>
+            <div style="font-size:9px;color:#94a3b8;margin-bottom:4px;">Max Mustermann · Online</div>
+            <div style="background:#334155;border-radius:4px;padding:4px 6px;font-size:9px;color:#e2e8f0;display:inline-block;margin-bottom:3px;">Habe eine Frage zu Bestellung #1234</div>
+          </div>
+          <div style="display:flex;gap:4px;">
+            <div style="background:#1e293b;border:1px solid #334155;border-radius:4px;flex:1;padding:4px 6px;font-size:9px;color:#64748b;">Antwort schreiben…</div>
+            <div style="background:#6366f1;border-radius:4px;padding:4px 8px;font-size:9px;color:#fff;">→</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Tab im bestehenden Support (/admin/support)</h3>
+      <p>Kein neuer Menüpunkt — Chat als zweiter Tab neben Tickets. Einfacher, aber alles an einem Ort.</p>
+      <div style="margin-top:12px;background:#0f172a;border-radius:10px;padding:10px;height:100px;">
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <div style="padding:4px 10px;font-size:9px;color:#64748b;border-radius:4px;background:#1e293b;">Tickets (5)</div>
+          <div style="padding:4px 10px;font-size:9px;color:#fff;border-radius:4px;background:#6366f1;">Live-Chats (3)</div>
+        </div>
+        <div style="background:#1e293b;border-radius:6px;padding:8px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+          <div style="background:#6366f1;border-radius:4px;padding:4px 6px;font-size:9px;color:#fff;">Max M. · Online</div>
+          <div style="background:#334155;border-radius:4px;padding:4px 6px;font-size:9px;color:#94a3b8;">Lisa K. · 2 Min</div>
+          <div style="background:#334155;border-radius:4px;padding:4px 6px;font-size:9px;color:#94a3b8;">Tom B. · 8 Min</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:16px;padding:12px;background:#1e293b;border-radius:8px;border-left:3px solid #6366f1;">
+  <div style="font-size:11px;color:#94a3b8;line-height:1.6;">
+    <strong style="color:#e2e8f0;">In beiden Fällen gleich:</strong> Echtzeit-Updates via Supabase Realtime, Push-Benachrichtigung bei neuer Chat-Anfrage, Badge im Sidebar mit Anzahl aktiver Chats.
+  </div>
+</div>

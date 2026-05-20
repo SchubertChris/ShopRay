@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { Product } from '../types/product.types';
+import type { Product, VariantOption, ProductSku } from '../types/product.types';
 import type { SearchParams } from '@/types/search';
 import type { PaginatedResponse } from '@/types/api';
 
@@ -69,12 +69,54 @@ export async function getCategoriesWithImages(): Promise<CategoryInfo[]> {
 export async function getProductBySlug(slug: string): Promise<Product> {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select(`
+      *,
+      variant_options (
+        id, name, position,
+        variant_option_values ( id, value, position )
+      ),
+      product_skus ( id, combination, stock, price_offset, sku_code, active )
+    `)
     .eq('slug', slug)
     .eq('active', true)
     .single();
   if (error) throw error;
-  return mapProduct(data as Record<string, unknown>);
+
+  const raw = data as Record<string, unknown>;
+
+  const variantOptions: VariantOption[] = Array.isArray(raw.variant_options)
+    ? (raw.variant_options as Array<Record<string, unknown>>)
+        .sort((a, b) => (a.position as number) - (b.position as number))
+        .map(o => ({
+          id:       String(o.id),
+          name:     String(o.name),
+          position: Number(o.position),
+          values:   Array.isArray(o.variant_option_values)
+            ? (o.variant_option_values as Array<Record<string, unknown>>)
+                .sort((a, b) => (a.position as number) - (b.position as number))
+                .map(v => ({ id: String(v.id), value: String(v.value), position: Number(v.position) }))
+            : [],
+        }))
+    : [];
+
+  const skus: ProductSku[] = Array.isArray(raw.product_skus)
+    ? (raw.product_skus as Array<Record<string, unknown>>)
+        .filter(s => s.active)
+        .map(s => ({
+          id:          String(s.id),
+          combination: (s.combination as Record<string, string>) ?? {},
+          stock:       Number(s.stock ?? 0),
+          priceOffset: Number(s.price_offset ?? 0),
+          skuCode:     s.sku_code != null ? String(s.sku_code) : null,
+          active:      Boolean(s.active),
+        }))
+    : [];
+
+  return {
+    ...mapProduct(raw),
+    variantOptions: variantOptions.length > 0 ? variantOptions : undefined,
+    skus:           skus.length > 0 ? skus : undefined,
+  };
 }
 
 export async function searchProducts(params: SearchParams): Promise<PaginatedResponse<Product>> {

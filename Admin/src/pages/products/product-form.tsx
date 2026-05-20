@@ -8,6 +8,7 @@ import type { ProductCategory } from '../../types/index';
 import NumberInput        from '../../components/ui/NumberInput';
 import ImageGalleryEditor from '../../components/ui/ImageGalleryEditor';
 import LmivEditor         from '../../components/ui/LmivEditor';
+import VariantEditor      from '../../components/ui/VariantEditor';
 
 const TAX_RATES = [
   { label: '0 % (steuerfrei)',       value: 0  },
@@ -454,6 +455,14 @@ export default function ProductFormPage() {
 
         {/* ══ RECHTE SPALTE ═════════════════════════════════════════════════ */}
         <div className="form-col form-col--side">
+
+          {/* ── Varianten (nur im Edit-Modus) ───────────────────────────── */}
+          {isEdit && id && (
+            <div className="form-section">
+              <h2 className="form-section__title">Varianten</h2>
+              <VariantEditor productId={id} />
+            </div>
+          )}
 
           {/* ── Sichtbarkeit ────────────────────────────────────────────── */}
           <div className="form-section">

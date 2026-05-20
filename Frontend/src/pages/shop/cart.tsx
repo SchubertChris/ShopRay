@@ -35,19 +35,21 @@ export default function CartPage() {
               {/* Artikel-Liste */}
               <div className="cart-items">
                 {items.map(item => (
-                  <div key={item.id} className="cart-item">
+                  <div key={item.cartKey} className="cart-item">
                     <div className="cart-item__thumb">
                       <ProductImage product={item} />
                     </div>
                     <div className="cart-item__info">
                       <div className="cart-item__name">{item.name}</div>
-                      <div className="cart-item__variant">{item.category}</div>
+                      <div className="cart-item__variant">
+                        {item.sku ? item.sku.label : item.category}
+                      </div>
                       <div className="cart-item__actions">
                         <div className="cart-item__qty">
-                          <button onClick={() => updateQuantity(item.id, -1)} aria-label="Weniger">−</button>
+                          <button onClick={() => updateQuantity(item.cartKey, -1)} aria-label="Weniger">−</button>
                           <span>{item.quantity}</span>
                           <button onClick={() => {
-                            const result = updateQuantity(item.id, +1);
+                            const result = updateQuantity(item.cartKey, +1);
                             if (!result.ok) notify({ type: 'error', title: result.reason ?? 'Nicht verfügbar' });
                           }} aria-label="Mehr">+</button>
                         </div>
@@ -58,7 +60,7 @@ export default function CartPage() {
                     </div>
                     <button
                       className="cart-item__remove"
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => removeItem(item.cartKey)}
                       aria-label={`${item.name} entfernen`}
                     >
                       <X size={16} strokeWidth={2} />

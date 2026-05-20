@@ -190,7 +190,7 @@ export default function CheckoutPage() {
           country:   form.country,
         },
         paymentMethod: form.paymentMethod,
-        cartItems:     items.map(i => ({ productId: i.id, quantity: i.quantity })),
+        cartItems:     items.map(i => ({ productId: i.id, quantity: i.quantity, ...(i.sku ? { skuId: i.sku.id } : {}) })),
         ...(isGuest && form.guestEmail ? { guestEmail:   form.guestEmail  } : {}),
         ...(discount                   ? { discountCode: discount.code     } : {}),
       });

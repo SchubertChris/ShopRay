@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import { Search, ChevronLeft, Heart, CheckCircle2, Check, ExternalLink, FileText } from 'lucide-react';
 import { useProductBySlug, useRelatedProducts } from '@features/products';
-import type { LmivInfo } from '@features/products';
+import type { LmivInfo, ProductSku } from '@features/products';
+import type { CartItemSku } from '@features/cart';
 import { ImageGallery } from '@features/products/components/ImageGallery';
 import { useCart } from '@features/cart';
 import { useNotifications } from '@features/notifications';
@@ -52,6 +53,7 @@ export default function ProductDetailPage() {
   const toggle         = useWishlist(state => state.toggle);
   const { isAuthenticated } = useAuth();
   const [qty,       setQty]       = useState(1);
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<Tab>(
     () => window.location.hash === '#reviews' ? 'reviews' : 'details'
   );
@@ -121,10 +123,46 @@ export default function ProductDetailPage() {
     );
   }
 
+  const hasVariants = (product?.variantOptions?.length ?? 0) > 0;
+
+  const selectedSku: ProductSku | null = hasVariants && product?.skus
+    ? product.skus.find(s => {
+        const opts = product.variantOptions ?? [];
+        return opts.every(o => s.combination[o.name] === selectedVariants[o.name]);
+      }) ?? null
+    : null;
+
+  const allVariantsSelected = hasVariants
+    ? (product?.variantOptions ?? []).every(o => selectedVariants[o.name])
+    : true;
+
+  const effectiveStock = hasVariants
+    ? (allVariantsSelected && selectedSku ? selectedSku.stock : 0)
+    : (product?.stock ?? 0);
+
+  const effectivePrice = hasVariants && selectedSku
+    ? (parseFloat(product!.price) + selectedSku.priceOffset).toFixed(2)
+    : product?.price ?? '0';
+
   function handleAddToCart() {
+    if (!product) return;
+    if (hasVariants && !allVariantsSelected) {
+      notify({ type: 'error', title: 'Bitte wähle alle Varianten aus' });
+      return;
+    }
+
+    const cartSku: CartItemSku | undefined = (hasVariants && selectedSku)
+      ? {
+          id:          selectedSku.id,
+          label:       (product.variantOptions ?? []).map(o => selectedVariants[o.name]).join(' / '),
+          stock:       selectedSku.stock,
+          priceOffset: selectedSku.priceOffset,
+        }
+      : undefined;
+
     let blocked = false;
     for (let i = 0; i < qty; i++) {
-      const result = addItem(product!);
+      const result = addItem(product, cartSku);
       if (!result.ok) {
         notify({ type: 'error', title: result.reason ?? 'Nicht verfügbar' });
         blocked = true;
@@ -132,7 +170,7 @@ export default function ProductDetailPage() {
       }
     }
     if (!blocked) {
-      notify({ type: 'success', title: 'In den Warenkorb gelegt', message: product!.name, action: { label: 'Zum Warenkorb', href: '/cart' } });
+      notify({ type: 'success', title: 'In den Warenkorb gelegt', message: product.name, action: { label: 'Zum Warenkorb', href: '/cart' } });
     }
   }
 
@@ -275,11 +313,11 @@ export default function ProductDetailPage() {
 
                 {/* Preis */}
                 <div className="product-info__price-block">
-                  <span className="product-info__price">{product.price} €</span>
-                  {product.oldPrice && (
+                  <span className="product-info__price">{effectivePrice} €</span>
+                  {product.oldPrice && !hasVariants && (
                     <span className="product-info__price-old">{product.oldPrice} €</span>
                   )}
-                  {product.discount && (
+                  {product.discount && !hasVariants && (
                     <span className="badge badge--danger">{product.discount}</span>
                   )}
                 </div>
@@ -302,20 +340,79 @@ export default function ProductDetailPage() {
                   </ul>
                 )}
 
+                {/* Varianten-Selector */}
+                {hasVariants && product.variantOptions && (
+                  <div className="product-variants">
+                    {product.variantOptions.map(opt => (
+                      <div key={opt.id} className="product-variants__group">
+                        <p className="product-variants__label">
+                          {opt.name}
+                          {selectedVariants[opt.name] && (
+                            <span className="product-variants__selected">: {selectedVariants[opt.name]}</span>
+                          )}
+                        </p>
+                        <div className="product-variants__options">
+                          {opt.values.map(val => {
+                            const testCombo = { ...selectedVariants, [opt.name]: val.value };
+                            const matchingSku = product.skus?.find(s =>
+                              (product.variantOptions ?? []).every(o =>
+                                !testCombo[o.name] || s.combination[o.name] === testCombo[o.name]
+                              )
+                            );
+                            const isUnavailable = product.skus &&
+                              !product.skus.some(s => s.combination[opt.name] === val.value && s.stock > 0);
+                            const priceOffset = matchingSku?.priceOffset ?? 0;
+
+                            return (
+                              <button
+                                key={val.id}
+                                className={`product-variants__btn${selectedVariants[opt.name] === val.value ? ' is-active' : ''}${isUnavailable ? ' is-unavailable' : ''}`}
+                                onClick={() => !isUnavailable && setSelectedVariants(prev => ({ ...prev, [opt.name]: val.value }))}
+                                disabled={!!isUnavailable}
+                                title={isUnavailable ? 'Nicht verfügbar' : undefined}
+                              >
+                                {val.value}
+                                {priceOffset !== 0 && (
+                                  <span className="product-variants__offset">
+                                    {priceOffset > 0 ? `+${priceOffset.toFixed(2)}` : priceOffset.toFixed(2)} €
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                    {allVariantsSelected && selectedSku && (
+                      <p className={`product-variants__stock${selectedSku.stock <= 3 ? ' product-variants__stock--low' : ''}`}>
+                        {selectedSku.stock === 0
+                          ? 'Ausverkauft'
+                          : selectedSku.stock <= 3
+                          ? `Nur noch ${selectedSku.stock} auf Lager`
+                          : 'Auf Lager'}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* Menge + In den Warenkorb */}
                 <div className="product-info__add-row">
-                  <div className={`product-info__qty${(product.stock ?? 1) === 0 ? ' product-info__qty--disabled' : ''}`}>
-                    <button onClick={() => setQty(q => Math.max(1, q - 1))} aria-label="Weniger" disabled={(product.stock ?? 1) === 0}>−</button>
+                  <div className={`product-info__qty${effectiveStock === 0 ? ' product-info__qty--disabled' : ''}`}>
+                    <button onClick={() => setQty(q => Math.max(1, q - 1))} aria-label="Weniger" disabled={effectiveStock === 0}>−</button>
                     <span>{qty}</span>
-                    <button onClick={() => setQty(q => q + 1)} aria-label="Mehr" disabled={(product.stock ?? 1) === 0}>+</button>
+                    <button onClick={() => setQty(q => q + 1)} aria-label="Mehr" disabled={effectiveStock === 0}>+</button>
                   </div>
                   <button
                     className="btn btn--primary btn--lg"
                     onClick={handleAddToCart}
-                    disabled={(product.stock ?? 1) === 0}
-                    aria-disabled={(product.stock ?? 1) === 0}
+                    disabled={effectiveStock === 0 || (hasVariants && !allVariantsSelected)}
+                    aria-disabled={effectiveStock === 0 || (hasVariants && !allVariantsSelected)}
                   >
-                    {(product.stock ?? 1) === 0 ? 'Ausverkauft' : 'In den Warenkorb'}
+                    {effectiveStock === 0
+                      ? 'Ausverkauft'
+                      : hasVariants && !allVariantsSelected
+                      ? 'Variante wählen'
+                      : 'In den Warenkorb'}
                   </button>
                   {FEATURES.wishlist && (
                     <button

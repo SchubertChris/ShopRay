@@ -184,6 +184,49 @@ export const bulkImportProducts = (rows: BulkImportRow[]) =>
     '/api/admin/products/bulk', 'POST', rows,
   );
 
+// ── Produktvarianten ──────────────────────────────────────────────────────────
+
+export interface AdminVariantOptionValue {
+  id:    string;
+  value: string;
+  position: number;
+}
+
+export interface AdminVariantOption {
+  id:       string;
+  name:     string;
+  position: number;
+  variant_option_values: AdminVariantOptionValue[];
+}
+
+export interface AdminProductSku {
+  id:           string;
+  combination:  Record<string, string>;
+  stock:        number;
+  price_offset: number;
+  sku_code:     string | null;
+  active:       boolean;
+}
+
+export interface VariantsPayload {
+  options: Array<{ name: string; values: string[] }>;
+  skus:    Array<{
+    combination:  Record<string, string>;
+    stock:        number;
+    price_offset: number;
+    sku_code?:    string | null;
+    active?:      boolean;
+  }>;
+}
+
+export const getProductVariants = (productId: string) =>
+  apiFetch<{ options: AdminVariantOption[]; skus: AdminProductSku[] }>(
+    `/api/admin/products/${productId}/variants`,
+  );
+
+export const saveProductVariants = (productId: string, payload: VariantsPayload) =>
+  apiFetch<{ success: boolean }>(`/api/admin/products/${productId}/variants`, 'PUT', payload);
+
 // ── Versandeinstellungen ──────────────────────────────────────────────────────
 
 export interface ShippingSettings {

@@ -22,6 +22,7 @@ const CheckoutSchema = z.object({
     z.object({
       productId: z.string().uuid('Ungültige Produkt-ID'),
       quantity:  z.number().int('Menge muss eine ganze Zahl sein').min(1, 'Mindestmenge: 1').max(100, 'Maximalmenge: 100'),
+      skuId:     z.string().uuid().optional(),
     }),
   ).min(1, 'Mindestens ein Artikel erforderlich').max(50, 'Maximal 50 verschiedene Artikel'),
   shippingAddress: z.object({
@@ -216,27 +217,67 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
 
     const productMap = new Map(dbProducts.map(p => [p.id, p]));
 
+    // SKUs für Varianten-Artikel laden
+    const skuIds = items.map(i => i.skuId).filter(Boolean) as string[];
+    const skuMap = new Map<string, { id: string; product_id: string; stock: number; price_offset: number; combination: Record<string, string> }>();
+    if (skuIds.length > 0) {
+      const { data: dbSkus } = await supabase
+        .from('product_skus')
+        .select('id, product_id, stock, price_offset, combination')
+        .in('id', skuIds)
+        .eq('active', true);
+      if (dbSkus) {
+        for (const sku of dbSkus) {
+          skuMap.set(sku.id as string, sku as typeof skuMap extends Map<string, infer V> ? V : never);
+        }
+      }
+    }
+
     for (const item of items) {
       const product = productMap.get(item.productId);
       if (!product) {
         res.status(400).json({ error: `Produkt ${item.productId} nicht gefunden.` });
         return;
       }
-      if ((product.stock as number) < item.quantity) {
-        res.status(409).json({
-          error: `"${product.name as string}" ist nicht mehr ausreichend auf Lager.`,
-          code:  'OUT_OF_STOCK',
-        });
-        return;
+
+      if (item.skuId) {
+        const sku = skuMap.get(item.skuId);
+        if (!sku || sku.product_id !== item.productId) {
+          res.status(400).json({ error: `Ungültige Variante für "${product.name as string}".` });
+          return;
+        }
+        if ((sku.stock as number) < item.quantity) {
+          res.status(409).json({
+            error: `"${product.name as string}" ist in dieser Variante nicht mehr ausreichend auf Lager.`,
+            code:  'OUT_OF_STOCK',
+          });
+          return;
+        }
+      } else {
+        if ((product.stock as number) < item.quantity) {
+          res.status(409).json({
+            error: `"${product.name as string}" ist nicht mehr ausreichend auf Lager.`,
+            code:  'OUT_OF_STOCK',
+          });
+          return;
+        }
       }
     }
 
     const lineItems = items.map(item => {
-      const product = productMap.get(item.productId)!;
+      const product     = productMap.get(item.productId)!;
+      const sku         = item.skuId ? skuMap.get(item.skuId) : undefined;
+      const priceOffset = sku ? Number(sku.price_offset) : 0;
+      const effectivePrice = Number(product.price) + priceOffset;
+      const variantLabel   = sku
+        ? Object.values(sku.combination as Record<string, string>).join(' / ')
+        : null;
       return {
         product,
         quantity:        item.quantity,
-        unitAmountCents: Math.round(Number(product.price) * 100),
+        unitAmountCents: Math.round(effectivePrice * 100),
+        skuId:           item.skuId ?? null,
+        variantLabel,
       };
     });
 
@@ -296,13 +337,14 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
     if (orderErr || !order) throw orderErr ?? new Error('Order konnte nicht erstellt werden');
 
     await supabase.from('order_items').insert(
-      lineItems.map(({ product, quantity, unitAmountCents }) => ({
-        order_id:     order.id,
-        product_id:   product.id,
-        product_name: product.name,
+      lineItems.map(({ product, quantity, unitAmountCents, skuId, variantLabel }) => ({
+        order_id:      order.id,
+        product_id:    product.id,
+        product_name:  variantLabel ? `${product.name as string} (${variantLabel})` : product.name,
         quantity,
-        price:        (unitAmountCents / 100).toFixed(2),
-        image_url:    product.image_url ?? null,
+        price:         (unitAmountCents / 100).toFixed(2),
+        image_url:     product.image_url ?? null,
+        sku_id:        skuId ?? null,
       })),
     );
 

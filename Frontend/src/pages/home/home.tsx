@@ -633,7 +633,7 @@ export default function HomePage() {
                       </div>
                       <button
                         className="drawer__remove-btn"
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => removeItem(item.cartKey)}
                         aria-label={`${item.name} entfernen`}
                       >×</button>
                     </div>

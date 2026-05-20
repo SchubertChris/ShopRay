@@ -6,7 +6,7 @@ export type PaymentMethod = 'card' | 'paypal' | 'klarna' | 'bank-transfer';
 export interface CheckoutPayload {
   shipping:      Address;
   paymentMethod: PaymentMethod;
-  cartItems:     Array<{ productId: string; quantity: number }>;
+  cartItems:     Array<{ productId: string; quantity: number; skuId?: string }>;
   guestEmail?:   string;
   discountCode?: string;
 }

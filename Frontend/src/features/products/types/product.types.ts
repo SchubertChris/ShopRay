@@ -34,6 +34,28 @@ export interface ProductDocument {
   type:  'pdf' | 'external';
 }
 
+export interface VariantOptionValue {
+  id:       string;
+  value:    string;
+  position: number;
+}
+
+export interface VariantOption {
+  id:       string;
+  name:     string;
+  position: number;
+  values:   VariantOptionValue[];
+}
+
+export interface ProductSku {
+  id:          string;
+  combination: Record<string, string>;
+  stock:       number;
+  priceOffset: number;
+  skuCode:     string | null;
+  active:      boolean;
+}
+
 /** Ein einzelnes Produkt im Shop */
 export interface Product {
   id:          string;
@@ -68,6 +90,10 @@ export interface Product {
   dealerLinks?:     DealerLink[];
   /** Downloadbare Dokumente (PDFs, Zertifikate) */
   documents?:       ProductDocument[];
+
+  // ── Varianten (nur auf Detailseite geladen) ────────────────────────────────
+  variantOptions?: VariantOption[];
+  skus?:           ProductSku[];
 }
 
 export type ProductCategory = 'Wohnen' | 'Deko' | 'Küche' | 'Textilien' | 'Kunst';
