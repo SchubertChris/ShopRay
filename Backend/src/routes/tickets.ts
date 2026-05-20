@@ -4,6 +4,7 @@ import { optionalAuth, AuthRequest }      from '../middleware/auth';
 import { ticketRateLimit }                from '../middleware/security';
 import { supabase }                       from '../lib/supabase';
 import { validate }                       from '../lib/validate';
+import { createNotification }            from '../lib/notify';
 
 const router = Router();
 
@@ -58,6 +59,13 @@ router.post('/', optionalAuth, ticketRateLimit, validate(TicketSchema), async (r
     await supabase
       .from('ticket_messages')
       .insert({ ticket_id: ticket.id, sender: 'customer', text: description });
+
+    void createNotification(
+      'new_ticket',
+      `Neues Ticket: ${subject}`,
+      description.slice(0, 120),
+      '/support',
+    );
 
     res.status(201).json({ id: ticket.id, subject: ticket.subject, status: ticket.status });
   } catch (err) {

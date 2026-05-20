@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { sendMail, sendMailWithAttachment, orderConfirmationHtml } from '../lib/mailer';
 import { generateInvoicePdf } from '../lib/invoice-pdf';
 import { sendPushToAll } from './admin-push';
+import { createNotification } from '../lib/notify';
 import Stripe from 'stripe';
 
 const router = Router();
@@ -188,6 +189,13 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction): 
           url:   `/orders/${order.id}`,
         }).catch(err => console.error('Push fehlgeschlagen:', err));
 
+        void createNotification(
+          'new_order',
+          `Neue Bestellung eingegangen`,
+          `${session.customer_email ?? 'Gast'} — ${((session.amount_total ?? 0) / 100).toFixed(2)} €`,
+          `/orders`,
+        );
+
         // Rechnung generieren und per E-Mail versenden (non-blocking)
         if (customerEmail) {
           generateInvoiceAndSend(order.id as string, customerEmail).catch(e =>
@@ -202,6 +210,11 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction): 
         const orderId = intent.metadata?.orderId;
         if (!orderId) break;
         await supabase.from('orders').update({ status: 'payment_failed' }).eq('id', orderId);
+        void createNotification(
+          'payment_failed',
+          'Zahlung fehlgeschlagen',
+          `Betrag: ${((event.data.object as Stripe.PaymentIntent).amount / 100).toFixed(2)} €`,
+        );
         break;
       }
 

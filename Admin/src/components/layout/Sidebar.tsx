@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import {
   LayoutDashboard, Package, ShoppingCart, Users,
   MessageSquare, Settings, LogOut, ChevronRight, Mail,
-  Star, Tag, RotateCcw, TicketPercent, BarChart2,
+  Star, Tag, RotateCcw, TicketPercent, BarChart2, CheckSquare,
 } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import { useBadgeStore } from '@stores/badgeStore';
@@ -52,6 +52,7 @@ const NAV: NavGroup[] = [
     items: [
       { to: ROUTES.SUPPORT.TICKETS,  icon: MessageSquare,   label: 'Tickets',   badgeKey: 'openTickets'  },
       { to: ROUTES.INQUIRIES,        icon: Mail,            label: 'Anfragen',  badgeKey: 'newInquiries' },
+      { to: ROUTES.TASKS,            icon: CheckSquare,     label: 'Aufgaben'                            },
     ],
   },
   {

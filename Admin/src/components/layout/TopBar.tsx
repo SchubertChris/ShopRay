@@ -1,5 +1,8 @@
+import { useState }            from 'react';
 import { Menu, Bell, Sun, Moon, RefreshCw } from 'lucide-react';
-import { useTheme } from '../../providers/ThemeProvider';
+import { useTheme }             from '../../providers/ThemeProvider';
+import { useNotifications }     from '../../hooks/useNotifications';
+import { NotificationDropdown } from '../notifications/NotificationDropdown';
 
 interface TopBarProps {
   onMenuClick: () => void;
@@ -7,7 +10,9 @@ interface TopBarProps {
 }
 
 export function TopBar({ onMenuClick, title }: TopBarProps) {
-  const { mode, toggleMode } = useTheme();
+  const { mode, toggleMode }                     = useTheme();
+  const { items, unread, markRead, markAllRead } = useNotifications();
+  const [open, setOpen] = useState(false);
 
   return (
     <header className="admin-topbar">
@@ -34,10 +39,30 @@ export function TopBar({ onMenuClick, title }: TopBarProps) {
 
         <div className="admin-topbar__divider" />
 
-        <button className="admin-topbar__btn" title="Benachrichtigungen">
-          <Bell size={18} strokeWidth={1.75} />
-          <span className="admin-topbar__notif-dot" />
-        </button>
+        <div className="admin-topbar__notif-wrap">
+          <button
+            className={`admin-topbar__btn${open ? ' is-active' : ''}`}
+            title="Benachrichtigungen"
+            onClick={() => setOpen(v => !v)}
+          >
+            <Bell size={18} strokeWidth={1.75} />
+            {unread > 0 && (
+              <span className="admin-topbar__notif-badge">
+                {unread > 99 ? '99+' : unread}
+              </span>
+            )}
+          </button>
+
+          {open && (
+            <NotificationDropdown
+              items={items}
+              unread={unread}
+              onMarkRead={markRead}
+              onMarkAll={markAllRead}
+              onClose={() => setOpen(false)}
+            />
+          )}
+        </div>
       </div>
     </header>
   );

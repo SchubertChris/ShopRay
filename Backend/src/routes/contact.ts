@@ -5,6 +5,7 @@ import { sendMail, contactNotificationHtml } from '../lib/mailer';
 import { contactRateLimit } from '../middleware/security';
 import { requireAdmin }     from '../middleware/adminAuth';
 import { validate, UUIDParam } from '../lib/validate';
+import { createNotification } from '../lib/notify';
 
 const router = Router();
 
@@ -33,6 +34,13 @@ router.post('/', contactRateLimit, validate(ContactSchema), async (req: Request,
       .insert({ name, email, subject, message, consent: true });
 
     if (dbError) throw dbError;
+
+    void createNotification(
+      'new_inquiry',
+      `Neue Anfrage: ${name}`,
+      message.slice(0, 120),
+      '/inquiries',
+    );
 
     const ownerEmail = process.env.SMTP_FROM_EMAIL;
     if (ownerEmail) {

@@ -781,3 +781,57 @@ export const updateReturnRequest = (
   data: { status: ReturnStatus; label_url?: string | null; admin_note?: string | null },
 ) =>
   apiFetch<AdminReturnRequest>(`/api/admin/orders/return-requests/${id}`, 'PATCH', data);
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+export interface AdminNotification {
+  id:         string;
+  type:       string;
+  title:      string;
+  body:       string | null;
+  link:       string | null;
+  created_at: string;
+  read:       boolean;
+}
+
+export interface NotificationsResponse {
+  items:  AdminNotification[];
+  unread: number;
+}
+
+export const getNotifications  = () => apiFetch<NotificationsResponse>('/api/admin/notifications');
+export const markNotificationRead = (id: string) =>
+  apiFetch<{ ok: boolean }>(`/api/admin/notifications/${id}/read`, 'POST');
+export const markAllNotificationsRead = () =>
+  apiFetch<{ ok: boolean }>('/api/admin/notifications/read-all', 'POST');
+
+// ── Tasks ─────────────────────────────────────────────────────────────────────
+export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
+export type TaskStatus   = 'open' | 'in_progress' | 'done';
+
+export interface AdminTask {
+  id:          string;
+  title:       string;
+  description: string | null;
+  assigned_to: string | null;
+  priority:    TaskPriority;
+  status:      TaskStatus;
+  due_date:    string | null;
+  created_at:  string;
+  updated_at:  string;
+}
+
+export interface CreateTaskPayload {
+  title:       string;
+  description?: string;
+  assigned_to?: string | null;
+  priority:    TaskPriority;
+  due_date?:   string | null;
+}
+
+export const getTasks    = () => apiFetch<AdminTask[]>('/api/admin/tasks');
+export const createTask  = (payload: CreateTaskPayload) =>
+  apiFetch<AdminTask>('/api/admin/tasks', 'POST', payload);
+export const updateTaskStatus = (id: string, status: TaskStatus) =>
+  apiFetch<AdminTask>(`/api/admin/tasks/${id}/status`, 'PATCH', { status });
+export const deleteTask  = (id: string) =>
+  apiFetch<{ ok: boolean }>(`/api/admin/tasks/${id}`, 'DELETE');

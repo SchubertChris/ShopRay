@@ -312,17 +312,6 @@
     }
   }
 
-  &__notif-dot {
-    position:      absolute;
-    top:           4px;
-    right:         4px;
-    width:         6px;
-    height:        6px;
-    border-radius: 50%;
-    background:    var(--clr-error);
-    border:        2px solid var(--clr-surface);
-  }
-
   &__divider {
     width:      1px;
     height:     18px;
