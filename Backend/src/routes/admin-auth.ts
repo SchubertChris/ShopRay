@@ -117,11 +117,11 @@ router.post('/login', authRateLimit, validate(LoginSchema), async (req: Request,
 
   const valid = await bcrypt.compare(password, hash);
   if (!valid) {
-    void supabase.from('admin_login_log').insert({
+    supabase.from('admin_login_log').insert({
       ip_address: ip,
       user_agent: (req.headers['user-agent'] ?? '').slice(0, 500),
       success: false,
-    });
+    }).then(({ error: e }) => { if (e) console.error('[login-log] insert failed:', e.message); });
     res.status(401).json({ error: 'Ungültige Anmeldedaten.' });
     return;
   }
@@ -174,7 +174,8 @@ router.post('/login/totp', authRateLimit, validate(TotpSchema), async (req: Requ
   const ip        = getClientIp(req);
   const userAgent = (req.headers['user-agent'] ?? '').slice(0, 500);
   const date      = new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' });
-  void supabase.from('admin_login_log').insert({ ip_address: ip, user_agent: userAgent, success: true });
+  supabase.from('admin_login_log').insert({ ip_address: ip, user_agent: userAgent, success: true })
+    .then(({ error: e }) => { if (e) console.error('[login-log] insert failed:', e.message); });
 
   const ownerEmail = process.env.SMTP_FROM_EMAIL;
   const adminUrl   = process.env.ADMIN_URL ?? 'https://shopray-admin.vercel.app';
@@ -199,11 +200,11 @@ router.post('/login/mod', authRateLimit, validate(ModLoginSchema), async (req: R
 
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
   if (authError || !authData.user) {
-    void supabase.from('admin_login_log').insert({
+    supabase.from('admin_login_log').insert({
       ip_address: ip,
       user_agent: (req.headers['user-agent'] ?? '').slice(0, 500),
       success: false,
-    });
+    }).then(({ error: e }) => { if (e) console.error('[login-log] insert failed:', e.message); });
     res.status(401).json({ error: 'Ungültige Anmeldedaten.' });
     return;
   }
@@ -236,11 +237,11 @@ router.post('/login/mod', authRateLimit, validate(ModLoginSchema), async (req: R
 
   const token = jwt.sign({ role: 'mod', userId: authData.user.id }, secret, { expiresIn: '8h' });
 
-  void supabase.from('admin_login_log').insert({
+  supabase.from('admin_login_log').insert({
     ip_address: ip,
     user_agent: (req.headers['user-agent'] ?? '').slice(0, 500),
     success: true,
-  });
+  }).then(({ error: e }) => { if (e) console.error('[login-log] insert failed:', e.message); });
 
   res.json({ ok: true, token, role: 'mod', mustChangePassword: profile?.must_change_password ?? false });
 });
