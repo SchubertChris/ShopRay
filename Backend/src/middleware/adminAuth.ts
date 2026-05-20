@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { supabase } from '../lib/supabase';
 
 export type AdminRole = 'owner' | 'mod';
 
@@ -20,6 +21,40 @@ declare global {
   }
 }
 
+// ── Session-Invalidierungs-Cache ──────────────────────────────────────────────
+
+// Owner: gespeicherter Zeitpunkt der letzten Passwortänderung (admin_config.updated_at)
+let _ownerSessionsValidFrom: number | null = null;
+let _ownerCacheExpiry = 0;
+
+async function getOwnerSessionsValidFrom(): Promise<number | null> {
+  if (Date.now() < _ownerCacheExpiry) return _ownerSessionsValidFrom;
+  const { data } = await supabase.from('admin_config').select('updated_at').eq('id', 1).single();
+  _ownerSessionsValidFrom = data?.updated_at
+    ? Math.floor(new Date(data.updated_at as string).getTime() / 1000)
+    : null;
+  _ownerCacheExpiry = Date.now() + 60_000;
+  return _ownerSessionsValidFrom;
+}
+
+// Mod: prüft ob der Mod noch aktiv ist (Rolle = 'mod' in DB)
+const _modCache = new Map<string, { active: boolean; expiry: number }>();
+
+export function clearModCache(userId: string): void {
+  _modCache.delete(userId);
+}
+
+async function isModActive(userId: string): Promise<boolean> {
+  const cached = _modCache.get(userId);
+  if (cached && Date.now() < cached.expiry) return cached.active;
+  const { data } = await supabase.from('profiles').select('role').eq('id', userId).single();
+  const active = data?.role === 'mod';
+  _modCache.set(userId, { active, expiry: Date.now() + 5 * 60_000 });
+  return active;
+}
+
+// ── Token-Hilfsfunktion ───────────────────────────────────────────────────────
+
 export function extractToken(req: Request): string | undefined {
   const authHeader = req.headers['authorization'];
   if (authHeader?.startsWith('Bearer ')) return authHeader.slice(7);
@@ -39,7 +74,7 @@ function issueRenewal(payload: AdminJwtPayload, secret: string, res: Response): 
   }
 }
 
-export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
+export async function requireAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
   const token = extractToken(req);
   if (!token) { res.status(401).json({ error: 'Nicht authentifiziert' }); return; }
 
@@ -55,6 +90,25 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
 
     const p = payload as unknown as AdminJwtPayload;
     if (p.role !== 'owner' && p.role !== 'mod') throw new Error('Ungültige Rolle');
+
+    // Owner: Token nach Passwortänderung invalidieren
+    if (p.role === 'owner') {
+      const validFrom = await getOwnerSessionsValidFrom();
+      if (validFrom && p.iat < validFrom) {
+        res.status(401).json({ error: 'Sitzung abgelaufen — bitte neu anmelden' });
+        return;
+      }
+    }
+
+    // Mod: prüfen ob Rolle noch aktiv ist
+    if (p.role === 'mod' && p.userId) {
+      const active = await isModActive(p.userId);
+      if (!active) {
+        res.status(401).json({ error: 'Zugriff verweigert — Konto nicht mehr aktiv' });
+        return;
+      }
+    }
+
     req.adminRole   = p.role;
     req.adminUserId = p.userId;
     issueRenewal(p, secret, res);
@@ -64,7 +118,7 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
   }
 }
 
-export function requireOwner(req: Request, res: Response, next: NextFunction): void {
+export async function requireOwner(req: Request, res: Response, next: NextFunction): Promise<void> {
   const token = extractToken(req);
   if (!token) { res.status(401).json({ error: 'Nicht authentifiziert' }); return; }
 
@@ -83,6 +137,14 @@ export function requireOwner(req: Request, res: Response, next: NextFunction): v
       res.status(403).json({ error: 'Nur für Inhaber zugänglich.' });
       return;
     }
+
+    // Token nach Passwortänderung invalidieren
+    const validFrom = await getOwnerSessionsValidFrom();
+    if (validFrom && p.iat < validFrom) {
+      res.status(401).json({ error: 'Sitzung abgelaufen — bitte neu anmelden' });
+      return;
+    }
+
     req.adminRole   = p.role;
     req.adminUserId = p.userId;
     issueRenewal(p, secret, res);

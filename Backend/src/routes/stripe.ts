@@ -164,20 +164,20 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction): 
           }
         })().catch(e => console.error('Stock-Update fehlgeschlagen:', e));
 
-        // Gutschein-Verwendungszähler hochsetzen (non-blocking)
+        // Gutschein-Verwendungszähler atomar hochsetzen (Race Condition-sicher)
         const usedCode = session.metadata?.discountCode;
         if (usedCode) {
           void (async () => {
             const { data: dc } = await supabase
               .from('discount_codes')
-              .select('id, uses')
+              .select('id, max_uses')
               .filter('code', 'ilike', usedCode)
               .single();
             if (dc) {
-              await supabase
-                .from('discount_codes')
-                .update({ uses: (dc.uses as number) + 1 })
-                .eq('id', dc.id);
+              await supabase.rpc('increment_discount_uses', {
+                p_discount_id: dc.id,
+                p_max_uses:    dc.max_uses ?? null,
+              });
             }
           })().catch(e => console.error('Discount uses update fehlgeschlagen:', e));
         }

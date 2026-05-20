@@ -40,6 +40,17 @@ export async function sendMailWithAttachment({ to, subject, html, filename, cont
   });
 }
 
+// ── Hilfsfunktionen ───────────────────────────────────────────────────────────
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ── E-Mail-Templates ─────────────────────────────────────────────────────────
 
 export function orderConfirmationHtml(params: {
@@ -206,6 +217,11 @@ export function contactNotificationHtml(params: {
   message: string;
   date:    string;
 }): string {
+  const name    = escapeHtml(params.name);
+  const email   = escapeHtml(params.email);
+  const subject = escapeHtml(params.subject);
+  const message = escapeHtml(params.message);
+
   return `
     <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#111">
       <h2 style="font-size:20px;margin-bottom:4px">Neue Kontaktanfrage</h2>
@@ -214,21 +230,21 @@ export function contactNotificationHtml(params: {
       <table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px">
         <tr>
           <td style="padding:8px 12px;background:#f5f5f5;font-weight:600;width:100px;border-radius:4px 0 0 0">Name</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #eee">${params.name}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #eee">${name}</td>
         </tr>
         <tr>
           <td style="padding:8px 12px;background:#f5f5f5;font-weight:600">E-Mail</td>
           <td style="padding:8px 12px;border-bottom:1px solid #eee">
-            <a href="mailto:${params.email}" style="color:#0066cc">${params.email}</a>
+            <a href="mailto:${email}" style="color:#0066cc">${email}</a>
           </td>
         </tr>
         <tr>
           <td style="padding:8px 12px;background:#f5f5f5;font-weight:600">Betreff</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #eee">${params.subject}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #eee">${subject}</td>
         </tr>
         <tr>
           <td style="padding:8px 12px;background:#f5f5f5;font-weight:600;vertical-align:top;border-radius:0 0 0 4px">Nachricht</td>
-          <td style="padding:8px 12px;white-space:pre-wrap">${params.message}</td>
+          <td style="padding:8px 12px;white-space:pre-wrap">${message}</td>
         </tr>
       </table>
 

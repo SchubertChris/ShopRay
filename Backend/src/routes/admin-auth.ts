@@ -4,7 +4,7 @@ import bcrypt    from 'bcrypt';
 import jwt       from 'jsonwebtoken';
 import { verifySync } from 'otplib';
 import { authRateLimit }                from '../middleware/security';
-import { requireAdmin, requireOwner }   from '../middleware/adminAuth';
+import { requireAdmin, requireOwner, clearModCache } from '../middleware/adminAuth';
 import { supabase }                     from '../lib/supabase';
 import { sendMail, adminLoginAlertHtml, modInviteHtml } from '../lib/mailer';
 import { validate }                     from '../lib/validate';
@@ -512,7 +512,8 @@ router.delete('/mods/invite/:id', requireOwner, async (req: Request, res: Respon
 
 // ── DELETE /api/admin/mods/:id — Mitarbeiter-Rolle entziehen ─────────────────
 router.delete('/mods/:id', requireOwner, async (req: Request, res: Response): Promise<void> => {
-  const { id } = req.params;
+  const id = String(req.params.id);
+  clearModCache(id);
 
   const { data: profile } = await supabase
     .from('profiles')

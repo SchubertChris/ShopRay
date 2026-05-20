@@ -53,3 +53,12 @@ export const ticketRateLimit = rateLimit({
   legacyHeaders:   false,
   message:         { error: 'Zu viele Tickets. Bitte versuche es in einer Stunde erneut.' },
 });
+
+// ── Discount Rate-Limit — 30 Prüfungen / Stunde pro IP (Brute-Force-Schutz) ──
+export const discountRateLimit = rateLimit({
+  windowMs:        60 * 60 * 1000,
+  max:             30,
+  standardHeaders: true,
+  legacyHeaders:   false,
+  message:         { error: 'Zu viele Gutschein-Anfragen. Bitte versuche es später erneut.' },
+});

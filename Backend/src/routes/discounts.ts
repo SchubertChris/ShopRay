@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { Router, Request, Response, NextFunction } from 'express';
 import { supabase } from '../lib/supabase';
 import { validate } from '../lib/validate';
+import { discountRateLimit } from '../middleware/security';
 
 const router = Router();
 
@@ -11,7 +12,7 @@ const ValidateSchema = z.object({
 });
 
 // POST /api/discounts/validate — Gutscheincode prüfen (öffentlich, für Checkout)
-router.post('/validate', validate(ValidateSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.post('/validate', discountRateLimit, validate(ValidateSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { code, orderTotal } = req.body as z.infer<typeof ValidateSchema>;
 
@@ -22,18 +23,21 @@ router.post('/validate', validate(ValidateSchema), async (req: Request, res: Res
       .filter('code', 'ilike', code)
       .single();
 
+    // Einheitliche Fehlermeldung — verhindert Code-Enumeration per Bruteforce
+    const INVALID_MSG = 'Gutscheincode ungültig oder abgelaufen.';
+
     if (error || !data) {
-      res.status(404).json({ error: 'Gutscheincode ungültig oder nicht gefunden.' });
+      res.status(400).json({ error: INVALID_MSG });
       return;
     }
 
     if (data.expires_at && new Date(data.expires_at as string) < new Date()) {
-      res.status(400).json({ error: 'Dieser Gutscheincode ist abgelaufen.' });
+      res.status(400).json({ error: INVALID_MSG });
       return;
     }
 
     if (data.max_uses !== null && (data.uses as number) >= (data.max_uses as number)) {
-      res.status(400).json({ error: 'Dieser Gutscheincode wurde bereits zu oft verwendet.' });
+      res.status(400).json({ error: INVALID_MSG });
       return;
     }
 

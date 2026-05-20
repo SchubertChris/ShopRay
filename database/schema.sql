@@ -138,6 +138,30 @@ $$;
 REVOKE EXECUTE ON FUNCTION public.next_invoice_number(TEXT, INTEGER) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION public.next_invoice_number(TEXT, INTEGER) TO service_role;
 
+-- ── DISCOUNT ATOMIC INCREMENT (Gutschein Race Condition Fix) ──────────────────
+CREATE OR REPLACE FUNCTION public.increment_discount_uses(
+  p_discount_id UUID,
+  p_max_uses    INTEGER
+) RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_rows INTEGER;
+BEGIN
+  UPDATE public.discount_codes
+  SET    uses = uses + 1
+  WHERE  id = p_discount_id
+    AND  (p_max_uses IS NULL OR uses < p_max_uses);
+
+  GET DIAGNOSTICS v_rows = ROW_COUNT;
+  RETURN v_rows > 0;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.increment_discount_uses(UUID, INTEGER) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION public.increment_discount_uses(UUID, INTEGER) TO service_role;
+
 -- ── ORDERS ───────────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS public.orders (

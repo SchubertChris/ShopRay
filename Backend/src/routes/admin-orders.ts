@@ -268,6 +268,19 @@ router.patch('/:id/status', validate(UUIDParam, 'params'), validate(StatusSchema
   try {
     const { status } = req.body as { status: typeof VALID_STATUSES[number] };
 
+    // Nur Owner darf Bestellungen ohne Stripe-Zahlung manuell auf "paid" setzen
+    if (status === 'paid' && req.adminRole !== 'owner') {
+      const { data: orderCheck } = await supabase
+        .from('orders')
+        .select('stripe_payment_intent_id')
+        .eq('id', req.params.id)
+        .single();
+      if (!orderCheck?.stripe_payment_intent_id) {
+        res.status(403).json({ error: 'Nur der Inhaber kann Bestellungen ohne Stripe-Zahlung als bezahlt markieren.' });
+        return;
+      }
+    }
+
     // Status-spezifische Zeitstempel setzen
     const extra: Record<string, string> = {};
     if (status === 'paid'     && !req.body.paid_at)    extra.paid_at    = new Date().toISOString();
