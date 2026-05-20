@@ -283,7 +283,7 @@ export default function AnalyticsPage() {
                         tickFormatter={(v: string) => v.length > 16 ? v.slice(0, 15) + '…' : v}
                       />
                       <Tooltip
-                        formatter={(v: number) => [fmt(v), 'Umsatz']}
+                        formatter={(v: unknown) => [fmt(Number(v)), 'Umsatz']}
                         contentStyle={{ background: 'var(--clr-surface)', border: '1px solid var(--clr-border)', borderRadius: '8px', fontSize: '12px' }}
                       />
                       <Bar dataKey="revenue" fill="var(--clr-accent)" radius={[0, 4, 4, 0]} maxBarSize={18} />
@@ -325,7 +325,7 @@ export default function AnalyticsPage() {
                         formatter={(value: string) => <span style={{ fontSize: '11px', color: 'var(--clr-text)' }}>{value}</span>}
                       />
                       <Tooltip
-                        formatter={(v: number, name: string) => [v, name]}
+                        formatter={(v: unknown, name: unknown) => [Number(v), String(name)]}
                         contentStyle={{ background: 'var(--clr-surface)', border: '1px solid var(--clr-border)', borderRadius: '8px', fontSize: '12px' }}
                       />
                     </PieChart>
@@ -363,7 +363,7 @@ export default function AnalyticsPage() {
                       width={30}
                     />
                     <Tooltip
-                      formatter={(v: number) => [v, 'Bestellungen']}
+                      formatter={(v: unknown) => [Number(v), 'Bestellungen']}
                       contentStyle={{ background: 'var(--clr-surface)', border: '1px solid var(--clr-border)', borderRadius: '8px', fontSize: '12px' }}
                     />
                     <Bar dataKey="orders" fill="#6366f1" radius={[3, 3, 0, 0]} maxBarSize={24} />
