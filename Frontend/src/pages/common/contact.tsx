@@ -153,6 +153,7 @@ export default function ContactPage() {
                       value={form.name}
                       onChange={handleChange}
                       required
+                      maxLength={100}
                       autoComplete="name"
                     />
                   </div>
@@ -167,6 +168,7 @@ export default function ContactPage() {
                       value={form.email}
                       onChange={handleChange}
                       required
+                      maxLength={254}
                       autoComplete="email"
                     />
                   </div>
@@ -199,6 +201,7 @@ export default function ContactPage() {
                     value={form.message}
                     onChange={handleChange}
                     required
+                    maxLength={5000}
                   />
                 </div>
 

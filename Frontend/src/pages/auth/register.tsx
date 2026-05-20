@@ -65,6 +65,7 @@ export default function RegisterPage() {
               placeholder="Max"
               autoComplete="given-name"
               required
+              maxLength={100}
               value={firstName}
               onChange={e => setFirstName(e.target.value)}
             />
@@ -77,6 +78,7 @@ export default function RegisterPage() {
               placeholder="Mustermann"
               autoComplete="family-name"
               required
+              maxLength={100}
               value={lastName}
               onChange={e => setLastName(e.target.value)}
             />
@@ -91,6 +93,7 @@ export default function RegisterPage() {
             placeholder="max@example.com"
             autoComplete="email"
             required
+            maxLength={254}
             value={email}
             onChange={e => setEmail(e.target.value)}
           />

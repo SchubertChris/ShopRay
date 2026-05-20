@@ -52,15 +52,23 @@ const ReturnStatusSchema = z.object({
   admin_note: z.string().max(2000).optional().nullable(),
 });
 
+const ReturnQuerySchema = z.object({
+  page:  z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
+
 // GET /api/admin/orders/return-requests — alle Rücksendeanträge
-router.get('/return-requests', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.get('/return-requests', validate(ReturnQuerySchema, 'query'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { data, error } = await supabase
+    const { page, limit } = req.query as unknown as z.infer<typeof ReturnQuerySchema>;
+    const from = (page - 1) * limit;
+    const { data, error, count } = await supabase
       .from('return_requests')
-      .select('*, orders(order_number, total, user_id, payment_method)')
-      .order('created_at', { ascending: false });
+      .select('*, orders(order_number, total, user_id, payment_method)', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, from + limit - 1);
     if (error) throw error;
-    res.json(data ?? []);
+    res.json({ data: data ?? [], total: count ?? 0, page, limit });
   } catch (err) {
     next(err);
   }

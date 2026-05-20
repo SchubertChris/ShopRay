@@ -171,6 +171,7 @@ export default function TicketNewPage() {
             value={form.subject}
             onChange={handleChange}
             required
+            maxLength={200}
             autoComplete="off"
           />
         </div>
@@ -220,6 +221,7 @@ export default function TicketNewPage() {
             value={form.description}
             onChange={handleChange}
             required
+            maxLength={5000}
           />
         </div>
 
