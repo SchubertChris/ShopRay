@@ -31,8 +31,9 @@ import adminAnalyticsRouter  from './routes/admin-analytics';
 import adminVariantsRouter   from './routes/admin-variants';
 import settingsRouter        from './routes/settings';
 import sitemapRouter         from './routes/sitemap';
-import adminNotificationsRouter from './routes/admin-notifications';
-import adminTasksRouter         from './routes/admin-tasks';
+import adminNotificationsRouter  from './routes/admin-notifications';
+import adminTasksRouter          from './routes/admin-tasks';
+import adminRefundRequestsRouter from './routes/admin-refund-requests';
 
 const app  = express();
 const PORT = process.env.PORT ?? 5000;
@@ -83,8 +84,9 @@ app.use('/api/admin/discounts',   adminDiscountsRouter);
 app.use('/api/admin/analytics',  adminAnalyticsRouter);
 app.use('/api/admin/products',   adminVariantsRouter);
 app.use('/api/admin/settings',    settingsRouter);
-app.use('/api/admin/notifications', adminNotificationsRouter);
-app.use('/api/admin/tasks',         adminTasksRouter);
+app.use('/api/admin/notifications',    adminNotificationsRouter);
+app.use('/api/admin/tasks',            adminTasksRouter);
+app.use('/api/admin/refund-requests',  adminRefundRequestsRouter);
 
 // ── Favicon ───────────────────────────────────────────────────────────────────
 app.get('/favicon.svg', (_req, res) => {

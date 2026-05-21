@@ -434,9 +434,39 @@ export const updateOrderStatus = (id: string, status: string) =>
   );
 
 export const refundOrder = (id: string) =>
-  apiFetch<{ ok: boolean; refundId: string; status: string }>(
+  apiFetch<{ ok?: boolean; pending?: boolean; requestId?: string; refundId?: string; status?: string }>(
     `/api/admin/orders/${id}/refund`, 'POST',
   );
+
+// ── Refund Requests ───────────────────────────────────────────────────────────
+
+export interface RefundRequest {
+  id:                string;
+  order_id:          string;
+  order_number:      string;
+  amount:            number;
+  requested_by:      string;
+  requested_by_role: string;
+  status:            'pending' | 'approved' | 'rejected';
+  approved_by:       string | null;
+  approved_by_role:  string | null;
+  approved_at:       string | null;
+  rejected_reason:   string | null;
+  stripe_refund_id:  string | null;
+  created_at:        string;
+  updated_at:        string;
+}
+
+export const getRefundRequests = (status?: string) =>
+  apiFetch<{ data: RefundRequest[]; total: number }>(
+    `/api/admin/refund-requests${status ? `?status=${status}` : ''}`,
+  );
+
+export const approveRefundRequest = (id: string) =>
+  apiFetch<{ ok: boolean }>(`/api/admin/refund-requests/${id}/approve`, 'POST');
+
+export const rejectRefundRequest = (id: string, reason?: string) =>
+  apiFetch<{ ok: boolean }>(`/api/admin/refund-requests/${id}/reject`, 'POST', { reason });
 
 export async function downloadOrderInvoice(id: string): Promise<void> {
   const token = getAdminToken();

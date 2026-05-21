@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { supabase } from '../lib/supabase';
 
-export type AdminRole = 'owner' | 'mod';
+export type AdminRole = 'owner' | 'team_lead' | 'mod';
 
 export interface AdminJwtPayload {
   role:    AdminRole;
@@ -37,19 +37,19 @@ async function getOwnerSessionsValidFrom(): Promise<number | null> {
   return _ownerSessionsValidFrom;
 }
 
-// Mod: prüft ob der Mod noch aktiv ist (Rolle = 'mod' in DB)
-const _modCache = new Map<string, { active: boolean; expiry: number }>();
+// Staff (mod + team_lead): prüft ob der Nutzer noch eine aktive Staff-Rolle hat
+const _staffCache = new Map<string, { active: boolean; expiry: number }>();
 
 export function clearModCache(userId: string): void {
-  _modCache.delete(userId);
+  _staffCache.delete(userId);
 }
 
 async function isModActive(userId: string): Promise<boolean> {
-  const cached = _modCache.get(userId);
+  const cached = _staffCache.get(userId);
   if (cached && Date.now() < cached.expiry) return cached.active;
   const { data } = await supabase.from('profiles').select('role').eq('id', userId).single();
-  const active = data?.role === 'mod';
-  _modCache.set(userId, { active, expiry: Date.now() + 5 * 60_000 });
+  const active = data?.role === 'mod' || data?.role === 'team_lead';
+  _staffCache.set(userId, { active, expiry: Date.now() + 5 * 60_000 });
   return active;
 }
 
@@ -89,7 +89,7 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
     }
 
     const p = payload as unknown as AdminJwtPayload;
-    if (p.role !== 'owner' && p.role !== 'mod') throw new Error('Ungültige Rolle');
+    if (p.role !== 'owner' && p.role !== 'team_lead' && p.role !== 'mod') throw new Error('Ungültige Rolle');
 
     // Owner: Token nach Passwortänderung invalidieren
     if (p.role === 'owner') {
@@ -100,8 +100,8 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
       }
     }
 
-    // Mod: prüfen ob Rolle noch aktiv ist
-    if (p.role === 'mod' && p.userId) {
+    // Staff (mod / team_lead): prüfen ob Rolle noch aktiv ist
+    if ((p.role === 'mod' || p.role === 'team_lead') && p.userId) {
       const active = await isModActive(p.userId);
       if (!active) {
         res.status(401).json({ error: 'Zugriff verweigert — Konto nicht mehr aktiv' });
@@ -154,6 +154,53 @@ export async function requireOwner(req: Request, res: Response, next: NextFuncti
   }
 }
 
+export async function requireTeamLead(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const token = extractToken(req);
+  if (!token) { res.status(401).json({ error: 'Nicht authentifiziert' }); return; }
+
+  try {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error('JWT_SECRET fehlt');
+    const payload = jwt.verify(token, secret) as Record<string, unknown>;
+
+    if ('mustSetup2FA' in payload) {
+      res.status(401).json({ error: '2FA muss zuerst eingerichtet werden.' });
+      return;
+    }
+
+    const p = payload as unknown as AdminJwtPayload;
+    if (p.role !== 'owner' && p.role !== 'team_lead') {
+      res.status(403).json({ error: 'Nur für Team-Leads und Inhaber zugänglich.' });
+      return;
+    }
+
+    // Owner: Token nach Passwortänderung invalidieren
+    if (p.role === 'owner') {
+      const validFrom = await getOwnerSessionsValidFrom();
+      if (validFrom && p.iat < validFrom) {
+        res.status(401).json({ error: 'Sitzung abgelaufen — bitte neu anmelden' });
+        return;
+      }
+    }
+
+    // Team-Lead: prüfen ob Rolle noch aktiv ist
+    if (p.role === 'team_lead' && p.userId) {
+      const active = await isModActive(p.userId);
+      if (!active) {
+        res.status(401).json({ error: 'Zugriff verweigert — Konto nicht mehr aktiv' });
+        return;
+      }
+    }
+
+    req.adminRole   = p.role;
+    req.adminUserId = p.userId;
+    issueRenewal(p, secret, res);
+    next();
+  } catch {
+    res.status(401).json({ error: 'Sitzung abgelaufen — bitte neu anmelden' });
+  }
+}
+
 // Erlaubt sowohl reguläre Admin-Sessions als auch den kurzzeitigen Setup-2FA-Token
 export function requireAdminOrSetup2FA(req: Request, res: Response, next: NextFunction): void {
   const token = extractToken(req);
@@ -172,7 +219,7 @@ export function requireAdminOrSetup2FA(req: Request, res: Response, next: NextFu
     }
 
     const p = payload as unknown as AdminJwtPayload;
-    if (p.role !== 'owner' && p.role !== 'mod') throw new Error('Ungültige Rolle');
+    if (p.role !== 'owner' && p.role !== 'team_lead' && p.role !== 'mod') throw new Error('Ungültige Rolle');
     req.adminRole   = p.role;
     req.adminUserId = p.userId;
     issueRenewal(p, secret, res);

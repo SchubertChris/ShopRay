@@ -241,22 +241,24 @@ router.post('/login/mod', authRateLimit, validate(ModLoginSchema), async (req: R
     .eq('id', authData.user.id)
     .single();
 
-  if (profile?.role !== 'mod') {
+  const staffRoles = ['mod', 'team_lead'] as const;
+  if (!profile?.role || !(staffRoles as readonly string[]).includes(profile.role)) {
     res.status(403).json({ error: 'Kein Mitarbeiter-Zugriff.' });
     return;
   }
 
-  const token = jwt.sign({ role: 'mod', userId: authData.user.id }, secret, { expiresIn: '8h' });
+  const actualRole = profile.role as 'mod' | 'team_lead';
+  const token = jwt.sign({ role: actualRole, userId: authData.user.id }, secret, { expiresIn: '8h' });
 
   supabase.from('admin_login_log').insert({
     ip_address: ip,
     user_agent: (req.headers['user-agent'] ?? '').slice(0, 500),
     success:    true,
-    role:       'mod',
+    role:       actualRole,
     email:      authData.user.email ?? email,
   }).then(({ error: e }) => { if (e) console.error('[login-log] insert failed:', e.message); });
 
-  res.json({ ok: true, token, role: 'mod', mustChangePassword: profile?.must_change_password ?? false });
+  res.json({ ok: true, token, role: actualRole, mustChangePassword: profile?.must_change_password ?? false });
 });
 
 // ── POST /api/admin/logout ────────────────────────────────────────────────────

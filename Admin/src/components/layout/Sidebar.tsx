@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import {
   LayoutDashboard, Package, ShoppingCart, Users,
   MessageSquare, Settings, LogOut, ChevronRight, Mail,
-  Star, Tag, RotateCcw, TicketPercent, BarChart2, CheckSquare,
+  Star, Tag, RotateCcw, TicketPercent, BarChart2, CheckSquare, CircleDollarSign,
 } from 'lucide-react';
 import { useAuthStore } from '@stores/authStore';
 import { useBadgeStore } from '@stores/badgeStore';
@@ -41,8 +41,9 @@ const NAV: NavGroup[] = [
       { to: ROUTES.PRODUCTS.LIST,    icon: Package,         label: 'Produkte'                                       },
       { to: ROUTES.ORDERS.LIST,      icon: ShoppingCart,    label: 'Bestellungen', badgeKey: 'pendingOrders' },
       { to: ROUTES.CUSTOMERS.LIST,   icon: Users,           label: 'Kunden'                                         },
-      { to: ROUTES.RETURNS,          icon: RotateCcw,       label: 'Rücksendungen'                                  },
-      { to: ROUTES.CATEGORIES,       icon: Tag,             label: 'Kategorien'                                     },
+      { to: ROUTES.RETURNS,          icon: RotateCcw,         label: 'Rücksendungen'       },
+      { to: ROUTES.REFUND_REQUESTS,  icon: CircleDollarSign, label: 'Erstattungsanträge'  },
+      { to: ROUTES.CATEGORIES,       icon: Tag,              label: 'Kategorien'          },
       { to: ROUTES.REVIEWS,          icon: Star,            label: 'Bewertungen'                                    },
       { to: ROUTES.DISCOUNTS,        icon: TicketPercent,   label: 'Gutscheincodes'                                 },
     ],
@@ -79,9 +80,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const visibleNav = NAV.map(group => ({
     ...group,
     items: group.items.filter(item => {
-      if (role !== 'mod') return true;
-      const modHidden = [ROUTES.CATEGORIES, ROUTES.SETTINGS];
-      return !modHidden.includes(item.to as typeof modHidden[number]);
+      if (role === 'owner') return true;
+      const ownerOnly = [ROUTES.CATEGORIES, ROUTES.SETTINGS];
+      return !ownerOnly.includes(item.to as typeof ownerOnly[number]);
     }),
   })).filter(group => group.items.length > 0);
 
@@ -140,7 +141,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="admin-sidebar__user-info">
             <p className="admin-sidebar__user-name">Admin</p>
             <p className="admin-sidebar__user-role">
-              {role === 'mod' ? 'Mitarbeiter' : 'Inhaber'}
+              {role === 'owner' ? 'Inhaber' : role === 'team_lead' ? 'Teamleiter' : 'Mitarbeiter'}
             </p>
           </div>
           <button className="admin-sidebar__logout" onClick={handleLogout} title="Abmelden">

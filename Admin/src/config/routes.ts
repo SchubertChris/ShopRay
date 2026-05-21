@@ -26,5 +26,6 @@ export const ROUTES = {
   DISCOUNTS:  '/discounts',
   ANALYTICS:  '/analytics',
   SETTINGS:   '/settings',
-  TASKS:      '/tasks',
+  TASKS:           '/tasks',
+  REFUND_REQUESTS: '/refund-requests',
 } as const;

@@ -6,6 +6,7 @@ import { requireAdmin, requireOwner } from '../middleware/adminAuth';
 import { validate, UUIDParam } from '../lib/validate';
 import { generateInvoicePdf }  from '../lib/invoice-pdf';
 import { sendMail }     from '../lib/mailer';
+import { createNotification } from '../lib/notify';
 
 const router = Router();
 router.use(requireAdmin);
@@ -387,10 +388,11 @@ router.get('/:id/invoice', requireAdmin, validate(UUIDParam, 'params'), async (r
   }
 });
 
-// POST /api/admin/orders/:id/refund — automatische Stripe-Erstattung
-// Owner: bis 500 € | Mod: bis 50 €
-const MOD_REFUND_LIMIT   = 50;
-const OWNER_REFUND_LIMIT = 500;
+// POST /api/admin/orders/:id/refund — Vier-Augen-Prinzip für Rückerstattungen
+// Schwellen-Konstanten
+const MOD_LIMIT       = 50;    // mod darf direkt bis 50 € erstatten
+const TEAM_LEAD_LIMIT = 500;   // team_lead darf direkt bis 500 € erstatten
+const OWNER_THRESHOLD = 2000;  // ab hier nur Owner genehmigungsberechtigt
 
 router.post('/:id/refund', requireAdmin, validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -408,62 +410,115 @@ router.post('/:id/refund', requireAdmin, validate(UUIDParam, 'params'), async (r
       return;
     }
 
-    // Rollen-basiertes Betragslimit prüfen
-    const orderTotal = parseFloat(String(order.total ?? '0'));
-    const isMod      = req.adminRole === 'mod';
-    const limit      = isMod ? MOD_REFUND_LIMIT : OWNER_REFUND_LIMIT;
-    if (orderTotal > limit) {
-      const who = isMod ? `Mitarbeiter (max. ${MOD_REFUND_LIMIT} €)` : `Inhaber (max. ${OWNER_REFUND_LIMIT} €)`;
-      res.status(403).json({ error: `Erstattungsbetrag (€ ${orderTotal.toFixed(2)}) überschreitet das Limit für ${who}.` });
-      return;
-    }
-
     const paymentIntentId = order.stripe_payment_intent_id as string | null;
     if (!paymentIntentId) {
       res.status(409).json({ error: 'Keine Stripe-Payment-Intent-ID gefunden — manuelle Erstattung erforderlich.' });
       return;
     }
 
-    // Stripe-Erstattung auslösen
-    const refund = await stripe.refunds.create({ payment_intent: paymentIntentId });
+    const orderTotal  = parseFloat(String(order.total ?? '0'));
+    const role        = req.adminRole!;
+    const requesterId = req.adminUserId;
 
-    if (refund.status !== 'succeeded' && refund.status !== 'pending') {
-      res.status(502).json({ error: `Stripe-Erstattung fehlgeschlagen: ${refund.status}` });
+    // ── Direkte Ausführung prüfen ──────────────────────────────────────────────
+    const canExecuteDirectly =
+      role === 'owner' ||
+      (role === 'team_lead' && orderTotal <= TEAM_LEAD_LIMIT) ||
+      (role === 'mod'       && orderTotal <= MOD_LIMIT);
+
+    if (canExecuteDirectly) {
+      // Stripe-Erstattung direkt auslösen
+      const refund = await stripe.refunds.create({ payment_intent: paymentIntentId });
+
+      if (refund.status !== 'succeeded' && refund.status !== 'pending') {
+        res.status(502).json({ error: `Stripe-Erstattung fehlgeschlagen: ${refund.status}` });
+        return;
+      }
+
+      // Order-Status auf refunded setzen
+      await supabase
+        .from('orders')
+        .update({ status: 'refunded', updated_at: new Date().toISOString() })
+        .eq('id', req.params.id);
+
+      // Lagerbestand zurückbuchen (non-blocking)
+      const items = (order.order_items as Array<{ product_id: string; quantity: number }>) ?? [];
+      void (async () => {
+        for (const item of items) {
+          const { data: prod } = await supabase.from('products').select('stock').eq('id', item.product_id).single();
+          if (prod) {
+            await supabase.from('products').update({ stock: (prod.stock as number) + item.quantity }).eq('id', item.product_id);
+          }
+        }
+      })().catch(e => console.error('Stock-Rückbuchung fehlgeschlagen:', e));
+
+      // Kunden-E-Mail (non-blocking)
+      if (order.user_id) {
+        void supabase.auth.admin.getUserById(String(order.user_id)).then(({ data }) => {
+          const email = data?.user?.email;
+          if (email) {
+            void sendMail({
+              to:      email,
+              subject: `Erstattung für Bestellung ${order.order_number as string}`,
+              html:    `<p>Hallo,<br><br>deine Bestellung <strong>${order.order_number as string}</strong> wurde erstattet. Der Betrag erscheint in 5–10 Werktagen auf deinem Konto.</p>`,
+            }).catch(e => console.error('Erstattungs-Mail fehlgeschlagen:', e));
+          }
+        });
+      }
+
+      res.json({ ok: true, refundId: refund.id, status: refund.status });
       return;
     }
 
-    // Order-Status auf refunded setzen
-    await supabase
-      .from('orders')
-      .update({ status: 'refunded', updated_at: new Date().toISOString() })
-      .eq('id', req.params.id);
+    // ── Antrag erstellen (Vier-Augen-Prinzip) ─────────────────────────────────
+    // Prüfen ob bereits ein offener Antrag existiert
+    const { data: existingRequest } = await supabase
+      .from('refund_requests')
+      .select('id')
+      .eq('order_id', req.params.id)
+      .eq('status', 'pending')
+      .maybeSingle();
 
-    // Lagerbestand zurückbuchen
-    const items = (order.order_items as Array<{ product_id: string; quantity: number }>) ?? [];
-    void (async () => {
-      for (const item of items) {
-        const { data: prod } = await supabase.from('products').select('stock').eq('id', item.product_id).single();
-        if (prod) {
-          await supabase.from('products').update({ stock: (prod.stock as number) + item.quantity }).eq('id', item.product_id);
-        }
-      }
-    })().catch(e => console.error('Stock-Rückbuchung fehlgeschlagen:', e));
-
-    // Kunden-E-Mail (non-blocking)
-    if (order.user_id) {
-      void supabase.auth.admin.getUserById(String(order.user_id)).then(({ data }) => {
-        const email = data?.user?.email;
-        if (email) {
-          void sendMail({
-            to:      email,
-            subject: `Erstattung für Bestellung ${order.order_number as string}`,
-            html:    `<p>Hallo,<br><br>deine Bestellung <strong>${order.order_number as string}</strong> wurde erstattet. Der Betrag erscheint in 5–10 Werktagen auf deinem Konto.</p>`,
-          }).catch(e => console.error('Erstattungs-Mail fehlgeschlagen:', e));
-        }
-      });
+    if (existingRequest) {
+      res.status(409).json({ error: 'Für diese Bestellung existiert bereits ein offener Erstattungsantrag.' });
+      return;
     }
 
-    res.json({ ok: true, refundId: refund.id, status: refund.status });
+    // Bestimme wer genehmigen darf
+    const requiredApproverRole = orderTotal >= OWNER_THRESHOLD ? 'owner' : 'team_lead_or_owner';
+
+    const { data: newRequest, error: reqErr } = await supabase
+      .from('refund_requests')
+      .insert({
+        order_id:           req.params.id,
+        order_number:       order.order_number as string,
+        amount:             orderTotal,
+        requested_by:       requesterId ?? null,
+        requested_by_role:  role,
+        status:             'pending',
+        required_approver:  requiredApproverRole,
+        created_at:         new Date().toISOString(),
+        updated_at:         new Date().toISOString(),
+      })
+      .select('id')
+      .single();
+
+    if (reqErr || !newRequest) {
+      throw reqErr ?? new Error('Erstattungsantrag konnte nicht erstellt werden.');
+    }
+
+    // Admin-Notification
+    const approverHint = orderTotal >= OWNER_THRESHOLD
+      ? 'Nur der Inhaber kann diesen Antrag genehmigen.'
+      : 'Team-Lead oder Inhaber muss genehmigen.';
+    void createNotification(
+      'refund_request',
+      `Erstattungsantrag: Bestellung ${order.order_number as string}`,
+      `${role} beantragt Rückerstattung über € ${orderTotal.toFixed(2)}. ${approverHint}`,
+      `/admin/refund-requests/${newRequest.id as string}`,
+    ).catch(e => console.error('Refund-Request-Notification fehlgeschlagen:', e));
+
+    res.status(200).json({ pending: true, requestId: newRequest.id });
   } catch (err) {
     next(err);
   }

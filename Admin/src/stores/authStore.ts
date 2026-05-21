@@ -5,7 +5,7 @@ import {
   get2faSetupForced, confirm2faForced,
 } from '../api/adminApi';
 
-export type AdminRole = 'owner' | 'mod';
+export type AdminRole = 'owner' | 'team_lead' | 'mod';
 
 interface AuthState {
   isAuthed:           boolean;
@@ -49,11 +49,11 @@ export const useAuthStore = create<AuthState>()((set) => ({
   loginMod: async (email: string, password: string) => {
     const result = await modLogin(email, password);
     if (result.token) setAdminToken(result.token);
+    const role = (result.role as AdminRole) ?? 'mod';
     if (result.mustChangePassword) {
-      // Token speichern, aber noch nicht als vollständig authentifiziert markieren
-      set({ isAuthed: false, mustChangePassword: true, role: 'mod' });
+      set({ isAuthed: false, mustChangePassword: true, role });
     } else {
-      set({ isAuthed: true, mustChangePassword: false, role: 'mod' });
+      set({ isAuthed: true, mustChangePassword: false, role });
     }
   },
 
