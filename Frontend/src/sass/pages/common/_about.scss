@@ -205,9 +205,14 @@
     border-radius: 16px;
   }
 
-  // Value: fÃ¼llt die Karte oben (16/9 aspect-ratio vom Parent)
+  // Value: füllt die Karte oben (16/9 aspect-ratio vom Parent)
   &--value {
     border-radius: 0;
+  }
+
+  // Process: kreisförmig wie das .ag--process Element
+  &--process {
+    border-radius: 50%;
   }
 }
 

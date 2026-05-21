@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SeoMeta } from '@components/ui';
 import { ROUTES } from '@config/routes';
-import { IMAGES, getChapterImage, getValueImage, getTeamImage } from '@config/images';
+import { IMAGES, getChapterImage, getValueImage, getProcessImage, getTeamImage } from '@config/images';
 
 // ── DATA ──────────────────────────────────────────────────────────────────
 
@@ -336,11 +336,18 @@ export default function AboutPage() {
             {PROCESS.map((step, i) => (
               <div key={step.num} className="process-step" data-reveal>
                 <div className="process-step__graphic">
-                  <div className={`ag ag--process ag--p${(i % 4) + 1}`}>
-                    <div className="ag__blob" />
-                    <div className="ag__ring ag__ring--1" />
-                    <div className="ag__dot ag__dot--1" />
-                  </div>
+                  {getProcessImage(i) ? (
+                    <div className="about-photo about-photo--process">
+                      <img src={getProcessImage(i)} alt={step.title} loading="lazy" />
+                      <div className="about-photo__overlay" />
+                    </div>
+                  ) : (
+                    <div className={`ag ag--process ag--p${(i % 4) + 1}`}>
+                      <div className="ag__blob" />
+                      <div className="ag__ring ag__ring--1" />
+                      <div className="ag__dot ag__dot--1" />
+                    </div>
+                  )}
                 </div>
                 <span className="process-step__num">{step.num}</span>
                 <h5 className="process-step__title">{step.title}</h5>

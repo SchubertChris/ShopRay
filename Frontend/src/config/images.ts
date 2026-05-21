@@ -43,6 +43,13 @@ export const IMAGES = {
       'https://picsum.photos/seed/concepts-val2/420/380',
       'https://picsum.photos/seed/concepts-val3/420/380',
     ],
+    /** Prozess-Schritte "Wie ein Produkt entsteht" (4 Einträge) */
+    process: [
+      'https://picsum.photos/seed/concepts-proc1/400/400',
+      'https://picsum.photos/seed/concepts-proc2/400/400',
+      'https://picsum.photos/seed/concepts-proc3/400/400',
+      'https://picsum.photos/seed/concepts-proc4/400/400',
+    ],
   },
 
   /** Produkt-Hauptbilder — 8 Varianten, zyklisch nach Produkt-ID */
@@ -183,6 +190,11 @@ export function getChapterImage(index: number): string {
 /** Werte-Karten-Bild nach Index (leer = CSS-Grafik) */
 export function getValueImage(index: number): string {
   return IMAGES.about.values[index % IMAGES.about.values.length] ?? '';
+}
+
+/** Prozess-Schritt-Bild nach Index (leer = CSS-Grafik) */
+export function getProcessImage(index: number): string {
+  return (IMAGES.about.process as readonly string[])[index % IMAGES.about.process.length] ?? '';
 }
 
 /** Team-Foto nach Index (leer = Initialen-Avatar) */
