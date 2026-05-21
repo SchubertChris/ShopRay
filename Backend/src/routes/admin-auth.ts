@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { Router, Request, Response } from 'express';
 import bcrypt    from 'bcrypt';
 import jwt       from 'jsonwebtoken';
-import { verifySync } from 'otplib';
+import { authenticator } from 'otplib';
 import { authRateLimit }                from '../middleware/security';
 import { requireAdmin, requireOwner, clearModCache } from '../middleware/adminAuth';
 import { supabase }                     from '../lib/supabase';
@@ -175,7 +175,7 @@ router.post('/login/totp', authRateLimit, validate(TotpSchema), async (req: Requ
   const { data: totpRow } = await supabase.from('admin_totp').select('secret').limit(1).single();
   if (!totpRow) { res.status(500).json({ error: '2FA nicht konfiguriert.' }); return; }
 
-  const { valid: isValid } = verifySync({ token: totpCode, secret: totpRow.secret });
+  const isValid = authenticator.verify({ token: totpCode, secret: totpRow.secret });
   if (!isValid) { res.status(401).json({ error: 'Ungültiger TOTP-Code.' }); return; }
 
   const sessionToken = jwt.sign({ role: 'owner' }, secret, { expiresIn: '8h' });

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { Router, Request, Response, NextFunction } from 'express';
 import jwt            from 'jsonwebtoken';
-import { generateSecret, verifySync, generateURI } from 'otplib';
+import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
 import { supabase }                               from '../lib/supabase';
 import { requireAdmin, requireOwner, requireAdminOrSetup2FA }   from '../middleware/adminAuth';
@@ -44,8 +44,8 @@ router.get('/status', requireAdmin, async (_req: Request, res: Response, next: N
 // Erlaubt sowohl eingeloggte Admins als auch den Setup-Token beim Erstzugang
 router.get('/setup', requireAdminOrSetup2FA, async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const secret     = generateSecret();
-    const otpAuthUrl = generateURI({ issuer: APP_NAME, label: 'admin', secret });
+    const secret     = authenticator.generateSecret();
+    const otpAuthUrl = authenticator.keyuri('admin', APP_NAME, secret);
     const qrCode     = await QRCode.toDataURL(otpAuthUrl);
 
     res.json({ secret, qrCode, otpAuthUrl });
@@ -60,8 +60,8 @@ router.post('/confirm', requireAdminOrSetup2FA, validate(ConfirmSchema), async (
   try {
     const { secret: totpSecret, token } = req.body as z.infer<typeof ConfirmSchema>;
 
-    const result = verifySync({ token, secret: totpSecret });
-    if (!result.valid) {
+    const isValid = authenticator.verify({ token, secret: totpSecret });
+    if (!isValid) {
       res.status(400).json({ error: 'Ungültiger TOTP-Code.' });
       return;
     }
@@ -113,8 +113,8 @@ router.post('/verify', requireAdmin, validate(VerifySchema), async (req: Request
       return;
     }
 
-    const result = verifySync({ token, secret: data.secret });
-    if (!result.valid) {
+    const isValid = authenticator.verify({ token, secret: data.secret });
+    if (!isValid) {
       res.status(400).json({ error: 'Ungültiger TOTP-Code.' });
       return;
     }
