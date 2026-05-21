@@ -45,6 +45,24 @@ function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
+function fmtPaymentMethod(method: string | null): string {
+  if (!method) return 'Online-Zahlung';
+  const map: Record<string, string> = {
+    card:            'Kreditkarte',
+    sepa_debit:      'SEPA-Lastschrift',
+    paypal:          'PayPal',
+    klarna:          'Klarna',
+    sofort:          'Sofortüberweisung',
+    giropay:         'Giropay',
+    eps:             'EPS',
+    ideal:           'iDEAL',
+    bancontact:      'Bancontact',
+    p24:             'Przelewy24',
+    link:            'Link by Stripe',
+  };
+  return map[method.toLowerCase()] ?? method;
+}
+
 export function generateInvoicePdf(p: InvoiceParams): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc    = new PDFDocument({ size: 'A4', margin: 0, info: { Title: `Rechnung ${p.invoiceNumber}` } });
@@ -90,6 +108,7 @@ export function generateInvoicePdf(p: InvoiceParams): Promise<Buffer> {
       ['Rechnungsdatum',    fmtDate(p.invoiceDate)],
       ['Lieferdatum',       fmtDate(p.deliveryDate)],
       ['Bestellnummer',     p.orderNumber],
+      ['Zahlungsart',       fmtPaymentMethod(p.paymentMethod)],
     ];
     if (p.paidAt) cols.push(['Bezahlt am', fmtDate(p.paidAt)]);
 
