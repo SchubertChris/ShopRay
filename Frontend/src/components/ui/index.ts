@@ -8,3 +8,4 @@ export { LegalPage }    from './LegalPage';
 export { JsonLd }       from './JsonLd';
 export { Pagination }   from './Pagination';
 export { IconX, IconInstagram, IconFacebook, IconYouTube, IconTikTok, IconPinterest, IconGoogle } from './SocialIcons';
+export { ChatWidget }   from './ChatWidget';

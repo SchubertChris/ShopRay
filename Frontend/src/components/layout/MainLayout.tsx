@@ -4,7 +4,7 @@ import { Header } from './Header';
 import { Footer } from './Footer';
 import { ScrollToTop } from './ScrollToTop';
 import { ConsentBanner } from '@features/consent';
-import { Toast } from '@components/ui';
+import { Toast, ChatWidget } from '@components/ui';
 
 function useRevealObserver() {
   const { pathname } = useLocation();
@@ -45,6 +45,7 @@ export function MainLayout() {
       <Footer />
       <ConsentBanner />
       <Toast />
+      <ChatWidget />
     </>
   );
 }
