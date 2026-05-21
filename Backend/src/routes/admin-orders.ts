@@ -387,8 +387,12 @@ router.get('/:id/invoice', requireAdmin, validate(UUIDParam, 'params'), async (r
   }
 });
 
-// POST /api/admin/orders/:id/refund — automatische Stripe-Erstattung (nur Owner)
-router.post('/:id/refund', requireOwner, validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+// POST /api/admin/orders/:id/refund — automatische Stripe-Erstattung
+// Owner: bis 500 € | Mod: bis 50 €
+const MOD_REFUND_LIMIT   = 50;
+const OWNER_REFUND_LIMIT = 500;
+
+router.post('/:id/refund', requireAdmin, validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { data: order, error: oErr } = await supabase
       .from('orders')
@@ -401,6 +405,16 @@ router.post('/:id/refund', requireOwner, validate(UUIDParam, 'params'), async (r
     const refundableStatuses = ['paid', 'shipped', 'delivered'];
     if (!refundableStatuses.includes(order.status as string)) {
       res.status(409).json({ error: `Status "${order.status as string}" kann nicht erstattet werden.` });
+      return;
+    }
+
+    // Rollen-basiertes Betragslimit prüfen
+    const orderTotal = parseFloat(String(order.total ?? '0'));
+    const isMod      = req.adminRole === 'mod';
+    const limit      = isMod ? MOD_REFUND_LIMIT : OWNER_REFUND_LIMIT;
+    if (orderTotal > limit) {
+      const who = isMod ? `Mitarbeiter (max. ${MOD_REFUND_LIMIT} €)` : `Inhaber (max. ${OWNER_REFUND_LIMIT} €)`;
+      res.status(403).json({ error: `Erstattungsbetrag (€ ${orderTotal.toFixed(2)}) überschreitet das Limit für ${who}.` });
       return;
     }
 

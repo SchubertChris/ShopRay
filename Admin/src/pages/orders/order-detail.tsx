@@ -173,20 +173,27 @@ export default function OrderDetailPage() {
           <p className="page-header__sub">{formatDate(order.created_at)}</p>
         </div>
         <div className="page-header__actions">
-          {role === 'owner' && ['paid', 'shipped', 'delivered'].includes(order.status) && (
-            <button
-              className="btn-danger"
-              onClick={() => setShowRefundConfirm(true)}
-              disabled={refunding}
-              title="Automatische Stripe-Erstattung auslösen"
-            >
-              {refunding
-                ? <Loader2 size={14} strokeWidth={2} className="spin" />
-                : <RotateCcw size={14} strokeWidth={2} />
-              }
-              {refunding ? 'Wird erstattet…' : 'Rückerstattung'}
-            </button>
-          )}
+          {['paid', 'shipped', 'delivered'].includes(order.status) && (() => {
+            const limit        = role === 'owner' ? 500 : 50;
+            const withinLimit  = order.total <= limit;
+            const title        = withinLimit
+              ? 'Automatische Stripe-Erstattung auslösen'
+              : `Betrag überschreitet dein Limit (${role === 'owner' ? '500' : '50'} €)`;
+            return (
+              <button
+                className="btn-danger"
+                onClick={() => setShowRefundConfirm(true)}
+                disabled={refunding || !withinLimit}
+                title={title}
+              >
+                {refunding
+                  ? <Loader2 size={14} strokeWidth={2} className="spin" />
+                  : <RotateCcw size={14} strokeWidth={2} />
+                }
+                {refunding ? 'Wird erstattet…' : 'Rückerstattung'}
+              </button>
+            );
+          })()}
           <button
             className="btn-secondary"
             onClick={handleDownloadInvoice}
@@ -475,7 +482,7 @@ export default function OrderDetailPage() {
       <ConfirmDialog
         isOpen={showRefundConfirm}
         title="Rückerstattung auslösen?"
-        description={`Bestellung ${order.order_number} wird über Stripe vollständig erstattet. Der Betrag erscheint in 5–10 Werktagen beim Kunden. Lagerbestand wird automatisch zurückgebucht.${refundError ? ` — Fehler: ${refundError}` : ''}`}
+        description={`Bestellung ${order.order_number} (€ ${formatPrice(order.total)}) wird über Stripe vollständig erstattet. Der Betrag erscheint in 5–10 Werktagen beim Kunden. Lagerbestand wird automatisch zurückgebucht.${refundError ? ` — Fehler: ${refundError}` : ''}`}
         confirmLabel={refunding ? 'Wird erstattet…' : 'Jetzt erstatten'}
         cancelLabel="Abbrechen"
         variant="danger"
