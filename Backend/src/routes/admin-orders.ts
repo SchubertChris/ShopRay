@@ -316,7 +316,7 @@ router.patch('/:id/status', validate(UUIDParam, 'params'), validate(StatusSchema
 });
 
 // GET /api/admin/orders/:id/invoice — Rechnung als PDF
-router.get('/:id/invoice', validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.get('/:id/invoice', requireAdmin, validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { data: order, error } = await supabase
       .from('orders')

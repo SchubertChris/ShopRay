@@ -77,7 +77,7 @@ export function generateInvoicePdf(p: InvoiceParams): Promise<Buffer> {
     doc.font('Helvetica-Bold').fontSize(22).fillColor(BLACK)
        .text('RECHNUNG', R - 160, y, { width: 160, align: 'right' });
 
-    doc.font('Helvetica-Mono').fontSize(10).fillColor(MUTED)
+    doc.font('Courier').fontSize(10).fillColor(MUTED)
        .text(p.invoiceNumber, R - 160, y + 28, { width: 160, align: 'right' });
 
     // ── Trennlinie ──────────────────────────────────────────────────────────
