@@ -11,6 +11,7 @@ export interface ConfirmDialogProps {
   cancelLabel?:  string;
   variant?:      DialogVariant;
   loading?:      boolean;
+  children?:     React.ReactNode;
   onConfirm:     () => void;
   onCancel:      () => void;
 }
@@ -29,6 +30,7 @@ export default function ConfirmDialog({
   cancelLabel  = 'Abbrechen',
   variant      = 'info',
   loading      = false,
+  children,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -37,6 +39,7 @@ export default function ConfirmDialog({
       <div className={`confirm-dialog confirm-dialog--${variant}`}>
         <div className="confirm-dialog__icon">{ICONS[variant]}</div>
         <p className="confirm-dialog__desc">{description}</p>
+        {children}
         <div className="confirm-dialog__actions">
           <button className="btn-secondary" onClick={onCancel} disabled={loading}>
             {cancelLabel}
