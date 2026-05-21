@@ -282,6 +282,12 @@ router.patch('/:id/status', validate(UUIDParam, 'params'), validate(StatusSchema
   try {
     const { status } = req.body as { status: typeof VALID_STATUSES[number] };
 
+    // "refunded" darf nie manuell gesetzt werden — nur über den Stripe-Refund-Endpoint
+    if (status === 'refunded') {
+      res.status(403).json({ error: 'Status "Erstattet" kann nur über die Rückerstattungsfunktion gesetzt werden.' });
+      return;
+    }
+
     // Nur Owner darf Bestellungen ohne Stripe-Zahlung manuell auf "paid" setzen
     if (status === 'paid' && req.adminRole !== 'owner') {
       const { data: orderCheck } = await supabase

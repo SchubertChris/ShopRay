@@ -9,6 +9,7 @@ import ConfirmDialog       from '../../components/ui/ConfirmDialog';
 import { useAuthStore }    from '../../stores/authStore';
 import type { OrderStatus } from '../../types/index';
 
+// "refunded" fehlt bewusst — kann nur über den Stripe-Refund-Button gesetzt werden
 const STATUS_OPTIONS: Array<{ value: OrderStatus; label: string }> = [
   { value: 'pending',        label: 'Ausstehend'             },
   { value: 'paid',           label: 'Bezahlt'                },
@@ -16,7 +17,6 @@ const STATUS_OPTIONS: Array<{ value: OrderStatus; label: string }> = [
   { value: 'delivered',      label: 'Zugestellt'             },
   { value: 'cancelled',      label: 'Storniert'              },
   { value: 'payment_failed', label: 'Zahlung fehlgeschlagen' },
-  { value: 'refunded',       label: 'Erstattet'              },
 ];
 
 const STATUS_TIMELINE: Record<OrderStatus, string> = {
@@ -208,22 +208,28 @@ export default function OrderDetailPage() {
             <Truck size={14} strokeWidth={2} />
             {order.tracking_number ? 'Label erstellt' : 'DHL Label'}
           </button>
-          <select
-            value={status}
-            onChange={e => { setStatus(e.target.value as OrderStatus); setSaved(false); }}
-            className="form-select form-select--auto"
-          >
-            {STATUS_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-          <button className="btn-primary" onClick={handleSave} disabled={saving}>
-            {saving
-              ? <Loader2 size={14} strokeWidth={2} className="spin" />
-              : <Save    size={14} strokeWidth={2} />
-            }
-            {saving ? 'Speichert…' : saved ? 'Gespeichert ✓' : 'Speichern'}
-          </button>
+          {order.status === 'refunded' ? (
+            <span className="status-badge status-badge--refunded">Erstattet</span>
+          ) : (
+            <>
+              <select
+                value={status}
+                onChange={e => { setStatus(e.target.value as OrderStatus); setSaved(false); }}
+                className="form-select form-select--auto"
+              >
+                {STATUS_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+              <button className="btn-primary" onClick={handleSave} disabled={saving}>
+                {saving
+                  ? <Loader2 size={14} strokeWidth={2} className="spin" />
+                  : <Save    size={14} strokeWidth={2} />
+                }
+                {saving ? 'Speichert…' : saved ? 'Gespeichert ✓' : 'Speichern'}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
