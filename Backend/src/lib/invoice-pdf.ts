@@ -119,53 +119,56 @@ export function generateInvoicePdf(p: InvoiceParams): Promise<Buffer> {
     doc.moveTo(L, y).lineTo(R, y).strokeColor(LINE).lineWidth(0.75).stroke();
     y += 20;
 
-    // ── Artikel-Tabelle Header ──────────────────────────────────────────────
-    const colPos = { desc: L, qty: L + 270, unit: L + 340, net: L + 410, gross: R - 40 };
+    // ── Artikel-Tabelle — Spalten von rechts nach links definiert ──────────────
+    // R=539, L=56, Nutzbreite=483
+    // gross: 474–539 (w65) | net: 401–466 (w65) | unit: 318–393 (w75) | qty: 265–310 (w45) | desc: 56–257 (w201)
+    const W_DESC = 201; const W_QTY = 45; const W_UNIT = 75; const W_NET = 65; const W_GROSS = 65;
+    const C = {
+      desc:  L,           // 56
+      qty:   265,         // right-aligned in 45px
+      unit:  318,         // right-aligned in 75px  (= qty + W_QTY + 8)
+      net:   401,         // right-aligned in 65px  (= unit + W_UNIT + 8)
+      gross: 474,         // right-aligned in 65px  (= net + W_NET + 8) → right edge = 539 = R
+    };
 
     doc.font('Helvetica-Bold').fontSize(8.5).fillColor(MUTED);
-    ['BEZEICHNUNG', 'MENGE', 'EINZEL (NETTO)', 'NETTO', 'BRUTTO'].forEach((h, i) => {
-      const pos = [colPos.desc, colPos.qty, colPos.unit, colPos.net, colPos.gross][i];
-      const align = i === 0 ? 'left' : 'right';
-      doc.text(h, pos, y, { width: i === 0 ? 200 : 60, align });
-    });
+    doc.text('BEZEICHNUNG',   C.desc,  y, { width: W_DESC,  align: 'left'  });
+    doc.text('MENGE',         C.qty,   y, { width: W_QTY,   align: 'right' });
+    doc.text('EINZELPREIS',   C.unit,  y, { width: W_UNIT,  align: 'right' });
+    doc.text('NETTO',         C.net,   y, { width: W_NET,   align: 'right' });
+    doc.text('BRUTTO',        C.gross, y, { width: W_GROSS, align: 'right' });
 
     y += 14;
     doc.moveTo(L, y).lineTo(R, y).strokeColor(LINE).lineWidth(0.5).stroke();
     y += 10;
 
     // ── Artikel ─────────────────────────────────────────────────────────────
-    let subtotalGross = 0;
     p.items.forEach(item => {
       const grossTotal = item.price * item.quantity;
       const netUnit    = item.price / (1 + TAX_RATE);
       const netTotal   = netUnit * item.quantity;
-      subtotalGross   += grossTotal;
 
       doc.font('Helvetica').fontSize(9.5).fillColor(BLACK);
-      doc.text(item.name, colPos.desc, y, { width: 255 });
-      doc.text(String(item.quantity),         colPos.qty,   y, { width: 60, align: 'right' });
-      doc.text(`€ ${fmt(netUnit)}`,           colPos.unit,  y, { width: 60, align: 'right' });
-      doc.text(`€ ${fmt(netTotal)}`,          colPos.net,   y, { width: 60, align: 'right' });
-      doc.text(`€ ${fmt(grossTotal)}`,        colPos.gross, y, { width: 40, align: 'right' });
+      doc.text(item.name,               C.desc,  y, { width: W_DESC,  align: 'left'  });
+      doc.text(String(item.quantity),   C.qty,   y, { width: W_QTY,   align: 'right' });
+      doc.text(`€ ${fmt(netUnit)}`,     C.unit,  y, { width: W_UNIT,  align: 'right' });
+      doc.text(`€ ${fmt(netTotal)}`,    C.net,   y, { width: W_NET,   align: 'right' });
+      doc.text(`€ ${fmt(grossTotal)}`,  C.gross, y, { width: W_GROSS, align: 'right' });
       y += 18;
     });
 
     // Versandkosten
     if (p.shipping > 0) {
       const shippingNet = p.shipping / (1 + TAX_RATE);
-      subtotalGross    += p.shipping;
 
       doc.font('Helvetica').fontSize(9.5).fillColor(MUTED);
-      doc.text('Versandkosten',          colPos.desc, y, { width: 255 });
-      doc.text('1',                      colPos.qty,   y, { width: 60, align: 'right' });
-      doc.text(`€ ${fmt(shippingNet)}`,  colPos.unit,  y, { width: 60, align: 'right' });
-      doc.text(`€ ${fmt(shippingNet)}`,  colPos.net,   y, { width: 60, align: 'right' });
-      doc.text(`€ ${fmt(p.shipping)}`,   colPos.gross, y, { width: 40, align: 'right' });
+      doc.text('Versandkosten',            C.desc,  y, { width: W_DESC,  align: 'left'  });
+      doc.text('1',                        C.qty,   y, { width: W_QTY,   align: 'right' });
+      doc.text(`€ ${fmt(shippingNet)}`,    C.unit,  y, { width: W_UNIT,  align: 'right' });
+      doc.text(`€ ${fmt(shippingNet)}`,    C.net,   y, { width: W_NET,   align: 'right' });
+      doc.text(`€ ${fmt(p.shipping)}`,     C.gross, y, { width: W_GROSS, align: 'right' });
       y += 18;
     }
-
-    // subtotalGross wird berechnet, aber nicht weiter verwendet (Gesamtbetrag kommt aus p.total)
-    void subtotalGross;
 
     y += 4;
     doc.moveTo(L, y).lineTo(R, y).strokeColor(LINE).lineWidth(0.75).stroke();
