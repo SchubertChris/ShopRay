@@ -398,9 +398,9 @@ export default function ProductDetailPage() {
                 {/* Menge + In den Warenkorb */}
                 <div className="product-info__add-row">
                   <div className={`product-info__qty${effectiveStock === 0 ? ' product-info__qty--disabled' : ''}`}>
-                    <button onClick={() => setQty(q => Math.max(1, q - 1))} aria-label="Weniger" disabled={effectiveStock === 0}>−</button>
+                    <button onClick={() => setQty(q => Math.max(1, q - 1))} aria-label="Weniger" disabled={effectiveStock === 0 || qty <= 1}>−</button>
                     <span>{qty}</span>
-                    <button onClick={() => setQty(q => q + 1)} aria-label="Mehr" disabled={effectiveStock === 0}>+</button>
+                    <button onClick={() => setQty(q => Math.min(effectiveStock, q + 1))} aria-label="Mehr" disabled={effectiveStock === 0 || qty >= effectiveStock}>+</button>
                   </div>
                   <button
                     className="btn btn--primary btn--lg"

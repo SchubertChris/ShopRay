@@ -72,17 +72,23 @@ export default function DashboardPage() {
           {!loading && recentOrders.length === 0 && (
             <p className="dashboard__empty">Noch keine Bestellungen. <Link to={ROUTES.HOME}>Jetzt shoppen →</Link></p>
           )}
-          {!loading && recentOrders.map(o => (
-            <Link key={o.id} to={ROUTES.ACCOUNT.orderDetail(o.id)} className="order-card order-card--clickable">
-              <div className="order-card__thumb order-card__thumb--placeholder" />
-              <div className="order-card__info">
-                <div className="order-card__name">Bestellung {o.orderNumber}</div>
-                <div className="order-card__meta">{new Date(o.createdAt).toLocaleDateString('de-DE')}</div>
-              </div>
-              <span className={`order-status order-status--${o.status}`}>{orderStatusLabel(o.status)}</span>
-              <div className="order-card__price">{o.total.toFixed(2)} €</div>
-            </Link>
-          ))}
+          {!loading && recentOrders.map(o => {
+            const thumb = o.items[0]?.imageUrl;
+            return (
+              <Link key={o.id} to={ROUTES.ACCOUNT.orderDetail(o.id)} className="order-card order-card--clickable">
+                {thumb
+                  ? <img className="order-card__thumb" src={thumb} alt={o.items[0]?.productName ?? ''} loading="lazy" />
+                  : <div className="order-card__thumb order-card__thumb--placeholder" />
+                }
+                <div className="order-card__info">
+                  <div className="order-card__name">Bestellung {o.orderNumber}</div>
+                  <div className="order-card__meta">{new Date(o.createdAt).toLocaleDateString('de-DE')}</div>
+                </div>
+                <span className={`order-status order-status--${o.status}`}>{orderStatusLabel(o.status)}</span>
+                <div className="order-card__price">{o.total.toFixed(2)} €</div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>
