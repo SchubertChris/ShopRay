@@ -53,6 +53,7 @@ export default function SupportPage() {
   const [chatInput,   setChatInput]   = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [chatSending, setChatSending] = useState(false);
+  const [chatError,   setChatError]   = useState<string | null>(null);
   const pollRef      = useRef<ReturnType<typeof setInterval> | null>(null);
   const detailPanelRef = useRef<HTMLDivElement>(null);
   const touchStartY  = useRef(-1);
@@ -176,15 +177,19 @@ export default function SupportPage() {
     pollRef.current = null;
     setChatTicket(null);
     setChatMsgs([]);
+    setChatError(null);
   };
 
   const sendChat = async () => {
     if (!chatTicket || !chatInput.trim() || chatSending) return;
     setChatSending(true);
+    setChatError(null);
     try {
       const msg = await sendAdminMessage(chatTicket.id, chatInput.trim());
       setChatMsgs(prev => [...prev, msg]);
       setChatInput('');
+    } catch (e) {
+      setChatError(e instanceof Error ? e.message : 'Nachricht konnte nicht gesendet werden.');
     } finally {
       setChatSending(false);
     }
@@ -456,13 +461,16 @@ export default function SupportPage() {
               <p className="admin-chat-panel__empty">Noch keine Nachrichten.</p>
             )}
           </div>
+          {chatError && (
+            <div className="admin-chat-panel__error">{chatError}</div>
+          )}
           <div className="admin-chat-panel__input-bar">
             <input
               className="form-input"
               type="text"
               placeholder="Antwort schreiben…"
               value={chatInput}
-              onChange={e => setChatInput(e.target.value)}
+              onChange={e => { setChatInput(e.target.value); setChatError(null); }}
               onKeyDown={e => e.key === 'Enter' && sendChat()}
               disabled={chatSending}
               maxLength={5000}
