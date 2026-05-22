@@ -12,7 +12,12 @@ body {
   // Kein versehentliches Markieren von UI-Elementen
   -webkit-user-select: none;
   user-select:         none;
-  // Verhindert horizontales Überlaufen ohne sticky-Elemente zu brechen
+}
+
+// overflow-x MUSS auf #root statt body gesetzt werden:
+// body mit overflow != visible macht position:fixed relativ zu body (Chrome-Bug),
+// wodurch das Chat-Widget und andere Fixed-Elemente mit der Seite mitscrollen.
+#root {
   overflow-x: clip;
 }
 
