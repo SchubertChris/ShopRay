@@ -1,6 +1,6 @@
 # ShopRay — Setup Guide
 
-**Version:** 1.8.0 | **Letzte Aktualisierung:** 2026-05-20
+**Version:** 1.9.0 | **Letzte Aktualisierung:** 2026-05-22
 
 Dieser Guide führt dich Schritt für Schritt durch die Einrichtung deines ShopRay-Templates —
 von der Installation bis zum fertigen, live geschalteten Shop.
@@ -20,15 +20,16 @@ von der Installation bis zum fertigen, live geschalteten Shop.
 9. [Rechnungen einrichten](#9-rechnungen-einrichten)
 10. [DHL Versandlabels einrichten](#10-dhl-versandlabels-einrichten)
 11. [Push-Benachrichtigungen einrichten](#11-push-benachrichtigungen-einrichten)
-12. [Theme wählen](#12-theme-wählen)
-13. [Shop-Name & Firmendaten einrichten](#13-shop-name--firmendaten-einrichten)
-14. [Features aktivieren oder deaktivieren](#14-features-aktivieren-oder-deaktivieren)
-15. [Produkte befüllen](#15-produkte-befüllen)
-16. [Rechtliche Texte anpassen](#16-rechtliche-texte-anpassen)
-17. [Admin-Bereich einrichten](#17-admin-bereich-einrichten)
-18. [Deployment (Veröffentlichen)](#18-deployment)
-19. [Was gehört zu welchem Paket?](#19-pakete--was-gehört-wozu)
-20. [Technologie & Open Source](#20-technologie--open-source)
+12. [Newsletter (Brevo) einrichten](#12-newsletter-brevo-einrichten)
+13. [Theme wählen](#13-theme-wählen)
+14. [Shop-Name & Firmendaten einrichten](#14-shop-name--firmendaten-einrichten)
+15. [Features aktivieren oder deaktivieren](#15-features-aktivieren-oder-deaktivieren)
+16. [Produkte befüllen](#16-produkte-befüllen)
+17. [Rechtliche Texte anpassen](#17-rechtliche-texte-anpassen)
+18. [Admin-Bereich einrichten](#18-admin-bereich-einrichten)
+19. [Deployment (Veröffentlichen)](#19-deployment)
+20. [Was gehört zu welchem Paket?](#20-pakete--was-gehört-wozu)
+21. [Technologie & Open Source](#21-technologie--open-source)
 
 ---
 
@@ -564,7 +565,85 @@ Danach erscheint eine Push-Benachrichtigung bei jeder neuen Bestellung — auch 
 
 ---
 
-## 12. Theme wählen
+## 12. Newsletter (Brevo) einrichten
+
+Das Template enthält eine fertige Backend-Route für Newsletter-Anmeldungen. Alles was du brauchst ist ein kostenloser Brevo-Account.
+
+> **Warum Brevo?** Brevo ist EU-gehostet, DSGVO-konform und hat Double-Opt-In direkt eingebaut — gesetzlich vorgeschrieben in Deutschland (§ 7 Abs. 2 Nr. 3 UWG).
+
+### Schritt 1 — Brevo-Account anlegen
+
+1. Gehe auf **https://www.brevo.com** und erstelle einen kostenlosen Account
+2. E-Mail-Adresse bestätigen und einloggen
+
+### Schritt 2 — Kontaktliste anlegen
+
+1. Im Brevo-Dashboard: **Contacts → Lists → Create a list**
+2. Namen vergeben (z.B. „Shop Newsletter")
+3. Die **Listen-ID** notieren — eine Zahl, sichtbar in der URL (z.B. `/lists/3` → ID ist `3`)
+
+### Schritt 3 — API-Schlüssel erstellen
+
+1. Oben rechts auf deinen **Account-Namen** klicken → **SMTP & API**
+2. Tab **API Keys** → **Generate a new API key**
+3. Namen vergeben (z.B. „ShopRay"), auf **Generate** klicken
+4. Den angezeigten Schlüssel sofort kopieren — er wird nur einmal angezeigt!
+
+### Schritt 4 — Env-Variablen setzen
+
+Trage diese Werte in `Backend/.env` und in Vercel (**Settings → Environment Variables**) ein:
+
+```env
+# Pflicht
+BREVO_API_KEY=xkeysib-...           # dein API-Schlüssel aus Schritt 3
+BREVO_LIST_ID=3                     # Listen-ID aus Schritt 2
+
+# Optional — Double-Opt-In (empfohlen für Deutschland)
+BREVO_DOI_TEMPLATE_ID=1             # Template-ID (siehe Schritt 5)
+BREVO_REDIRECT_URL=https://deine-domain.de/newsletter-bestaetigt
+```
+
+### Schritt 5 — Double-Opt-In einrichten (empfohlen)
+
+Double-Opt-In bedeutet: der Kunde bekommt nach der Anmeldung eine E-Mail und muss darin auf einen Link klicken. Erst dann landet er in der Liste. Das ist in Deutschland gesetzlich vorgeschrieben.
+
+**Template in Brevo anlegen:**
+
+1. **Campaigns → Email Templates → Create a template**
+2. Template-Typ: **Confirmation** (Bestätigungs-E-Mail)
+3. Einen Text schreiben, z.B.:
+   > *Hallo, klicke auf den Button um deine Anmeldung zu bestätigen.*
+4. Den Button mit dem Platzhalter `{{ doubleoptin }}` verknüpfen — Brevo ersetzt das automatisch durch den Bestätigungslink
+5. Template speichern → die **Template-ID** notieren (steht in der URL)
+6. Diese ID als `BREVO_DOI_TEMPLATE_ID` eintragen
+
+> **Ohne `BREVO_DOI_TEMPLATE_ID`:** Der Kontakt wird direkt in die Liste eingetragen (kein Bestätigungs-E-Mail). Nur verwenden wenn du die Einwilligung anderweitig nachweisen kannst.
+
+### Schritt 6 — Newsletter-Feature aktivieren
+
+In `Frontend/src/config/features.ts`:
+
+```ts
+newsletter: true,   // Newsletter-Formular auf der Startseite anzeigen
+```
+
+### So funktioniert es im Hintergrund
+
+Wenn ein Besucher seine E-Mail eingibt und auf „Jetzt anmelden" klickt:
+
+1. Das Frontend sendet die E-Mail an `POST /api/newsletter/subscribe`
+2. Das Backend prüft die E-Mail-Adresse (Format, max. 254 Zeichen)
+3. Brevo wird aufgerufen — mit DOI: Bestätigungs-E-Mail wird verschickt; ohne DOI: direkte Listenzuweisung
+4. Bereits angemeldete Adressen werden still ignoriert (kein Fehler)
+5. Der Besucher sieht „Fast geschafft! Prüf deine E-Mails…"
+
+### Was passiert wenn `BREVO_API_KEY` nicht gesetzt ist?
+
+Die Route gibt trotzdem `200 OK` zurück — der Shop funktioniert normal, die Anmeldung wird lautlos verworfen. So entstehen keine sichtbaren Fehler wenn du den Newsletter noch nicht konfiguriert hast.
+
+---
+
+## 13. Theme wählen
 
 ShopRay kommt mit **4 Farbpaletten**, jede in **Dark und Light Mode** — macht 8 Themes gesamt.
 
@@ -591,7 +670,7 @@ ShopRay kommt mit **4 Farbpaletten**, jede in **Dark und Light Mode** — macht 
 
 ---
 
-## 13. Shop-Name & Firmendaten einrichten
+## 14. Shop-Name & Firmendaten einrichten
 
 Alle Shop- und Firmendaten sind zentral in einer Datei konfiguriert:
 [Frontend/src/config/app.ts](Frontend/src/config/app.ts)
@@ -624,16 +703,17 @@ export const APP_CONTACT = {
 
 ---
 
-## 14. Features aktivieren oder deaktivieren
+## 15. Features aktivieren oder deaktivieren
 
 Ändere in `Frontend/src/config/features.ts` die Werte:
 
 ```ts
 export const FEATURES = {
-  reviews:  true,   // Produktbewertungen
-  wishlist: true,   // Wunschliste
-  tickets:  true,   // Support-Tickets
-  chat:     false,  // Live-Chat
+  reviews:    true,   // Produktbewertungen
+  wishlist:   true,   // Wunschliste
+  tickets:    true,   // Support-Tickets
+  lmiv:       false,  // Nährwertangaben (nur für Lebensmittel / Supplements)
+  newsletter: true,   // Newsletter-Formular auf der Startseite (erfordert Brevo — Abschnitt 12)
 };
 ```
 
@@ -650,7 +730,7 @@ Nach jeder Änderung: `npx tsc --noEmit` ausführen um TypeScript-Fehler zu prü
 
 ---
 
-## 15. Produkte befüllen
+## 16. Produkte befüllen
 
 Produkte werden über den **Admin-Bereich** angelegt (empfohlen) oder direkt per SQL in die Datenbank eingefügt.
 
@@ -713,7 +793,7 @@ Im Ordner `database/seed.sql` liegt eine Datei mit Beispielprodukten. Diese kann
 
 ---
 
-## 16. Rechtliche Texte anpassen
+## 17. Rechtliche Texte anpassen
 
 > **Wichtig:** Die rechtlichen Texte im Template sind Platzhalter. Vor dem Launch anpassen — am besten mit einem Anwalt oder einem Dienst wie eRecht24 oder Trusted Shops.
 
@@ -733,9 +813,9 @@ Wenn du deine Daten in `Frontend/src/config/app.ts` einträgst (Abschnitt 10), w
 | **Widerruf** | `src/pages/info/widerruf.tsx` | Prüfen ob Muster passt |
 | **Versand** | Automatisch aus Admin-Panel | Kein manueller Eingriff nötig |
 
-### Newsletter — wichtiger Hinweis
+### Newsletter — rechtlicher Hinweis
 
-Das Template enthält kein Double-Opt-In. Nach § 7 Abs. 2 Nr. 3 UWG ist ein bestätigter Opt-In für Werbemails Pflicht. Wenn du einen Newsletter anbietest, musst du einen externen Anbieter (Mailchimp, Brevo, Klaviyo) integrieren.
+Das Template enthält eine fertige Brevo-Integration mit Double-Opt-In (§ 7 Abs. 2 Nr. 3 UWG). Richte Brevo ein wie in **Abschnitt 12** beschrieben und setze `BREVO_DOI_TEMPLATE_ID` — dann ist die gesetzliche Pflicht zur Einwilligung erfüllt. Ohne DOI-Template werden Kontakte direkt eingetragen, was nur zulässig ist wenn die Einwilligung anderweitig nachgewiesen werden kann.
 
 ### Für Nahrungsergänzungsmittel zusätzlich
 
@@ -745,7 +825,7 @@ Das Template enthält kein Double-Opt-In. Nach § 7 Abs. 2 Nr. 3 UWG ist ein bes
 
 ---
 
-## 17. Admin-Bereich einrichten
+## 18. Admin-Bereich einrichten
 
 Der Admin-Bereich ist ein separates Projekt (`Admin/`) und läuft unabhängig vom Shop-Frontend.
 
@@ -807,7 +887,7 @@ cd Admin && npm install && npm run dev
 
 ---
 
-## 18. Deployment
+## 19. Deployment
 
 ShopRay besteht aus drei separaten Vercel-Projekten im gleichen GitHub-Repository (**Monorepo**).
 
@@ -905,7 +985,7 @@ Im Demo-Modus sind alle schreibenden Admin-Operationen gesperrt (HTTP 403). Logi
 
 ---
 
-## 19. Pakete — Was gehört wozu
+## 20. Pakete — Was gehört wozu
 
 | Feature | Lite | Pro | Enterprise |
 |---|---|---|---|
@@ -928,7 +1008,7 @@ Im Demo-Modus sind alle schreibenden Admin-Operationen gesperrt (HTTP 403). Logi
 
 ---
 
-## 20. Technologie & Open Source
+## 21. Technologie & Open Source
 
 ShopRay basiert fast vollständig auf Open-Source-Technologien.
 
