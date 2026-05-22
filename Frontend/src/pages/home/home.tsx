@@ -227,12 +227,23 @@ export default function HomePage() {
       scrollTrigger: { trigger: '.newsletter-dark', start: 'top 82%' },
     });
 
-    // ── PRODUCT CARDS (Bestseller + Arrivals) — staggered pro Grid-Zeile ──────
-    gsap.utils.toArray<HTMLElement>('.products-grid .product-card').forEach((card, i) => {
+    // ── BESTSELLER CARDS — fade up, staggered pro Spalte ─────────────────────
+    gsap.utils.toArray<HTMLElement>('.products-grid:not(.products-grid--wide) .product-card').forEach((card, i) => {
       gsap.from(card, {
         y: 40, opacity: 0, duration: 0.8, ease: 'power2.out',
         delay: (i % 4) * 0.09,
         scrollTrigger: { trigger: card, start: 'top 92%', toggleActions: 'play none none none' },
+      });
+    });
+
+    // ── ARRIVALS CARDS — links/rechts alternierend, Zeile 2 nachgezogen ──────
+    gsap.utils.toArray<HTMLElement>('.products-grid--wide .product-card').forEach((card, i) => {
+      const fromLeft = i % 2 === 0;
+      const rowDelay = Math.floor(i / 2) * 0.14;
+      gsap.from(card, {
+        x: fromLeft ? -70 : 70, opacity: 0, duration: 1.05, ease: 'expo.out',
+        delay: rowDelay,
+        scrollTrigger: { trigger: card, start: 'top 88%', toggleActions: 'play none none none' },
       });
     });
   }, []); // Nur einmal auf Mount — kein Re-Run bei State-Änderungen
