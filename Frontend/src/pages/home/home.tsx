@@ -577,7 +577,7 @@ export default function HomePage() {
             </div>
             <Link className="products-head__link" to={ROUTES.SHOP.SEARCH}>Neuheiten →</Link>
           </div>
-          <div className="products-grid">
+          <div className="products-grid products-grid--wide">
             {products.slice(4, 8).map((p) => (
               <ProductCard key={p.id} product={p} skeleton={skeletons} onQuickView={setQuickView} />
             ))}
