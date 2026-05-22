@@ -223,6 +223,16 @@ export default function HomePage() {
       y: 45, opacity: 0, stagger: 0.1, duration: 1, ease: 'expo.out', immediateRender: false,
       scrollTrigger: { trigger: '.newsletter-dark', start: 'top 82%' },
     });
+
+    // ── PRODUCT CARDS (Bestseller + Arrivals) — staggered pro Grid-Zeile ──────
+    gsap.utils.toArray<HTMLElement>('.products-grid .product-card').forEach((card, i) => {
+      gsap.from(card, {
+        y: 40, opacity: 0, duration: 0.8, ease: 'power2.out',
+        immediateRender: false,
+        delay: (i % 4) * 0.09,
+        scrollTrigger: { trigger: card, start: 'top 92%', toggleActions: 'play none none none' },
+      });
+    });
   });
 
   function showToast(message: string, type: ToastState['type'] = 'success') {
@@ -491,8 +501,8 @@ export default function HomePage() {
             <Link className="products-head__link" to={ROUTES.SHOP.SEARCH}>Alle anzeigen →</Link>
           </div>
           <div className="products-grid">
-            {products.slice(0, 4).map((p, idx) => (
-              <ProductCard key={p.id} product={p} skeleton={skeletons} revealDelay={idx + 1} onQuickView={setQuickView} />
+            {products.slice(0, 4).map((p) => (
+              <ProductCard key={p.id} product={p} skeleton={skeletons} onQuickView={setQuickView} />
             ))}
           </div>
         </div>
@@ -566,8 +576,8 @@ export default function HomePage() {
             <Link className="products-head__link" to={ROUTES.SHOP.SEARCH}>Neuheiten →</Link>
           </div>
           <div className="products-grid">
-            {products.slice(4, 8).map((p, idx) => (
-              <ProductCard key={p.id} product={p} skeleton={skeletons} revealDelay={idx + 1} onQuickView={setQuickView} />
+            {products.slice(4, 8).map((p) => (
+              <ProductCard key={p.id} product={p} skeleton={skeletons} onQuickView={setQuickView} />
             ))}
           </div>
         </div>
