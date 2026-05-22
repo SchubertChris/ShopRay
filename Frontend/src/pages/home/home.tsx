@@ -43,10 +43,14 @@ const REVIEWS = [
 ];
 
 const FAQ_ITEMS = [
-  { q: 'Wie lange dauert die Lieferung?',   a: 'Standard 3–5 Werktage, Express 1–2 Werktage. Ab 50 € Bestellwert kostenfrei.' },
-  { q: 'Wie funktioniert die Rückgabe?',    a: '30 Tage Rückgaberecht ohne Angabe von Gründen — kostenlos per Retourenlink.' },
-  { q: 'Welche Zahlungsmethoden gibt es?',  a: 'Kreditkarte, PayPal, Klarna, Sofortüberweisung und Apple Pay.' },
-  { q: 'Kann ich meine Bestellung ändern?', a: 'Innerhalb von 30 Minuten nach Bestellung kostenfrei anpassen oder stornieren.' },
+  { q: 'Wie lange dauert die Lieferung?',        a: 'Standard 3–5 Werktage, Express 1–2 Werktage. Ab 50 € Bestellwert ist der Versand kostenlos.' },
+  { q: 'Wie funktioniert die Rückgabe?',         a: '30 Tage Rückgaberecht ohne Angabe von Gründen — kostenlos per Retourenlink direkt aus deinem Kundenkonto.' },
+  { q: 'Welche Zahlungsmethoden gibt es?',       a: 'Kreditkarte, PayPal, Klarna (Ratenkauf & Rechnung), Sofortüberweisung und Apple Pay.' },
+  { q: 'Kann ich meine Bestellung ändern?',      a: 'Innerhalb von 30 Minuten nach Bestellung kannst du Artikel, Menge und Adresse kostenfrei anpassen oder stornieren.' },
+  { q: 'Sind alle Produkte wirklich bio?',        a: 'Ja — jedes Produkt trägt eine EU-Bio-Zertifizierung. Unsere Lieferketten werden jährlich durch unabhängige Prüfstellen kontrolliert.' },
+  { q: 'Wie wird verpackt?',                     a: 'Vollständig plastikfrei: Kartons aus Recyclingpapier, Füllmaterial aus Maisstärke, Klebeband aus Papier. Alles kompostierbar.' },
+  { q: 'Gibt es eine Mindestbestellmenge?',      a: 'Nein — du kannst auch einzelne Artikel bestellen. Kostenloser Versand gilt bereits ab 50 € Warenwert.' },
+  { q: 'Wie erreiche ich den Kundensupport?',    a: 'Per Chat (Antwort < 2 h), E-Mail oder Telefon. Montag bis Freitag 9–18 Uhr, Samstag 10–14 Uhr.' },
 ];
 
 interface ToastState { visible: boolean; message: string; type: 'success' | 'error' | 'warning'; }
