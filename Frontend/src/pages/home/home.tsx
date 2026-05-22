@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
-import { HeroCanvas } from './HeroCanvas';
+import { gsap }                from 'gsap';
+import { ScrollTrigger }       from 'gsap/ScrollTrigger';
+import { useGSAP }             from '@gsap/react';
+import { HeroCanvas }          from './HeroCanvas';
+
+gsap.registerPlugin(ScrollTrigger);
 import { Link } from 'react-router-dom';
 import { useCart } from '@features/cart';
 import { useNotifications } from '@features/notifications';
@@ -78,16 +83,146 @@ export default function HomePage() {
     return () => clearInterval(id);
   }, [categories.length]);
 
+  // ScrollTrigger-Positionen nach Skeleton-Ende neu berechnen
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => entries.forEach(e => {
-        if (e.isIntersecting) { e.target.classList.add('is-visible'); observer.unobserve(e.target); }
-      }),
-      { threshold: 0.08 }
-    );
-    document.querySelectorAll('[data-reveal]').forEach(el => observer.observe(el));
-    return () => observer.disconnect();
+    if (!skeletons) ScrollTrigger.refresh();
   }, [skeletons]);
+
+  useGSAP(() => {
+    // ── HERO ENTRANCE ─────────────────────────────────────────────────────────
+    gsap.from('.editorial-hero__pill', {
+      y: 28, opacity: 0, duration: 0.95, delay: 0.2, ease: 'power3.out',
+    });
+    gsap.from('.hero-word__inner', {
+      y: '110%', stagger: 0.1, duration: 1, delay: 0.05, ease: 'expo.out',
+    });
+    gsap.from('.editorial-hero__sub', {
+      y: 24, opacity: 0, duration: 0.9, delay: 0.45, ease: 'power2.out',
+    });
+    gsap.from('.editorial-hero__ctas', {
+      y: 24, opacity: 0, duration: 0.9, delay: 0.62, ease: 'power2.out',
+    });
+    gsap.from('.hero-social', {
+      y: 20, opacity: 0, duration: 0.85, delay: 0.78, ease: 'power2.out',
+    });
+    gsap.from('.hero-slot', {
+      x: 70, opacity: 0, duration: 1.2, delay: 0.3, ease: 'expo.out',
+    });
+
+    // ── HERO PARALLAX ─────────────────────────────────────────────────────────
+    gsap.to('.editorial-hero__bg', {
+      yPercent: 28, ease: 'none',
+      scrollTrigger: {
+        trigger: '.editorial-hero',
+        start: 'top top',
+        end: 'bottom top',
+        scrub: true,
+      },
+    });
+    gsap.to('.hero-canvas', {
+      yPercent: 14, ease: 'none',
+      scrollTrigger: {
+        trigger: '.editorial-hero',
+        start: 'top top',
+        end: 'bottom top',
+        scrub: 1.8,
+      },
+    });
+
+    // ── TRUST BAR ─────────────────────────────────────────────────────────────
+    gsap.from('.trust-bar', {
+      opacity: 0, duration: 0.8,
+      scrollTrigger: { trigger: '.trust-bar', start: 'top 95%' },
+    });
+
+    // ── EDITORIAL INTRO ───────────────────────────────────────────────────────
+    gsap.from('.editorial-intro__text', {
+      y: 50, opacity: 0, duration: 1.1, ease: 'expo.out',
+      scrollTrigger: { trigger: '.editorial-intro', start: 'top 80%' },
+    });
+
+    // ── BENTO — jede Karte aus anderer Richtung ───────────────────────────────
+    const bentoFrom = [
+      { x: -100, y:    0, rotation: -2   },
+      { x:   80, y:  -60, rotation:  1.5 },
+      { x:    0, y:   80, rotation: -1   },
+      { x:  100, y:    0, rotation:  2   },
+      { x:    0, y:   70, rotation: -1.5 },
+      { x:  -70, y:   60, rotation:  1   },
+    ];
+    gsap.utils.toArray<HTMLElement>('.cat-bento__item').forEach((item, i) => {
+      const dir = bentoFrom[i] ?? { x: 0, y: 60, rotation: 0 };
+      gsap.from(item, {
+        ...dir, opacity: 0, duration: 1.25, ease: 'expo.out',
+        scrollTrigger: { trigger: item, start: 'top 92%', toggleActions: 'play none none none' },
+      });
+    });
+
+    // ── PRODUCTS HEAD ─────────────────────────────────────────────────────────
+    gsap.utils.toArray<HTMLElement>('.products-head').forEach(el => {
+      gsap.from(el, {
+        y: 32, opacity: 0, duration: 0.85, ease: 'power2.out',
+        scrollTrigger: { trigger: el, start: 'top 85%' },
+      });
+    });
+
+    // ── BRAND SPLIT ───────────────────────────────────────────────────────────
+    gsap.from('.brand-split__visual-wrap', {
+      x: -90, opacity: 0, duration: 1.35, ease: 'expo.out',
+      scrollTrigger: { trigger: '.brand-split', start: 'top 78%' },
+    });
+    gsap.from('.brand-split__content > *', {
+      x: 60, opacity: 0, stagger: 0.1, duration: 1.1, ease: 'expo.out',
+      scrollTrigger: { trigger: '.brand-split', start: 'top 78%' },
+    });
+
+    // ── PARTIKEL-RINGE (rotieren gegenläufig beim Scrollen) ───────────────────
+    gsap.to('.particle-ring--outer', {
+      rotation: 360, ease: 'none',
+      scrollTrigger: { trigger: '.brand-split', start: 'top bottom', end: 'bottom top', scrub: 1 },
+    });
+    gsap.to('.particle-ring--inner', {
+      rotation: -360, ease: 'none',
+      scrollTrigger: { trigger: '.brand-split', start: 'top bottom', end: 'bottom top', scrub: 1.6 },
+    });
+
+    // ── USP GRID ──────────────────────────────────────────────────────────────
+    gsap.utils.toArray<HTMLElement>('.usp-card').forEach((card, i) => {
+      gsap.from(card, {
+        y: 55, opacity: 0, scale: 0.93, duration: 0.95, ease: 'back.out(1.2)',
+        scrollTrigger: { trigger: '.usp-grid', start: 'top 82%', toggleActions: 'play none none none' },
+        delay: i * 0.08,
+      });
+    });
+
+    // ── TESTIMONIALS HEAD ─────────────────────────────────────────────────────
+    gsap.from('.testimonials-head', {
+      y: 30, opacity: 0, duration: 0.85, ease: 'power2.out',
+      scrollTrigger: { trigger: '.testimonials-head', start: 'top 85%' },
+    });
+
+    // ── REVIEWS ───────────────────────────────────────────────────────────────
+    gsap.from('.review-card-v2', {
+      y: 65, opacity: 0, stagger: 0.13, duration: 0.95, ease: 'power2.out',
+      scrollTrigger: { trigger: '.review-grid', start: 'top 82%' },
+    });
+
+    // ── FAQ ───────────────────────────────────────────────────────────────────
+    gsap.from('.faq-split__head', {
+      x: -50, opacity: 0, duration: 1.1, ease: 'expo.out',
+      scrollTrigger: { trigger: '.faq-split', start: 'top 80%' },
+    });
+    gsap.from('.faq-item-v2', {
+      y: 22, opacity: 0, stagger: 0.09, duration: 0.75, ease: 'power2.out',
+      scrollTrigger: { trigger: '.faq-split__items', start: 'top 85%' },
+    });
+
+    // ── NEWSLETTER ────────────────────────────────────────────────────────────
+    gsap.from('.newsletter-dark__inner > *', {
+      y: 45, opacity: 0, stagger: 0.1, duration: 1, ease: 'expo.out',
+      scrollTrigger: { trigger: '.newsletter-dark', start: 'top 82%' },
+    });
+  });
 
   function showToast(message: string, type: ToastState['type'] = 'success') {
     setToast({ visible: true, message, type });
@@ -204,42 +339,27 @@ export default function HomePage() {
 
         <div className="editorial-hero__inner">
           <div className="editorial-hero__content">
-          <div className="hero-glass">
-
-            <span
-              className="editorial-hero__pill hero-fade"
-              style={{ '--fd': '0s' } as React.CSSProperties}
-            >
+            <span className="editorial-hero__pill">
               Sommer 2026 — Neue Kollektion
             </span>
 
             <h1 className="editorial-hero__title">
               <span className="hero-word">
-                <span className="hero-word__inner" style={{ '--wd': '0.18s' } as React.CSSProperties}>
-                  Designed
-                </span>
+                <span className="hero-word__inner">Designed</span>
               </span>
               <br />
               <em>
                 <span className="hero-word">
-                  <span className="hero-word__inner" style={{ '--wd': '0.36s' } as React.CSSProperties}>
-                    to last.
-                  </span>
+                  <span className="hero-word__inner">to last.</span>
                 </span>
               </em>
             </h1>
 
-            <p
-              className="editorial-hero__sub hero-fade"
-              style={{ '--fd': '0.55s' } as React.CSSProperties}
-            >
+            <p className="editorial-hero__sub">
               Nachhaltige Wohnprodukte für ein bewusstes Leben. Von der Materialwahl bis zur plastikfreien Verpackung — jedes Detail durchdacht.
             </p>
 
-            <div
-              className="editorial-hero__ctas hero-fade"
-              style={{ '--fd': '0.72s' } as React.CSSProperties}
-            >
+            <div className="editorial-hero__ctas">
               <button
                 className="btn btn--primary btn--lg"
                 onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
@@ -251,10 +371,7 @@ export default function HomePage() {
               </button>
             </div>
 
-            <div
-              className="hero-social hero-fade"
-              style={{ '--fd': '0.9s' } as React.CSSProperties}
-            >
+            <div className="hero-social">
               <div className="hero-avatars">
                 {(['A', 'L', 'S', 'M'] as const).map((l, i) => {
                   const avatarUrl = getAvatarImage(i);
@@ -272,8 +389,6 @@ export default function HomePage() {
                 <span>4.9 · über 2.400 Kunden</span>
               </div>
             </div>
-
-          </div>{/* hero-glass */}
           </div>
 
           <div className="hero-slot" aria-label="Produktkategorien">
@@ -325,7 +440,7 @@ export default function HomePage() {
 
       {/* ── EDITORIAL INTRO ─────────────────────────────────────────────────── */}
       <section className="editorial-intro">
-        <div className="container" data-reveal>
+        <div className="container">
           <h2 className="editorial-intro__text">
             Nachhaltige Wohnprodukte.<br />
             <span className="editorial-intro__sub">Jedes Detail durchdacht — von der Materialwahl bis zur Verpackung.</span>
@@ -336,7 +451,7 @@ export default function HomePage() {
       {/* ── KATEGORIE BENTO ─────────────────────────────────────────────────── */}
       <section className="section">
         <div className="container">
-          <div className="cat-bento" data-reveal>
+          <div className="cat-bento">
             {categories.map((cat, idx) => {
               const catImg = cat.image_url ?? getCategoryImage(idx);
               return (
@@ -367,7 +482,7 @@ export default function HomePage() {
       {/* ── BESTSELLER ──────────────────────────────────────────────────────── */}
       <section className="dark-block" id="products">
         <div className="container">
-          <div className="products-head" data-reveal>
+          <div className="products-head">
             <div>
               <span className="products-head__eyebrow">Beliebt diese Woche</span>
               <h2 className="products-head__title">Bestseller</h2>
@@ -385,19 +500,23 @@ export default function HomePage() {
       {/* ── BRAND SPLIT ─────────────────────────────────────────────────────── */}
       <section className="section">
         <div className="container">
-          <div className="brand-split" data-reveal>
-            <div className="brand-split__visual">
-              {IMAGES.brand ? (
-                <>
-                  <img src={IMAGES.brand} alt="" loading="lazy" className="brand-split__img" />
-                  <div className="brand-split__overlay" aria-hidden="true" />
-                </>
-              ) : (
-                <div className="brand-split__orb" aria-hidden="true" />
-              )}
-              <div className="brand-chip">
-                <span className="brand-chip__label">Materialien</span>
-                <span className="brand-chip__value">100 % bio-zertifiziert</span>
+          <div className="brand-split">
+            <div className="brand-split__visual-wrap">
+              <div className="particle-ring particle-ring--outer" aria-hidden="true" />
+              <div className="particle-ring particle-ring--inner" aria-hidden="true" />
+              <div className="brand-split__visual">
+                {IMAGES.brand ? (
+                  <>
+                    <img src={IMAGES.brand} alt="" loading="lazy" className="brand-split__img" />
+                    <div className="brand-split__overlay" aria-hidden="true" />
+                  </>
+                ) : (
+                  <div className="brand-split__orb" aria-hidden="true" />
+                )}
+                <div className="brand-chip">
+                  <span className="brand-chip__label">Materialien</span>
+                  <span className="brand-chip__value">100 % bio-zertifiziert</span>
+                </div>
               </div>
             </div>
             <div className="brand-split__content">
@@ -423,7 +542,7 @@ export default function HomePage() {
       {/* ── USP GRID ────────────────────────────────────────────────────────── */}
       <section className="dark-block">
         <div className="container">
-          <div className="usp-grid" data-reveal>
+          <div className="usp-grid">
             {USPS.map((usp, i) => (
               <div key={i} className={`usp-card usp-card--${usp.size}`}>
                 <span className="usp-card__metric">{usp.metric}</span>
@@ -438,7 +557,7 @@ export default function HomePage() {
       {/* ── NEUE ARRIVALS ────────────────────────────────────────────────────── */}
       <section className="section">
         <div className="container">
-          <div className="products-head" data-reveal>
+          <div className="products-head">
             <div>
               <span className="products-head__eyebrow">Gerade eingetroffen</span>
               <h2 className="products-head__title">Neue Arrivals</h2>
@@ -456,7 +575,7 @@ export default function HomePage() {
       {/* ── TESTIMONIALS ────────────────────────────────────────────────────── */}
       <section className="dark-block">
         <div className="container">
-          <div className="testimonials-head" data-reveal>
+          <div className="testimonials-head">
             <div>
               <span className="products-head__eyebrow">Was Kunden sagen</span>
               <h2 className="products-head__title">Echte Bewertungen</h2>
@@ -467,7 +586,7 @@ export default function HomePage() {
               <span className="review-score-inline__label">/ 5 · 2.400 Bewertungen</span>
             </div>
           </div>
-          <div className="review-grid" data-reveal>
+          <div className="review-grid">
             {REVIEWS.map((r, i) => (
               <div key={i} className="review-card-v2">
                 <Stars rating={r.rating} size={15} />
@@ -490,13 +609,13 @@ export default function HomePage() {
       <section className="section">
         <div className="container">
           <div className="faq-split">
-            <div className="faq-split__head" data-reveal>
+            <div className="faq-split__head">
               <span className="label">Häufige Fragen</span>
               <h2 className="faq-split__title">Alles was du wissen musst.</h2>
               <p className="faq-split__sub">Noch Fragen? Schreib uns — wir antworten innerhalb von 2 Stunden.</p>
               <Link className="btn btn--ghost btn--sm" to={ROUTES.INFO.CONTACT}>Kontakt →</Link>
             </div>
-            <div className="faq-split__items" data-reveal>
+            <div className="faq-split__items">
               {FAQ_ITEMS.map((item, i) => (
                 <div key={i} className="faq-item-v2">
                   <button
@@ -518,7 +637,7 @@ export default function HomePage() {
       {/* ── NEWSLETTER ──────────────────────────────────────────────────────── */}
       <section className="newsletter-dark">
         <div className="newsletter-dark__orb" aria-hidden="true" />
-        <div className="container newsletter-dark__inner" data-reveal>
+        <div className="container newsletter-dark__inner">
           <span className="newsletter-dark__eyebrow">Exklusiv für Mitglieder</span>
           <h2 className="newsletter-dark__title">Join the Club.</h2>
           <p className="newsletter-dark__text">

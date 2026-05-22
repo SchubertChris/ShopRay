@@ -3,7 +3,7 @@
 Diese Datei wird von Claude am Anfang jeder Session gelesen und am Ende/bei Pausen aktualisiert.
 Ziel: Kontextverlust durch Compacting verhindern.
 
-**Letzte Aktualisierung:** 2026-05-22 (Session 15 — Mod-2FA + Newsletter-Backend)
+**Letzte Aktualisierung:** 2026-05-22 (Session 16 — Homepage Visual Redesign)
 
 ---
 
@@ -54,6 +54,14 @@ git push origin main   → PRODUCTION auf Vercel (alle 3 Projekte automatisch)
 | schema.sql (Frisch-Install) | Enthält Migrations 001–029 komplett — 1 File für kompletten DB-Rebuild |
 | Security Audit | 27 Sicherheitslücken gefunden + alle geschlossen (Stand 2026-05-20) |
 | Docs-Cleanup | .env.examples korrigiert, QUICKSTART.md, SETUP.en.md v1.8.0 — alles gepusht |
+
+### Implementiert in Session 16 (2026-05-22)
+
+| Feature | Details |
+|---|---|
+| **Homepage Visual Redesign** | Komplette Animation-Überarbeitung: Lenis Smooth Scroll, GSAP ScrollTrigger. Cormorant Garamond für Hero/Display-Texte. Hero-Titel auf `clamp(5rem, 14vw, 10rem)` vergrößert, hero-glass Container entfernt (direktes Text-Layout). Bento-Karten fliegen aus 6 verschiedenen Richtungen ein. Partikel-Orbit-Ringe (CSS + GSAP scrub gegenläufig) um Brand-Split-Bild. Hero-Parallax für `__bg` + `.hero-canvas`. IntersectionObserver durch GSAP ScrollTrigger ersetzt. |
+| **Lenis Integration** | `lenis@1.3.23` in `App.tsx` — `lenis.on('scroll', ScrollTrigger.update)` + GSAP ticker. Smooth scroll für alle Seiten aktiv. |
+| **GSAP Animationen** | Hero-Entrance (stagger), Hero-Parallax (scrub), Bento-Fly-In (6 Richtungen), Brand-Split (links/rechts gleichzeitig), Partikel-Ringe (gegenläufig auf scroll), USP-Grid (scale + stagger), Reviews (stagger), FAQ (stagger), Newsletter (stagger) |
 
 ### Implementiert in Session 15 (2026-05-22)
 
@@ -106,7 +114,7 @@ git push origin main   → PRODUCTION auf Vercel (alle 3 Projekte automatisch)
 ### Supabase-Migrationen noch ausführen
 - [ ] **Migration 030** — `increment_discount_uses` RPC — `database/migration_030_discount_atomic.sql`
 - [ ] **Migration 031** — team_lead-Rolle + refund_requests — `database/migration_031_team_lead_refund_requests.sql`
-- [ ] **Migration 032** — `mod_totp` Tabelle (Mod-2FA) — `database/migration_032_mod_totp.sql`
+- [x] **Migration 032** — `mod_totp` Tabelle (Mod-2FA) — ausgeführt ✓
 
 > **User hat bestätigt:** Migrations 025–029 + weitere bereits ausgeführt. 030–032 noch ausstehend.
 
@@ -210,7 +218,7 @@ git push origin main   → PRODUCTION auf Vercel (alle 3 Projekte automatisch)
 | 029 | migration_029_invoice_sequence.sql | Atomare Rechnungsnummer-Sequenz (GoBD) — ausgeführt ✓ |
 | 030 | migration_030_discount_atomic.sql | Atomarer Rabatt-Zähler (race-condition-sicher) — noch ausstehend |
 | 031 | migration_031_team_lead_refund_requests.sql | team_lead-Constraint + refund_requests-Tabelle — noch ausstehend |
-| 032 | migration_032_mod_totp.sql | TOTP für Mitarbeiter (Mod-2FA) — noch ausstehend |
+| 032 | migration_032_mod_totp.sql | TOTP für Mitarbeiter (Mod-2FA) — ausgeführt ✓ |
 
 ---
 
