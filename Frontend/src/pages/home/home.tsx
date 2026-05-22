@@ -131,13 +131,13 @@ export default function HomePage() {
 
     // ── TRUST BAR ─────────────────────────────────────────────────────────────
     gsap.from('.trust-bar', {
-      opacity: 0, duration: 0.8,
+      opacity: 0, duration: 0.8, immediateRender: false,
       scrollTrigger: { trigger: '.trust-bar', start: 'top 95%' },
     });
 
     // ── EDITORIAL INTRO ───────────────────────────────────────────────────────
     gsap.from('.editorial-intro__text', {
-      y: 50, opacity: 0, duration: 1.1, ease: 'expo.out',
+      y: 50, opacity: 0, duration: 1.1, ease: 'expo.out', immediateRender: false,
       scrollTrigger: { trigger: '.editorial-intro', start: 'top 80%' },
     });
 
@@ -153,7 +153,7 @@ export default function HomePage() {
     gsap.utils.toArray<HTMLElement>('.cat-bento__item').forEach((item, i) => {
       const dir = bentoFrom[i] ?? { x: 0, y: 60, rotation: 0 };
       gsap.from(item, {
-        ...dir, opacity: 0, duration: 1.25, ease: 'expo.out',
+        ...dir, opacity: 0, duration: 1.25, ease: 'expo.out', immediateRender: false,
         scrollTrigger: { trigger: item, start: 'top 92%', toggleActions: 'play none none none' },
       });
     });
@@ -161,18 +161,18 @@ export default function HomePage() {
     // ── PRODUCTS HEAD ─────────────────────────────────────────────────────────
     gsap.utils.toArray<HTMLElement>('.products-head').forEach(el => {
       gsap.from(el, {
-        y: 32, opacity: 0, duration: 0.85, ease: 'power2.out',
+        y: 32, opacity: 0, duration: 0.85, ease: 'power2.out', immediateRender: false,
         scrollTrigger: { trigger: el, start: 'top 85%' },
       });
     });
 
     // ── BRAND SPLIT ───────────────────────────────────────────────────────────
     gsap.from('.brand-split__visual-wrap', {
-      x: -90, opacity: 0, duration: 1.35, ease: 'expo.out',
+      x: -90, opacity: 0, duration: 1.35, ease: 'expo.out', immediateRender: false,
       scrollTrigger: { trigger: '.brand-split', start: 'top 78%' },
     });
     gsap.from('.brand-split__content > *', {
-      x: 60, opacity: 0, stagger: 0.1, duration: 1.1, ease: 'expo.out',
+      x: 60, opacity: 0, stagger: 0.1, duration: 1.1, ease: 'expo.out', immediateRender: false,
       scrollTrigger: { trigger: '.brand-split', start: 'top 78%' },
     });
 
@@ -190,6 +190,7 @@ export default function HomePage() {
     gsap.utils.toArray<HTMLElement>('.usp-card').forEach((card, i) => {
       gsap.from(card, {
         y: 55, opacity: 0, scale: 0.93, duration: 0.95, ease: 'back.out(1.2)',
+        immediateRender: false,
         scrollTrigger: { trigger: '.usp-grid', start: 'top 82%', toggleActions: 'play none none none' },
         delay: i * 0.08,
       });
@@ -197,29 +198,29 @@ export default function HomePage() {
 
     // ── TESTIMONIALS HEAD ─────────────────────────────────────────────────────
     gsap.from('.testimonials-head', {
-      y: 30, opacity: 0, duration: 0.85, ease: 'power2.out',
+      y: 30, opacity: 0, duration: 0.85, ease: 'power2.out', immediateRender: false,
       scrollTrigger: { trigger: '.testimonials-head', start: 'top 85%' },
     });
 
     // ── REVIEWS ───────────────────────────────────────────────────────────────
     gsap.from('.review-card-v2', {
-      y: 65, opacity: 0, stagger: 0.13, duration: 0.95, ease: 'power2.out',
+      y: 65, opacity: 0, stagger: 0.13, duration: 0.95, ease: 'power2.out', immediateRender: false,
       scrollTrigger: { trigger: '.review-grid', start: 'top 82%' },
     });
 
     // ── FAQ ───────────────────────────────────────────────────────────────────
     gsap.from('.faq-split__head', {
-      x: -50, opacity: 0, duration: 1.1, ease: 'expo.out',
+      x: -50, opacity: 0, duration: 1.1, ease: 'expo.out', immediateRender: false,
       scrollTrigger: { trigger: '.faq-split', start: 'top 80%' },
     });
     gsap.from('.faq-item-v2', {
-      y: 22, opacity: 0, stagger: 0.09, duration: 0.75, ease: 'power2.out',
+      y: 22, opacity: 0, stagger: 0.09, duration: 0.75, ease: 'power2.out', immediateRender: false,
       scrollTrigger: { trigger: '.faq-split__items', start: 'top 85%' },
     });
 
     // ── NEWSLETTER ────────────────────────────────────────────────────────────
     gsap.from('.newsletter-dark__inner > *', {
-      y: 45, opacity: 0, stagger: 0.1, duration: 1, ease: 'expo.out',
+      y: 45, opacity: 0, stagger: 0.1, duration: 1, ease: 'expo.out', immediateRender: false,
       scrollTrigger: { trigger: '.newsletter-dark', start: 'top 82%' },
     });
   });
