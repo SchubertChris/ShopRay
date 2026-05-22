@@ -34,6 +34,7 @@ import sitemapRouter         from './routes/sitemap';
 import adminNotificationsRouter  from './routes/admin-notifications';
 import adminTasksRouter          from './routes/admin-tasks';
 import adminRefundRequestsRouter from './routes/admin-refund-requests';
+import newsletterRouter          from './routes/newsletter';
 
 const app  = express();
 const PORT = process.env.PORT ?? 5000;
@@ -62,9 +63,10 @@ app.use('/api/tickets',    ticketsRouter);
 app.use('/api/categories', categoriesRouter);
 
 // ── Öffentliche Settings-Route ────────────────────────────────────────────────
-app.use('/api/discounts', discountsRouter);
-app.use('/api/settings', settingsRouter);
-app.use('/sitemap.xml',  sitemapRouter);
+app.use('/api/discounts',   discountsRouter);
+app.use('/api/settings',    settingsRouter);
+app.use('/api/newsletter',  newsletterRouter);
+app.use('/sitemap.xml',     sitemapRouter);
 
 // ── Admin Routes (JWT HttpOnly Cookie erforderlich) ───────────────────────────
 app.use('/api/admin', demoModeGuard);

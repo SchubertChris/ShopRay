@@ -1417,6 +1417,28 @@ $slot-vis:    5;   // sichtbare EintrÃ¤ge
   }
 
   &__disclaimer { font-size: 0.72rem; color: color-mix(in srgb, var(--clr-on-dark) 28%, transparent); margin: 0; }
+
+  &__input:disabled,
+  &__btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  &__success {
+    font-size:   0.95rem;
+    font-weight: 600;
+    color:       var(--clr-on-dark);
+    background:  color-mix(in srgb, var(--clr-primary) 18%, transparent);
+    border:      1px solid color-mix(in srgb, var(--clr-primary) 35%, transparent);
+    padding:     1rem 1.75rem;
+    border-radius: 12px;
+    max-width:   420px;
+    text-align:  center;
+  }
+
+  &__error {
+    font-size:     0.82rem;
+    color:         #f87171;
+    margin:        0;
+    text-align:    center;
+  }
 }
 
 // â”€â”€â”€ THEME DOCK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

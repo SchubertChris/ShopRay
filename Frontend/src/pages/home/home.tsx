@@ -7,6 +7,7 @@ import { useWishlist } from '@features/wishlist';
 import { useProducts } from '@features/products';
 import type { Product } from '@features/products';
 import { useCategories } from '@features/categories';
+import { subscribeNewsletter } from '@features/newsletter';
 import { ProductCard, Stars, ProductImage, SeoMeta, JsonLd } from '@components/ui';
 import { ROUTES } from '@config/routes';
 import { useTheme } from '@providers/ThemeProvider';
@@ -18,30 +19,30 @@ import { APP_NAME, APP_URL, APP_SOCIALS, APP_CONTACT, APP_OG_IMAGE } from '@conf
 
 
 const TRUST_ITEMS = [
-  '100 % Bio', 'Plastikfrei', 'Express-Versand', 'SSL-Sicher',
-  '30 Tage Rückgabe', '4.9 / 5 Sterne', 'Seit 2018', 'Kauf auf Rechnung',
+  'Dermatologisch getestet', 'OEKO-TEX® zertifiziert', 'Express-Versand', 'SSL-Sicher',
+  '30 Tage Rückgabe', '4.9 / 5 Sterne', 'Seit 2019', 'Kauf auf Rechnung',
 ];
 
 const USPS = [
-  { metric: '100 %', title: 'Bio-zertifiziert',  size: 'large', text: 'Alle Rohstoffe aus kontrolliert ökologischem Anbau mit EU-Zertifizierung.' },
-  { metric: '0 g',   title: 'Plastik',            size: 'small', text: 'Vollständig kompostierbare Verpackung.' },
-  { metric: '24 h',  title: 'Express-Lieferung',  size: 'small', text: 'Bestellung bis 14 Uhr — Lieferung morgen.' },
-  { metric: '30',    title: 'Tage Rückgabe',       size: 'small', text: 'Kostenlos, ohne Fragen.' },
-  { metric: 'SSL',   title: 'Verschlüsselt',       size: 'small', text: 'SSL + PCI-DSS zertifiziert.' },
-  { metric: '< 2 h', title: 'Support-Antwort',     size: 'large', text: 'Echte Menschen, kein Bot. Antwort im Schnitt unter 2 Stunden.' },
+  { metric: '98 %', title: 'Besser eingeschlafen', size: 'large', text: 'Kunden berichten innerhalb von 2 Wochen von deutlich erholsamerem Schlaf.' },
+  { metric: '0 g',  title: 'Plastik',              size: 'small', text: 'Vollständig kompostierbare Verpackung.' },
+  { metric: '24 h', title: 'Express-Lieferung',    size: 'small', text: 'Bestellung bis 14 Uhr — Lieferung morgen.' },
+  { metric: '30',   title: 'Tage Rückgabe',         size: 'small', text: 'Kostenlos, ohne Fragen.' },
+  { metric: 'SSL',  title: 'Verschlüsselt',         size: 'small', text: 'SSL + PCI-DSS zertifiziert.' },
+  { metric: '< 2 h', title: 'Support-Antwort',      size: 'large', text: 'Echte Menschen, kein Bot. Antwort im Schnitt unter 2 Stunden.' },
 ];
 
 const REVIEWS = [
-  { name: 'Anna M.',   date: 'April 2026', product: 'Sage Candle Set',    rating: 5, text: 'Traumhafte Qualität, riecht wunderbar und sieht noch besser aus als auf den Fotos.' },
-  { name: 'Lars K.',   date: 'März 2026',  product: 'Ceramic Vase No. 4', rating: 5, text: 'Schnelle Lieferung, perfekte plastikfreie Verpackung — übertrifft alle Erwartungen.' },
-  { name: 'Sophie B.', date: 'März 2026',  product: 'Stone Bowl Set',     rating: 4, text: 'Sehr schöne Verarbeitung und tolles Design. Genau wie auf den Fotos.' },
+  { name: 'Lena M.',  date: 'April 2026', product: 'Seiden-Schlafmaske',   rating: 5, text: 'Seit ich die Schlafmaske nutze, schlafe ich wirklich tiefer. Unglaublich weich und komplett abdunkelnd.' },
+  { name: 'Tom K.',   date: 'März 2026',  product: 'Lavendel-Diffuser',     rating: 5, text: 'Der Raum riecht wunderbar — und ich schlafe mindestens 20 Minuten schneller ein. Nicht mehr wegzudenken.' },
+  { name: 'Sarah B.', date: 'März 2026',  product: 'Weighted Blanket 8 kg', rating: 5, text: 'Das Gewicht ist genau richtig. Fühlt sich an wie eine Umarmung — ich schlafe jetzt durch.' },
 ];
 
 const FAQ_ITEMS = [
-  { q: 'Wie lange dauert die Lieferung?',   a: 'Standard 3–5 Werktage, Express 1–2 Werktage. Ab 50 € Bestellwert kostenfrei.' },
-  { q: 'Wie funktioniert die Rückgabe?',    a: '30 Tage Rückgaberecht ohne Angabe von Gründen — kostenlos per Retourenlink.' },
-  { q: 'Welche Zahlungsmethoden gibt es?',  a: 'Kreditkarte, PayPal, Klarna, Sofortüberweisung und Apple Pay.' },
-  { q: 'Kann ich meine Bestellung ändern?', a: 'Innerhalb von 30 Minuten nach Bestellung kostenfrei anpassen oder stornieren.' },
+  { q: 'Wie lange dauert die Lieferung?',           a: 'Standard 3–5 Werktage, Express 1–2 Werktage. Ab 50 € Bestellwert kostenfrei.' },
+  { q: 'Für wen sind die Produkte geeignet?',       a: 'Für alle, die ihre Schlafqualität verbessern möchten — von Einschlafschwierigkeiten bis hin zu leichtem oder unruhigem Schlaf.' },
+  { q: 'Wie funktioniert die Rückgabe?',            a: '30 Tage Rückgaberecht ohne Angabe von Gründen — kostenlos per Retourenlink.' },
+  { q: 'Sind die Materialien hautverträglich?',     a: 'Ja, alle Masken und Textilien sind dermatologisch getestet und OEKO-TEX® Standard 100 zertifiziert.' },
 ];
 
 interface ToastState { visible: boolean; message: string; type: 'success' | 'error' | 'warning'; }
@@ -63,8 +64,9 @@ export default function HomePage() {
   const [quickView,     setQuickView]     = useState<Product | null>(null);
   const [toast,         setToast]         = useState<ToastState>({ visible: false, message: '', type: 'success' });
   const [skeletons,     setSkeletons]     = useState(true);
-  const [openFaq,       setOpenFaq]       = useState<number | null>(null);
-  const [email,         setEmail]         = useState('');
+  const [openFaq,           setOpenFaq]       = useState<number | null>(null);
+  const [email,             setEmail]         = useState('');
+  const [newsletterState,   setNewsletterState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     const t = setTimeout(() => setSkeletons(false), 1600);
@@ -92,6 +94,18 @@ export default function HomePage() {
   function showToast(message: string, type: ToastState['type'] = 'success') {
     setToast({ visible: true, message, type });
     setTimeout(() => setToast(t => ({ ...t, visible: false })), 3200);
+  }
+
+  async function handleNewsletterSubmit() {
+    if (!email) { showToast('Bitte gib deine E-Mail-Adresse ein.', 'warning'); return; }
+    setNewsletterState('loading');
+    try {
+      await subscribeNewsletter({ email });
+      setNewsletterState('success');
+      setEmail('');
+    } catch {
+      setNewsletterState('error');
+    }
   }
 
   function handleAddItem(p: Product) {
@@ -158,7 +172,7 @@ export default function HomePage() {
     <>
       <SeoMeta
         title="Startseite"
-        description="Entdecke unsere Kollektion — handverlesene Produkte für Wohnen, Küche, Deko und mehr. Kostenloser Versand ab 50 €."
+        description="Entdecke die Dormio Schlaf-Kollektion — Seiden-Schlafmasken, Aromatherapie und Zubehör für erholsamen Schlaf. Kostenloser Versand ab 50 €."
       />
       <JsonLd data={websiteSchema} />
       <JsonLd data={organizationSchema} />
@@ -210,20 +224,20 @@ export default function HomePage() {
               className="editorial-hero__pill hero-fade"
               style={{ '--fd': '0s' } as React.CSSProperties}
             >
-              Sommer 2026 — Neue Kollektion
+              Neue Schlaf-Kollektion 2026
             </span>
 
             <h1 className="editorial-hero__title">
               <span className="hero-word">
                 <span className="hero-word__inner" style={{ '--wd': '0.18s' } as React.CSSProperties}>
-                  Designed
+                  Schlaf besser.
                 </span>
               </span>
               <br />
               <em>
                 <span className="hero-word">
                   <span className="hero-word__inner" style={{ '--wd': '0.36s' } as React.CSSProperties}>
-                    to last.
+                    Jede Nacht.
                   </span>
                 </span>
               </em>
@@ -233,7 +247,7 @@ export default function HomePage() {
               className="editorial-hero__sub hero-fade"
               style={{ '--fd': '0.55s' } as React.CSSProperties}
             >
-              Nachhaltige Wohnprodukte für ein bewusstes Leben. Von der Materialwahl bis zur plastikfreien Verpackung — jedes Detail durchdacht.
+              Handverlesene Produkte für erholsamen Schlaf. Von der Seiden-Schlafmaske bis zum Lavendel-Diffuser — jedes Detail für deine Ruhe entwickelt.
             </p>
 
             <div
@@ -269,7 +283,7 @@ export default function HomePage() {
               </div>
               <div className="hero-social-text">
                 <Stars rating={4.9} size={13} />
-                <span>4.9 · über 2.400 Kunden</span>
+                <span>4.9 · über 3.100 Kunden</span>
               </div>
             </div>
 
@@ -327,8 +341,8 @@ export default function HomePage() {
       <section className="editorial-intro">
         <div className="container" data-reveal>
           <h2 className="editorial-intro__text">
-            Nachhaltige Wohnprodukte.<br />
-            <span className="editorial-intro__sub">Jedes Detail durchdacht — von der Materialwahl bis zur Verpackung.</span>
+            Besserer Schlaf. Jeden Tag.<br />
+            <span className="editorial-intro__sub">Entwickelt für Menschen, die verstehen: guter Schlaf ist die Basis für alles andere.</span>
           </h2>
         </div>
       </section>
@@ -397,24 +411,24 @@ export default function HomePage() {
               )}
               <div className="brand-chip">
                 <span className="brand-chip__label">Materialien</span>
-                <span className="brand-chip__value">100 % bio-zertifiziert</span>
+                <span className="brand-chip__value">OEKO-TEX® zertifiziert</span>
               </div>
             </div>
             <div className="brand-split__content">
               <span className="label">Unsere Mission</span>
-              <h2 className="brand-split__title">Schönheit die nicht auf Kosten der Erde kommt.</h2>
+              <h2 className="brand-split__title">Schlaf ist keine Schwäche — er ist deine Superpower.</h2>
               <p className="brand-split__text">
-                Jedes Produkt entsteht in kleinen Manufakturen mit fairem Lohn, kurzen Lieferketten und ohne Kompromisse bei Materialqualität.
+                Wir entwickeln Produkte, die deinen Körper in seinen natürlichen Schlafrhythmus bringen. Dermatologisch getestet, plastikfrei verpackt — mit jahrelangem Know-how aus der Schlafforschung.
               </p>
               <div className="brand-split__stats">
-                {[['2018', 'Gegründet'], ['4.9', 'Bewertung'], ['0 %', 'Plastik']].map(([val, lbl]) => (
+                {[['2019', 'Gegründet'], ['4.9', 'Bewertung'], ['98 %', 'Besser']].map(([val, lbl]) => (
                   <div key={lbl} className="brand-stat">
                     <div className="brand-stat__val">{val}</div>
                     <div className="brand-stat__lbl">{lbl}</div>
                   </div>
                 ))}
               </div>
-              <Link className="btn btn--primary" to={ROUTES.INFO.ABOUT}>Mehr erfahren</Link>
+              <Link className="btn btn--primary" to={ROUTES.INFO.ABOUT}>Über Dormio →</Link>
             </div>
           </div>
         </div>
@@ -464,7 +478,7 @@ export default function HomePage() {
             <div className="review-score-inline">
               <span className="review-score-inline__num">4.9</span>
               <Stars rating={4.9} size={18} />
-              <span className="review-score-inline__label">/ 5 · 2.400 Bewertungen</span>
+              <span className="review-score-inline__label">/ 5 · 3.100 Bewertungen</span>
             </div>
           </div>
           <div className="review-grid" data-reveal>
@@ -520,28 +534,37 @@ export default function HomePage() {
         <div className="newsletter-dark__orb" aria-hidden="true" />
         <div className="container newsletter-dark__inner" data-reveal>
           <span className="newsletter-dark__eyebrow">Exklusiv für Mitglieder</span>
-          <h2 className="newsletter-dark__title">Join the Club.</h2>
+          <h2 className="newsletter-dark__title">Schlaf Club.</h2>
           <p className="newsletter-dark__text">
-            10 % auf deine erste Bestellung — plus exklusive Drops und Early-Bird-Preise.
+            10 % auf deine erste Bestellung — plus Schlaf-Tipps und exklusive Drops. Einmal wöchentlich, kein Spam.
           </p>
-          <div className="newsletter-dark__form">
-            <input
-              type="email"
-              className="newsletter-dark__input"
-              placeholder="deine@email.de"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-            />
-            <button
-              className="btn newsletter-dark__btn"
-              onClick={() => {
-                if (email) { showToast('Willkommen im Club!'); setEmail(''); }
-                else showToast('Bitte gib deine E-Mail-Adresse ein.', 'warning');
-              }}
-            >
-              Jetzt anmelden
-            </button>
-          </div>
+          {newsletterState === 'success' ? (
+            <p className="newsletter-dark__success">
+              Fast geschafft! Prüf deine E-Mails und bestätige deine Anmeldung.
+            </p>
+          ) : (
+            <div className="newsletter-dark__form">
+              <input
+                type="email"
+                className="newsletter-dark__input"
+                placeholder="deine@email.de"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleNewsletterSubmit()}
+                disabled={newsletterState === 'loading'}
+              />
+              <button
+                className="btn newsletter-dark__btn"
+                onClick={handleNewsletterSubmit}
+                disabled={newsletterState === 'loading'}
+              >
+                {newsletterState === 'loading' ? 'Wird angemeldet …' : 'Jetzt anmelden'}
+              </button>
+            </div>
+          )}
+          {newsletterState === 'error' && (
+            <p className="newsletter-dark__error">Anmeldung fehlgeschlagen — bitte versuche es erneut.</p>
+          )}
           <p className="newsletter-dark__disclaimer">Kein Spam · Jederzeit abmeldbar · DSGVO-konform</p>
         </div>
       </section>
