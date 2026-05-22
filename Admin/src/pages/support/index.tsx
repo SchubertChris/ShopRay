@@ -49,6 +49,8 @@ export default function SupportPage() {
 
   const [replyError,  setReplyError]  = useState<string | null>(null);
   const [replySent,   setReplySent]   = useState(false);
+  const [detailMsgs,  setDetailMsgs]  = useState<TicketMessage[]>([]);
+  const detailMsgsEndRef = useRef<HTMLDivElement>(null);
 
   const [chatView,    setChatView]    = useState(false);
   const [chatTicket,  setChatTicket]  = useState<AdminTicket | null>(null);
@@ -137,6 +139,12 @@ export default function SupportPage() {
       setReplyStatus(activeTicket.status === 'open' ? 'in_progress' : activeTicket.status);
       setReplyError(null);
       setReplySent(false);
+      setDetailMsgs([]);
+      getAdminTicketMessages(activeTicket.id)
+        .then(setDetailMsgs)
+        .catch(() => null);
+    } else {
+      setDetailMsgs([]);
     }
   }, [active]);
 
@@ -150,6 +158,12 @@ export default function SupportPage() {
       setTickets(prev => prev.map(t =>
         t.id === activeTicket.id ? { ...t, reply, status: replyStatus, replied_at: new Date().toISOString() } : t,
       ));
+      // Chat-History neu laden damit die gesendete Nachricht erscheint
+      const fresh = await getAdminTicketMessages(activeTicket.id).catch(() => null);
+      if (fresh) {
+        setDetailMsgs(fresh);
+        setTimeout(() => detailMsgsEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+      }
       setReplySent(true);
       setTimeout(() => setReplySent(false), 3000);
     } catch (e) {
@@ -382,10 +396,29 @@ export default function SupportPage() {
                 {ticketCustomer(activeTicket)} · {new Date(activeTicket.created_at).toLocaleDateString('de-DE')}
               </p>
             </div>
-            <div className="ticket-detail__message">
-              <p className="ticket-detail__message-label">Nachricht des Kunden</p>
-              <p className="ticket-detail__message-text">{activeTicket.message}</p>
-            </div>
+            {detailMsgs.length > 0 ? (
+              <div className="ticket-detail__chat">
+                {detailMsgs.map(msg => (
+                  <div
+                    key={msg.id}
+                    className={`chat-bubble chat-bubble--${msg.sender === 'admin' ? 'admin-sent' : 'customer-recv'}`}
+                  >
+                    <div className="chat-bubble__text">{msg.text}</div>
+                    <div className="chat-bubble__time">
+                      {new Date(msg.created_at).toLocaleString('de-DE', {
+                        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+                      })}
+                    </div>
+                  </div>
+                ))}
+                <div ref={detailMsgsEndRef} />
+              </div>
+            ) : (
+              <div className="ticket-detail__message">
+                <p className="ticket-detail__message-label">Nachricht des Kunden</p>
+                <p className="ticket-detail__message-text">{activeTicket.message}</p>
+              </div>
+            )}
             <div className="ticket-detail__reply">
               <p className="ticket-detail__message-label">Antwort</p>
               <textarea

@@ -33,9 +33,10 @@ router.patch('/:id/reply', requireAdmin, validate(ReplySchema), async (req: Requ
     const ticketId = req.params.id;
 
     // In ticket_messages schreiben — damit der Kunde die Antwort im Chat sieht
-    await supabase
+    const { error: msgErr } = await supabase
       .from('ticket_messages')
       .insert({ ticket_id: ticketId, sender: 'admin', text: reply });
+    if (msgErr) throw msgErr;
 
     const { data, error } = await supabase
       .from('tickets')
