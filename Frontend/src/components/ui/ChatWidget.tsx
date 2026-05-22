@@ -288,8 +288,10 @@ export function ChatWidget() {
     setView('active-chat');
   }, []);
 
+  // Full-screen transparent portal — kein position:fixed auf child nötig,
+  // verhindert Containing-Block-Probleme durch CSS auf body/#root.
   return createPortal(
-    <div className="chat-widget">
+    <div className="chat-portal">
       {isOpen && (
         <div className="chat-widget__panel">
           {view === 'loading' && (
@@ -309,13 +311,15 @@ export function ChatWidget() {
         </div>
       )}
 
-      <button
-        className={`chat-widget__fab${isOpen ? ' chat-widget__fab--active' : ''}`}
-        onClick={isOpen ? close : () => void open()}
-        aria-label={isOpen ? 'Chat schließen' : 'Chat öffnen'}
-      >
-        {isOpen ? <ChevronDown size={22} /> : <MessageCircle size={22} />}
-      </button>
+      <div className="chat-widget">
+        <button
+          className={`chat-widget__fab${isOpen ? ' chat-widget__fab--active' : ''}`}
+          onClick={isOpen ? close : () => void open()}
+          aria-label={isOpen ? 'Chat schließen' : 'Chat öffnen'}
+        >
+          {isOpen ? <ChevronDown size={22} /> : <MessageCircle size={22} />}
+        </button>
+      </div>
     </div>,
     document.body
   );

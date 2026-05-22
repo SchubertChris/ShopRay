@@ -233,7 +233,7 @@ export default function HomePage() {
         scrollTrigger: { trigger: card, start: 'top 92%', toggleActions: 'play none none none' },
       });
     });
-  });
+  }, []); // Nur einmal auf Mount — kein Re-Run bei State-Änderungen
 
   function showToast(message: string, type: ToastState['type'] = 'success') {
     setToast({ visible: true, message, type });
