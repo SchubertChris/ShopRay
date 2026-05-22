@@ -26,6 +26,75 @@ const OrderQuerySchema = z.object({
   search: z.string().trim().max(100).optional(),
 });
 
+const ExportQuerySchema = z.object({
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ungültiges Datum (YYYY-MM-DD)'),
+  to:   z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ungültiges Datum (YYYY-MM-DD)'),
+});
+
+// GET /api/admin/orders/export?from=YYYY-MM-DD&to=YYYY-MM-DD  → CSV-Download
+router.get('/export', validate(ExportQuerySchema, 'query'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { from, to } = req.query as unknown as z.infer<typeof ExportQuerySchema>;
+    const sinceDate     = new Date(from).toISOString();
+    const untilDate     = new Date(to + 'T23:59:59.999Z').toISOString();
+
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('order_number, created_at, total, discount_amount, status, payment_method, user_id')
+      .gte('created_at', sinceDate)
+      .lte('created_at', untilDate)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    // Kundenprofile nachladen
+    const userIds = [...new Set((orders ?? []).map(o => o.user_id as string | null).filter(Boolean))];
+    const profileMap = new Map<string, { name: string; email: string }>();
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, name, email')
+        .in('id', userIds);
+      for (const p of profiles ?? []) {
+        profileMap.set(p.id as string, { name: p.name as string, email: p.email as string });
+      }
+    }
+
+    const VAT = 0.19;
+    const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
+
+    const rows = (orders ?? []).map(o => {
+      const brutto  = Number(o.total);
+      const netto   = Math.round(brutto / (1 + VAT) * 100) / 100;
+      const mwst    = Math.round((brutto - netto) * 100) / 100;
+      const profile = o.user_id ? profileMap.get(o.user_id as string) : null;
+      const date    = new Date(o.created_at as string).toLocaleDateString('de-DE');
+      return [
+        date,
+        esc(String(o.order_number ?? '')),
+        esc(profile?.name   ?? '—'),
+        esc(profile?.email  ?? '—'),
+        brutto.toFixed(2).replace('.', ','),
+        netto.toFixed(2).replace('.', ','),
+        mwst.toFixed(2).replace('.', ','),
+        Number(o.discount_amount ?? 0).toFixed(2).replace('.', ','),
+        esc(String(o.status ?? '')),
+        esc(String(o.payment_method ?? '—')),
+      ].join(';');
+    });
+
+    const bom    = '﻿';
+    const header = 'Datum;Bestellnummer;Kundenname;E-Mail;Brutto (€);Netto (€);MwSt 19% (€);Rabatt (€);Status;Zahlungsart';
+    const csv    = bom + header + '\n' + rows.join('\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="bestellungen_${from}_bis_${to}.csv"`);
+    res.send(csv);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/admin/orders — alle Bestellungen (paginated)
 router.get('/', validate(OrderQuerySchema, 'query'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {

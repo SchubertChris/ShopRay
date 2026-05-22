@@ -632,14 +632,51 @@ export interface AnalyticsKpi {
 
 export interface AnalyticsData {
   period:          number;
+  from:            string;
+  to:              string;
   revenueByDay:    RevenueDay[];
   topProducts:     TopProduct[];
   statusBreakdown: StatusBreakdown[];
   kpi:             AnalyticsKpi;
 }
 
-export const getAnalytics = (period: 7 | 30 | 90 = 30) =>
-  apiFetch<AnalyticsData>(`/api/admin/analytics?period=${period}`);
+export interface AnalyticsQuery {
+  period?: 7 | 30 | 90;
+  from?:   string; // YYYY-MM-DD
+  to?:     string; // YYYY-MM-DD
+}
+
+export const getAnalytics = (query: AnalyticsQuery = { period: 30 }) => {
+  const params = new URLSearchParams();
+  if (query.from && query.to) {
+    params.set('from', query.from);
+    params.set('to', query.to);
+  } else {
+    params.set('period', String(query.period ?? 30));
+  }
+  return apiFetch<AnalyticsData>(`/api/admin/analytics?${params.toString()}`);
+};
+
+export async function exportOrdersCsv(from: string, to: string): Promise<void> {
+  const headers: Record<string, string> = {};
+  const token = getAdminToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_URL}/api/admin/orders/export?from=${from}&to=${to}`, { headers });
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}));
+    throw new Error((json as { error?: string }).error ?? `HTTP ${res.status}`);
+  }
+  const blob = await res.blob();
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `bestellungen_${from}_bis_${to}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 export const changeModPassword = (newPassword: string, name: string) =>
   apiFetch<{ ok: boolean }>('/api/admin/mods/change-password', 'PUT', { newPassword, name });

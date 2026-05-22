@@ -7,15 +7,29 @@ const router = Router();
 router.use(requireAdmin);
 
 const QuerySchema = z.object({
-  period: z.enum(['7', '30', '90']).optional().default('30'),
+  period: z.enum(['7', '30', '90']).optional(),
+  from:   z.string().optional(),
+  to:     z.string().optional(),
 });
 
-// GET /api/admin/analytics?period=7|30|90
+// GET /api/admin/analytics?period=7|30|90  OR  ?from=YYYY-MM-DD&to=YYYY-MM-DD
 router.get('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { period } = QuerySchema.parse(req.query);
-    const days       = parseInt(period);
-    const sinceDate  = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+    const { period, from, to } = QuerySchema.parse(req.query);
+
+    let sinceDate: string;
+    let untilDate: string;
+    let days: number;
+
+    if (from && to) {
+      sinceDate = new Date(from).toISOString();
+      untilDate = new Date(to + 'T23:59:59.999Z').toISOString();
+      days      = Math.ceil((new Date(untilDate).getTime() - new Date(sinceDate).getTime()) / 86_400_000);
+    } else {
+      days      = parseInt(period ?? '30');
+      sinceDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+      untilDate = new Date().toISOString();
+    }
 
     const [ordersRes, itemsRes, allTimeRes] = await Promise.all([
       // Alle Bestellungen im Zeitraum (inkl. Datum und Status)
@@ -23,6 +37,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
         .from('orders')
         .select('id, created_at, total, status, discount_amount')
         .gte('created_at', sinceDate)
+        .lte('created_at', untilDate)
         .order('created_at', { ascending: true }),
 
       // Bestellpositionen im Zeitraum für Top-Produkte
@@ -30,6 +45,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
         .from('order_items')
         .select('product_name, quantity, price, order_id, orders!inner(created_at, status)')
         .gte('orders.created_at', sinceDate)
+        .lte('orders.created_at', untilDate)
         .not('orders.status', 'in', '("cancelled","refunded","payment_failed")'),
 
       // Alle Bestellungen ever für Gesamtumsatz
@@ -46,9 +62,9 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
     const dayMap = new Map<string, { revenue: number; orders: number }>();
 
     // Alle Tage im Zeitraum vorinitialisieren
+    const startMs = new Date(sinceDate).setHours(0, 0, 0, 0);
     for (let i = 0; i < days; i++) {
-      const d = new Date(Date.now() - (days - 1 - i) * 24 * 60 * 60 * 1000);
-      const key = d.toISOString().slice(0, 10);
+      const key = new Date(startMs + i * 86_400_000).toISOString().slice(0, 10);
       dayMap.set(key, { revenue: 0, orders: 0 });
     }
 
@@ -106,7 +122,9 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
     const allTimeRevenue  = (allTimeRes.data ?? []).reduce((s, o) => s + Number(o.total), 0);
 
     res.json({
-      period:        days,
+      period:    days,
+      from:      sinceDate.slice(0, 10),
+      to:        untilDate.slice(0, 10),
       revenueByDay,
       statusBreakdown,
       topProducts,

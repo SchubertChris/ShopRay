@@ -5,7 +5,8 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import { Loader2, AlertCircle, TrendingUp, ShoppingCart, Package, Tag } from 'lucide-react';
-import { getAnalytics, type AnalyticsData } from '../../api/adminApi';
+import { Download } from 'lucide-react';
+import { getAnalytics, exportOrdersCsv, type AnalyticsData, type AnalyticsQuery } from '../../api/adminApi';
 
 type Period = 7 | 30 | 90;
 
@@ -14,6 +15,10 @@ const PERIODS: Array<{ value: Period; label: string }> = [
   { value: 30, label: '30 Tage' },
   { value: 90, label: '90 Tage' },
 ];
+
+function toLocalDateInput(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
 
 const STATUS_LABELS: Record<string, string> = {
   pending:        'Ausstehend',
@@ -89,24 +94,60 @@ function RevenueTooltip({ active, payload, label }: { active?: boolean; payload?
 }
 
 export default function AnalyticsPage() {
-  const [period,  setPeriod]  = useState<Period>(30);
-  const [data,    setData]    = useState<AnalyticsData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState<string | null>(null);
+  const [period,     setPeriod]     = useState<Period>(30);
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo,   setCustomTo]   = useState('');
+  const [isCustom,   setIsCustom]   = useState(false);
+  const [data,       setData]       = useState<AnalyticsData | null>(null);
+  const [loading,    setLoading]    = useState(false);
+  const [error,      setError]      = useState<string | null>(null);
+  const [exporting,  setExporting]  = useState(false);
+  const [exportErr,  setExportErr]  = useState<string | null>(null);
+
+  const query: AnalyticsQuery = isCustom && customFrom && customTo
+    ? { from: customFrom, to: customTo }
+    : { period };
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      setData(await getAnalytics(period));
+      setData(await getAnalytics(query));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Laden fehlgeschlagen.');
     } finally {
       setLoading(false);
     }
-  }, [period]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period, isCustom, customFrom, customTo]);
 
   useEffect(() => { load(); }, [load]);
+
+  const handlePreset = (p: Period) => {
+    setPeriod(p);
+    setIsCustom(false);
+    setExportErr(null);
+  };
+
+  const handleCustomApply = () => {
+    if (!customFrom || !customTo || customFrom > customTo) return;
+    setIsCustom(true);
+    setExportErr(null);
+  };
+
+  const handleExport = async () => {
+    const from = isCustom && customFrom ? customFrom : toLocalDateInput(new Date(Date.now() - period * 86_400_000));
+    const to   = isCustom && customTo   ? customTo   : toLocalDateInput(new Date());
+    setExporting(true);
+    setExportErr(null);
+    try {
+      await exportOrdersCsv(from, to);
+    } catch (err) {
+      setExportErr(err instanceof Error ? err.message : 'Export fehlgeschlagen.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const chartData = data?.revenueByDay.map(d => ({
     ...d,
@@ -128,24 +169,70 @@ export default function AnalyticsPage() {
           <span className="page-header__eyebrow">Übersicht</span>
           <h1 className="page-header__title">Analytics</h1>
           <p className="page-header__sub">
-            {data ? `${fmt(data.kpi.periodRevenue)} Umsatz in den letzten ${period} Tagen` : 'Umsatz- und Bestellungsauswertung'}
+            {data
+              ? isCustom
+                ? `${fmt(data.kpi.periodRevenue)} Umsatz vom ${new Date(data.from).toLocaleDateString('de-DE')} bis ${new Date(data.to).toLocaleDateString('de-DE')}`
+                : `${fmt(data.kpi.periodRevenue)} Umsatz in den letzten ${period} Tagen`
+              : 'Umsatz- und Bestellungsauswertung'}
           </p>
         </div>
         <div className="page-header__actions">
-          <div className="an-period-nav">
-            {PERIODS.map(p => (
+          <div className="an-controls">
+            <div className="an-period-nav">
+              {PERIODS.map(p => (
+                <button
+                  key={p.value}
+                  className={`an-period-btn${!isCustom && period === p.value ? ' is-active' : ''}`}
+                  onClick={() => handlePreset(p.value)}
+                  disabled={loading}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <div className="an-daterange">
+              <input
+                type="date"
+                className="an-daterange__input"
+                value={customFrom}
+                max={customTo || toLocalDateInput(new Date())}
+                onChange={e => setCustomFrom(e.target.value)}
+                aria-label="Von"
+              />
+              <span className="an-daterange__sep">–</span>
+              <input
+                type="date"
+                className="an-daterange__input"
+                value={customTo}
+                min={customFrom}
+                max={toLocalDateInput(new Date())}
+                onChange={e => setCustomTo(e.target.value)}
+                aria-label="Bis"
+              />
               <button
-                key={p.value}
-                className={`an-period-btn${period === p.value ? ' is-active' : ''}`}
-                onClick={() => setPeriod(p.value)}
-                disabled={loading}
+                className={`an-daterange__apply${isCustom ? ' is-active' : ''}`}
+                onClick={handleCustomApply}
+                disabled={!customFrom || !customTo || customFrom > customTo || loading}
               >
-                {p.label}
+                Anwenden
               </button>
-            ))}
+            </div>
+            <button
+              className="an-export-btn"
+              onClick={handleExport}
+              disabled={exporting || loading}
+              title="Bestellungen als CSV exportieren"
+            >
+              <Download size={15} strokeWidth={2} />
+              {exporting ? 'Exportiert…' : 'CSV Export'}
+            </button>
           </div>
         </div>
       </div>
+
+      {exportErr && (
+        <p className="an-export-error">{exportErr}</p>
+      )}
 
       {loading && (
         <div className="inq-state">

@@ -24,7 +24,7 @@ export default function TicketDetailPage() {
   const [ticket,   setTicket]   = useState<Ticket | null>(null);
   const [tLoading, setTLoading] = useState(true);
   const [input,    setInput]    = useState('');
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
 
   const { messages, loading, sending, error, send } = useTicketChat(id ?? '');
 
@@ -37,7 +37,8 @@ export default function TicketDetailPage() {
   }, [id]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = messagesRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
   if (!id) return <Navigate to={ROUTES.ACCOUNT.TICKETS} replace />;
@@ -70,7 +71,7 @@ export default function TicketDetailPage() {
         )}
 
         <div className="ticket-chat">
-          <div className="ticket-chat__messages">
+          <div className="ticket-chat__messages" ref={messagesRef}>
             {loading && <p className="ticket-chat__loading">Lädt…</p>}
 
             {!loading && messages.map(msg => (
@@ -87,7 +88,6 @@ export default function TicketDetailPage() {
               <p className="ticket-chat__empty">Noch keine Nachrichten.</p>
             )}
 
-            <div ref={bottomRef} />
           </div>
 
           <form className="ticket-chat__input-bar" onSubmit={handleSubmit}>

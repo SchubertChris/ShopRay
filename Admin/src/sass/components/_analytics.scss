@@ -1,6 +1,14 @@
 // ── Analytics ──────────────────────────────────────────────────────────────────
 
-// ── Zeitraum-Auswahl ──────────────────────────────────────────────────────────
+// ── Controls-Zeile (Presets + Daterange + Export) ─────────────────────────────
+.an-controls {
+  display:     flex;
+  align-items: center;
+  gap:         0.625rem;
+  flex-wrap:   wrap;
+}
+
+// ── Zeitraum-Presets ──────────────────────────────────────────────────────────
 .an-period-nav {
   display:       flex;
   border:        1px solid var(--clr-border);
@@ -27,6 +35,93 @@
     color:      #fff;
     opacity:    1;
   }
+}
+
+// ── Datum-Range ───────────────────────────────────────────────────────────────
+.an-daterange {
+  display:     flex;
+  align-items: center;
+  gap:         0.375rem;
+
+  &__input {
+    padding:       0.35rem 0.625rem;
+    border:        1px solid var(--clr-border);
+    border-radius: 7px;
+    background:    var(--clr-surface);
+    color:         var(--clr-text);
+    font-size:     0.8125rem;
+    font-family:   inherit;
+    cursor:        pointer;
+
+    &::-webkit-calendar-picker-indicator {
+      filter:  invert(0.5);
+      cursor:  pointer;
+    }
+    &:focus { outline: none; border-color: var(--clr-accent); }
+  }
+
+  &__sep {
+    color:     color-mix(in srgb, var(--clr-text) 40%, transparent);
+    font-size: 0.875rem;
+  }
+
+  &__apply {
+    padding:       0.35rem 0.75rem;
+    border:        1px solid var(--clr-border);
+    border-radius: 7px;
+    background:    transparent;
+    color:         var(--clr-text);
+    font-size:     0.8125rem;
+    font-weight:   500;
+    cursor:        pointer;
+    transition:    background 0.15s, border-color 0.15s, color 0.15s;
+    white-space:   nowrap;
+    opacity:       0.7;
+
+    &:hover:not(:disabled) { background: var(--clr-surface); opacity: 0.9; }
+    &:disabled             { cursor: not-allowed; opacity: 0.35; }
+    &.is-active {
+      background:   var(--clr-accent);
+      border-color: var(--clr-accent);
+      color:        #fff;
+      opacity:      1;
+    }
+  }
+}
+
+// ── Export-Button ─────────────────────────────────────────────────────────────
+.an-export-btn {
+  display:     flex;
+  align-items: center;
+  gap:         0.375rem;
+  padding:     0.375rem 0.875rem;
+  border:      1px solid var(--clr-border);
+  border-radius: 8px;
+  background:  transparent;
+  color:       var(--clr-text);
+  font-size:   0.8125rem;
+  font-weight: 500;
+  cursor:      pointer;
+  white-space: nowrap;
+  transition:  background 0.15s, border-color 0.15s;
+  opacity:     0.75;
+
+  &:hover:not(:disabled) {
+    background:   color-mix(in srgb, var(--clr-accent) 10%, transparent);
+    border-color: var(--clr-accent);
+    color:        var(--clr-accent);
+    opacity:      1;
+  }
+  &:disabled { cursor: not-allowed; opacity: 0.4; }
+}
+
+.an-export-error {
+  font-size:   0.8125rem;
+  color:       var(--clr-error);
+  background:  color-mix(in srgb, var(--clr-error) 8%, transparent);
+  border-radius: 7px;
+  padding:     0.4rem 0.875rem;
+  margin-bottom: 0.5rem;
 }
 
 // ── KPI-Karten ────────────────────────────────────────────────────────────────
