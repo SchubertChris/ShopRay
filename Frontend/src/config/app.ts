@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 /** Shop-Name — erscheint in Titel, Nav-Logo, Footer, Browser-Tab und SEO */
-export const APP_NAME = 'Dormio';
+export const APP_NAME = 'Concepts';
 
 /** Aktuelle Version des Templates (nicht für den End-Kunden sichtbar) */
 export const APP_VERSION = '1.0.0';
@@ -21,11 +21,11 @@ export const APP_URL = 'https://deine-domain.de';
 
 /** Standard-Beschreibung — erscheint in Google-Ergebnissen und Social-Previews */
 export const APP_DESCRIPTION =
-  'Entdecke unsere Schlaf-Kollektion — Seiden-Schlafmasken, Aromatherapie und Zubehör für erholsamen Schlaf.';
+  'Entdecke unsere Kollektion — handverlesene Produkte für Wohnen, Küche, Deko und mehr.';
 
 /** Kurzslogan — erscheint im Footer und auf der Über-uns-Seite */
 export const APP_TAGLINE =
-  'Handverlesene Schlaf-Produkte — entwickelt für Menschen, die ihre Nächte ernst nehmen.';
+  'Kuratierte Lifestyle-Objekte — ausgewählt für Menschen mit Geschmack.';
 
 /** Pfad zum OG-Bild (in /public ablegen) — wird auf Social Media angezeigt. PNG, 1200×630 px */
 export const APP_OG_IMAGE = '/og-image.png';

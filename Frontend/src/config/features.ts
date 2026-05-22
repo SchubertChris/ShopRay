@@ -51,13 +51,7 @@ export const FEATURES = {
   // EU-Pflichtangaben für Lebensmittel und Nahrungsergänzungsmittel.
   // Nur aktivieren wenn du Lebensmittel / Supplements verkaufst.
   // Deaktivieren: Tab "Inhaltsstoffe & Nährwerte" auf der Produktseite verschwindet.
-  lmiv: false,
-
-  // ── Newsletter ───────────────────────────────────────────────────────────────
-  // E-Mail-Anmeldeformular auf der Startseite.
-  // Erfordert BREVO_API_KEY + BREVO_LIST_ID im Backend.
-  // DOI (Double-Opt-In) wird automatisch genutzt wenn BREVO_DOI_TEMPLATE_ID gesetzt.
-  newsletter: true,
+  lmiv: true,
 
 } as const;
 
