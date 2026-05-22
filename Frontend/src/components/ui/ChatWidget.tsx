@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { MessageCircle, X, Send, ChevronDown, Loader2 } from 'lucide-react';
 import { useAuth } from '@features/auth';
 import { getTickets, createTicket, useTicketChat } from '@features/tickets';
@@ -287,7 +288,7 @@ export function ChatWidget() {
     setView('active-chat');
   }, []);
 
-  return (
+  return createPortal(
     <div className="chat-widget">
       {isOpen && (
         <div className="chat-widget__panel">
@@ -315,6 +316,7 @@ export function ChatWidget() {
       >
         {isOpen ? <ChevronDown size={22} /> : <MessageCircle size={22} />}
       </button>
-    </div>
+    </div>,
+    document.body
   );
 }
