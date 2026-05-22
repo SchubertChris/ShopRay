@@ -95,7 +95,7 @@
 // 4. CHAT WIDGET (links)
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-.chat-widget {
+.chat-page .chat-widget {
   position:       relative;
   display:        flex;
   flex-direction: column;
@@ -484,6 +484,6 @@
 }
 
 // Light-Mode-Override
-[data-theme$="-light"] .chat-widget {
+[data-theme$="-light"] .chat-page .chat-widget {
   background: var(--clr-dark-surface);
 }
