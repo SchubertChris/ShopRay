@@ -47,6 +47,9 @@ export default function SupportPage() {
   const [replyStatus, setReplyStatus] = useState<AdminTicket['status']>('closed');
   const [saving, setSaving]       = useState(false);
 
+  const [replyError,  setReplyError]  = useState<string | null>(null);
+  const [replySent,   setReplySent]   = useState(false);
+
   const [chatView,    setChatView]    = useState(false);
   const [chatTicket,  setChatTicket]  = useState<AdminTicket | null>(null);
   const [chatMsgs,    setChatMsgs]    = useState<TicketMessage[]>([]);
@@ -132,19 +135,28 @@ export default function SupportPage() {
     if (activeTicket) {
       setReply(activeTicket.reply ?? '');
       setReplyStatus(activeTicket.status === 'open' ? 'in_progress' : activeTicket.status);
+      setReplyError(null);
+      setReplySent(false);
     }
   }, [active]);
 
   const handleSend = async () => {
     if (!activeTicket || !reply.trim()) return;
     setSaving(true);
+    setReplyError(null);
+    setReplySent(false);
     try {
       await replyToTicket(activeTicket.id, reply, replyStatus);
       setTickets(prev => prev.map(t =>
         t.id === activeTicket.id ? { ...t, reply, status: replyStatus, replied_at: new Date().toISOString() } : t,
       ));
-    } catch { /* ignore */ }
-    setSaving(false);
+      setReplySent(true);
+      setTimeout(() => setReplySent(false), 3000);
+    } catch (e) {
+      setReplyError(e instanceof Error ? e.message : 'Antwort konnte nicht gesendet werden.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const switchView = (mode: ListViewMode) => {
@@ -381,8 +393,10 @@ export default function SupportPage() {
                 rows={5}
                 placeholder="Deine Antwort an den Kunden…"
                 value={reply}
-                onChange={e => setReply(e.target.value)}
+                onChange={e => { setReply(e.target.value); setReplyError(null); }}
               />
+              {replyError && <p className="ticket-detail__feedback ticket-detail__feedback--error">{replyError}</p>}
+              {replySent  && <p className="ticket-detail__feedback ticket-detail__feedback--success">Antwort gesendet!</p>}
               <div className="ticket-detail__actions">
                 <select
                   className="form-select form-select--sm"

@@ -195,6 +195,16 @@
     .form-textarea { min-height: 120px; }
   }
 
+  &__feedback {
+    font-size:     rem(12px);
+    border-radius: 6px;
+    padding:       0.4rem 0.75rem;
+    margin:        0;
+
+    &--error   { color: var(--clr-error);   background: color-mix(in srgb, var(--clr-error)   8%, transparent); }
+    &--success { color: var(--clr-success); background: color-mix(in srgb, var(--clr-success) 8%, transparent); }
+  }
+
   &__actions {
     display:     flex;
     align-items: center;
