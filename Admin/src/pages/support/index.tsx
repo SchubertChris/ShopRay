@@ -164,6 +164,7 @@ export default function SupportPage() {
         setDetailMsgs(fresh);
         setTimeout(() => detailMsgsEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
       }
+      setReply('');
       setReplySent(true);
       setTimeout(() => setReplySent(false), 3000);
     } catch (e) {
