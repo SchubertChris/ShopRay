@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import {
-  adminLogin, adminLogout, adminCheck, loginTotp, modLogin, changeModPassword,
+  adminLogin, adminLogout, adminCheck, loginTotp, modLogin, modLoginTotp, changeModPassword,
   setAdminToken, clearAdminToken, setSetupToken, clearSetupToken,
   get2faSetupForced, confirm2faForced,
 } from '../api/adminApi';
@@ -11,6 +11,7 @@ interface AuthState {
   isAuthed:           boolean;
   checking:           boolean;
   requireTotp:        boolean;
+  requireModTotp:     boolean;
   requireSetup2FA:    boolean;
   mustChangePassword: boolean;
   role:               AdminRole | null;
@@ -18,6 +19,7 @@ interface AuthState {
   loginMod:                 (email: string, password: string) => Promise<void>;
   submitNewModPassword:     (newPassword: string, name: string) => Promise<void>;
   verifyTotp:               (token: string) => Promise<void>;
+  verifyModTotp:            (token: string) => Promise<void>;
   setupForcedTwoFactor:     () => Promise<{ secret: string; qrCode: string; otpAuthUrl: string }>;
   confirmForcedTwoFactor:   (secret: string, totpCode: string) => Promise<void>;
   logout:                   () => Promise<void>;
@@ -28,6 +30,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
   isAuthed:           false,
   checking:           true,
   requireTotp:        false,
+  requireModTotp:     false,
   requireSetup2FA:    false,
   mustChangePassword: false,
   role:               null,
@@ -48,8 +51,13 @@ export const useAuthStore = create<AuthState>()((set) => ({
 
   loginMod: async (email: string, password: string) => {
     const result = await modLogin(email, password);
-    if (result.token) setAdminToken(result.token);
     const role = (result.role as AdminRole) ?? 'mod';
+    if (result.requireTotp && result.pendingToken) {
+      setAdminToken(result.pendingToken);
+      set({ requireModTotp: true, role });
+      return;
+    }
+    if (result.token) setAdminToken(result.token);
     if (result.mustChangePassword) {
       set({ isAuthed: false, mustChangePassword: true, role });
     } else {
@@ -68,6 +76,13 @@ export const useAuthStore = create<AuthState>()((set) => ({
     set({ isAuthed: true, requireTotp: false, role: 'owner' });
   },
 
+  verifyModTotp: async (token: string) => {
+    const result = await modLoginTotp(token);
+    if (result.token) setAdminToken(result.token);
+    const role = (result.role as AdminRole) ?? 'mod';
+    set({ isAuthed: true, requireModTotp: false, role });
+  },
+
   setupForcedTwoFactor: async () => {
     return get2faSetupForced();
   },
@@ -84,7 +99,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
     await adminLogout().catch(() => null);
     clearAdminToken();
     clearSetupToken();
-    set({ isAuthed: false, requireTotp: false, requireSetup2FA: false, role: null });
+    set({ isAuthed: false, requireTotp: false, requireModTotp: false, requireSetup2FA: false, role: null });
   },
 
   checkAuth: async () => {

@@ -35,6 +35,7 @@ import adminNotificationsRouter  from './routes/admin-notifications';
 import adminTasksRouter          from './routes/admin-tasks';
 import adminRefundRequestsRouter from './routes/admin-refund-requests';
 import newsletterRouter          from './routes/newsletter';
+import adminMod2faRouter         from './routes/mod-2fa';
 
 const app  = express();
 const PORT = process.env.PORT ?? 5000;
@@ -89,6 +90,7 @@ app.use('/api/admin/settings',    settingsRouter);
 app.use('/api/admin/notifications',    adminNotificationsRouter);
 app.use('/api/admin/tasks',            adminTasksRouter);
 app.use('/api/admin/refund-requests',  adminRefundRequestsRouter);
+app.use('/api/admin/mod-2fa',          adminMod2faRouter);
 
 // ── Favicon ───────────────────────────────────────────────────────────────────
 app.get('/favicon.svg', (_req, res) => {

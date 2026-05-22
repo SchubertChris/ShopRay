@@ -3,7 +3,7 @@
 Diese Datei wird von Claude am Anfang jeder Session gelesen und am Ende/bei Pausen aktualisiert.
 Ziel: Kontextverlust durch Compacting verhindern.
 
-**Letzte Aktualisierung:** 2026-05-21 (Session 14 — 4-Augen-Erstattungssystem + Rechnungs-Fixes)
+**Letzte Aktualisierung:** 2026-05-22 (Session 15 — Mod-2FA + Newsletter-Backend)
 
 ---
 
@@ -55,6 +55,14 @@ git push origin main   → PRODUCTION auf Vercel (alle 3 Projekte automatisch)
 | Security Audit | 27 Sicherheitslücken gefunden + alle geschlossen (Stand 2026-05-20) |
 | Docs-Cleanup | .env.examples korrigiert, QUICKSTART.md, SETUP.en.md v1.8.0 — alles gepusht |
 
+### Implementiert in Session 15 (2026-05-22)
+
+| Feature | Details |
+|---|---|
+| **Mod-2FA (TOTP)** | Mods + Team Leads können eigene TOTP-2FA einrichten. Neue `mod_totp` Tabelle (Migration 032). Login-Flow: nach Credentials → 5-min Pending-Token → `/login/mod/totp`. Settings/Sicherheit für Mods zeigt `ModTwoFactorSettings` (eigene 2FA, kein Login-Log, kein Passwort-Form) |
+| **Newsletter-Backend** | Brevo REST-API Integration, DOI-Support (§7 UWG), Rate-Limiting, silent fallback ohne API-Key. SETUP.md v1.9.0 mit Abschnitt 12 (Brevo einrichten) |
+| **ChatWidget createPortal** | `overflow-x: clip` von body auf #root verschoben; Widget via createPortal in document.body gerendert — floated korrekt am Viewport |
+
 ### Implementiert in Session 14 (2026-05-21)
 
 | Feature | Details |
@@ -96,12 +104,11 @@ git push origin main   → PRODUCTION auf Vercel (alle 3 Projekte automatisch)
 ## Offene Aufgaben (manuell durch User)
 
 ### Supabase-Migrationen noch ausführen
-- [ ] **Migration 030** — `increment_discount_uses` RPC (atomare Rabatt-Zähler-Erhöhung) — `database/migration_030_discount_atomic.sql`
-- [ ] **Migration 031** — team_lead-Rolle + refund_requests-Tabelle — `database/migration_031_team_lead_refund_requests.sql`
+- [ ] **Migration 030** — `increment_discount_uses` RPC — `database/migration_030_discount_atomic.sql`
+- [ ] **Migration 031** — team_lead-Rolle + refund_requests — `database/migration_031_team_lead_refund_requests.sql`
+- [ ] **Migration 032** — `mod_totp` Tabelle (Mod-2FA) — `database/migration_032_mod_totp.sql`
 
-> **Stand nach Session 12:** Migrations 025 + 028 Tabellen existieren, Grants wurden manuell gesetzt ✓
-> Migration 030 + 031 noch ausstehend.
-> **Alternativ bei frischer DB:** Nur `database/schema.sql` ausführen — enthält alles.
+> **User hat bestätigt:** Migrations 025–029 + weitere bereits ausgeführt. 030–032 noch ausstehend.
 
 ### Vercel Env-Vars prüfen / setzen (Backend)
 - [ ] **SHOP_VAT_ID / SHOP_TAX_NUMBER** — für GoBD-Rechnungen Pflicht
@@ -113,9 +120,8 @@ git push origin main   → PRODUCTION auf Vercel (alle 3 Projekte automatisch)
 ### Code-Qualität (nice-to-have)
 - [ ] **Heading-Reihenfolge** — Lighthouse Accessibility: H-Tags prüfen
 - [ ] **Bilder → WebP** — via squoosh.app (519 KB Einsparpotenzial)
-- [ ] **Mod-2FA** — Mods haben noch kein 2FA (nice-to-have vor Enterprise-Verkauf)
 - [ ] **Audit-Log** — Admin-Aktionen (wer hat was wann geändert) — noch nicht implementiert
-- [ ] **SETUP.en.md** — Database-Abschnitt hat noch nicht alle Migrations (nur bis 026 sichtbar, 029/030 fehlen)
+- [ ] **SETUP.en.md** — Database-Abschnitt hat noch nicht alle Migrations (nur bis 026, 030–032 fehlen)
 
 ---
 
@@ -204,6 +210,7 @@ git push origin main   → PRODUCTION auf Vercel (alle 3 Projekte automatisch)
 | 029 | migration_029_invoice_sequence.sql | Atomare Rechnungsnummer-Sequenz (GoBD) — ausgeführt ✓ |
 | 030 | migration_030_discount_atomic.sql | Atomarer Rabatt-Zähler (race-condition-sicher) — noch ausstehend |
 | 031 | migration_031_team_lead_refund_requests.sql | team_lead-Constraint + refund_requests-Tabelle — noch ausstehend |
+| 032 | migration_032_mod_totp.sql | TOTP für Mitarbeiter (Mod-2FA) — noch ausstehend |
 
 ---
 

@@ -537,7 +537,24 @@ export const loginTotp = (token: string) =>
   apiFetch<{ ok: boolean }>('/api/admin/login/totp', 'POST', { token });
 
 export const modLogin = (email: string, password: string) =>
-  apiFetch<{ ok: boolean; token: string; role: string; mustChangePassword: boolean }>('/api/admin/login/mod', 'POST', { email, password });
+  apiFetch<{ ok: boolean; token?: string; role?: string; mustChangePassword?: boolean; requireTotp?: boolean; pendingToken?: string }>('/api/admin/login/mod', 'POST', { email, password });
+
+export const modLoginTotp = (code: string) =>
+  apiFetch<{ ok: boolean; token?: string; role?: string }>('/api/admin/login/mod/totp', 'POST', { token: code });
+
+// ── Mod-2FA ───────────────────────────────────────────────────────────────────
+
+export const getMod2faStatus = () =>
+  apiFetch<{ enabled: boolean }>('/api/admin/mod-2fa/status');
+
+export const getMod2faSetup = () =>
+  apiFetch<{ secret: string; qrCode: string; otpAuthUrl: string }>('/api/admin/mod-2fa/setup');
+
+export const confirmMod2fa = (secret: string, token: string) =>
+  apiFetch<{ ok: boolean }>('/api/admin/mod-2fa/confirm', 'POST', { secret, token });
+
+export const disableMod2fa = () =>
+  apiFetch<{ ok: boolean }>('/api/admin/mod-2fa', 'DELETE');
 
 // ── Mod-Management ────────────────────────────────────────────────────────────
 

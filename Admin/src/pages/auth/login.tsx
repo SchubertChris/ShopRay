@@ -35,7 +35,7 @@ export default function LoginPage() {
   const [modError,    setModError]    = useState('');
   const [modLoading,  setModLoading]  = useState(false);
 
-  const { login, verifyTotp, loginMod, submitNewModPassword, setupForcedTwoFactor, confirmForcedTwoFactor, requireTotp, requireSetup2FA, mustChangePassword } = useAuthStore();
+  const { login, verifyTotp, verifyModTotp, loginMod, submitNewModPassword, setupForcedTwoFactor, confirmForcedTwoFactor, requireTotp, requireModTotp, requireSetup2FA, mustChangePassword } = useAuthStore();
   const navigate = useNavigate();
 
   // Forced 2FA Setup State
@@ -106,7 +106,11 @@ export default function LoginPage() {
     setTotpError('');
     setTotpLoading(true);
     try {
-      await verifyTotp(totpCode);
+      if (requireModTotp) {
+        await verifyModTotp(totpCode);
+      } else {
+        await verifyTotp(totpCode);
+      }
       navigate(ROUTES.DASHBOARD);
     } catch (err) {
       setTotpError(err instanceof Error ? err.message : 'Ungültiger Code.');
@@ -124,9 +128,12 @@ export default function LoginPage() {
     setModLoading(true);
     try {
       await loginMod(modEmail, modPassword);
-      // Wenn mustChangePassword → bleibt auf Login-Seite, zeigt Force-Change-Screen
-      if (!useAuthStore.getState().mustChangePassword) {
+      const state = useAuthStore.getState();
+      // requireModTotp → TOTP-Schritt; mustChangePassword → Passwort-Schritt; sonst Dashboard
+      if (!state.requireModTotp && !state.mustChangePassword) {
         navigate(ROUTES.DASHBOARD);
+      } else if (state.requireModTotp) {
+        setTimeout(() => totpInputRef.current?.focus(), 50);
       }
     } catch (err) {
       setModError(err instanceof Error ? err.message : 'Anmeldung fehlgeschlagen.');
@@ -393,7 +400,7 @@ export default function LoginPage() {
           )}
 
           {/* ── Tab-Switcher ── */}
-          {!requireSetup2FA && !requireTotp && !mustChangePassword && (
+          {!requireSetup2FA && !requireTotp && !requireModTotp && !mustChangePassword && (
             <div className="login-tabs">
               <button
                 type="button"
@@ -416,7 +423,7 @@ export default function LoginPage() {
 
           {!requireSetup2FA && !mustChangePassword && (
           <div className="login-form__lock-icon" aria-hidden="true">
-            {requireTotp
+            {(requireTotp || requireModTotp)
               ? <Smartphone size={22} strokeWidth={1.75} />
               : <Lock       size={22} strokeWidth={1.75} />
             }
@@ -424,7 +431,7 @@ export default function LoginPage() {
           )}
 
           {/* ── Passwort-Form ── */}
-          {!requireSetup2FA && !requireTotp && !mustChangePassword && loginMode === 'owner' && (
+          {!requireSetup2FA && !requireTotp && !requireModTotp && !mustChangePassword && loginMode === 'owner' && (
             <form className="login-form" onSubmit={handleSubmit} noValidate>
               <p className="login-form__eyebrow">Admin-Bereich</p>
               <h2 className="login-form__title">Anmelden</h2>
@@ -474,8 +481,8 @@ export default function LoginPage() {
             </form>
           )}
 
-          {/* ── TOTP-Form ── */}
-          {!requireSetup2FA && requireTotp && !mustChangePassword && (
+          {/* ── TOTP-Form (Owner + Mod) ── */}
+          {!requireSetup2FA && (requireTotp || requireModTotp) && !mustChangePassword && (
             <form className="login-form" onSubmit={handleTotpSubmit} noValidate>
               <p className="login-form__eyebrow">2-Faktor-Authentifizierung</p>
               <h2 className="login-form__title">Code eingeben</h2>
@@ -521,7 +528,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 className="login-form__back-link"
-                onClick={() => useAuthStore.setState({ requireTotp: false })}
+                onClick={() => useAuthStore.setState({ requireTotp: false, requireModTotp: false })}
               >
                 ← Zurück zur Passwort-Eingabe
               </button>
@@ -529,7 +536,7 @@ export default function LoginPage() {
           )}
 
           {/* ── Mitarbeiter-Form ── */}
-          {!requireSetup2FA && !requireTotp && !mustChangePassword && loginMode === 'mod' && (
+          {!requireSetup2FA && !requireTotp && !requireModTotp && !mustChangePassword && loginMode === 'mod' && (
             <form className="login-form" onSubmit={handleModSubmit} noValidate>
               <p className="login-form__eyebrow">Mitarbeiter-Zugang</p>
               <h2 className="login-form__title">Anmelden</h2>

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Save, Store, Mail, Truck, Lock, Tag, Trash2, Plus, ShieldCheck, Monitor, AlertTriangle, Loader2, CheckCircle2, Smartphone, QrCode, X, Bell, BellOff, Users, Eye, EyeOff } from 'lucide-react';
+import { Save, Store, Mail, Truck, Lock, Tag, Trash2, Plus, ShieldCheck, Monitor, AlertTriangle, Loader2, CheckCircle2, Smartphone, QrCode, X, Bell, BellOff, Users, Eye, EyeOff, Copy, Check, ExternalLink } from 'lucide-react';
 import TeamTab from './tabs/TeamTab';
 import {
   getLoginLog, getShippingSettings, updateShippingSettings,
   getShopSettings, updateShopSettings,
   getCategories, createCategory, deleteCategory,
   get2faStatus, get2faSetup, confirm2fa, disable2fa, verify2fa,
+  getMod2faStatus, getMod2faSetup, confirmMod2fa, disableMod2fa,
   changeOwnerPassword,
   type LoginLogEntry, type ShippingSettings, type ShopSettingsData, type Category,
 } from '../../api/adminApi';
@@ -654,18 +655,216 @@ function PasswordChangeForm() {
   );
 }
 
+// ── Mod-2FA (Mitarbeiter-eigene TOTP-Verwaltung) ──────────────────────────────
+function ModTwoFactorSettings() {
+  type Step = 'idle' | 'setup' | 'disable-confirm';
+
+  const [enabled,      setEnabled]      = useState<boolean | null>(null);
+  const [step,         setStep]         = useState<Step>('idle');
+  const [qrCode,       setQrCode]       = useState('');
+  const [secret,       setSecret]       = useState('');
+  const [otpAuthUrl,   setOtpAuthUrl]   = useState('');
+  const [token,        setToken]        = useState('');
+  const [tokenErr,     setTokenErr]     = useState('');
+  const [working,      setWorking]      = useState(false);
+  const [secretCopied, setSecretCopied] = useState(false);
+
+  useEffect(() => {
+    getMod2faStatus()
+      .then(d => setEnabled(d.enabled))
+      .catch(() => setEnabled(false));
+  }, []);
+
+  const startSetup = async () => {
+    setWorking(true);
+    try {
+      const data = await getMod2faSetup();
+      setQrCode(data.qrCode);
+      setSecret(data.secret);
+      setOtpAuthUrl(data.otpAuthUrl);
+      setStep('setup');
+      setToken('');
+      setTokenErr('');
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const confirmSetup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (token.length !== 6) { setTokenErr('6-stelligen Code eingeben.'); return; }
+    setWorking(true);
+    setTokenErr('');
+    try {
+      await confirmMod2fa(secret, token);
+      setEnabled(true);
+      setStep('idle');
+      setToken('');
+    } catch (err) {
+      setTokenErr(err instanceof Error ? err.message : 'Ungültiger Code.');
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const confirmDisable = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setWorking(true);
+    setTokenErr('');
+    try {
+      await disableMod2fa();
+      setEnabled(false);
+      setStep('idle');
+      setToken('');
+    } catch (err) {
+      setTokenErr(err instanceof Error ? err.message : 'Deaktivieren fehlgeschlagen.');
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  if (enabled === null) {
+    return (
+      <div className="form-section">
+        <div className="page-loading">
+          <Loader2 size={18} strokeWidth={1.5} className="spin" />
+          <span>Lade 2FA-Status…</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="form-section">
+      <div className="form-section__head">
+        <h2 className="form-section__title">
+          <Smartphone size={15} strokeWidth={2} />
+          Zwei-Faktor-Authentifizierung (2FA)
+        </h2>
+        <p className="form-section__desc">
+          Mit 2FA wird beim Login zusätzlich ein Einmal-Code aus deiner Authenticator-App verlangt
+          (z. B. Google Authenticator, Aegis, Authy). Du kannst 2FA für deinen Mitarbeiter-Account
+          selbst einrichten und verwalten.
+        </p>
+      </div>
+
+      <div className="two-fa-status">
+        <span className={`two-fa-status__badge two-fa-status__badge--${enabled ? 'on' : 'off'}`}>
+          {enabled ? 'Aktiviert' : 'Deaktiviert'}
+        </span>
+        {enabled && step === 'idle' && (
+          <button className="btn-danger" onClick={() => { setStep('disable-confirm'); setToken(''); setTokenErr(''); }}>
+            <X size={13} strokeWidth={2} />
+            2FA deaktivieren
+          </button>
+        )}
+        {!enabled && step === 'idle' && (
+          <button className="btn-primary" onClick={startSetup} disabled={working}>
+            {working
+              ? <Loader2 size={13} strokeWidth={2} className="spin" />
+              : <QrCode  size={13} strokeWidth={2} />
+            }
+            2FA einrichten
+          </button>
+        )}
+      </div>
+
+      {/* Setup-Flow */}
+      {step === 'setup' && (
+        <div className="two-fa-setup">
+          <p className="two-fa-setup__hint">
+            <strong>1.</strong> Scanne diesen QR-Code mit deiner Authenticator-App.
+          </p>
+          {qrCode && <img src={qrCode} alt="2FA QR-Code" className="two-fa-setup__qr" />}
+
+          <div className="setup2fa-mobile">
+            <p className="setup2fa-mobile__label">Auf diesem Gerät?</p>
+            <div className="setup2fa-mobile__actions">
+              <a href={otpAuthUrl} className="btn-secondary setup2fa-mobile__btn" rel="noopener noreferrer">
+                <ExternalLink size={13} strokeWidth={2} />
+                In App öffnen
+              </a>
+              <button
+                type="button"
+                className="btn-secondary setup2fa-mobile__btn"
+                onClick={() => {
+                  void navigator.clipboard.writeText(secret).then(() => {
+                    setSecretCopied(true);
+                    setTimeout(() => setSecretCopied(false), 2500);
+                  });
+                }}
+              >
+                {secretCopied
+                  ? <><Check size={13} strokeWidth={2.5} />Kopiert!</>
+                  : <><Copy  size={13} strokeWidth={2}   />Secret kopieren</>
+                }
+              </button>
+            </div>
+            <p className="setup2fa-mobile__secret">{secret}</p>
+          </div>
+
+          <p className="two-fa-setup__hint">
+            <strong>2.</strong> Gib anschließend den 6-stelligen Code ein.
+          </p>
+          <form className="two-fa-setup__form" onSubmit={confirmSetup} noValidate>
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="000000"
+              value={token}
+              onChange={e => { setToken(e.target.value.replace(/\D/g, '').slice(0, 6)); setTokenErr(''); }}
+              className="form-input two-fa-setup__code-input"
+              autoFocus
+            />
+            {tokenErr && <p className="form-error-inline">{tokenErr}</p>}
+            <div className="form-actions">
+              <button type="button" className="btn-secondary" onClick={() => setStep('idle')}>Abbrechen</button>
+              <button type="submit" className="btn-primary" disabled={working || token.length !== 6}>
+                {working ? <Loader2 size={13} strokeWidth={2} className="spin" /> : <CheckCircle2 size={13} strokeWidth={2} />}
+                {working ? 'Wird gespeichert…' : 'Bestätigen & aktivieren'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Deaktivierungs-Flow */}
+      {step === 'disable-confirm' && (
+        <div className="two-fa-setup">
+          <p className="two-fa-setup__hint">
+            Bist du sicher? 2FA schützt deinen Account vor unbefugtem Zugriff.
+          </p>
+          {tokenErr && <p className="form-error-inline">{tokenErr}</p>}
+          <div className="form-actions">
+            <button type="button" className="btn-secondary" onClick={() => setStep('idle')}>Abbrechen</button>
+            <button className="btn-danger" onClick={confirmDisable} disabled={working}>
+              {working ? <Loader2 size={13} strokeWidth={2} className="spin" /> : <X size={13} strokeWidth={2} />}
+              {working ? 'Wird deaktiviert…' : '2FA deaktivieren'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Sicherheit ────────────────────────────────────────────────────────────────
 function SecuritySettings() {
+  const role    = useAuthStore(s => s.role);
+  const isOwner = role === 'owner';
+
   const [log,     setLog]     = useState<LoginLogEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isOwner);
   const [error,   setError]   = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isOwner) return;
     getLoginLog()
       .then(setLog)
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Protokoll konnte nicht geladen werden.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [isOwner]);
 
   function formatDate(iso: string): string {
     return new Date(iso).toLocaleString('de-DE', {
@@ -683,10 +882,19 @@ function SecuritySettings() {
     return ua.slice(0, 40);
   }
 
+  // Mitarbeiter (Mod / Team Lead) sehen nur ihre eigene 2FA-Verwaltung
+  if (!isOwner) {
+    return (
+      <div className="security-panel">
+        <ModTwoFactorSettings />
+      </div>
+    );
+  }
+
   return (
     <div className="security-panel">
 
-      {/* 2FA */}
+      {/* 2FA (Owner-global) */}
       <TwoFactorSettings />
 
       {/* Passwort ändern */}

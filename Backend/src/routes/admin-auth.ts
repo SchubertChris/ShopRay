@@ -23,6 +23,10 @@ const ModLoginSchema = z.object({
   password: z.string().min(1, 'Passwort fehlt.').max(200),
 });
 
+const ModTotpSchema = z.object({
+  token: z.string().length(6, 'TOTP-Code muss 6 Stellen haben.').regex(/^\d{6}$/, 'Nur Ziffern.'),
+});
+
 const AddModSchema = z.object({
   email: z.string().email('Ungültige E-Mail.'),
 });
@@ -248,6 +252,23 @@ router.post('/login/mod', authRateLimit, validate(ModLoginSchema), async (req: R
   }
 
   const actualRole = profile.role as 'mod' | 'team_lead';
+
+  // 2FA prüfen — hat dieser Mitarbeiter TOTP eingerichtet?
+  const { count: totpCount } = await supabase
+    .from('mod_totp')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', authData.user.id);
+
+  if ((totpCount ?? 0) > 0) {
+    const pendingToken = jwt.sign(
+      { modTotpPending: true, userId: authData.user.id, role: actualRole },
+      secret,
+      { expiresIn: '5m' },
+    );
+    res.json({ ok: true, requireTotp: true, pendingToken, role: actualRole });
+    return;
+  }
+
   const token = jwt.sign({ role: actualRole, userId: authData.user.id }, secret, { expiresIn: '8h' });
 
   supabase.from('admin_login_log').insert({
@@ -259,6 +280,55 @@ router.post('/login/mod', authRateLimit, validate(ModLoginSchema), async (req: R
   }).then(({ error: e }) => { if (e) console.error('[login-log] insert failed:', e.message); });
 
   res.json({ ok: true, token, role: actualRole, mustChangePassword: profile?.must_change_password ?? false });
+});
+
+// ── POST /api/admin/login/mod/totp ───────────────────────────────────────────
+router.post('/login/mod/totp', authRateLimit, validate(ModTotpSchema), async (req: Request, res: Response): Promise<void> => {
+  const { token: totpCode } = req.body as z.infer<typeof ModTotpSchema>;
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) { res.status(500).json({ error: 'JWT_SECRET fehlt.' }); return; }
+
+  const authHeader = req.headers['authorization'];
+  const pendingRaw = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+  if (!pendingRaw) { res.status(401).json({ error: 'Kein Pending-Token. Bitte zuerst anmelden.' }); return; }
+
+  let payload: { modTotpPending: boolean; userId: string; role: 'mod' | 'team_lead' };
+  try {
+    payload = jwt.verify(pendingRaw, jwtSecret) as typeof payload;
+    if (!payload.modTotpPending || !payload.userId) throw new Error('Ungültiges Token');
+  } catch {
+    res.status(401).json({ error: 'Pending-Token ungültig oder abgelaufen.' });
+    return;
+  }
+
+  const { data: totpRow } = await supabase
+    .from('mod_totp')
+    .select('secret')
+    .eq('user_id', payload.userId)
+    .single();
+
+  if (!totpRow) { res.status(400).json({ error: '2FA nicht konfiguriert.' }); return; }
+
+  const isValid = authenticator.verify({ token: totpCode, secret: totpRow.secret });
+  if (!isValid) { res.status(401).json({ error: 'Ungültiger TOTP-Code.' }); return; }
+
+  const sessionToken = jwt.sign(
+    { role: payload.role, userId: payload.userId },
+    jwtSecret,
+    { expiresIn: '8h' },
+  );
+
+  const ip        = getClientIp(req);
+  const userAgent = (req.headers['user-agent'] ?? '').slice(0, 500);
+  supabase.from('admin_login_log').insert({
+    ip_address: ip,
+    user_agent: userAgent,
+    success:    true,
+    role:       payload.role,
+    email:      null,
+  }).then(({ error: e }) => { if (e) console.error('[login-log] insert failed:', e.message); });
+
+  res.json({ ok: true, token: sessionToken, role: payload.role });
 });
 
 // ── POST /api/admin/logout ────────────────────────────────────────────────────
