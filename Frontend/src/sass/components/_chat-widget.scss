@@ -2,23 +2,18 @@
 @use '../abstracts/functions' as *;
 
 // ─── CHAT WIDGET ──────────────────────────────────────────────────────────────
-
-// Full-screen transparent overlay — dient als containing block für Widget + Panel.
-// position:fixed hier (nicht auf den Kindern) vermeidet CSS-Cascade-Probleme
-// durch body/html-Properties die sonst fixed-positioning brechen können.
-.chat-portal {
-  position:       fixed;
-  inset:          0;
-  pointer-events: none;
-  z-index:        1000;
-}
+// .chat-widget ist ein direktes body-Kind via React-Portal — position:fixed
+// funktioniert hier ohne Containing-Block-Probleme durch #root CSS.
 
 .chat-widget {
-  // FAB-Wrapper — absolute innerhalb des Portals
-  position:       absolute;
+  position:       fixed;
   bottom:         1.5rem;
   right:          1.5rem;
-  pointer-events: auto;
+  z-index:        1000;
+  display:        flex;
+  flex-direction: column;
+  align-items:    flex-end;
+  gap:            0.75rem;
 
   // ── FAB ────────────────────────────────────────────────────────────────────
   &__fab {
@@ -48,11 +43,8 @@
     }
   }
 
-  // ── Panel — absolute innerhalb des .chat-portal Overlays ─────────────────
+  // ── Panel — flex child oberhalb des FAB ──────────────────────────────────
   &__panel {
-    position:       absolute;
-    bottom:         5.75rem; // 1.5rem (FAB-Abstand) + 54px (FAB) + 14px (Gap)
-    right:          1.5rem;
     width:          360px;
     max-height:     calc(100dvh - 7rem);
     background:     var(--clr-surface);
@@ -62,14 +54,14 @@
     display:        flex;
     flex-direction: column;
     overflow:       hidden;
-    pointer-events: auto;
     animation:      chat-slide-up 0.28s cubic-bezier(0.34, 1.38, 0.64, 1) both;
 
     @media (max-width: 480px) {
-      right:  1rem;
-      left:   1rem;
-      width:  auto;
-      bottom: 5.5rem;
+      position: fixed;
+      bottom:   5.5rem;
+      left:     1rem;
+      right:    1rem;
+      width:    auto;
     }
   }
 
