@@ -79,6 +79,9 @@ export function HeroCanvas({ themeKey }: HeroCanvasProps) {
     interface Wave { x: number; y: number; startTime: number; }
     interface Grid { shapes: Shape[]; width: number; height: number; }
 
+    // Touch/Mobile: Canvas-Loop zu teuer (250+ Shapes @ 60fps) — skip
+    if (window.matchMedia('(pointer: coarse)').matches) return;
+
     let grid: Grid | null = null;
     let rafId: number;
     let pointer: { x: number; y: number } | null = null;
@@ -206,7 +209,7 @@ export function HeroCanvas({ themeKey }: HeroCanvasProps) {
       activity *= 0.93;
 
       frameCount++;
-      if (frameCount % 10 === 0) {
+      if (frameCount % 60 === 0) { // Alle 60 Frames (~1s) statt 10 — weniger Layout-Recalcs
         maskRects = Array.from(document.querySelectorAll('[data-shape-mask]'))
           .map(el => el.getBoundingClientRect());
       }

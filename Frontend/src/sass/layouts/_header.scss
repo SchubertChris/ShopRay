@@ -30,6 +30,12 @@
   background: var(--clr-glass);
   backdrop-filter: blur(16px);
   border-bottom-color: var(--clr-secondary);
+
+  // Mobile: einfaches Solid-Background statt teurem Blur
+  @media (pointer: coarse) {
+    backdrop-filter: none;
+    background:      var(--clr-surface);
+  }
 }
 
 // Beim Runter-Scrollen ausblenden

@@ -109,15 +109,17 @@ export default function HomePage() {
       x: 70, opacity: 0, duration: 1.2, delay: 0.3, ease: 'expo.out',
     });
 
-    // HERO PARALLAX
-    gsap.to('.editorial-hero__bg', {
-      yPercent: 28, ease: 'none',
-      scrollTrigger: { trigger: '.editorial-hero', start: 'top top', end: 'bottom top', scrub: true },
-    });
-    gsap.to('.hero-canvas', {
-      yPercent: 14, ease: 'none',
-      scrollTrigger: { trigger: '.editorial-hero', start: 'top top', end: 'bottom top', scrub: 1.8 },
-    });
+    // HERO PARALLAX — nur Desktop (Scrub-Animationen zu teuer auf Mobile)
+    if (!window.matchMedia('(pointer: coarse)').matches) {
+      gsap.to('.editorial-hero__bg', {
+        yPercent: 28, ease: 'none',
+        scrollTrigger: { trigger: '.editorial-hero', start: 'top top', end: 'bottom top', scrub: true },
+      });
+      gsap.to('.hero-canvas', {
+        yPercent: 14, ease: 'none',
+        scrollTrigger: { trigger: '.editorial-hero', start: 'top top', end: 'bottom top', scrub: 1.8 },
+      });
+    }
 
     // TRUST BAR
     gsap.from('.trust-bar', {
@@ -149,15 +151,17 @@ export default function HomePage() {
       scrollTrigger: { trigger: '.brand-split', start: 'top 78%' },
     });
 
-    // PARTIKEL-RINGE
-    gsap.to('.particle-ring--outer', {
-      rotation: 360, ease: 'none',
-      scrollTrigger: { trigger: '.brand-split', start: 'top bottom', end: 'bottom top', scrub: 1 },
-    });
-    gsap.to('.particle-ring--inner', {
-      rotation: -360, ease: 'none',
-      scrollTrigger: { trigger: '.brand-split', start: 'top bottom', end: 'bottom top', scrub: 1.6 },
-    });
+    // PARTIKEL-RINGE — nur Desktop
+    if (!window.matchMedia('(pointer: coarse)').matches) {
+      gsap.to('.particle-ring--outer', {
+        rotation: 360, ease: 'none',
+        scrollTrigger: { trigger: '.brand-split', start: 'top bottom', end: 'bottom top', scrub: 1 },
+      });
+      gsap.to('.particle-ring--inner', {
+        rotation: -360, ease: 'none',
+        scrollTrigger: { trigger: '.brand-split', start: 'top bottom', end: 'bottom top', scrub: 1.6 },
+      });
+    }
 
     // USP GRID
     gsap.utils.toArray<HTMLElement>('.usp-card').forEach((card, i) => {
