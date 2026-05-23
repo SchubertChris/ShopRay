@@ -9,7 +9,7 @@
   position:       fixed;
   bottom:         1.5rem;
   right:          1.5rem;
-  z-index:        1000;
+  z-index:        150; // unter Nav (z-index: 200) — Widget bleibt sichtbar, Nav immer drüber
   display:        flex;
   flex-direction: column;
   align-items:    flex-end;
