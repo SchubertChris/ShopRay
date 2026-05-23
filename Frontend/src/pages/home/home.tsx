@@ -202,22 +202,23 @@ export default function HomePage() {
   }, []);
 
   // ── Block 2: Bento — läuft sobald categories geladen sind ─────────────────
-  // (categories kommen async — beim Mount-Run existieren .cat-bento__item noch nicht)
   useGSAP(() => {
     if (!categories.length) return;
+    // Sanfte Richtungen — kleiner Versatz, kein Rotation-Overload
     const bentoFrom = [
-      { x: -100, y:    0, rotation: -2   },
-      { x:   80, y:  -60, rotation:  1.5 },
-      { x:    0, y:   80, rotation: -1   },
-      { x:  100, y:    0, rotation:  2   },
-      { x:    0, y:   70, rotation: -1.5 },
-      { x:  -70, y:   60, rotation:  1   },
+      { x: -45, y:   0, rotation: -0.8 },
+      { x:  30, y: -28, rotation:  0.6 },
+      { x:   0, y:  38, rotation: -0.5 },
+      { x:  45, y:   0, rotation:  0.8 },
+      { x:   0, y:  32, rotation: -0.6 },
+      { x: -30, y:  28, rotation:  0.5 },
     ];
     gsap.utils.toArray<HTMLElement>('.cat-bento__item').forEach((item, i) => {
-      const dir = bentoFrom[i] ?? { x: 0, y: 60, rotation: 0 };
+      const dir = bentoFrom[i] ?? { x: 0, y: 32, rotation: 0 };
       gsap.from(item, {
-        ...dir, opacity: 0, duration: 1.25, ease: 'expo.out',
-        scrollTrigger: { trigger: item, start: 'top 92%', toggleActions: 'play none none none' },
+        ...dir, opacity: 0, duration: 1.4, ease: 'power2.out',
+        delay: i * 0.07, // koordinierter Stagger statt unabhängiger Trigger
+        scrollTrigger: { trigger: '.cat-bento', start: 'top 82%', toggleActions: 'play none none none' },
       });
     });
   }, [categories.length]);
