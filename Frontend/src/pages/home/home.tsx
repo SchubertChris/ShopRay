@@ -19,6 +19,21 @@ import { PALETTES } from '@config/theme';
 import { IMAGES, getAvatarImage, getCategoryImage } from '@config/images';
 import { APP_NAME, APP_URL, APP_SOCIALS, APP_CONTACT, APP_OG_IMAGE } from '@config/app';
 
+// ── Animation-Design-System ───────────────────────────────────────────────────
+// Einheitliche Tokens für alle GSAP-Animationen — nie Magic Numbers streuen.
+// Easing-Hierarchie: ENTER für große Entrances, SOFT für Text/Labels, SPRING für Karten.
+const EASE_ENTER  = 'expo.out';      // Große Entrances: Headings, Hero, Bento
+const EASE_SOFT   = 'power2.out';    // Sanfte Reveals: Fließtext, Eyebrows, Subs
+const EASE_SPRING = 'back.out(1.1)'; // Karten mit minimalem Federgefühl
+const DUR_FAST    = 0.65;            // Schnell: Labels, Eyebrows, Sub-Text
+const DUR_BASE    = 0.9;             // Standard: Sektionen, Karten
+const DUR_SLOW    = 1.25;            // Dramatisch: Bento, Intro-Heading, Brand
+const STAGGER_SM  = 0.055;           // Dichter Stagger: FAQ (viele Items)
+const STAGGER_MD  = 0.085;           // Standard-Stagger: Karten, USPs, Reviews
+const Y_NEAR      = 22;              // Subtiler Y-Versatz: Text, Labels
+const Y_MID       = 44;              // Standard Y-Versatz: Karten, Sektionen
+const X_SIDE      = 60;              // Horizontaler Versatz: Brand Split, Arrivals
+
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
 
@@ -89,114 +104,101 @@ export default function HomePage() {
 
   // ── Block 1: Statische Elemente — einmalig auf Mount ─────────────────────
   useGSAP(() => {
-    // HERO ENTRANCE
-    gsap.from('.editorial-hero__pill', {
-      y: 28, opacity: 0, duration: 0.95, delay: 0.2, ease: 'power3.out',
+    // HERO ENTRANCE — immer (above-the-fold, kein ScrollTrigger nötig, kein Mobile-Skip)
+    gsap.from('.editorial-hero__pill',  { y: Y_NEAR, opacity: 0, duration: DUR_FAST, delay: 0.20, ease: EASE_SOFT });
+    gsap.from('.hero-word__inner',      { y: '110%', stagger: 0.1, duration: DUR_BASE, delay: 0.05, ease: EASE_ENTER });
+    gsap.from('.editorial-hero__sub',   { y: Y_NEAR, opacity: 0, duration: DUR_FAST, delay: 0.45, ease: EASE_SOFT });
+    gsap.from('.editorial-hero__ctas',  { y: Y_NEAR, opacity: 0, duration: DUR_FAST, delay: 0.62, ease: EASE_SOFT });
+    gsap.from('.hero-social',           { y: 16,     opacity: 0, duration: DUR_FAST, delay: 0.78, ease: EASE_SOFT });
+    gsap.from('.hero-slot',             { x: X_SIDE, opacity: 0, duration: DUR_SLOW, delay: 0.30, ease: EASE_ENTER });
+
+    // ── Scroll-Animationen: nur Desktop (pointer: fine) ─────────────────────
+    // Auf Touch-Geräten: ScrollTrigger-Transform-Animationen ruckeln + kein
+    // Mehrwert (kein Hover, kein Parallax). Opacity-only über CSS [data-reveal].
+    if (window.matchMedia('(pointer: coarse)').matches) return;
+
+    // Parallax
+    gsap.to('.editorial-hero__bg', {
+      yPercent: 28, ease: 'none',
+      scrollTrigger: { trigger: '.editorial-hero', start: 'top top', end: 'bottom top', scrub: true },
     });
-    gsap.from('.hero-word__inner', {
-      y: '110%', stagger: 0.1, duration: 1, delay: 0.05, ease: 'expo.out',
-    });
-    gsap.from('.editorial-hero__sub', {
-      y: 24, opacity: 0, duration: 0.9, delay: 0.45, ease: 'power2.out',
-    });
-    gsap.from('.editorial-hero__ctas', {
-      y: 24, opacity: 0, duration: 0.9, delay: 0.62, ease: 'power2.out',
-    });
-    gsap.from('.hero-social', {
-      y: 20, opacity: 0, duration: 0.85, delay: 0.78, ease: 'power2.out',
-    });
-    gsap.from('.hero-slot', {
-      x: 70, opacity: 0, duration: 1.2, delay: 0.3, ease: 'expo.out',
+    gsap.to('.hero-canvas', {
+      yPercent: 14, ease: 'none',
+      scrollTrigger: { trigger: '.editorial-hero', start: 'top top', end: 'bottom top', scrub: 1.8 },
     });
 
-    // HERO PARALLAX — nur Desktop (Scrub-Animationen zu teuer auf Mobile)
-    if (!window.matchMedia('(pointer: coarse)').matches) {
-      gsap.to('.editorial-hero__bg', {
-        yPercent: 28, ease: 'none',
-        scrollTrigger: { trigger: '.editorial-hero', start: 'top top', end: 'bottom top', scrub: true },
-      });
-      gsap.to('.hero-canvas', {
-        yPercent: 14, ease: 'none',
-        scrollTrigger: { trigger: '.editorial-hero', start: 'top top', end: 'bottom top', scrub: 1.8 },
-      });
-    }
-
-    // TRUST BAR
+    // Trust Bar — simples Fade reicht, kein Transform nötig
     gsap.from('.trust-bar', {
-      opacity: 0, duration: 0.8,
+      opacity: 0, duration: DUR_FAST,
       scrollTrigger: { trigger: '.trust-bar', start: 'top 95%' },
     });
 
-    // EDITORIAL INTRO
+    // Editorial Intro — großer Heading, dramatisches Entrance
     gsap.from('.editorial-intro__text', {
-      y: 50, opacity: 0, duration: 1.1, ease: 'expo.out',
+      y: Y_MID, opacity: 0, duration: DUR_SLOW, ease: EASE_ENTER,
       scrollTrigger: { trigger: '.editorial-intro', start: 'top 80%' },
     });
 
-    // PRODUCTS HEAD (immer im DOM, unabhängig von Produktdaten)
+    // Sektions-Köpfe — subtil, immer im DOM unabhängig von Produktdaten
     gsap.utils.toArray<HTMLElement>('.products-head').forEach(el => {
       gsap.from(el, {
-        y: 32, opacity: 0, duration: 0.85, ease: 'power2.out',
-        scrollTrigger: { trigger: el, start: 'top 85%' },
+        y: Y_NEAR, opacity: 0, duration: DUR_FAST, ease: EASE_SOFT,
+        scrollTrigger: { trigger: el, start: 'top 88%' },
       });
     });
 
-    // BRAND SPLIT
+    // Brand Split — visuell starker horizontaler Aufbau
     gsap.from('.brand-split__visual-wrap', {
-      x: -90, opacity: 0, duration: 1.35, ease: 'expo.out',
+      x: -X_SIDE, opacity: 0, duration: DUR_SLOW, ease: EASE_ENTER,
       scrollTrigger: { trigger: '.brand-split', start: 'top 78%' },
     });
     gsap.from('.brand-split__content > *', {
-      x: 60, opacity: 0, stagger: 0.1, duration: 1.1, ease: 'expo.out',
+      x: X_SIDE * 0.65, opacity: 0, stagger: STAGGER_MD, duration: DUR_BASE, ease: EASE_ENTER,
       scrollTrigger: { trigger: '.brand-split', start: 'top 78%' },
     });
 
-    // PARTIKEL-RINGE — nur Desktop
-    if (!window.matchMedia('(pointer: coarse)').matches) {
-      gsap.to('.particle-ring--outer', {
-        rotation: 360, ease: 'none',
-        scrollTrigger: { trigger: '.brand-split', start: 'top bottom', end: 'bottom top', scrub: 1 },
-      });
-      gsap.to('.particle-ring--inner', {
-        rotation: -360, ease: 'none',
-        scrollTrigger: { trigger: '.brand-split', start: 'top bottom', end: 'bottom top', scrub: 1.6 },
-      });
-    }
+    // Partikel-Ringe — scrub, nur Desktop (Rotation auf Touch zu teuer)
+    gsap.to('.particle-ring--outer', {
+      rotation: 360, ease: 'none',
+      scrollTrigger: { trigger: '.brand-split', start: 'top bottom', end: 'bottom top', scrub: 1 },
+    });
+    gsap.to('.particle-ring--inner', {
+      rotation: -360, ease: 'none',
+      scrollTrigger: { trigger: '.brand-split', start: 'top bottom', end: 'bottom top', scrub: 1.6 },
+    });
 
-    // USP GRID
+    // USP Grid — scale minimal (0.96 statt 0.93: weniger aggressiv)
     gsap.utils.toArray<HTMLElement>('.usp-card').forEach((card, i) => {
       gsap.from(card, {
-        y: 55, opacity: 0, scale: 0.93, duration: 0.95, ease: 'back.out(1.2)',
-        delay: i * 0.08,
+        y: Y_MID, opacity: 0, scale: 0.96, duration: DUR_BASE, ease: EASE_SPRING,
+        delay: i * STAGGER_MD,
         scrollTrigger: { trigger: '.usp-grid', start: 'top 82%', toggleActions: 'play none none none' },
       });
     });
 
-    // TESTIMONIALS HEAD
+    // Testimonials — Head + Cards getrennt triggern
     gsap.from('.testimonials-head', {
-      y: 30, opacity: 0, duration: 0.85, ease: 'power2.out',
-      scrollTrigger: { trigger: '.testimonials-head', start: 'top 85%' },
+      y: Y_NEAR, opacity: 0, duration: DUR_FAST, ease: EASE_SOFT,
+      scrollTrigger: { trigger: '.testimonials-head', start: 'top 88%' },
     });
-
-    // REVIEWS
     gsap.from('.review-card-v2', {
-      y: 65, opacity: 0, stagger: 0.13, duration: 0.95, ease: 'power2.out',
+      y: Y_MID, opacity: 0, stagger: STAGGER_MD * 1.4, duration: DUR_BASE, ease: EASE_SOFT,
       scrollTrigger: { trigger: '.review-grid', start: 'top 82%' },
     });
 
-    // FAQ
+    // FAQ — Head horizontal, Items fade up mit engem Stagger (8 Items: 8 × 55ms = 440ms)
     gsap.from('.faq-split__head', {
-      x: -50, opacity: 0, duration: 1.1, ease: 'expo.out',
-      scrollTrigger: { trigger: '.faq-split', start: 'top 80%' },
+      x: -(X_SIDE * 0.75), opacity: 0, duration: DUR_BASE, ease: EASE_ENTER,
+      scrollTrigger: { trigger: '.faq-split', start: 'top 82%' },
     });
     gsap.from('.faq-item-v2', {
-      y: 22, opacity: 0, stagger: 0.09, duration: 0.75, ease: 'power2.out',
-      scrollTrigger: { trigger: '.faq-split__items', start: 'top 85%' },
+      y: Y_NEAR, opacity: 0, stagger: STAGGER_SM, duration: DUR_FAST, ease: EASE_SOFT,
+      scrollTrigger: { trigger: '.faq-split__items', start: 'top 88%' },
     });
 
-    // NEWSLETTER
+    // Newsletter — zentriert einblenden, kein X-Versatz nötig
     gsap.from('.newsletter-dark__inner > *', {
-      y: 45, opacity: 0, stagger: 0.1, duration: 1, ease: 'expo.out',
+      y: Y_MID, opacity: 0, stagger: STAGGER_MD, duration: DUR_BASE, ease: EASE_ENTER,
       scrollTrigger: { trigger: '.newsletter-dark', start: 'top 82%' },
     });
   }, []);
@@ -204,7 +206,20 @@ export default function HomePage() {
   // ── Block 2: Bento — läuft sobald categories geladen sind ─────────────────
   useGSAP(() => {
     if (!categories.length) return;
-    // Sanfte Richtungen — kleiner Versatz, kein Rotation-Overload
+
+    const mobile = window.matchMedia('(pointer: coarse)').matches;
+
+    if (mobile) {
+      // Mobile: reines Fade, kein Transform (keine Rotation, kein X/Y-Versatz)
+      gsap.from('.cat-bento__item', {
+        opacity: 0, duration: 0.5, ease: EASE_SOFT,
+        scrollTrigger: { trigger: '.cat-bento', start: 'top 90%' },
+      });
+      return;
+    }
+
+    // Desktop: koordinierte Richtungs-Animation pro Karte
+    // Kleine Werte für sanften Einzug — kein überdrehtes Rotation-Overload
     const bentoFrom = [
       { x: -45, y:   0, rotation: -0.8 },
       { x:  30, y: -28, rotation:  0.6 },
@@ -216,8 +231,8 @@ export default function HomePage() {
     gsap.utils.toArray<HTMLElement>('.cat-bento__item').forEach((item, i) => {
       const dir = bentoFrom[i] ?? { x: 0, y: 32, rotation: 0 };
       gsap.from(item, {
-        ...dir, opacity: 0, duration: 1.4, ease: 'power2.out',
-        delay: i * 0.07, // koordinierter Stagger statt unabhängiger Trigger
+        ...dir, opacity: 0, duration: DUR_SLOW, ease: EASE_SOFT,
+        delay: i * STAGGER_SM,
         scrollTrigger: { trigger: '.cat-bento', start: 'top 82%', toggleActions: 'play none none none' },
       });
     });
@@ -229,22 +244,30 @@ export default function HomePage() {
   useGSAP(() => {
     if (skeletons || !products.length) return;
 
+    const mobile = window.matchMedia('(pointer: coarse)').matches;
+
     // BESTSELLER CARDS — fade up, staggered
     gsap.utils.toArray<HTMLElement>('.products-grid:not(.products-grid--wide) .product-card').forEach((card, i) => {
       gsap.from(card, {
-        y: 40, opacity: 0, duration: 0.8, ease: 'power2.out',
-        delay: (i % 4) * 0.09,
+        y:        mobile ? 0 : Y_MID,
+        opacity:  0,
+        duration: mobile ? 0.4 : DUR_BASE,
+        ease:     EASE_SOFT,
+        delay:    mobile ? 0 : (i % 4) * STAGGER_MD,
         scrollTrigger: { trigger: card, start: 'top 92%', toggleActions: 'play none none none' },
       });
     });
 
-    // ARRIVALS CARDS — links/rechts alternierend, Zeile 2 nachgezogen
+    // ARRIVALS CARDS — links/rechts alternierend (nur Desktop mit seitlichem Einzug)
     gsap.utils.toArray<HTMLElement>('.products-grid--wide .product-card').forEach((card, i) => {
       const fromLeft = i % 2 === 0;
       gsap.from(card, {
-        x: fromLeft ? -70 : 70, opacity: 0, duration: 1.05, ease: 'expo.out',
-        delay: Math.floor(i / 2) * 0.14,
-        scrollTrigger: { trigger: card, start: 'top 88%', toggleActions: 'play none none none' },
+        x:        mobile ? 0 : (fromLeft ? -X_SIDE : X_SIDE),
+        opacity:  0,
+        duration: mobile ? 0.4 : DUR_SLOW * 0.88,
+        ease:     EASE_ENTER,
+        delay:    mobile ? 0 : Math.floor(i / 2) * (STAGGER_MD * 1.5),
+        scrollTrigger: { trigger: card, start: 'top 90%', toggleActions: 'play none none none' },
       });
     });
 

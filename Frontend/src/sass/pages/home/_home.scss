@@ -24,6 +24,12 @@
   50%       { opacity: 0.9; transform: scaleY(1); }
 }
 
+// Sanfter Atemrhythmus für Newsletter-Orb (ersetzt endloses orb-spin)
+@keyframes orb-breathe {
+  0%, 100% { transform: translate(-50%, -50%) scale(1);    opacity: 0.7; }
+  50%       { transform: translate(-50%, -50%) scale(1.12); opacity: 1;   }
+}
+
 @keyframes hero-reveal {
   from { opacity: 0; transform: translateY(22px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -33,9 +39,6 @@
   from { transform: translateY(108%); }
   to   { transform: translateY(0); }
 }
-
-// Initiale Sichtbarkeit — GSAP übernimmt die Einblend-Animation
-.hero-fade { opacity: 0; }
 
 // Clip-Container für Wort-für-Wort-Reveal — GSAP animiert .hero-word__inner
 .hero-word {
@@ -159,7 +162,7 @@
 
   &__title {
     font-family:    'Cormorant Garamond', Georgia, serif;
-    font-size:      clamp(5rem, 14vw, 10rem);
+    font-size:      clamp(3.25rem, 14vw, 10rem); // min gesenkt: 5rem war bei 320px (iPhone SE) zu groß
     font-weight:    600;
     line-height:    0.88;
     letter-spacing: -0.03em;
@@ -987,6 +990,12 @@ $slot-vis:    5;   // sichtbare EintrÃ¤ge
   align-items:            center;
   padding:                2rem 0;
 
+  // Tablet: bereits 2-spaltig (1024px ist zu spät — Tablets bekommen Mobile-Layout)
+  @include respond-to('md') {
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+
   @include respond-to('lg') {
     grid-template-columns: 1fr 1fr;
     gap: 4rem;
@@ -1004,6 +1013,7 @@ $slot-vis:    5;   // sichtbare EintrÃ¤ge
     overflow:      hidden;
     background:    linear-gradient(145deg, var(--clr-primary) 0%, var(--clr-accent) 100%);
 
+    @include respond-to('md') { height: 340px; }
     @include respond-to('lg') { height: 400px; }
   }
 
@@ -1117,6 +1127,14 @@ $slot-vis:    5;   // sichtbare EintrÃ¤ge
   display:               grid;
   grid-template-columns: 1fr;
   gap:                   8px;
+
+  // Ab 640px: 2 Spalten — nicht erst bei 768px warten
+  @include respond-to('sm') {
+    grid-template-columns: repeat(2, 1fr);
+
+    .usp-card:nth-child(1),
+    .usp-card:nth-child(6) { grid-column: 1 / 3; }
+  }
 
   @include respond-to('md') {
     grid-template-columns: repeat(2, 1fr);
@@ -1398,14 +1416,16 @@ $slot-vis:    5;   // sichtbare EintrÃ¤ge
 
   &__orb {
     position:      absolute;
-    width:         500px;
-    height:        500px;
+    width:         600px;
+    height:        600px;
     border-radius: 50%;
-    background:    radial-gradient(circle, color-mix(in srgb, var(--clr-primary) 18%, transparent), transparent 70%);
+    background:    radial-gradient(circle, color-mix(in srgb, var(--clr-primary) 22%, transparent), transparent 65%);
     top:           50%;
     left:          50%;
     transform:     translate(-50%, -50%);
-    animation:     orb-spin 15s linear infinite;
+    // Kein orb-spin — endlos-Rotation ist CPU-Verschwendung ohne visuellen Mehrwert
+    // Sanfter Puls: subtile Skalierung, niedrige Frequenz
+    animation:     orb-breathe 8s ease-in-out infinite;
     pointer-events: none;
   }
 
@@ -1771,4 +1791,29 @@ $slot-vis:    5;   // sichtbare EintrÃ¤ge
   &__price-row { display: flex; align-items: center; gap: 0.75rem; }
 
   &__actions { display: flex; flex-direction: column; gap: 0.5rem; margin-top: auto; }
+}
+
+// ─── PREFERS-REDUCED-MOTION ───────────────────────────────────────────────────
+// Barrierefreiheit: Alle Animationen + Transitionen für vestibulär
+// beeinträchtigte Nutzer deaktivieren. GSAP wird zusätzlich in home.tsx
+// per matchMedia-Check gestoppt.
+
+@media (prefers-reduced-motion: reduce) {
+  // Marquee stoppt — Trust Bar bleibt lesbar
+  .trust-bar__track { animation: none; }
+
+  // Slot-Karussell stoppt — zeigt ersten Eintrag
+  .hero-slot__track { animation: none; }
+
+  // Scroll-Indikator: kein Puls
+  .editorial-hero__scroll-line { animation: none; opacity: 0.5; }
+
+  // Newsletter-Orb: kein Puls, statisch
+  .newsletter-dark__orb { animation: none; }
+
+  // Brand-Split-Orb (Fallback ohne Bild)
+  .brand-split__orb { animation: none; }
+
+  // Hover-Transforms reduzieren (Karten, Buttons)
+  .cat-bento__item:hover { transform: none; }
 }
