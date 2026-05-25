@@ -3,7 +3,7 @@
 Diese Datei wird von Claude am Anfang jeder Session gelesen und am Ende/bei Pausen aktualisiert.
 Ziel: Kontextverlust durch Compacting verhindern.
 
-**Letzte Aktualisierung:** 2026-05-22 (Session 16 — Homepage Visual Redesign)
+**Letzte Aktualisierung:** 2026-05-25 (Session 17 — Homepage Komplettneubau)
 
 ---
 
@@ -54,6 +54,17 @@ git push origin main   → PRODUCTION auf Vercel (alle 3 Projekte automatisch)
 | schema.sql (Frisch-Install) | Enthält Migrations 001–029 komplett — 1 File für kompletten DB-Rebuild |
 | Security Audit | 27 Sicherheitslücken gefunden + alle geschlossen (Stand 2026-05-20) |
 | Docs-Cleanup | .env.examples korrigiert, QUICKSTART.md, SETUP.en.md v1.8.0 — alles gepusht |
+
+### Implementiert in Session 17 (2026-05-25)
+
+| Feature | Details |
+|---|---|
+| **Homepage Komplettneubau** | Candlescope-branded Landing Page (Trading Kurse + Merch). 6 Sektionen: Hero (dekorative Kerzen-SVGs), Trust Bar (Marquee), Bestseller-Produkte, Kategorien (2 Karten), Reviews (asymmetrisch), Newsletter. Kein GSAP — alles CSS-only. |
+| **HomeLayout + Bottom-Reveal Nav** | Eigenes Layout für `/` (kein Standard-Header). Nav startet `position: fixed; bottom: 0`, wechselt nach Scroll zu `top: 0` mit `hn-slide-top` Keyframe. `useRevealObserver` als shared Hook extrahiert. |
+| **HeroCanvas.tsx gelöscht** | War nur in alter home.tsx importiert — komplett entfernt. |
+| **Token-Aliase in _root.scss** | `--clr-bg`, `--clr-border`, `--clr-text-muted`, `--clr-avatar-1`, `--clr-avatar-2` als `:root`-Aliases definiert. |
+| **supabase/.temp/ in .gitignore** | Supabase CLI Cache-Dateien waren im Repo — entfernt + .gitignore aktualisiert. |
+| **Commits** | `dca4e16`, `d7a0161`, `4de84d3`, `82dbb7f`, `03d53e7`, `bbc1cc2`, `26f6975`, `85b2c0c` |
 
 ### Implementiert in Session 16 (2026-05-22)
 
