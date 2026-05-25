@@ -30,9 +30,11 @@
 [data-theme="navy-light"]     { @include set-theme-vars("navy-light"); }
 [data-theme="terra-light"]    { @include set-theme-vars("terra-light"); }
 [data-theme="electric-light"] { @include set-theme-vars("electric-light"); }
+[data-theme="gold-light"]     { @include set-theme-vars("gold-light"); }
 
 // ─── 3. DARK MODES
 [data-theme="sage-dark"]      { @include set-theme-vars("sage-dark"); }
 [data-theme="navy-dark"]      { @include set-theme-vars("navy-dark"); }
 [data-theme="terra-dark"]     { @include set-theme-vars("terra-dark"); }
 [data-theme="electric-dark"]  { @include set-theme-vars("electric-dark"); }
+[data-theme="gold-dark"]      { @include set-theme-vars("gold-dark"); }

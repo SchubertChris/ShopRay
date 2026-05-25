@@ -116,6 +116,33 @@ $themes: (
     on-dark:       #f1f5f9,
   ),
 
+  // ── 5. GOLD / CANDLESCOPE ────────────────────────────────────────────────
+  // Warm, luxuriös, handgefertigt. Candlescope-Palette: Gold auf Pergament / Schwarz.
+  gold-light: (
+    text:          #0A0806,
+    background:    #F2EDE2,
+    surface:       #EEE9DE,
+    primary:       #C9A84C,
+    secondary:     #E2DDD2,
+    accent:        #A8892E,
+    shadow:        rgba(10, 8, 6, 0.06),
+    glass:         rgba(242, 237, 226, 0.80),
+    dark-surface:  #0A0806,
+    on-dark:       #F5F0E8,
+  ),
+  gold-dark: (
+    text:          #F5F0E8,
+    background:    #080808,
+    surface:       #111111,
+    primary:       #C9A84C,
+    secondary:     #1a1a1a,
+    accent:        #A8892E,
+    shadow:        rgba(0, 0, 0, 0.60),
+    glass:         rgba(8, 8, 8, 0.85),
+    dark-surface:  #0d0d0d,
+    on-dark:       #F5F0E8,
+  ),
+
 ) !default;
 
 // ═══════════════════════════════════════════════════════════════════════════
