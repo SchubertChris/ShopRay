@@ -259,6 +259,9 @@ export function ChatWidget() {
   const [isOpen,       setIsOpen]       = useState(false);
   const [view,         setView]         = useState<PanelView>('loading');
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
+  const [dismissed,    setDismissed]    = useState(false);
+  const touchStartX    = useRef(0);
+  const touchStartY    = useRef(0);
 
   const open = useCallback(async () => {
     setIsOpen(true);
@@ -288,9 +291,43 @@ export function ChatWidget() {
     setView('active-chat');
   }, []);
 
+  // ── Swipe-to-dismiss ───────────────────────────────────────────────────────
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    // Swipe rechts >60px und überwiegend horizontal → dismissen
+    if (dx > 60 && Math.abs(dy) < Math.abs(dx) * 1.2) {
+      if (isOpen) close();
+      setDismissed(true);
+    }
+  };
+
+  // Weggewischt → kleiner Recall-Tab am Rand
+  if (dismissed) {
+    return createPortal(
+      <button
+        className="chat-widget__recall"
+        onClick={() => setDismissed(false)}
+        aria-label="Chat wieder einblenden"
+      >
+        <MessageCircle size={18} />
+      </button>,
+      document.body
+    );
+  }
+
   // Portal direkt in document.body — umgeht #root { isolation: isolate } Containing-Block-Problem
   return createPortal(
-    <div className="chat-widget">
+    <div
+      className="chat-widget"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {isOpen && (
         <div className="chat-widget__panel">
           {view === 'loading' && (
