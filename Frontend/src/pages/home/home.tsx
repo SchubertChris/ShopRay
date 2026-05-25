@@ -61,6 +61,8 @@ function HeadlineWords({ text }: { text: string }) {
   return (
     <>
       {words.map((word, i) => (
+        // style prop is the only way to pass dynamic CSS custom properties in React
+        // Used for animation stagger: SCSS reads var(--i) in animation-delay
         <span key={i} className="hw" style={{ '--i': i } as React.CSSProperties}>
           <span className="hw__inner">{word}{i < words.length - 1 ? ' ' : ''}</span>
         </span>
@@ -130,8 +132,9 @@ export default function HomePage() {
     sameAs: Object.values(APP_SOCIALS).filter(v => v !== '#' && v !== ''),
   };
 
-  const featuredReview = REVIEWS.find(r => r.featured)!;
-  const miniReviews    = REVIEWS.filter(r => !r.featured);
+  // REVIEWS[0] is the featured review (as const guarantees the first entry has featured: true)
+  const featuredReview = REVIEWS[0];
+  const miniReviews    = REVIEWS.slice(1);
 
   return (
     <>
@@ -221,22 +224,19 @@ export default function HomePage() {
                 role="presentation"
               >
                 {[40, 80, 120, 160].map(y => (
-                  <line key={y} x1="0" y1={y} x2="280" y2={y} stroke="#C9A84C" strokeWidth="0.5" opacity="0.12" />
+                  <line key={y} x1="0" y1={y} x2="280" y2={y} strokeWidth="0.5" className="cs-hero__grid-line" />
                 ))}
                 {CANDLES.map(([x, wt, wb, bt, bh, bull], i) => (
                   <g key={i}>
                     <line
                       x1={x} y1={wt} x2={x} y2={wb}
-                      stroke={bull ? '#C9A84C' : '#888'}
                       strokeWidth="1.5"
-                      opacity={bull ? '0.6' : '0.35'}
+                      className={bull ? 'cs-hero__wick--bull' : 'cs-hero__wick--bear'}
                     />
                     <rect
                       x={x - 9} y={bt} width={18} height={bh} rx="2"
-                      fill={bull ? '#C9A84C' : 'none'}
-                      stroke={bull ? 'none' : '#888'}
                       strokeWidth="1.5"
-                      opacity={bull ? '0.85' : '0.45'}
+                      className={bull ? 'cs-hero__candle--bull' : 'cs-hero__candle--bear'}
                     />
                   </g>
                 ))}
@@ -334,11 +334,9 @@ export default function HomePage() {
             <span className="cs-eyebrow">Was Schüler sagen</span>
             <h2 id="reviews-heading" className="cs-heading">Echte Bewertungen</h2>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="cs-reviews__rating-badge">
             <Stars rating={4.9} size={16} />
-            <span style={{ fontSize: '0.875rem', color: 'var(--clr-text-muted)' }}>
-              4.9 · 700+ Bewertungen
-            </span>
+            <span>4.9 · 700+ Bewertungen</span>
           </div>
         </div>
 
