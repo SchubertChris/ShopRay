@@ -96,6 +96,6 @@ export interface Product {
   skus?:           ProductSku[];
 }
 
-export type ProductCategory = 'Wohnen' | 'Deko' | 'Küche' | 'Textilien' | 'Kunst';
+export type ProductCategory = 'Merch' | 'Kurse';
 
 export type SortBy = 'popularity' | 'price-asc' | 'price-desc' | 'newest';
