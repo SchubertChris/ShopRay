@@ -3,6 +3,7 @@ import { Outlet, useLocation, Link } from 'react-router-dom';
 import { ShoppingCart, Menu, X, Sun, Moon } from 'lucide-react';
 import { Footer }        from './Footer';
 import { ScrollToTop }   from './ScrollToTop';
+import { useRevealObserver } from './useRevealObserver';
 import { ConsentBanner } from '@features/consent';
 import { Toast, ChatWidget } from '@components/ui';
 import { ROUTES }        from '@config/routes';
@@ -19,33 +20,6 @@ const NAV_LINKS = [
   { label: 'Merch',  to: `${ROUTES.SHOP.SEARCH}?category=Merch` },
   { label: 'Über',   to: ROUTES.INFO.ABOUT },
 ] as const;
-
-// ── Reveal Observer (same pattern as MainLayout) ───────────────────────────
-function useRevealObserver() {
-  const { pathname } = useLocation();
-
-  useEffect(() => {
-    let observer: IntersectionObserver;
-
-    const timer = setTimeout(() => {
-      observer = new IntersectionObserver(
-        entries => entries.forEach(e => {
-          if (e.isIntersecting) {
-            e.target.classList.add('is-visible');
-            observer.unobserve(e.target);
-          }
-        }),
-        { threshold: 0.1 }
-      );
-      document.querySelectorAll('[data-reveal]:not(.is-visible)').forEach(el => observer.observe(el));
-    }, 50);
-
-    return () => {
-      clearTimeout(timer);
-      observer?.disconnect();
-    };
-  }, [pathname]);
-}
 
 // ── HomeNav ────────────────────────────────────────────────────────────────
 function HomeNav() {
