@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { MainLayout, AuthLayout, AccountLayout, PrivateRoute } from '../components/layout';
+import { MainLayout, AuthLayout, AccountLayout, PrivateRoute, HomeLayout } from '../components/layout';
 import { ROUTES } from '../config/routes';
 import { FEATURES } from '../config/features';
 
@@ -55,11 +55,18 @@ function lazy$(el: React.ReactElement) {
 // ── Router-Konfiguration ───────────────────────────────────────────────────
 export const router = createBrowserRouter([
 
+  // ── Home-Layout (Bottom-Reveal Nav, kein Standard-Header) ─────────────
+  {
+    element: <HomeLayout />,
+    children: [
+      { path: ROUTES.HOME, element: lazy$(<HomePage />) },
+    ],
+  },
+
   // ── Haupt-Layout (Header + Footer) ──────────────────────────────────────
   {
     element: <MainLayout />,
     children: [
-      { path: ROUTES.HOME,               element: lazy$(<HomePage />) },
       { path: ROUTES.SHOP.PRODUCT,       element: lazy$(<ProductDetailPage />) },
       { path: ROUTES.SHOP.CART,          element: lazy$(<CartPage />) },
 
