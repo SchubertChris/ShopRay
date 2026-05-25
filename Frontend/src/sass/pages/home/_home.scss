@@ -529,8 +529,8 @@
   justify-content: center;
   flex-shrink:     0;
 
-  &--1 { background: color-mix(in srgb, #4a90d9 20%, var(--clr-surface)); color: #4a90d9; }
-  &--2 { background: color-mix(in srgb, #7c5cbf 20%, var(--clr-surface)); color: #7c5cbf; }
+  &--1 { background: color-mix(in srgb, var(--clr-avatar-1) 20%, var(--clr-surface)); color: var(--clr-avatar-1); }
+  &--2 { background: color-mix(in srgb, var(--clr-avatar-2) 20%, var(--clr-surface)); color: var(--clr-avatar-2); }
 }
 
 // ── Newsletter Section ────────────────────────────────────────────────────
@@ -598,7 +598,7 @@
   }
 
   &__error {
-    color:     var(--clr-danger, #e53e3e);
+    color:     var(--clr-error);
     font-size: 0.85rem;
     margin-top: 0.75rem;
   }
@@ -624,7 +624,7 @@
     font-size:   0.75rem;
     font-weight: 500;
     color:       var(--clr-text);
-    box-shadow:  0 2px 12px color-mix(in srgb, #000 12%, transparent);
+    box-shadow:  0 2px 12px color-mix(in srgb, var(--clr-shadow) 80%, transparent);
     transition:  background 0.2s;
 
     &:hover { background: color-mix(in srgb, var(--clr-primary) 10%, var(--clr-surface)); }
@@ -649,7 +649,7 @@
   border-radius: 14px;
   padding:       1rem;
   min-width:     180px;
-  box-shadow:    0 8px 32px color-mix(in srgb, #000 20%, transparent);
+  box-shadow:    0 8px 32px color-mix(in srgb, var(--clr-shadow) 85%, transparent);
 
   &__title {
     font-size:      0.7rem;

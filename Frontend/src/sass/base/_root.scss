@@ -14,6 +14,15 @@
   --clr-star:          #f59e0b;
 }
 
+// ─── TOKEN-ALIASE — Kurzformen für project-weite Nutzung ───────────────────
+:root {
+  --clr-bg:          var(--clr-background);
+  --clr-border:      var(--clr-secondary);
+  --clr-text-muted:  color-mix(in srgb, var(--clr-text) 55%, transparent);
+  --clr-avatar-1:    #4a90d9;
+  --clr-avatar-2:    #7c5cbf;
+}
+
 // ─── 1. STANDARD-FALLBACK (kommt zuerst → wird von den theme-rules unten überschrieben)
 :root {
   @include set-theme-vars("sage-light");

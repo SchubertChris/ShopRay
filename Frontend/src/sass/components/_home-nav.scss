@@ -218,3 +218,9 @@
     border-top:  1px solid color-mix(in srgb, var(--clr-border) 35%, transparent);
   }
 }
+
+// ── Reduced motion ─────────────────────────────────────────────────────────
+
+@media (prefers-reduced-motion: reduce) {
+  .home-nav--top { animation: none; }
+}
