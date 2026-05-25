@@ -57,6 +57,10 @@ const ProductBodySchema = z.object({
   lmiv:             z.record(z.unknown()).nullable().optional(),
   dealer_links:     z.array(DealerLinkSchema).max(20).optional().default([]),
   documents:        z.array(DocumentSchema).max(20).optional().default([]),
+  sections_config:  z.object({
+    lmiv:    z.boolean().optional(),
+    reviews: z.boolean().optional(),
+  }).nullable().optional(),
 });
 
 // PUT erlaubt partielle Updates

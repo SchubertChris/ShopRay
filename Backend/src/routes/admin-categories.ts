@@ -59,6 +59,32 @@ router.post('/', requireOwner, validate(CategorySchema), async (req: Request, re
   }
 });
 
+// PUT /api/admin/categories/:id — Kategorie aktualisieren (Name, Reihenfolge, Bild)
+const CategoryUpdateSchema = z.object({
+  name:      z.string().trim().min(1).max(100).optional(),
+  order:     z.number().int().min(0).optional(),
+  image_url: z.string().url('Ungültige URL').max(2000).nullable().optional(),
+});
+
+router.put('/:id', requireOwner, validate(UUIDParam, 'params'), validate(CategoryUpdateSchema), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const updates = req.body as z.infer<typeof CategoryUpdateSchema>;
+
+    const { data, error } = await supabase
+      .from('categories')
+      .update(updates)
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    if (!data) { res.status(404).json({ error: 'Kategorie nicht gefunden.' }); return; }
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // DELETE /api/admin/categories/:id — Kategorie löschen
 router.delete('/:id', requireOwner, validate(UUIDParam, 'params'), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
