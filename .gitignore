@@ -68,3 +68,6 @@ Frontend/src/sass/components/_post.scss
 # ── Redundante Dateien ──────────────────────────────────────────────────────
 .env.example
 database/migration_004_categories.sql
+
+# ── Supabase CLI Cache ────────────────────────────────────────────────────────
+supabase/.temp/
