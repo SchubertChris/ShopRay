@@ -35,14 +35,17 @@ interface ProductFormData {
   lmiv:             LmivInfo | null;
   dealer_links:     DealerLink[];
   documents:        ProductDocument[];
+  show_lmiv:        boolean;
+  show_reviews:     boolean;
 }
 
 const EMPTY: ProductFormData = {
-  name: '', slug: '', category: 'Wohnen', description: '',
+  name: '', slug: '', category: 'Merch', description: '',
   price: '', old_price: '', discount: '', badge: '',
   stock: '0', active: true, tax_rate: 19, images: [],
   rich_description: '', highlights: '', certifications: '',
   lmiv: null, dealer_links: [], documents: [],
+  show_lmiv: true, show_reviews: true,
 };
 
 function autoSlug(name: string): string {
@@ -98,6 +101,8 @@ export default function ProductFormPage() {
           lmiv:             p.lmiv ?? null,
           dealer_links:     p.dealer_links ?? [],
           documents:        p.documents ?? [],
+          show_lmiv:        p.sections_config?.lmiv    !== false,
+          show_reviews:     p.sections_config?.reviews  !== false,
         });
       })
       .catch(err => setLoadError(err instanceof Error ? err.message : 'Produkt konnte nicht geladen werden'))
@@ -185,6 +190,7 @@ export default function ProductFormPage() {
       lmiv:             form.lmiv,
       dealer_links:     form.dealer_links.filter(d => d.label.trim() && d.href.trim()),
       documents:        form.documents.filter(d => d.label.trim() && d.href.trim()),
+      sections_config:  { lmiv: form.show_lmiv, reviews: form.show_reviews },
     };
 
     try {
@@ -473,6 +479,26 @@ export default function ProductFormPage() {
               <span className="form-toggle__track" />
               <span className="form-toggle__label">
                 {form.active ? 'Aktiv — im Shop sichtbar' : 'Inaktiv — versteckt'}
+              </span>
+            </label>
+
+            <p className="form-section__desc" style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}>
+              Detailseiten-Tabs — steuert welche Tabs auf der Produktdetailseite erscheinen:
+            </p>
+            <label className="form-toggle">
+              <input type="checkbox" className="form-toggle__input" checked={form.show_lmiv}
+                onChange={() => setForm(prev => ({ ...prev, show_lmiv: !prev.show_lmiv }))} />
+              <span className="form-toggle__track" />
+              <span className="form-toggle__label">
+                {form.show_lmiv ? 'Tab „Inhaltsstoffe & Nährwerte" sichtbar' : 'Tab „Inhaltsstoffe & Nährwerte" ausgeblendet'}
+              </span>
+            </label>
+            <label className="form-toggle" style={{ marginTop: '0.5rem' }}>
+              <input type="checkbox" className="form-toggle__input" checked={form.show_reviews}
+                onChange={() => setForm(prev => ({ ...prev, show_reviews: !prev.show_reviews }))} />
+              <span className="form-toggle__track" />
+              <span className="form-toggle__label">
+                {form.show_reviews ? 'Tab „Bewertungen" sichtbar' : 'Tab „Bewertungen" ausgeblendet'}
               </span>
             </label>
           </div>

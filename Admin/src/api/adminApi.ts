@@ -141,6 +141,7 @@ export interface AdminProduct {
   lmiv:             LmivInfo | null;
   dealer_links:     DealerLink[];
   documents:        ProductDocument[];
+  sections_config:  { lmiv?: boolean; reviews?: boolean } | null;
 }
 
 export const getAdminProduct   = (id: string) =>
@@ -713,6 +714,9 @@ export const getCategories    = () =>
 
 export const createCategory   = (name: string, order?: number, image_url?: string | null) =>
   apiFetch<Category>('/api/admin/categories', 'POST', { name, order: order ?? 0, image_url: image_url ?? null });
+
+export const updateCategory   = (id: string, data: Partial<Pick<Category, 'name' | 'order' | 'image_url'>>) =>
+  apiFetch<Category>(`/api/admin/categories/${id}`, 'PUT', data);
 
 export const deleteCategory   = (id: string) =>
   apiFetch<{ success: boolean }>(`/api/admin/categories/${id}`, 'DELETE');

@@ -26,6 +26,9 @@ function mapProduct(raw: Record<string, unknown>): Product {
     lmiv:            raw.lmiv        != null ? (raw.lmiv as Product['lmiv'])                           : undefined,
     dealerLinks:     Array.isArray(raw.dealer_links)   ? (raw.dealer_links as Product['dealerLinks'])  : undefined,
     documents:       Array.isArray(raw.documents)      ? (raw.documents as Product['documents'])        : undefined,
+    sectionsConfig:  raw.sections_config != null
+      ? (raw.sections_config as Product['sectionsConfig'])
+      : null,
   };
 }
 

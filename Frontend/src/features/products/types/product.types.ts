@@ -94,6 +94,17 @@ export interface Product {
   // ── Varianten (nur auf Detailseite geladen) ────────────────────────────────
   variantOptions?: VariantOption[];
   skus?:           ProductSku[];
+
+  // ── Sichtbarkeits-Konfiguration (Admin-steuerbar pro Produkt) ─────────────
+  /**
+   * Steuert welche Tabs auf der Detailseite angezeigt werden.
+   * null / undefined = alle Tabs sichtbar (Standard).
+   * false = Tab ausgeblendet (unabhängig vom globalen FEATURES-Flag).
+   */
+  sectionsConfig?: {
+    lmiv?:    boolean;
+    reviews?: boolean;
+  } | null;
 }
 
 export type ProductCategory = 'Merch' | 'Kurse';

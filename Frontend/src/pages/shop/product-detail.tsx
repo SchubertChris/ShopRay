@@ -445,7 +445,7 @@ export default function ProductDetailPage() {
                 >
                   Produktdetails
                 </button>
-                {FEATURES.lmiv && (
+                {FEATURES.lmiv && product.sectionsConfig?.lmiv !== false && (
                   <button
                     className={`product-tabs__tab${activeTab === 'lmiv' ? ' product-tabs__tab--active' : ''}`}
                     onClick={() => setActiveTab('lmiv')}
@@ -453,7 +453,7 @@ export default function ProductDetailPage() {
                     Inhaltsstoffe & Nährwerte
                   </button>
                 )}
-                {FEATURES.reviews && (
+                {FEATURES.reviews && product.sectionsConfig?.reviews !== false && (
                   <button
                     className={`product-tabs__tab${activeTab === 'reviews' ? ' product-tabs__tab--active' : ''}`}
                     onClick={() => setActiveTab('reviews')}

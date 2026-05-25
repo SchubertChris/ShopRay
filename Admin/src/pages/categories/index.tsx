@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2, Loader2, AlertCircle, Tag } from 'lucide-react';
+import { Plus, Trash2, Loader2, AlertCircle, Tag, Pencil, Check, X } from 'lucide-react';
 import {
-  getCategories, createCategory, deleteCategory,
+  getCategories, createCategory, updateCategory, deleteCategory,
   type Category,
 } from '../../api/adminApi';
 import ViewToggle from '../../components/ui/ViewToggle';
@@ -18,6 +18,9 @@ export default function CategoriesPage() {
   const [saveError,  setSaveError]  = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [viewMode, toggleViewMode] = useViewMode('admin-categories-view');
+  const [editingId,  setEditingId]  = useState<string | null>(null);
+  const [editUrl,    setEditUrl]    = useState('');
+  const [savingUrl,  setSavingUrl]  = useState(false);
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
@@ -50,6 +53,25 @@ export default function CategoriesPage() {
       setSaveError(err instanceof Error ? err.message : 'Erstellen fehlgeschlagen.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  function startEditUrl(cat: Category) {
+    setEditingId(cat.id);
+    setEditUrl(cat.image_url ?? '');
+  }
+
+  async function saveEditUrl(id: string) {
+    setSavingUrl(true);
+    try {
+      const url = editUrl.trim() || null;
+      const updated = await updateCategory(id, { image_url: url });
+      setCategories(prev => prev.map(c => c.id === id ? { ...c, image_url: updated.image_url } : c));
+      setEditingId(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Speichern fehlgeschlagen.');
+    } finally {
+      setSavingUrl(false);
     }
   }
 
@@ -169,20 +191,43 @@ export default function CategoriesPage() {
                 <p className="admin-card__name">{cat.name}</p>
                 <p className="admin-card__meta">Reihenfolge #{cat.order}</p>
               </div>
-              <div className="admin-card__footer">
-                <span className="admin-card__meta">{new Date(cat.created_at).toLocaleDateString('de-DE')}</span>
-                <button
-                  className="table-action table-action--danger"
-                  onClick={() => handleDelete(cat.id, cat.name)}
-                  disabled={deletingId === cat.id}
-                  title={`"${cat.name}" löschen`}
-                >
-                  {deletingId === cat.id
-                    ? <Loader2 size={13} strokeWidth={2} className="spin" />
-                    : <Trash2 size={13} strokeWidth={2} />
-                  }
-                </button>
-              </div>
+              {editingId === cat.id ? (
+                <div style={{ padding: '0.5rem 0.75rem', display: 'flex', gap: '0.4rem' }}>
+                  <input
+                    className="form-input"
+                    type="url"
+                    placeholder="https://…/bild.jpg"
+                    value={editUrl}
+                    onChange={e => setEditUrl(e.target.value)}
+                    autoFocus
+                    style={{ flex: 1, fontSize: '0.78rem' }}
+                  />
+                  <button className="table-action" onClick={() => saveEditUrl(cat.id)} disabled={savingUrl} title="Speichern">
+                    {savingUrl ? <Loader2 size={13} className="spin" /> : <Check size={13} />}
+                  </button>
+                  <button className="table-action table-action--danger" onClick={() => setEditingId(null)} title="Abbrechen">
+                    <X size={13} />
+                  </button>
+                </div>
+              ) : (
+                <div className="admin-card__footer">
+                  <span className="admin-card__meta">{new Date(cat.created_at).toLocaleDateString('de-DE')}</span>
+                  <button className="table-action" onClick={() => startEditUrl(cat)} title="Bild-URL bearbeiten">
+                    <Pencil size={13} strokeWidth={2} />
+                  </button>
+                  <button
+                    className="table-action table-action--danger"
+                    onClick={() => handleDelete(cat.id, cat.name)}
+                    disabled={deletingId === cat.id}
+                    title={`"${cat.name}" löschen`}
+                  >
+                    {deletingId === cat.id
+                      ? <Loader2 size={13} strokeWidth={2} className="spin" />
+                      : <Trash2 size={13} strokeWidth={2} />
+                    }
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -195,15 +240,41 @@ export default function CategoriesPage() {
               <div className="cat-item__info">
                 <span className="cat-item__order">#{cat.order}</span>
                 <span className="cat-item__name">{cat.name}</span>
+                {cat.image_url && <span className="cat-item__img-hint" title={cat.image_url}>🖼</span>}
               </div>
-              <button
-                className="btn-icon btn-icon--danger"
-                onClick={() => handleDelete(cat.id, cat.name)}
-                disabled={deletingId === cat.id}
-                title={`"${cat.name}" löschen`}
-              >
-                <Trash2 size={14} strokeWidth={2} />
-              </button>
+              {editingId === cat.id ? (
+                <div style={{ display: 'flex', gap: '0.4rem', flex: 1, maxWidth: '420px' }}>
+                  <input
+                    className="form-input"
+                    type="url"
+                    placeholder="Bild-URL…"
+                    value={editUrl}
+                    onChange={e => setEditUrl(e.target.value)}
+                    autoFocus
+                    style={{ flex: 1, fontSize: '0.78rem' }}
+                  />
+                  <button className="btn-icon" onClick={() => saveEditUrl(cat.id)} disabled={savingUrl} title="Speichern">
+                    {savingUrl ? <Loader2 size={14} className="spin" /> : <Check size={14} />}
+                  </button>
+                  <button className="btn-icon btn-icon--danger" onClick={() => setEditingId(null)} title="Abbrechen">
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn-icon" onClick={() => startEditUrl(cat)} title="Bild-URL bearbeiten">
+                    <Pencil size={14} strokeWidth={2} />
+                  </button>
+                  <button
+                    className="btn-icon btn-icon--danger"
+                    onClick={() => handleDelete(cat.id, cat.name)}
+                    disabled={deletingId === cat.id}
+                    title={`"${cat.name}" löschen`}
+                  >
+                    <Trash2 size={14} strokeWidth={2} />
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
