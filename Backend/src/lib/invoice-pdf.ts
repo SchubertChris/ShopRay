@@ -217,6 +217,13 @@ export function generateInvoicePdf(p: InvoiceParams): Promise<Buffer> {
     doc.moveTo(L, y).lineTo(R, y).strokeColor(LINE).lineWidth(0.5).stroke();
     y += 16;
 
+    // ── Kleinunternehmer-Hinweis (§19 UStG) ─────────────────────────────────
+    if (!p.shop.vatId && !p.shop.taxNumber) {
+      doc.font('Helvetica').fontSize(8).fillColor(MUTED)
+         .text('Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.', L, y, { width: W, align: 'center' });
+      y += 14;
+    }
+
     // ── Fußzeile: USt-ID / Steuernummer ────────────────────────────────────
     const footerParts: string[] = [];
     if (p.shop.vatId)     footerParts.push(`USt-IdNr.: ${p.shop.vatId}`);
