@@ -1,6 +1,6 @@
 # ShopRay — Setup Guide
 
-**Version:** 1.8.0 | **Last updated:** 2026-05-20
+**Version:** 2.0.0 | **Last updated:** 2026-05-27
 
 This guide walks you step by step through setting up your ShopRay template —
 from installation to a fully live shop.
@@ -195,27 +195,57 @@ This creates all tables, functions, and RLS policies in one step.
 
 ### Step 2 — Run migrations
 
-Run migrations **in order** — each as a separate query in the SQL Editor:
+> **Fresh installation:** `schema.sql` from Step 1 already includes all changes through Migration 029. After that you only need to run **Migrations 030–032**.
+>
+> **Updating an existing database:** Run any migrations you haven't run yet, in order.
+
+#### Required after fresh installation (030–032)
 
 | File | What it does |
 |---|---|
-| `migration_001_products_detail.sql` | Extended product fields (highlights, certificates, nutritional info) |
-| `migration_002_admin_login_log.sql` | Login log for the admin panel |
-| `migration_003_product_images.sql` | Supabase Storage bucket for product images |
-| `migration_004_grants.sql` | Permissions for all tables |
-| `migration_005_shipping_settings.sql` | Shipping cost configuration |
-| `migration_006_admin_totp.sql` | Admin 2FA table (TOTP) |
-| `migration_007_categories.sql` | Categories table |
-| `migration_008_reviews.sql` | Reviews system with moderation |
-| `migration_009_tickets.sql` | Support tickets |
-| `migration_010_contact_inquiries.sql` | Contact requests table |
-| `migration_011_user_ban.sql` | Customer ban/unban system |
-| `migration_012_push_subscriptions.sql` | Web push notifications |
-| `migration_013_invoice_label.sql` | Invoice numbers + DHL tracking columns |
-| `migration_025_discount_codes.sql` | Discount / coupon code system |
-| `migration_026_product_variants.sql` | Product variants (size, color — with per-variant stock) |
+| `database/migration_030_discount_atomic.sql` | Atomic discount counter (race-condition-safe for parallel orders) |
+| `database/migration_031_team_lead_refund_requests.sql` | Team lead role + refund requests table (4-eyes principle) |
+| `database/migration_032_mod_totp.sql` | Two-factor authentication for staff members (Mods) |
 
-> **Order matters:** Always run migrations in the order listed above.
+#### Full migration list (for existing DB updates)
+
+| File | What it does |
+|---|---|
+| `database/migration_001_products_detail.sql` | Extended product fields (highlights, certificates, nutritional info, rich text) |
+| `database/migration_002_admin_login_log.sql` | Login log for the admin panel |
+| `database/migration_003_product_images.sql` | Supabase Storage bucket for product images |
+| `database/migration_004_grants.sql` | Permissions for all tables |
+| `database/migration_005_shipping_settings.sql` | Shipping cost configuration |
+| `database/migration_006_admin_totp.sql` | Admin 2FA table (TOTP) |
+| `database/migration_007_categories.sql` | Categories table |
+| `database/migration_008_profiles_email.sql` | Email column in customer profiles + automatic trigger |
+| `database/migration_009_profiles_roles.sql` | Role extension (team lead role) |
+| `database/migration_010_order_payment_method.sql` | Payment method + product image in orders |
+| `database/migration_011_user_ban.sql` | Customer ban/unban system |
+| `database/migration_012_push_subscriptions.sql` | Web push notifications |
+| `database/migration_013_invoice_label.sql` | Invoice numbers + DHL tracking columns |
+| `database/migration_014_ticket_messages.sql` | Ticket chat (message history) |
+| `database/migration_014_shop_settings_categories_image.sql` | Shop settings + category images |
+| `database/migration_015_mod_invites_admin_config.sql` | Staff invitations + admin configuration in DB |
+| `database/migration_016_must_change_password.sql` | Password change requirement on first login |
+| `database/migration_017_service_role_grants.sql` | Missing backend permissions (service_role) |
+| `database/migration_018_tickets_guest.sql` | Guest tickets (support without an account) |
+| `database/migration_019_ticket_priority.sql` | Ticket priority levels (low / normal / high / urgent) |
+| `database/migration_020_cleanup_testdata.sql` | Cleanup of test data |
+| `database/migration_021_missing_grants.sql` | Additional missing permissions |
+| `database/migration_022_stripe_payment_intent.sql` | Stripe Payment Intent ID in orders |
+| `database/migration_023_return_requests.sql` | Return requests table |
+| `database/migration_024_return_items.sql` | Items in return requests (JSONB) |
+| `database/migration_025_discount_codes.sql` | Discount / coupon code system |
+| `database/migration_026_product_variants.sql` | Product variants (size, color — with per-variant stock) |
+| `database/migration_027_login_log_user.sql` | Role + email in the login log |
+| `database/migration_028_notifications_tasks.sql` | Notification center + task management system |
+| `database/migration_029_invoice_sequence.sql` | Atomic invoice number sequence (audit-compliant) |
+| `database/migration_030_discount_atomic.sql` | Atomic discount counter (race-condition-safe) |
+| `database/migration_031_team_lead_refund_requests.sql` | Team lead role + refund requests |
+| `database/migration_032_mod_totp.sql` | 2FA for staff members |
+
+> **Order matters:** Always run migrations in the order listed above. All files are idempotent — running them more than once will not cause errors.
 
 ### What happens automatically
 
