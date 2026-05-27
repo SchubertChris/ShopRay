@@ -43,12 +43,11 @@ const REVIEWS = [
   },
 ] as const;
 
-// Decorative floating stat badges for hero visual
 const STAT_BADGES = [
-  { val: '1k+',    lbl: 'Kunden',       pos: '--badge-top: -1rem;   --badge-left: -1.5rem;' },
-  { val: '4.9 ★',  lbl: 'Bewertung',    pos: '--badge-top: 40%;     --badge-left: -2rem;'   },
-  { val: '2–3d',   lbl: 'Lieferzeit',   pos: '--badge-top: -1rem;   --badge-right: -1rem;'  },
-  { val: '30T',    lbl: 'Rückgabe',     pos: '--badge-bottom: 1rem; --badge-right: -1.5rem;'},
+  { val: '1k+',   lbl: 'Kunden',     cls: 'cs-hero__chip--tl' },
+  { val: '4.9 ★', lbl: 'Bewertung',  cls: 'cs-hero__chip--bl' },
+  { val: '2–3d',  lbl: 'Lieferzeit', cls: 'cs-hero__chip--tr' },
+  { val: '30T',   lbl: 'Rückgabe',   cls: 'cs-hero__chip--br' },
 ] as const;
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -58,8 +57,6 @@ function HeadlineWords({ text }: { text: string }) {
   return (
     <>
       {words.map((word, i) => (
-        // style prop is the only way to pass dynamic CSS custom properties in React
-        // Used for animation stagger: SCSS reads var(--i) in animation-delay
         <span key={i} className="hw" style={{ '--i': i } as React.CSSProperties}>
           <span className="hw__inner">{word}{i < words.length - 1 ? ' ' : ''}</span>
         </span>
@@ -79,6 +76,24 @@ export default function HomePage() {
   const [subState,      setSubState]      = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [themeDockOpen, setThemeDockOpen] = useState(false);
 
+  // ── Hero Card Carousel ───────────────────────────────────────────────────
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [pulsing,   setPulsing]   = useState(false);
+
+  const n     = products.length;
+  const slots = n > 0 ? [0, 1, 2].map(i => products[(activeIdx + i) % n]) : [];
+  const bgUrl = slots[0]?.imageUrl ?? null;
+
+  function cycleNext() {
+    if (pulsing || n < 2) return;
+    setPulsing(true);
+    setTimeout(() => {
+      setActiveIdx(i => (i + 1) % n);
+      setPulsing(false);
+    }, 320);
+  }
+
+  // ── Newsletter ───────────────────────────────────────────────────────────
   async function handleSubscribe(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = email.trim();
@@ -93,6 +108,7 @@ export default function HomePage() {
     }
   }
 
+  // ── SEO ──────────────────────────────────────────────────────────────────
   const origin = typeof window !== 'undefined' ? window.location.origin : APP_URL;
 
   const websiteSchema = {
@@ -112,19 +128,10 @@ export default function HomePage() {
     '@type': 'Organization',
     name: APP_NAME,
     url: origin,
-    logo: {
-      '@type': 'ImageObject',
-      url:      `${origin}${APP_OG_IMAGE}`,
-      width:   '1200',
-      height:  '630',
-    },
+    logo: { '@type': 'ImageObject', url: `${origin}${APP_OG_IMAGE}`, width: '1200', height: '630' },
     contactPoint: {
-      '@type':           'ContactPoint',
-      email:              APP_CONTACT.email,
-      telephone:          APP_CONTACT.phone,
-      contactType:       'customer service',
-      availableLanguage: 'German',
-      areaServed:        'DE',
+      '@type': 'ContactPoint', email: APP_CONTACT.email, telephone: APP_CONTACT.phone,
+      contactType: 'customer service', availableLanguage: 'German', areaServed: 'DE',
     },
     sameAs: Object.values(APP_SOCIALS).filter(v => v !== '#' && v !== ''),
   };
@@ -151,7 +158,6 @@ export default function HomePage() {
           <span className="theme-dock__dot" />
           <span className="theme-dock__label">Themes</span>
         </button>
-
         {themeDockOpen && (
           <div className="theme-panel">
             <p className="theme-panel__title">Farbpalette</p>
@@ -177,9 +183,22 @@ export default function HomePage() {
 
       {/* ── HERO — Split Screen Reveal ──────────────────────────────────── */}
       <section className="cs-hero">
+
+        {/* Dynamic blurred hero background — keyed so React remounts on change → fade animation */}
+        {bgUrl && (
+          <div
+            key={bgUrl}
+            className="cs-hero__bg"
+            style={{ backgroundImage: `url(${bgUrl})` }}
+            aria-hidden="true"
+          />
+        )}
+        {/* Noise texture stays on top of bg */}
+        <div className="cs-hero__noise" aria-hidden="true" />
+
         <div className="cs-hero__grid">
 
-          {/* ── Left: Content ────────────────────────────────────────────── */}
+          {/* ── Left: Content ──────────────────────────────────────────── */}
           <div className="cs-hero__content">
             <span className="cs-hero__eyebrow">Einfach. Schön. Sicher.</span>
 
@@ -209,45 +228,91 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* ── Right: Visual ────────────────────────────────────────────── */}
+          {/* ── Right: Clickable Card Stack ────────────────────────────── */}
           <div className="cs-hero__visual" aria-hidden="true">
-            <div className="cs-hero__card-stack">
-              {/* Decorative product card mockups */}
-              <div className="cs-hero__mock cs-hero__mock--back" />
-              <div className="cs-hero__mock cs-hero__mock--mid" />
-              <div className="cs-hero__mock cs-hero__mock--front">
-                <div className="cs-hero__mock-img">
-                  <img
-                    src="https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=600&q=80&auto=format&fit=crop"
-                    alt=""
-                    className="cs-hero__mock-photo"
-                    loading="eager"
-                  />
-                </div>
+
+            {/* Card deck */}
+            <div
+              className={`cs-hero__card-stack${pulsing ? ' is-pulsing' : ''}`}
+              onClick={cycleNext}
+              role={n > 1 ? 'button' : undefined}
+              tabIndex={n > 1 ? 0 : undefined}
+              onKeyDown={n > 1 ? e => (e.key === 'Enter' || e.key === ' ') && cycleNext() : undefined}
+              aria-label={n > 1 ? 'Nächstes Produkt anzeigen' : undefined}
+              title={n > 1 ? 'Klicken für nächstes Produkt' : undefined}
+            >
+              {/* Back card */}
+              <div className="cs-hero__mock cs-hero__mock--back">
+                <div className="cs-hero__mock-img cs-hero__mock-img--placeholder" />
+              </div>
+
+              {/* Mid card */}
+              <div className="cs-hero__mock cs-hero__mock--mid">
+                {slots[1]?.imageUrl && (
+                  <div className="cs-hero__mock-img">
+                    <img
+                      src={slots[1].imageUrl}
+                      alt=""
+                      className="cs-hero__mock-photo"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+                {!slots[1]?.imageUrl && <div className="cs-hero__mock-img cs-hero__mock-img--placeholder" />}
                 <div className="cs-hero__mock-body">
                   <div className="cs-hero__mock-line cs-hero__mock-line--title" />
-                  <div className="cs-hero__mock-line cs-hero__mock-line--sub" />
                   <div className="cs-hero__mock-footer">
                     <div className="cs-hero__mock-price" />
                     <div className="cs-hero__mock-btn" />
                   </div>
                 </div>
               </div>
+
+              {/* Front card — active product */}
+              <div className="cs-hero__mock cs-hero__mock--front">
+                <div className="cs-hero__mock-img">
+                  {slots[0]?.imageUrl ? (
+                    <img
+                      key={slots[0].imageUrl}           // remount on change → fade animation
+                      src={slots[0].imageUrl}
+                      alt={slots[0].name}
+                      className="cs-hero__mock-photo"
+                      loading="eager"
+                    />
+                  ) : (
+                    <div className="cs-hero__mock-img--placeholder" style={{ width: '100%', height: '100%' }} />
+                  )}
+                </div>
+                <div className="cs-hero__mock-body">
+                  <p
+                    key={slots[0]?.id}                  // remount on change → fade animation
+                    className="cs-hero__mock-product-name"
+                  >
+                    {slots[0]?.name ?? ''}
+                  </p>
+                  <div className="cs-hero__mock-footer">
+                    <span className="cs-hero__mock-price-text">
+                      {slots[0]?.price ? `€ ${slots[0].price}` : ''}
+                    </span>
+                    <div className="cs-hero__mock-btn-icon">→</div>
+                  </div>
+                </div>
+              </div>
             </div>
 
+            {/* Click hint — only when products available */}
+            {n > 1 && (
+              <p className="cs-hero__click-hint">
+                Klicken für nächstes Produkt
+              </p>
+            )}
+
+            {/* Stat chips */}
             {STAT_BADGES.map((b, i) => (
               <div
                 key={i}
-                className="cs-hero__chip"
-                style={{
-                  animationDelay: `${0.5 + i * 0.12}s`,
-                  ...Object.fromEntries(
-                    b.pos.split(';').filter(Boolean).map(s => {
-                      const [k, v] = s.trim().split(':');
-                      return [k.trim(), v.trim()];
-                    })
-                  ),
-                } as React.CSSProperties}
+                className={`cs-hero__chip ${b.cls}`}
+                style={{ animationDelay: `${0.5 + i * 0.12}s` } as React.CSSProperties}
               >
                 <span className="cs-hero__chip-val">{b.val}</span>
                 <span className="cs-hero__chip-lbl">{b.lbl}</span>
@@ -278,7 +343,8 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <div className="cs-products__grid">
+        {/* data-reveal-stagger: jede Produktkarte erscheint mit Versatz */}
+        <div className="cs-products__grid" data-reveal-stagger>
           {products.slice(0, 4).map(p => (
             <ProductCard key={p.id} product={p} />
           ))}
@@ -300,13 +366,13 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="cs-cats__grid">
+        {/* data-reveal-stagger: Kategoriekarten staffeln */}
+        <div className="cs-cats__grid" data-reveal-stagger>
           {categories.map(cat => (
             <Link
               key={cat.id}
               to={`${ROUTES.SHOP.SEARCH}?category=${encodeURIComponent(cat.name)}`}
               className="cs-cat-card"
-              data-reveal
             >
               {cat.image_url && (
                 <>
@@ -338,7 +404,7 @@ export default function HomePage() {
         </div>
 
         <div className="cs-reviews__grid">
-          <div className="cs-review-featured" data-reveal>
+          <div className="cs-review-featured" data-reveal data-reveal-dir="left">
             <Stars rating={featuredReview.rating} size={18} />
             <blockquote className="cs-review-featured__quote">
               &ldquo;{featuredReview.text}&rdquo;
@@ -354,9 +420,9 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="cs-reviews__minis">
+          <div className="cs-reviews__minis" data-reveal-stagger>
             {miniReviews.map((r, i) => (
-              <div key={i} className="cs-review-mini" data-reveal>
+              <div key={i} className="cs-review-mini">
                 <Stars rating={r.rating} size={14} />
                 <p className="cs-review-mini__text">&ldquo;{r.text}&rdquo;</p>
                 <div className="cs-review-mini__footer">

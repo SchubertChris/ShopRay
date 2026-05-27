@@ -12,16 +12,30 @@
   to   { transform: translateY(0); }
 }
 
-// Split Screen: left panel slides from left
 @keyframes hero-slide-left {
   from { opacity: 0; transform: translateX(-56px); }
   to   { opacity: 1; transform: translateX(0); }
 }
-
-// Split Screen: right panel slides from right
 @keyframes hero-slide-right {
   from { opacity: 0; transform: translateX(56px); }
   to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes bg-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 0.22; }
+}
+@keyframes img-content-in {
+  from { opacity: 0; transform: scale(1.04); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes name-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes card-pulse {
+  0%   { transform: rotate(0deg) scale(1); }
+  40%  { transform: rotate(-1deg) scale(0.96); }
+  100% { transform: rotate(0deg) scale(1); }
 }
 
 // Chip float-in
@@ -61,8 +75,27 @@
 [data-reveal] {
   opacity:   0;
   transform: translateY(28px);
-  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+
+  // Richtungs-Varianten
+  &[data-reveal-dir="left"]  { transform: translateX(-48px); }
+  &[data-reveal-dir="right"] { transform: translateX(48px);  }
+
+  &.is-visible {
+    opacity:   1;
+    transform: none;
+  }
+}
+
+// ── Stagger-Container ─────────────────────────────────────────────────────
+// data-reveal-stagger: Kinder werden per JS mit gestaffeltem transitionDelay eingeblendet
+
+[data-reveal-stagger] > * {
+  opacity:   0;
+  transform: translateY(24px);
+  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
 
   &.is-visible {
     opacity:   1;
@@ -71,8 +104,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-reveal] { opacity: 1; transform: none; transition: none; }
-  .hw__inner     { animation: none; }
+  [data-reveal],
+  [data-reveal-stagger] > * { opacity: 1; transform: none; transition: none; }
+  .hw__inner                 { animation: none; }
 }
 
 // ── Shared section primitives ─────────────────────────────────────────────
@@ -123,21 +157,33 @@
   padding-bottom: max(4rem, 8vh);
   overflow:       hidden;
 
-  // Subtle noise texture
-  &::before {
-    content:          '';
+  // ── Dynamischer Hintergrund (Produktbild, geblurrt) ─────────────────────
+  &__bg {
+    position:            absolute;
+    inset:               -8%;
+    background-size:     cover;
+    background-position: center;
+    filter:              blur(80px) saturate(1.5);
+    transform:           scale(1.1);
+    z-index:             0;
+    pointer-events:      none;
+    animation:           bg-fade-in 1s ease forwards;
+  }
+
+  // Noise texture overlay (eigene div, nicht ::before damit sie über dem bg-Layer liegt)
+  &__noise {
     position:         absolute;
     inset:            0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
     background-size:  256px;
     pointer-events:   none;
-    z-index:          0;
+    z-index:          1;
     opacity:          0.6;
   }
 
   &__grid {
     position:  relative;
-    z-index:   1;
+    z-index:   2;   // über bg-Layer + noise
     display:   grid;
     gap:       3rem;
     max-width: 1400px;
@@ -214,41 +260,49 @@
     @include respond-to('lg') { display: block; }
   }
 
-  // ── Product Card Stack ────────────────────────────────────────────────────
+  // ── Clickable Card Stack ─────────────────────────────────────────────────
   &__card-stack {
     position:     relative;
     width:        100%;
     aspect-ratio: 3 / 4;
     max-width:    380px;
     margin:       0 auto;
+
+    &[role="button"] { cursor: pointer; }
+
+    // Pulse on click — front card (slot-0) gets subtle scale down+up
+    &.is-pulsing .cs-hero__mock--front {
+      animation: card-pulse 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
   }
 
   &__mock {
     position:      absolute;
+    inset:         0;
     border-radius: 20px;
     background:    var(--clr-surface);
     border:        1px solid color-mix(in srgb, var(--clr-border) 60%, transparent);
-    box-shadow:    0 8px 40px color-mix(in srgb, var(--clr-shadow, rgba(0,0,0,0.08)) 60%, transparent);
+    box-shadow:    0 12px 48px color-mix(in srgb, var(--clr-shadow, rgba(0,0,0,0.10)) 80%, transparent);
     overflow:      hidden;
+    display:       flex;
+    flex-direction: column;
+    transition:    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                   opacity   0.4s ease;
 
     &--back {
-      inset:      0;
-      transform:  rotate(-6deg) translateY(12px);
-      opacity:    0.45;
-      animation:  card-float 5s ease-in-out 0.6s infinite;
+      transform: rotate(-6deg) translate(-8px, 16px) scale(0.88);
+      opacity:   0.45;
+      animation: card-float 5s ease-in-out 0.6s infinite;
     }
-
     &--mid {
-      inset:      0;
-      transform:  rotate(-2deg) translateY(6px);
-      opacity:    0.7;
-      animation:  card-float-mid 4.5s ease-in-out 0.4s infinite;
+      transform: rotate(-2.5deg) translate(-4px, 8px) scale(0.94);
+      opacity:   0.72;
+      animation: card-float-mid 4.5s ease-in-out 0.4s infinite;
     }
-
     &--front {
-      inset:   0;
-      display: flex;
-      flex-direction: column;
+      transform:  rotate(0deg) translate(0, 0) scale(1);
+      opacity:    1;
+      box-shadow: 0 24px 64px color-mix(in srgb, var(--clr-primary) 18%, rgba(0,0,0,0.15));
     }
   }
 
@@ -257,7 +311,15 @@
     min-height: 0;
     position:   relative;
     overflow:   hidden;
-    background: color-mix(in srgb, var(--clr-primary) 8%, var(--clr-surface));
+    background: color-mix(in srgb, var(--clr-primary) 6%, var(--clr-surface));
+
+    &--placeholder {
+      background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--clr-primary) 14%, var(--clr-surface)),
+        color-mix(in srgb, var(--clr-primary) 4%,  var(--clr-surface))
+      );
+    }
   }
 
   &__mock-photo {
@@ -266,25 +328,33 @@
     width:      100%;
     height:     100%;
     object-fit: cover;
-    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    animation:  img-content-in 0.5s ease both;
 
-    .cs-hero__mock--front:hover & {
-      transform: scale(1.04);
-    }
+    .cs-hero__mock--front:hover & { transform: scale(1.04); transition: transform 0.6s ease; }
   }
 
   &__mock-body {
-    padding:    1.25rem;
+    padding:    1rem 1.25rem 1.25rem;
     background: var(--clr-surface);
+  }
+
+  &__mock-product-name {
+    font-size:     0.875rem;
+    font-weight:   600;
+    color:         var(--clr-text);
+    margin:        0 0 0.75rem;
+    white-space:   nowrap;
+    overflow:      hidden;
+    text-overflow: ellipsis;
+    animation:     name-fade-in 0.4s ease both;
   }
 
   &__mock-line {
     border-radius: 6px;
-    background:    color-mix(in srgb, var(--clr-text) 12%, transparent);
-    margin-bottom: 0.5rem;
-
-    &--title { height: 14px; width: 60%; }
-    &--sub   { height: 10px; width: 40%; margin-bottom: 1rem; }
+    background:    color-mix(in srgb, var(--clr-text) 10%, transparent);
+    margin-bottom: 0.75rem;
+    height:        12px;
+    width:         55%;
   }
 
   &__mock-footer {
@@ -295,27 +365,53 @@
   }
 
   &__mock-price {
-    height:        16px;
-    width:         70px;
+    height:        14px;
+    width:         64px;
     border-radius: 6px;
     background:    color-mix(in srgb, var(--clr-primary) 35%, transparent);
   }
 
+  &__mock-price-text {
+    font-size:   0.9375rem;
+    font-weight: 700;
+    color:       var(--clr-primary);
+  }
+
   &__mock-btn {
-    height:        32px;
-    width:         80px;
+    height:        30px;
+    width:         72px;
     border-radius: 8px;
     background:    var(--clr-primary);
-    opacity:       0.8;
+    opacity:       0.85;
+  }
+
+  &__mock-btn-icon {
+    width:           32px;
+    height:          32px;
+    border-radius:   50%;
+    background:      var(--clr-primary);
+    color:           var(--clr-bg);
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:       1rem;
+    font-weight:     700;
+    flex-shrink:     0;
+  }
+
+  // ── Click Hint ────────────────────────────────────────────────────────────
+  &__click-hint {
+    text-align:     center;
+    margin-top:     1rem;
+    font-size:      0.75rem;
+    color:          var(--clr-text-muted);
+    letter-spacing: 0.04em;
+    opacity:        0.7;
   }
 
   // ── Stat Chips ────────────────────────────────────────────────────────────
   &__chip {
     position:       absolute;
-    top:            var(--badge-top,    auto);
-    bottom:         var(--badge-bottom, auto);
-    left:           var(--badge-left,   auto);
-    right:          var(--badge-right,  auto);
     background:     var(--clr-surface);
     border:         1px solid color-mix(in srgb, var(--clr-primary) 30%, transparent);
     border-radius:  12px;
@@ -326,6 +422,11 @@
     box-shadow:     0 4px 20px color-mix(in srgb, var(--clr-primary) 10%, transparent);
     animation:      chip-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
     white-space:    nowrap;
+
+    &--tl { top: -1rem;    left: -1.5rem; }
+    &--bl { bottom: 30%;   left: -2rem;   }
+    &--tr { top: -1rem;    right: -1rem;  }
+    &--br { bottom: 1rem;  right: -1.5rem;}
 
     &-val {
       font-size:   1rem;
