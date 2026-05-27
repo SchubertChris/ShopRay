@@ -216,7 +216,14 @@ export default function HomePage() {
               <div className="cs-hero__mock cs-hero__mock--back" />
               <div className="cs-hero__mock cs-hero__mock--mid" />
               <div className="cs-hero__mock cs-hero__mock--front">
-                <div className="cs-hero__mock-img" />
+                <div className="cs-hero__mock-img">
+                  <img
+                    src="https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=600&q=80&auto=format&fit=crop"
+                    alt=""
+                    className="cs-hero__mock-photo"
+                    loading="eager"
+                  />
+                </div>
                 <div className="cs-hero__mock-body">
                   <div className="cs-hero__mock-line cs-hero__mock-line--title" />
                   <div className="cs-hero__mock-line cs-hero__mock-line--sub" />
