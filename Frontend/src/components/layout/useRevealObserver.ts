@@ -5,24 +5,30 @@ export function useRevealObserver() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    let observer: IntersectionObserver;
+    const io = new IntersectionObserver(
+      entries => entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('is-visible');
+          io.unobserve(e.target);
+        }
+      }),
+      { threshold: 0.08 },
+    );
 
-    const timer = setTimeout(() => {
-      observer = new IntersectionObserver(
-        entries => entries.forEach(e => {
-          if (e.isIntersecting) {
-            e.target.classList.add('is-visible');
-            observer.unobserve(e.target);
-          }
-        }),
-        { threshold: 0.1 }
-      );
-      document.querySelectorAll('[data-reveal]:not(.is-visible)').forEach(el => observer.observe(el));
-    }, 50);
+    // Alle bereits vorhandenen [data-reveal]-Elemente sofort registrieren
+    const register = () => {
+      document.querySelectorAll<Element>('[data-reveal]:not(.is-visible)').forEach(el => io.observe(el));
+    };
+
+    register();
+
+    // MutationObserver: neu gerenderte Elemente (z.B. async API-Daten) nachmelden
+    const mo = new MutationObserver(register);
+    mo.observe(document.body, { childList: true, subtree: true });
 
     return () => {
-      clearTimeout(timer);
-      observer?.disconnect();
+      io.disconnect();
+      mo.disconnect();
     };
   }, [pathname]);
 }
