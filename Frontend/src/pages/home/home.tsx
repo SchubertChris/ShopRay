@@ -12,47 +12,44 @@ import { PALETTES }   from '@config/theme';
 // ── Static Data ────────────────────────────────────────────────────────────
 
 const TRUST_ITEMS = [
-  '700+ Schüler', '4.9 / 5 Sterne', 'Live-Trading-Sessions', 'Discord-Community',
-  'Seit 2024', 'Lifetime-Zugang', 'Praxis-orientiert', 'SSL-Sicher',
+  '1.000+ Kunden', '4.9 / 5 Sterne', '2–3 Tage Lieferung', 'SSL-verschlüsselt',
+  'DSGVO-konform', '30 Tage Rückgabe', 'Kostenloser Support', 'Made in Germany',
 ];
 
 const REVIEWS = [
   {
-    name:    'Leon K.',
-    date:    'April 2026',
-    product: 'Trading Anfänger Kurs',
+    name:    'Lena K.',
+    date:    'Mai 2026',
+    product: 'Premium Paket',
     rating:  5,
-    text:    'Endlich versteht man, was hinter den Kerzen steckt. Dieser Kurs hat mein Bild von Trading komplett verändert — klarer Aufbau, keine unnötigen Theorien.',
+    text:    'Blitzschnelle Lieferung und perfekte Qualität. Ich bin total begeistert — genau das, was ich mir erhofft hatte. Klare Empfehlung!',
     featured: true,
   },
   {
-    name:    'Jana M.',
-    date:    'März 2026',
-    product: 'Prompt Starter Kit',
+    name:    'Marc T.',
+    date:    'April 2026',
+    product: 'Starter Set',
     rating:  5,
-    text:    'In wenigen Tagen habe ich mehr gelernt als in Monaten davor. Sehr empfehlenswert.',
+    text:    'Top Qualität, schöne Verpackung und sehr schnelle Lieferung. Bestelle definitiv wieder.',
     featured: false,
   },
   {
-    name:    'Tobias S.',
-    date:    'März 2026',
-    product: 'Windows + Claude Code Kurs',
+    name:    'Sarah M.',
+    date:    'April 2026',
+    product: 'Bestseller Bundle',
     rating:  5,
-    text:    'Perfekte Einführung — auch für absolute Einsteiger. Klare Sprache, sofort umsetzbar.',
+    text:    'Einfach bestellt, schnell angekommen, qualitativ hochwertig. Genau so soll Online-Shopping sein.',
     featured: false,
   },
 ] as const;
 
-// Decorative candlestick data [x, wickTop, wickBot, bodyTop, bodyH, isBull]
-const CANDLES: [number, number, number, number, number, boolean][] = [
-  [20,  18, 138, 58,  52, true ],
-  [58,  28, 118, 43,  45, false],
-  [96,  12, 152, 38,  78, true ],
-  [134, 24, 128, 48,  48, false],
-  [172,  8, 148, 28,  76, true ],
-  [210, 18, 122, 44,  44, false],
-  [248,  6, 142, 20,  82, true ],
-];
+// Decorative floating stat badges for hero visual
+const STAT_BADGES = [
+  { val: '1k+',    lbl: 'Kunden',       pos: '--badge-top: -1rem;   --badge-left: -1.5rem;' },
+  { val: '4.9 ★',  lbl: 'Bewertung',    pos: '--badge-top: 40%;     --badge-left: -2rem;'   },
+  { val: '2–3d',   lbl: 'Lieferzeit',   pos: '--badge-top: -1rem;   --badge-right: -1rem;'  },
+  { val: '30T',    lbl: 'Rückgabe',     pos: '--badge-bottom: 1rem; --badge-right: -1.5rem;'},
+] as const;
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -132,7 +129,6 @@ export default function HomePage() {
     sameAs: Object.values(APP_SOCIALS).filter(v => v !== '#' && v !== ''),
   };
 
-  // REVIEWS[0] is the featured review (as const guarantees the first entry has featured: true)
   const featuredReview = REVIEWS[0];
   const miniReviews    = REVIEWS.slice(1);
 
@@ -140,7 +136,7 @@ export default function HomePage() {
     <>
       <SeoMeta
         title="Startseite"
-        description="Lerne Trading von Grund auf — mit echten Strategien, Live-Sessions und einer Community, die dich pushed. Candlescope Kurse &amp; Merch."
+        description="Qualitätsprodukte, schneller Versand und echter Support. Entdecke unseren Shop — Online-Shopping so wie es sein sollte."
       />
       <JsonLd data={websiteSchema} />
       <JsonLd data={organizationSchema} />
@@ -179,84 +175,78 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* ── HERO ────────────────────────────────────────────────────────── */}
+      {/* ── HERO — Split Screen Reveal ──────────────────────────────────── */}
       <section className="cs-hero">
         <div className="cs-hero__grid">
 
-          {/* Content */}
+          {/* ── Left: Content ────────────────────────────────────────────── */}
           <div className="cs-hero__content">
-            <span className="cs-hero__eyebrow">Trading-Plattform &amp; Community</span>
+            <span className="cs-hero__eyebrow">Einfach. Schön. Sicher.</span>
 
             <h1 className="cs-hero__title">
-              <HeadlineWords text="Dein Edge." />
+              <HeadlineWords text="Dein Produkt." />
               <br />
-              <em><HeadlineWords text="Dein Chart." /></em>
+              <em><HeadlineWords text="Deine Marke." /></em>
             </h1>
 
-            <p className="cs-hero__sub" data-reveal>
-              Lerne Trading von Grund auf — mit echten Strategien, Live-Sessions und einer
-              Community, die dich pushed.
+            <p className="cs-hero__sub">
+              Entdecke handverlesene Produkte, genieß schnellen Versand und verlass dich
+              auf echten Support — Online-Shopping so wie es sein sollte.
             </p>
 
-            <div className="cs-hero__ctas" data-reveal>
-              <Link to={`${ROUTES.SHOP.SEARCH}?category=Kurse`} className="btn btn--primary btn--lg">
-                Kurse entdecken →
+            <div className="cs-hero__ctas">
+              <Link to={ROUTES.SHOP.SEARCH} className="btn btn--primary btn--lg">
+                Produkte entdecken →
               </Link>
-              <Link to={`${ROUTES.SHOP.SEARCH}?category=Merch`} className="btn btn--ghost btn--lg">
-                Merch shoppen
+              <Link to={ROUTES.INFO.ABOUT} className="btn btn--ghost btn--lg">
+                Über uns
               </Link>
             </div>
 
-            <div className="cs-hero__social" data-reveal>
+            <div className="cs-hero__social">
               <Stars rating={4.9} size={14} />
-              <span>4.9 · über 700 Schüler</span>
+              <span>4.9 · über 1.000 Bewertungen</span>
             </div>
           </div>
 
-          {/* Decorative chart */}
+          {/* ── Right: Visual ────────────────────────────────────────────── */}
           <div className="cs-hero__visual" aria-hidden="true">
-            <div className="cs-hero__chart-area">
-              <svg
-                className="cs-hero__chart-svg"
-                viewBox="0 0 280 200"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                role="presentation"
+            <div className="cs-hero__card-stack">
+              {/* Decorative product card mockups */}
+              <div className="cs-hero__mock cs-hero__mock--back" />
+              <div className="cs-hero__mock cs-hero__mock--mid" />
+              <div className="cs-hero__mock cs-hero__mock--front">
+                <div className="cs-hero__mock-img" />
+                <div className="cs-hero__mock-body">
+                  <div className="cs-hero__mock-line cs-hero__mock-line--title" />
+                  <div className="cs-hero__mock-line cs-hero__mock-line--sub" />
+                  <div className="cs-hero__mock-footer">
+                    <div className="cs-hero__mock-price" />
+                    <div className="cs-hero__mock-btn" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {STAT_BADGES.map((b, i) => (
+              <div
+                key={i}
+                className="cs-hero__chip"
+                style={{
+                  animationDelay: `${0.5 + i * 0.12}s`,
+                  ...Object.fromEntries(
+                    b.pos.split(';').filter(Boolean).map(s => {
+                      const [k, v] = s.trim().split(':');
+                      return [k.trim(), v.trim()];
+                    })
+                  ),
+                } as React.CSSProperties}
               >
-                {[40, 80, 120, 160].map(y => (
-                  <line key={y} x1="0" y1={y} x2="280" y2={y} strokeWidth="0.5" className="cs-hero__grid-line" />
-                ))}
-                {CANDLES.map(([x, wt, wb, bt, bh, bull], i) => (
-                  <g key={i}>
-                    <line
-                      x1={x} y1={wt} x2={x} y2={wb}
-                      strokeWidth="1.5"
-                      className={bull ? 'cs-hero__wick--bull' : 'cs-hero__wick--bear'}
-                    />
-                    <rect
-                      x={x - 9} y={bt} width={18} height={bh} rx="2"
-                      strokeWidth="1.5"
-                      className={bull ? 'cs-hero__candle--bull' : 'cs-hero__candle--bear'}
-                    />
-                  </g>
-                ))}
-              </svg>
-            </div>
-
-            <div className="cs-hero__chip cs-hero__chip--1">
-              <span className="cs-hero__chip-val">700+</span>
-              <span className="cs-hero__chip-lbl">Schüler</span>
-            </div>
-            <div className="cs-hero__chip cs-hero__chip--2">
-              <span className="cs-hero__chip-val">4.9 ★</span>
-              <span className="cs-hero__chip-lbl">Bewertung</span>
-            </div>
+                <span className="cs-hero__chip-val">{b.val}</span>
+                <span className="cs-hero__chip-lbl">{b.lbl}</span>
+              </div>
+            ))}
           </div>
-        </div>
-
-        <div className="cs-hero__scroll" aria-hidden="true">
-          <div className="cs-hero__scroll-dot" />
-          <div className="cs-hero__scroll-line" />
         </div>
       </section>
 
@@ -331,12 +321,12 @@ export default function HomePage() {
       <section className="cs-reviews" aria-labelledby="reviews-heading">
         <div className="cs-section-head" data-reveal>
           <div>
-            <span className="cs-eyebrow">Was Schüler sagen</span>
+            <span className="cs-eyebrow">Was Kunden sagen</span>
             <h2 id="reviews-heading" className="cs-heading">Echte Bewertungen</h2>
           </div>
           <div className="cs-reviews__rating-badge">
             <Stars rating={4.9} size={16} />
-            <span>4.9 · 700+ Bewertungen</span>
+            <span>4.9 · 1.000+ Bewertungen</span>
           </div>
         </div>
 
@@ -382,10 +372,11 @@ export default function HomePage() {
         <div className="cs-newsletter__inner">
           <span className="cs-eyebrow" data-reveal>Exklusiv für Mitglieder</span>
           <h2 id="newsletter-heading" className="cs-newsletter__title" data-reveal>
-            Join the Club.
+            Immer als Erster.
           </h2>
           <p className="cs-newsletter__sub" data-reveal>
-            Updates zu neuen Kursen, Live-Session-Einladungen und 10 % Rabatt auf deine erste Bestellung.
+            Neue Produkte, exklusive Angebote und 10 % Rabatt auf deine erste Bestellung —
+            direkt in deinen Posteingang.
           </p>
 
           <form className="cs-newsletter__form" onSubmit={handleSubscribe} data-reveal>
