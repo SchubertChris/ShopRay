@@ -12,8 +12,6 @@ import { useCart }       from '@features/cart';
 import { useAuth }       from '@features/auth';
 import { useTheme }      from '@providers/ThemeProvider';
 
-const NAV_H = 72;
-
 const NAV_LINKS = [
   { label: 'Shop',   to: ROUTES.SHOP.SEARCH },
   { label: 'Kurse',  to: `${ROUTES.SHOP.SEARCH}?category=Kurse` },
@@ -23,7 +21,6 @@ const NAV_LINKS = [
 
 // ── HomeNav ────────────────────────────────────────────────────────────────
 function HomeNav() {
-  const [atTop,      setAtTop]      = useState(false);
   const [hasBg,      setHasBg]      = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const cartCount       = useCart(s => s.items.reduce((sum, i) => sum + i.quantity, 0));
@@ -35,21 +32,16 @@ function HomeNav() {
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      setAtTop(y > window.innerHeight - NAV_H);
-      setHasBg(y > 40);
-    };
+    const onScroll = () => { setHasBg(window.scrollY > 40); };
     window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll(); // run once on mount
+    onScroll();
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   const cls = [
     'home-nav',
-    atTop            ? 'home-nav--top'    : 'home-nav--bottom',
-    hasBg || atTop   ? 'home-nav--bg'     : '',
-    mobileOpen       ? 'home-nav--open'   : '',
+    hasBg      ? 'home-nav--bg'   : '',
+    mobileOpen ? 'home-nav--open' : '',
   ].filter(Boolean).join(' ');
 
   return (

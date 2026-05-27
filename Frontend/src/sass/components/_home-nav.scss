@@ -5,37 +5,18 @@
   --home-nav-h: 72px;
 }
 
-// ── Keyframes ─────────────────────────────────────────────────────────────
-
-@keyframes hn-slide-top {
-  from { transform: translateY(-100%); }
-  to   { transform: translateY(0); }
-}
-
 // ── Nav ───────────────────────────────────────────────────────────────────
 
 .home-nav {
   position:   fixed;
+  top:        0;
   left:       0;
   right:      0;
   z-index:    100;
   height:     var(--home-nav-h);
   transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 
-  // Default: sits at the bottom of the viewport
-  &--bottom {
-    bottom: 0;
-    top:    auto;
-  }
-
-  // After scroll threshold: anchors to the top with slide animation
-  &--top {
-    top:    0;
-    bottom: auto;
-    animation: hn-slide-top 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  // Background overlay
+  // Background overlay (active after scrolling past 40px)
   &--bg {
     background:     color-mix(in srgb, var(--clr-surface) 94%, transparent);
     backdrop-filter: blur(16px);
@@ -219,8 +200,3 @@
   }
 }
 
-// ── Reduced motion ─────────────────────────────────────────────────────────
-
-@media (prefers-reduced-motion: reduce) {
-  .home-nav--top { animation: none; }
-}

@@ -7,11 +7,18 @@ import { validate }     from '../lib/validate';
 
 const router = Router();
 
-webpush.setVapidDetails(
-  `mailto:${process.env.VAPID_EMAIL ?? 'admin@shopray.de'}`,
-  process.env.VAPID_PUBLIC_KEY  ?? '',
-  process.env.VAPID_PRIVATE_KEY ?? '',
-);
+// VAPID wird lazy initialisiert — nicht beim Modulimport,
+// damit fehlende Keys den Server nicht beim Start crashen.
+function initVapid() {
+  const pub  = process.env.VAPID_PUBLIC_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  if (!pub || !priv) throw new Error('VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY fehlen in den Umgebungsvariablen.');
+  webpush.setVapidDetails(
+    `mailto:${process.env.VAPID_EMAIL ?? 'admin@shopray.de'}`,
+    pub,
+    priv,
+  );
+}
 
 const SubscribeSchema = z.object({
   endpoint: z.string().url().max(2000),
@@ -62,6 +69,8 @@ export default router;
 
 // ── Hilfsfunktion für andere Routes ──────────────────────────────────────────
 export async function sendPushToAll(payload: { title: string; body: string; url?: string }): Promise<void> {
+  try { initVapid(); } catch { return; } // VAPID nicht gesetzt → still skippen
+
   const { data: subs } = await supabase
     .from('push_subscriptions')
     .select('endpoint, p256dh, auth');
