@@ -61,12 +61,59 @@ const FAQ_ITEMS = [
 
 const CATS = ['Alle', ...Array.from(new Set(FAQ_ITEMS.map(f => f.cat)))];
 
+// ── PROVIDER ICONS (inline SVG — kein externer CDN) ───────────────────────
+const IconZendesk = () => (
+  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect width="40" height="40" rx="10" fill="#03363D"/>
+    <path d="M20 10c-3.866 0-7 2.686-7 6v.5h14V16c0-3.314-3.134-6-7-6z" fill="#fff"/>
+    <path d="M13 17.5L27 28H13V17.5z" fill="#fff"/>
+    <path d="M27 28H13l14-10.5V28z" fill="rgba(255,255,255,0.35)"/>
+    <path d="M20 19c3.866 0 7 2.686 7 6v.5H13V25c0-3.314 3.134-6 7-6z" fill="rgba(255,255,255,0.6)"/>
+  </svg>
+);
+
+const IconFreshdesk = () => (
+  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect width="40" height="40" rx="10" fill="#00B4E5"/>
+    <path d="M20 9C14.477 9 10 13.477 10 19v8.5a1.5 1.5 0 001.5 1.5H14v-8h-2v-1c0-4.418 3.582-8 8-8s8 3.582 8 8v1h-2v8h2.5A1.5 1.5 0 0030 27.5V19c0-5.523-4.477-10-10-10z" fill="#fff"/>
+    <rect x="11" y="21" width="4" height="6" rx="2" fill="#fff"/>
+    <rect x="25" y="21" width="4" height="6" rx="2" fill="#fff"/>
+  </svg>
+);
+
+const IconIntercom = () => (
+  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect width="40" height="40" rx="10" fill="#006FFF"/>
+    <rect x="10" y="10" width="20" height="17" rx="4" fill="#fff"/>
+    <rect x="14" y="15" width="3" height="3" rx="1.5" fill="#006FFF"/>
+    <rect x="18.5" y="15" width="3" height="3" rx="1.5" fill="#006FFF"/>
+    <rect x="23" y="15" width="3" height="3" rx="1.5" fill="#006FFF"/>
+    <path d="M10 27l3-3h17v5l-3-2H10z" fill="#fff"/>
+  </svg>
+);
+
+const IconTidio = () => (
+  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect width="40" height="40" rx="10" fill="#1A1A2E"/>
+    <path d="M20 8C13.373 8 8 13.373 8 20s5.373 12 12 12 12-5.373 12-12S26.627 8 20 8z" fill="#4F7FFF" opacity=".25"/>
+    <path d="M16 13h8v3h-2.5v11h-3V16H16v-3z" fill="#fff"/>
+    <circle cx="20" cy="28" r="1.5" fill="#4F7FFF"/>
+  </svg>
+);
+
+const IconKlaviyo = () => (
+  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect width="40" height="40" rx="10" fill="#1A0DAB" opacity=".9"/>
+    <path d="M13 11h3.5v7.5L23 11h4.5L21 19l7 10h-4.5l-5-7.5L16.5 24V29H13V11z" fill="#fff"/>
+  </svg>
+);
+
 const PROVIDERS = [
-  { name: 'Zendesk',   tag: 'Helpdesk', sub: 'Ticketsystem & Wissensdatenbank',    logo: 'https://logo.clearbit.com/zendesk.com' },
-  { name: 'Freshdesk', tag: 'Helpdesk', sub: 'Multichannel Support-Suite',          logo: 'https://logo.clearbit.com/freshdesk.com' },
-  { name: 'Intercom',  tag: 'Chat',     sub: 'Messaging & Onboarding-Plattform',    logo: 'https://logo.clearbit.com/intercom.com' },
-  { name: 'Tidio',     tag: 'Chat',     sub: 'Live-Chat mit KI-Bots',               logo: 'https://logo.clearbit.com/tidio.com' },
-  { name: 'Klaviyo',   tag: 'E-Mail',   sub: 'Marketing & Support Automation',      logo: 'https://logo.clearbit.com/klaviyo.com' },
+  { name: 'Zendesk',   tag: 'Helpdesk', sub: 'Ticketsystem & Wissensdatenbank',   Icon: IconZendesk   },
+  { name: 'Freshdesk', tag: 'Helpdesk', sub: 'Multichannel Support-Suite',         Icon: IconFreshdesk },
+  { name: 'Intercom',  tag: 'Chat',     sub: 'Messaging & Onboarding-Plattform',   Icon: IconIntercom  },
+  { name: 'Tidio',     tag: 'Chat',     sub: 'Live-Chat mit KI-Bots',              Icon: IconTidio     },
+  { name: 'Klaviyo',   tag: 'E-Mail',   sub: 'Marketing & Support Automation',     Icon: IconKlaviyo   },
 ];
 
 // ── PAGE ──────────────────────────────────────────────────────────────────────
@@ -223,16 +270,14 @@ export default function FaqPage() {
           </header>
 
           <div className="help-providers__grid">
-            {PROVIDERS.map((p, i) => (
-              <div key={p.name} className={`provider-card provider-card--${i + 1}`}>
-                <div className="provider-card__logo" aria-label={p.name}>
-                  {p.logo
-                    ? <img src={p.logo} alt={p.name} loading="lazy" />
-                    : <span>{p.name[0]}</span>}
+            {PROVIDERS.map(({ name, tag, sub, Icon }, i) => (
+              <div key={name} className={`provider-card provider-card--${i + 1}`}>
+                <div className="provider-card__logo" aria-label={name}>
+                  <Icon />
                 </div>
-                <span className="provider-card__tag">{p.tag}</span>
-                <p className="provider-card__name">{p.name}</p>
-                <p className="provider-card__sub">{p.sub}</p>
+                <span className="provider-card__tag">{tag}</span>
+                <p className="provider-card__name">{name}</p>
+                <p className="provider-card__sub">{sub}</p>
                 <a className="provider-card__link" href="#">Verbinden →</a>
               </div>
             ))}

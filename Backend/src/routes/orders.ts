@@ -193,6 +193,7 @@ router.post('/:id/return', requireAuth, validate(UUIDParam, 'params'), validate(
 
 // POST /api/orders/checkout — Stripe Checkout Session (Auth optional für Gastbestellungen)
 router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchema), async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  let claimedDiscountId: string | null = null;
   try {
     const { items, shippingAddress, paymentMethod, guestEmail, discountCode } = req.body as CheckoutBody;
 
@@ -233,6 +234,40 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
       }
     }
 
+    // ── Aktive Reservierungen laden (für reservierungsbereinigten Lagerbestand) ──
+    // Verhindert, dass zwei simultane Checkouts denselben "letzten Artikel" kaufen.
+    const reservedMap = new Map<string, number>();
+
+    const { data: prodReservations } = await supabase
+      .from('stock_reservations')
+      .select('product_id, quantity')
+      .gt('expires_at', new Date().toISOString())
+      .is('sku_id', null)
+      .in('product_id', productIds);
+
+    for (const r of prodReservations ?? []) {
+      const k = `prod:${r.product_id as string}`;
+      reservedMap.set(k, (reservedMap.get(k) ?? 0) + (r.quantity as number));
+    }
+
+    if (skuIds.length > 0) {
+      const { data: skuReservations } = await supabase
+        .from('stock_reservations')
+        .select('sku_id, quantity')
+        .gt('expires_at', new Date().toISOString())
+        .not('sku_id', 'is', null)
+        .in('sku_id', skuIds);
+
+      for (const r of skuReservations ?? []) {
+        const k = `sku:${r.sku_id as string}`;
+        reservedMap.set(k, (reservedMap.get(k) ?? 0) + (r.quantity as number));
+      }
+    }
+
+    // Effektiver Lagerbestand = DB-Stock minus aktive Reservierungen
+    const effectiveStock = (productId: string, stock: number, skuId?: string | null): number =>
+      Math.max(0, stock - (reservedMap.get(skuId ? `sku:${skuId}` : `prod:${productId}`) ?? 0));
+
     for (const item of items) {
       const product = productMap.get(item.productId);
       if (!product) {
@@ -246,7 +281,7 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
           res.status(400).json({ error: `Ungültige Variante für "${product.name as string}".` });
           return;
         }
-        if ((sku.stock as number) < item.quantity) {
+        if (effectiveStock(item.productId, sku.stock, item.skuId) < item.quantity) {
           res.status(409).json({
             error: `"${product.name as string}" ist in dieser Variante nicht mehr ausreichend auf Lager.`,
             code:  'OUT_OF_STOCK',
@@ -254,7 +289,7 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
           return;
         }
       } else {
-        if ((product.stock as number) < item.quantity) {
+        if (effectiveStock(item.productId, product.stock as number) < item.quantity) {
           res.status(409).json({
             error: `"${product.name as string}" ist nicht mehr ausreichend auf Lager.`,
             code:  'OUT_OF_STOCK',
@@ -283,32 +318,21 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
 
     const subtotalCents = lineItems.reduce((s, i) => s + i.unitAmountCents * i.quantity, 0);
 
-    // Gutscheincode validieren (falls angegeben)
+    // Gutscheincode atomar reservieren — verhindert TOCTOU bei gleichzeitigen Checkouts.
+    // claim_discount() ist ein einzelnes UPDATE...RETURNING — keine Race Condition möglich.
     let discountAmount = 0;
-    let resolvedCode: string | null = null;
+    let resolvedCode:  string | null = null;
 
     if (discountCode) {
-      const { data: dc } = await supabase
-        .from('discount_codes')
-        .select('id, code, type, value, min_order, max_uses, uses, active, expires_at')
-        .eq('active', true)
-        .filter('code', 'ilike', discountCode)
-        .single();
-
-      if (dc) {
-        const orderTotal = subtotalCents / 100;
-        const expired    = dc.expires_at && new Date(dc.expires_at as string) < new Date();
-        const exhausted  = dc.max_uses !== null && (dc.uses as number) >= (dc.max_uses as number);
-        const tooSmall   = orderTotal < (dc.min_order as number);
-
-        if (!expired && !exhausted && !tooSmall) {
-          resolvedCode = (dc.code as string).toUpperCase();
-          if (dc.type === 'percent') {
-            discountAmount = Math.round(orderTotal * (dc.value as number) / 100 * 100) / 100;
-          } else {
-            discountAmount = Math.min(dc.value as number, orderTotal);
-          }
-        }
+      const { data: claim } = await supabase.rpc('claim_discount', {
+        p_code:        discountCode,
+        p_order_total: subtotalCents / 100,
+      });
+      if (claim) {
+        const c       = claim as { id: string; type: string; value: number; amount: number };
+        claimedDiscountId = c.id;
+        resolvedCode      = discountCode.toUpperCase();
+        discountAmount    = c.amount;
       }
     }
 
@@ -376,14 +400,40 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
         },
         quantity,
       })),
-      metadata:    { orderId: order.id, discountCode: resolvedCode ?? '' },
+      metadata:    { orderId: order.id, discountCode: resolvedCode ?? '', discountCodeId: claimedDiscountId ?? '' },
       success_url: `${process.env.CLIENT_URL}/order-success?order=${order.id}`,
       cancel_url:  `${process.env.CLIENT_URL}/cart`,
     });
 
     await supabase.from('orders').update({ stripe_session_id: session.id }).eq('id', order.id);
+
+    // ── Lagerbestand für diese Session reservieren ────────────────────────────
+    // Non-blocking: Fehlschlag loggen, aber User trotzdem zur Zahlung weiterleiten.
+    // Der atomare Abzug im Webhook verhindert auch ohne Reservierung Inkonsistenzen.
+    const reservationItems = lineItems.map(({ product, quantity, skuId }) => ({
+      product_id: product.id as string,
+      sku_id:     skuId ?? '',
+      quantity,
+    }));
+    void (async () => {
+      try {
+        const { error: resErr } = await supabase.rpc('reserve_stock', {
+          p_stripe_session_id: session.id,
+          p_order_id:          order.id,
+          p_items:             reservationItems,
+        });
+        if (resErr) console.error('[reserve_stock] Fehlgeschlagen:', resErr.message);
+      } catch (e) {
+        console.error('[reserve_stock] Fehlgeschlagen:', e);
+      }
+    })();
+
     res.json({ checkoutUrl: session.url });
   } catch (err) {
+    // Discount-Claim zurückgeben wenn Checkout nach dem Claim fehlschlug
+    if (claimedDiscountId) {
+      void supabase.rpc('release_discount_claim', { p_discount_id: claimedDiscountId });
+    }
     next(err);
   }
 });

@@ -4,8 +4,17 @@ import { Request } from 'express';
 
 // ── Helmet — Security-Header ──────────────────────────────────────────────────
 export const helmetMiddleware = helmet({
-  contentSecurityPolicy:    false, // API — kein HTML-Output
-  crossOriginEmbedderPolicy: false,
+  contentSecurityPolicy:     false, // API — kein HTML-Output
+  crossOriginEmbedderPolicy: false, // API — kein Document-Context
+  hsts: {
+    maxAge:            31536000, // 1 Jahr — HSTS Preload-Anforderung
+    includeSubDomains: true,
+    preload:           true,
+  },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  frameguard:     { action: 'deny' },
+  noSniff:        true,
+  xssFilter:      true,
 });
 
 // ── Globales Rate-Limit — 100 Requests / 15 Min pro IP ───────────────────────

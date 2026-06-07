@@ -3,7 +3,7 @@
 Diese Datei wird von Claude am Anfang jeder Session gelesen und am Ende/bei Pausen aktualisiert.
 Ziel: Kontextverlust durch Compacting verhindern.
 
-**Letzte Aktualisierung:** 2026-05-25 (Session 17 — Homepage Komplettneubau)
+**Letzte Aktualisierung:** 2026-06-07 (Session 18 — Security Hardening 5 Phasen + Stock-Reservierung + Stripe-Webhook-Fix)
 
 ---
 
@@ -54,6 +54,19 @@ git push origin main   → PRODUCTION auf Vercel (alle 3 Projekte automatisch)
 | schema.sql (Frisch-Install) | Enthält Migrations 001–029 komplett — 1 File für kompletten DB-Rebuild |
 | Security Audit | 27 Sicherheitslücken gefunden + alle geschlossen (Stand 2026-05-20) |
 | Docs-Cleanup | .env.examples korrigiert, QUICKSTART.md, SETUP.en.md v1.8.0 — alles gepusht |
+
+### Implementiert in Session 18 (2026-06-07)
+
+| Feature | Details |
+|---|---|
+| **Security Hardening Phase 1 — adminAuth.ts** | `rootIat` in JWT-Payload verankert (erste Login-Zeit, nie überschrieben bei Renewal) → absolute 24h-Session-Grenze. Zentrales `verifyAdminToken()` eliminiert doppelten Code in 4 Guard-Funktionen. Memory-Leak in `_staffCache` behoben: abgelaufene Einträge werden aktiv gelöscht statt nur übersprungen. |
+| **Security Hardening Phase 2 — Webhook-Idempotenz** | `checkout.session.completed` prüft jetzt vor der Verarbeitung ob die Bestellung bereits `'paid'` ist → kein Doppel-Versand von E-Mail/Rechnung/Push. |
+| **Security Hardening Phase 2 — Discount TOCTOU** | Migration 034: `claim_discount()` RPC (ein atomares `UPDATE...RETURNING` → Row-Lock, kein Read-Then-Write). `release_discount_claim()` für Session-Expiry. Checkout-Route ruft `claim_discount` auf statt freies Lesen; Catch-Block gibt Claim zurück wenn Fehler nach Claim. `checkout.session.expired` ruft `release_discount_claim` auf. `increment_discount_uses` aus Webhook entfernt (war redundant). |
+| **Security Hardening Phase 3 — Helmet + Payload** | HSTS explizit mit `maxAge: 31536000, includeSubDomains, preload`. `referrerPolicy`, `frameguard`, `noSniff`, `xssFilter` explizit gesetzt. Bulk-Import bekommt 512kb Payload-Limit (vor globalem 10kb registriert). |
+| **Security Hardening Phase 4 — Bulk Import + Error Handler** | Bulk-Insert: sequentielle N-DB-Calls → ein einziger Batch-Insert (`supabase.from.insert(array)`). Error-Handler: Request-Methode + URL im Log (anti-injection gekürzt auf 200 Zeichen), `code`-Feld aus 5xx-Responses entfernt. |
+| **Security Hardening Phase 5 — vercel.json Headers** | Frontend + Admin: `X-Content-Type-Options`, `X-Frame-Options: DENY`, `X-XSS-Protection: 0`, `Referrer-Policy`, `HSTS`, `Permissions-Policy`, `Content-Security-Policy`. Backend: HSTS als Belt-and-Suspenders (neben helmet). |
+| **Stock-Reservierung (aus Session 17)** | Migration 033 erstellt: `stock_reservations` Tabelle, `decrement_stock`, `reserve_stock`, `release_reservation` RPCs. Orders.ts: Reservierungs-Check vor Checkout. Stripe.ts: atomarer Abzug via `decrement_stock`, `release_reservation` bei Zahlung + Session-Expiry. |
+| **FAQ Clearbit-Fix** | Clearbit Logo API abgekündigt — alle Provider-Logos durch inline SVG-Komponenten ersetzt. |
 
 ### Implementiert in Session 17 (2026-05-25)
 
@@ -126,6 +139,11 @@ git push origin main   → PRODUCTION auf Vercel (alle 3 Projekte automatisch)
 - [ ] **Migration 030** — `increment_discount_uses` RPC — `database/migration_030_discount_atomic.sql`
 - [ ] **Migration 031** — team_lead-Rolle + refund_requests — `database/migration_031_team_lead_refund_requests.sql`
 - [x] **Migration 032** — `mod_totp` Tabelle (Mod-2FA) — ausgeführt ✓
+- [x] **Migration 033** — Stock-Reservierungen + atomarer Abzug — ausgeführt ✓
+- [x] **Migration 034** — Atomare Discount-Reservierung (TOCTOU-Fix) — ausgeführt ✓
+
+### Stripe Webhook — Event-Typ ergänzen
+- [ ] Stripe Dashboard → Webhooks → Event-Typen → `checkout.session.expired` hinzufügen
 
 > **User hat bestätigt:** Migrations 025–029 + weitere bereits ausgeführt. 030–032 noch ausstehend.
 
@@ -230,6 +248,8 @@ git push origin main   → PRODUCTION auf Vercel (alle 3 Projekte automatisch)
 | 030 | migration_030_discount_atomic.sql | Atomarer Rabatt-Zähler (race-condition-sicher) — noch ausstehend |
 | 031 | migration_031_team_lead_refund_requests.sql | team_lead-Constraint + refund_requests-Tabelle — noch ausstehend |
 | 032 | migration_032_mod_totp.sql | TOTP für Mitarbeiter (Mod-2FA) — ausgeführt ✓ |
+| 033 | migration_033_stock_reservation.sql | Stock-Reservierungen + atomarer Abzug — noch ausstehend |
+| 034 | migration_034_discount_claim.sql | Atomare Discount-Reservierung (TOCTOU-Fix) — noch ausstehend |
 
 ---
 

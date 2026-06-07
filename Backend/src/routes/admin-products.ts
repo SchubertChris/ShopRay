@@ -135,18 +135,31 @@ router.post('/bulk', requireOwner, async (req: Request, res: Response, next: Nex
       });
     }
 
-    // Batch-Insert
-    for (const product of toInsert) {
-      const { _row, _name, ...data } = product as Record<string, unknown>;
-      const { error } = await supabase.from('products').insert(data);
-      if (error) {
-        results.push({ row: _row as number, status: 'error', name: _name as string, error: error.message });
+    // Batch-Insert: alle validen Produkte in einem einzigen DB-Call statt N sequenzieller Requests
+    if (toInsert.length > 0) {
+      const rows = toInsert.map(p => {
+        const { _row, _name, ...data } = p as Record<string, unknown>;
+        return { _row, _name, data };
+      });
+      const { data: inserted, error: batchErr } = await supabase
+        .from('products')
+        .insert(rows.map(r => r.data))
+        .select('id');
+
+      if (batchErr) {
+        // DB hat den gesamten Batch abgelehnt (z.B. unique constraint) — alle als Fehler markieren
+        for (const r of rows) {
+          results.push({ row: r._row as number, status: 'error', name: r._name as string, error: batchErr.message });
+        }
       } else {
-        results.push({ row: _row as number, status: 'ok', name: _name as string });
+        for (let i = 0; i < rows.length; i++) {
+          results.push({ row: rows[i]._row as number, status: 'ok', name: rows[i]._name as string });
+        }
+        void inserted; // suppress unused warning
       }
     }
 
-    const ok    = results.filter(r => r.status === 'ok').length;
+    const ok     = results.filter(r => r.status === 'ok').length;
     const errors = results.filter(r => r.status === 'error').length;
     res.status(errors === results.length ? 400 : 207).json({ ok, errors, results });
   } catch (err) {

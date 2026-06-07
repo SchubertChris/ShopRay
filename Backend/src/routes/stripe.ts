@@ -98,6 +98,10 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction): 
         const orderId = session.metadata?.orderId;
         if (!orderId) break;
 
+        // Idempotenz: Stripe liefert Events mind. einmal — doppelte Verarbeitung verhindern
+        const { data: idempotencyCheck } = await supabase.from('orders').select('status').eq('id', orderId).single();
+        if (idempotencyCheck?.status === 'paid') break;
+
         const { data: order, error } = await supabase
           .from('orders')
           .update({
@@ -132,55 +136,72 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction): 
           });
         }
 
-        // Lagerbestand abziehen: SKU-Stock wenn Variante, sonst Produkt-Stock (non-blocking)
+        // ── Lagerbestand ATOMAR abziehen + Reservierung freigeben ───────────
+        // decrement_stock = einzelnes UPDATE-Statement, kein Read-Then-Write.
+        // Fehler → Admin-Notification statt stiller console.error.
         const orderItems = order.order_items as Array<{ product_id: string; quantity: number; sku_id?: string | null }>;
         void (async () => {
-          for (const item of orderItems) {
-            if (item.sku_id) {
-              const { data: sku } = await supabase
-                .from('product_skus')
-                .select('stock')
-                .eq('id', item.sku_id)
-                .single();
-              if (sku) {
-                await supabase
-                  .from('product_skus')
-                  .update({ stock: Math.max(0, (sku.stock as number) - item.quantity) })
-                  .eq('id', item.sku_id);
-              }
-            } else {
-              const { data: prod } = await supabase
-                .from('products')
-                .select('stock')
-                .eq('id', item.product_id)
-                .single();
-              if (prod) {
-                await supabase
-                  .from('products')
-                  .update({ stock: Math.max(0, (prod.stock as number) - item.quantity) })
-                  .eq('id', item.product_id);
-              }
-            }
-          }
-        })().catch(e => console.error('Stock-Update fehlgeschlagen:', e));
-
-        // Gutschein-Verwendungszähler atomar hochsetzen (Race Condition-sicher)
-        const usedCode = session.metadata?.discountCode;
-        if (usedCode) {
-          void (async () => {
-            const { data: dc } = await supabase
-              .from('discount_codes')
-              .select('id, max_uses')
-              .filter('code', 'ilike', usedCode)
-              .single();
-            if (dc) {
-              await supabase.rpc('increment_discount_uses', {
-                p_discount_id: dc.id,
-                p_max_uses:    dc.max_uses ?? null,
+          try {
+            for (const item of orderItems) {
+              const { error: rpcErr } = await supabase.rpc('decrement_stock', {
+                p_product_id: item.product_id,
+                p_quantity:   item.quantity,
+                ...(item.sku_id ? { p_sku_id: item.sku_id } : {}),
               });
+              if (rpcErr) throw new Error(`decrement_stock Fehler (${item.product_id}): ${rpcErr.message}`);
             }
-          })().catch(e => console.error('Discount uses update fehlgeschlagen:', e));
-        }
+
+            // Reservierung freigeben (idempotent — kein Fehler wenn bereits weg)
+            await supabase.rpc('release_reservation', { p_stripe_session_id: session.id });
+
+            // Low-Stock-Warnung wenn Lagerbestand ≤ 5 (non-blocking, kein throw)
+            for (const item of orderItems) {
+              void (async () => {
+                try {
+                  if (item.sku_id) {
+                    const { data: sku } = await supabase
+                      .from('product_skus')
+                      .select('stock, product_id')
+                      .eq('id', item.sku_id)
+                      .single();
+                    if (sku && (sku.stock as number) <= 5) {
+                      await createNotification(
+                        'low_stock',
+                        'Niedriger Lagerbestand',
+                        `SKU ${item.sku_id} — noch ${sku.stock as number} Stück`,
+                        `/products/${item.product_id}`,
+                      );
+                    }
+                  } else {
+                    const { data: prod } = await supabase
+                      .from('products')
+                      .select('stock, name')
+                      .eq('id', item.product_id)
+                      .single();
+                    if (prod && (prod.stock as number) <= 5) {
+                      await createNotification(
+                        'low_stock',
+                        'Niedriger Lagerbestand',
+                        `${prod.name as string} — noch ${prod.stock as number} Stück`,
+                        `/products/${item.product_id}`,
+                      );
+                    }
+                  }
+                } catch { /* Low-Stock-Check ist non-critical — ignorieren */ }
+              })();
+            }
+
+          } catch (e) {
+            console.error('[stripe.webhook] Stock-Update fehlgeschlagen:', e);
+            // Admin wird benachrichtigt — kein stiller Fehler mehr
+            void createNotification(
+              'payment_failed',
+              'Lagerbestand-Update fehlgeschlagen',
+              `Bestellung ${order.order_number as string} — Lagerbestand bitte manuell prüfen`,
+              `/orders`,
+            );
+          }
+        })();
 
         // Push-Benachrichtigung an alle Admin-Geräte (non-blocking)
         sendPushToAll({
@@ -215,6 +236,43 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction): 
           'Zahlung fehlgeschlagen',
           `Betrag: ${((event.data.object as Stripe.PaymentIntent).amount / 100).toFixed(2)} €`,
         );
+        break;
+      }
+
+      // ── Session abgelaufen → Reservierungen freigeben + Bestellung stornieren ──
+      case 'checkout.session.expired': {
+        const expiredSession = event.data.object as Stripe.Checkout.Session;
+
+        // Lager-Reservierung freigeben (idempotent)
+        try {
+          await supabase.rpc('release_reservation', { p_stripe_session_id: expiredSession.id });
+        } catch (e) {
+          console.error('[stripe.webhook] release_reservation fehlgeschlagen:', e);
+        }
+
+        // Discount-Claim zurückgeben (nur wenn ein UUID-artiger discountCodeId im Metadata steht)
+        const expiredDiscountCodeId = expiredSession.metadata?.discountCodeId;
+        if (expiredDiscountCodeId && /^[0-9a-f-]{36}$/i.test(expiredDiscountCodeId)) {
+          try {
+            await supabase.rpc('release_discount_claim', { p_discount_id: expiredDiscountCodeId });
+          } catch (e) {
+            console.error('[stripe.webhook] release_discount_claim fehlgeschlagen:', e);
+          }
+        }
+
+        // Zugehörige Bestellung auf 'cancelled' setzen (nur wenn noch pending)
+        const expiredOrderId = expiredSession.metadata?.orderId;
+        if (expiredOrderId) {
+          try {
+            await supabase
+              .from('orders')
+              .update({ status: 'cancelled' })
+              .eq('id', expiredOrderId)
+              .eq('status', 'pending');
+          } catch (e) {
+            console.error('[stripe.webhook] Order-Cancel fehlgeschlagen:', e);
+          }
+        }
         break;
       }
 

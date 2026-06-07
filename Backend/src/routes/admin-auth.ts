@@ -182,7 +182,7 @@ router.post('/login/totp', authRateLimit, validate(TotpSchema), async (req: Requ
   const isValid = authenticator.verify({ token: totpCode, secret: totpRow.secret });
   if (!isValid) { res.status(401).json({ error: 'Ungültiger TOTP-Code.' }); return; }
 
-  const sessionToken = jwt.sign({ role: 'owner' }, secret, { expiresIn: '8h' });
+  const sessionToken = jwt.sign({ role: 'owner', rootIat: Math.floor(Date.now() / 1000) }, secret, { expiresIn: '8h' });
 
   const ip        = getClientIp(req);
   const userAgent = (req.headers['user-agent'] ?? '').slice(0, 500);
@@ -269,7 +269,7 @@ router.post('/login/mod', authRateLimit, validate(ModLoginSchema), async (req: R
     return;
   }
 
-  const token = jwt.sign({ role: actualRole, userId: authData.user.id }, secret, { expiresIn: '8h' });
+  const token = jwt.sign({ role: actualRole, userId: authData.user.id, rootIat: Math.floor(Date.now() / 1000) }, secret, { expiresIn: '8h' });
 
   supabase.from('admin_login_log').insert({
     ip_address: ip,
@@ -313,7 +313,7 @@ router.post('/login/mod/totp', authRateLimit, validate(ModTotpSchema), async (re
   if (!isValid) { res.status(401).json({ error: 'Ungültiger TOTP-Code.' }); return; }
 
   const sessionToken = jwt.sign(
-    { role: payload.role, userId: payload.userId },
+    { role: payload.role, userId: payload.userId, rootIat: Math.floor(Date.now() / 1000) },
     jwtSecret,
     { expiresIn: '8h' },
   );

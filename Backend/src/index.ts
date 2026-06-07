@@ -50,6 +50,8 @@ app.use('/api/webhook/stripe', express.raw({ type: 'application/json' }));
 app.use(helmetMiddleware);
 app.use(corsMiddleware);
 app.use(globalRateLimit);
+// Bulk-Import: höheres Limit vor dem globalen Parser registrieren (body-parser überspringt bereits geparste Bodies)
+app.use('/api/admin/products/bulk', express.json({ limit: '512kb' }));
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 
