@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2, X, Plus } from 'lucide-react';
 import { ROUTES } from '@config/routes';
-import { getAdminProduct, createProduct, updateProduct, API_URL } from '../../api/adminApi';
-import type { AdminProduct, LmivInfo, DealerLink, ProductDocument } from '../../api/adminApi';
+import { getAdminProduct, createProduct, updateProduct, getCategories } from '../../api/adminApi';
+import type { AdminProduct, LmivInfo, DealerLink, ProductDocument, Category } from '../../api/adminApi';
 import type { ProductCategory } from '../../types/index';
 import NumberInput        from '../../components/ui/NumberInput';
 import ImageGalleryEditor from '../../components/ui/ImageGalleryEditor';
@@ -66,14 +66,11 @@ export default function ProductFormPage() {
   const [loadError, setLoadError]         = useState<string | null>(null);
   const [submitting, setSubmitting]       = useState(false);
   const [submitError, setSubmitError]     = useState<string | null>(null);
-  const [categories, setCategories]       = useState<string[]>([]);
+  const [categories, setCategories]       = useState<Category[]>([]);
 
   /* ── Kategorien laden ───────────────────────────────────────────────────── */
   useEffect(() => {
-    fetch(`${API_URL}/api/products/categories`)
-      .then(r => r.json())
-      .then((data: unknown) => { if (Array.isArray(data)) setCategories(data as string[]); })
-      .catch(() => setCategories(['Wohnen', 'Deko', 'Küche', 'Textilien', 'Kunst']));
+    getCategories().then(setCategories).catch(() => setCategories([]));
   }, []);
 
   /* ── Produkt laden (Edit-Modus) ─────────────────────────────────────────── */
@@ -286,11 +283,17 @@ export default function ProductFormPage() {
               </div>
               <div className="form-field">
                 <label className="form-label">Kategorie *</label>
-                <input className="form-input" list="category-suggestions" value={form.category}
-                  onChange={set('category')} placeholder="z. B. Wohnen, Deko…" required />
-                <datalist id="category-suggestions">
-                  {categories.map(c => <option key={c} value={c} />)}
-                </datalist>
+                <select
+                  className="form-input"
+                  value={form.category}
+                  onChange={set('category')}
+                  required
+                >
+                  <option value="">— Kategorie wählen —</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
