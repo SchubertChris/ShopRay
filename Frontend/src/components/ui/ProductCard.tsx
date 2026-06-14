@@ -83,9 +83,9 @@ export function ProductCard({ product: p, skeleton, revealDelay, onQuickView }: 
 
       <div className="product-card__body">
         {p.badge && <span className="product-card__badge">{p.badge}</span>}
-        <h4 className="product-card__title">
+        <h3 className="product-card__title">
           <Link to={ROUTES.SHOP.product(p.slug)}>{p.name}</Link>
-        </h4>
+        </h3>
 
         <div className="product-card__rating">
           <Link

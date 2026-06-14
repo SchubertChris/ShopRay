@@ -14,6 +14,7 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) return 'vendor';
             if (id.includes('zustand')) return 'store';
+            if (id.includes('gsap')) return 'gsap';
           }
         },
       },
