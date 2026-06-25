@@ -55,6 +55,27 @@ git push origin main   → PRODUCTION auf Vercel (alle 3 Projekte automatisch)
 | Security Audit | 27 Sicherheitslücken gefunden + alle geschlossen (Stand 2026-05-20) |
 | Docs-Cleanup | .env.examples korrigiert, QUICKSTART.md, SETUP.en.md v1.8.0 — alles gepusht |
 
+### Implementiert in Session 19 (2026-06-25) — GPT-5.5-Audit Gegenprüfung + Fixes
+
+GPT-5.5 lieferte zwei „launch-ready"-Bewertungen. Multi-Agent-Audit (verify + adversarisch) gegen den echten Code: **7 Behauptungen erfunden** (API-URL-Chaos, Service-Key im Admin, Stripe-Redirects falsch, Cart zu früh geleert, Stock ungeprüft, Reviews ungefiltert, CSRF) — **16 bestätigt**. Bestätigte echte Bugs gefixt:
+
+| Fix | Bug | Datei |
+|---|---|---|
+| B3 🔴 | Versand fehlte in Stripe → Shop verlor Versandkosten | `Backend/routes/orders.ts` (shipping_option + order.total) |
+| C2 🟠 | refund/payment_failed fanden Order nie (Metadata nur auf Session) | `orders.ts` payment_intent_data + `stripe.ts` DB-Fallback |
+| C1 | Webhook-Idempotenz war TOCTOU-racy | `stripe.ts` atomarer `.eq('status','pending')`-Guard |
+| B6 | order_items-Fehler ungeprüft + Orphan-Orders | `orders.ts` Fehlerprüfung + Cleanup |
+| F1 | Mail-Templates escapten nur Kontakt | `mailer.ts` escapeHtml in Order/Login/Ban/ModInvite |
+| G1 | admin-stats fragte Tabelle `contacts` (existiert nicht) | `admin-stats.ts` → `contact_inquiries` |
+| G2 | demoModeGuard nur auf /api/admin | `index.ts` global vor allen Routern |
+| A1 | `.env.example` Doppel-`/api` | Frontend + Admin `.env.example` |
+| A3 | `vercel.json` hardcodet Backend-Domain | SETUP.md Käufer-Warnung (Domain bleibt — sonst Live-Break) |
+| SMTP | Fake-Formular ohne Funktion | `Admin/settings/index.tsx` → Read-only Info-Panel |
+| J3 | Legal-Platzhalter ohne Guard | `Frontend/config/goLiveCheck.ts` Dev-Warnung |
+| **D1/D2/D3/E2** 🔴 | RLS: role-Eskalation, Fake-Orders, Contact-Spam, Rating zählt unverified | **`migration_035` — NOCH AUSFÜHREN** |
+
+**Noch offen (bewusst zurückgestellt, Architektur/Infra — User-Entscheidung):** I2 (Admin-Token sessionStorage → httpOnly-Cookie), I4 (TOTP-Secret Klartext → verschlüsselt), J4 (keine Tests/CI), J1 (große Dateien), B2 (order-success lädt echte Order).
+
 ### Implementiert in Session 18 (2026-06-07)
 
 | Feature | Details |
@@ -141,9 +162,10 @@ git push origin main   → PRODUCTION auf Vercel (alle 3 Projekte automatisch)
 - [x] **Migration 032** — `mod_totp` Tabelle (Mod-2FA) — ausgeführt ✓
 - [x] **Migration 033** — Stock-Reservierungen + atomarer Abzug — ausgeführt ✓
 - [x] **Migration 034** — Atomare Discount-Reservierung (TOCTOU-Fix) — ausgeführt ✓
+- [x] **Migration 035** — Security Hardening (RLS role-Schutz, orders/contact INSERT-Revoke, Rating nur verified) — ausgeführt ✓ (2026-06-26)
 
 ### Stripe Webhook — Event-Typ ergänzen
-- [ ] Stripe Dashboard → Webhooks → Event-Typen → `checkout.session.expired` hinzufügen
+- [x] Stripe Dashboard → Webhooks → Event-Typen → `checkout.session.expired` hinzugefügt ✓
 
 > **User hat bestätigt:** Migrations 025–029 + weitere bereits ausgeführt. 030–032 noch ausstehend.
 
@@ -248,8 +270,11 @@ git push origin main   → PRODUCTION auf Vercel (alle 3 Projekte automatisch)
 | 030 | migration_030_discount_atomic.sql | Atomarer Rabatt-Zähler (race-condition-sicher) — noch ausstehend |
 | 031 | migration_031_team_lead_refund_requests.sql | team_lead-Constraint + refund_requests-Tabelle — noch ausstehend |
 | 032 | migration_032_mod_totp.sql | TOTP für Mitarbeiter (Mod-2FA) — ausgeführt ✓ |
-| 033 | migration_033_stock_reservation.sql | Stock-Reservierungen + atomarer Abzug — noch ausstehend |
-| 034 | migration_034_discount_claim.sql | Atomare Discount-Reservierung (TOCTOU-Fix) — noch ausstehend |
+| 030 | migration_030_discount_atomic.sql | Atomarer Rabatt-Zähler (race-condition-sicher) — ausgeführt ✓ |
+| 031 | migration_031_team_lead_refund_requests.sql | team_lead-Constraint + refund_requests-Tabelle — ausgeführt ✓ |
+| 033 | migration_033_stock_reservation.sql | Stock-Reservierungen + atomarer Abzug — ausgeführt ✓ |
+| 034 | migration_034_discount_claim.sql | Atomare Discount-Reservierung (TOCTOU-Fix) — ausgeführt ✓ |
+| 035 | migration_035_security_hardening.sql | RLS role-Schutz + orders/contact INSERT-Revoke + Rating nur verified — ausgeführt ✓ (2026-06-26) |
 
 ---
 
