@@ -72,9 +72,14 @@ GPT-5.5 lieferte zwei „launch-ready"-Bewertungen. Multi-Agent-Audit (verify + 
 | A3 | `vercel.json` hardcodet Backend-Domain | SETUP.md Käufer-Warnung (Domain bleibt — sonst Live-Break) |
 | SMTP | Fake-Formular ohne Funktion | `Admin/settings/index.tsx` → Read-only Info-Panel |
 | J3 | Legal-Platzhalter ohne Guard | `Frontend/config/goLiveCheck.ts` Dev-Warnung |
-| **D1/D2/D3/E2** 🔴 | RLS: role-Eskalation, Fake-Orders, Contact-Spam, Rating zählt unverified | **`migration_035` — NOCH AUSFÜHREN** |
+| **D1/D2/D3/E2** 🔴 | RLS: role-Eskalation, Fake-Orders, Contact-Spam, Rating zählt unverified | `migration_035` — ausgeführt ✓ (2026-06-26) |
+| **I4** 🟡 | TOTP-Secret lag im Klartext in der DB | `Backend/lib/totpCrypto.ts` AES-256-GCM, rückwärtskompat + Lazy-Migration |
+| **J4** 🟡 | keine Tests/CI | Vitest (10 Tests, totpCrypto) + `.github/workflows/ci.yml` |
 
-**Noch offen (bewusst zurückgestellt, Architektur/Infra — User-Entscheidung):** I2 (Admin-Token sessionStorage → httpOnly-Cookie), I4 (TOTP-Secret Klartext → verschlüsselt), J4 (keine Tests/CI), J1 (große Dateien), B2 (order-success lädt echte Order).
+**Deploy:** Commits gruppiert auf `main` gepusht, alle 3 Vercel-Projekte READY (Stand 2026-06-26).
+**TOTP_ENC_KEY:** in `Backend/.env.example` dokumentiert — User muss ihn noch in Vercel (Backend) + lokal setzen (`openssl rand -hex 32`), sonst bleiben TOTP-Secrets Klartext (kein Fehler, nur unverschlüsselt). Nach dem Setzen: 1× einloggen → Lazy-Migration verschlüsselt bestehende Secrets.
+
+**Noch offen (bewusst zurückgestellt, Architektur — User-Entscheidung):** I2 (Admin-Token sessionStorage → httpOnly-Cookie + CSRF), J1 (große Dateien `home.tsx` 488 / `product-form.tsx` 528 Zeilen splitten), B2 (order-success lädt echte Bestellnummer statt gekürzter UUID).
 
 ### Implementiert in Session 18 (2026-06-07)
 
