@@ -3,6 +3,10 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './sass/style.scss'; // WICHTIG: Hier wird das Stylesheet geladen
 import { IMAGES } from './config/images';
+import { warnOnLegalPlaceholders } from './config/goLiveCheck';
+
+// Dev-Hinweis auf verbliebene Rechts-/Kontakt-Platzhalter (im Prod-Build entfernt)
+warnOnLegalPlaceholders();
 
 // Bild-URLs als CSS Custom Properties ins Root-Element injizieren
 // → kein Inline-Style in Komponenten nötig; SCSS liest diese Variablen direkt

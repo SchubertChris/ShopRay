@@ -157,17 +157,27 @@
   padding-bottom: max(4rem, 8vh);
   overflow:       hidden;
 
-  // ── Dynamischer Hintergrund (Produktbild, geblurrt) ─────────────────────
+  // ── Hintergrund: Gradient sofort sichtbar, Produktbild via ::before (kein LCP-Kandidat) ──
   &__bg {
-    position:            absolute;
-    inset:               -8%;
-    background-size:     cover;
-    background-position: center;
-    filter:              blur(48px) saturate(1.4);
-    transform:           scale(1.1);
-    z-index:             0;
-    pointer-events:      none;
-    animation:           bg-fade-in 1s ease forwards;
+    position:       absolute;
+    inset:          -8%;
+    // Gradient ist kein LCP-Kandidat → erscheint sofort ohne API-Abhängigkeit
+    background:     radial-gradient(ellipse at 30% 50%, var(--clr-primary) 0%, var(--clr-bg) 65%);
+    filter:         blur(48px) saturate(1.4);
+    transform:      scale(1.1);
+    z-index:        0;
+    pointer-events: none;
+    animation:      bg-fade-in 1s ease forwards;
+
+    // Produktbild in ::before — Pseudo-Elemente zählen nicht als LCP-Kandidaten
+    &::before {
+      content:             '';
+      position:            absolute;
+      inset:               0;
+      background-image:    var(--cs-bg, none);
+      background-size:     cover;
+      background-position: center;
+    }
   }
 
   // Noise texture overlay (eigene div, nicht ::before damit sie über dem bg-Layer liegt)

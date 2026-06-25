@@ -196,56 +196,44 @@ function ShopSettings() {
 }
 
 // ── SMTP ─────────────────────────────────────────────────────────────────────
+const SMTP_VARS: ReadonlyArray<readonly [string, string]> = [
+  ['SMTP_HOST',       'smtp.resend.com'],
+  ['SMTP_PORT',       '587'],
+  ['SMTP_USER',       'resend'],
+  ['SMTP_PASS',       're_xxxxxxxxxxxx'],
+  ['SMTP_FROM_NAME',  'Dein Shop'],
+  ['SMTP_FROM_EMAIL', 'noreply@deinshop.de'],
+];
+
 function SmtpSettings() {
   return (
     <div className="form-section">
       <div className="form-section__head">
         <h2 className="form-section__title">E-Mail-Einstellungen (SMTP)</h2>
         <p className="form-section__desc">
-          Für transaktionale E-Mails (Bestellbestätigungen, Passwort-Reset).
-          Empfohlen: Resend, Postmark oder AWS SES.
+          Transaktionale E-Mails (Bestellbestätigungen, Rechnungen) versendet das Backend per SMTP.
+          Aus Sicherheitsgründen wird das <strong>nicht hier im Browser</strong>, sondern über
+          Umgebungsvariablen im Backend konfiguriert — so liegen die Zugangsdaten ausschließlich
+          auf dem Server. Empfohlen: Resend, Postmark oder AWS SES.
         </p>
       </div>
-      <div className="form-row">
-        <div className="form-field">
-          <label className="form-label">SMTP-Host</label>
-          <input type="text" className="form-input form-input--mono" placeholder="smtp.resend.com" />
-        </div>
-        <div className="form-field form-field--narrow">
-          <label className="form-label">Port</label>
-          <input type="number" className="form-input" placeholder="587" />
-        </div>
+
+      <div className="smtp-config">
+        <p className="smtp-config__label">Backend-Umgebungsvariablen</p>
+        <ul className="smtp-config__list">
+          {SMTP_VARS.map(([key, example]) => (
+            <li key={key} className="smtp-config__row">
+              <code className="smtp-config__key">{key}</code>
+              <span className="smtp-config__example">z.&nbsp;B. {example}</span>
+            </li>
+          ))}
+        </ul>
       </div>
-      <div className="form-row">
-        <div className="form-field">
-          <label className="form-label">Benutzername</label>
-          <input type="text" className="form-input form-input--mono" placeholder="resend" />
-        </div>
-        <div className="form-field">
-          <label className="form-label">Passwort / API-Key</label>
-          <input type="password" className="form-input" placeholder="••••••••" />
-        </div>
-      </div>
-      <div className="form-row">
-        <div className="form-field">
-          <label className="form-label">Absender-Name</label>
-          <input type="text" className="form-input" defaultValue="ShopRay" />
-        </div>
-        <div className="form-field">
-          <label className="form-label">Absender-E-Mail</label>
-          <input type="email" className="form-input" placeholder="noreply@deinshop.de" />
-        </div>
-      </div>
-      <div className="form-section__info">
-        Diese Einstellungen entsprechen den Supabase SMTP-Settings (Authentication → SMTP).
-        Siehe SETUP.md Schritt 7 für Details.
-      </div>
-      <div className="form-actions">
-        <button className="btn-secondary">Test-Mail senden</button>
-        <button className="btn-primary">
-          <Save size={14} strokeWidth={2} />
-          Speichern
-        </button>
+
+      <div className="smtp-config__note">
+        Login- und Passwort-Reset-Mails laufen zusätzlich über die Supabase-SMTP-Einstellungen
+        (Authentication&nbsp;→&nbsp;SMTP). Die vollständige Anleitung findest du in der SETUP.md,
+        Schritt&nbsp;7.
       </div>
     </div>
   );

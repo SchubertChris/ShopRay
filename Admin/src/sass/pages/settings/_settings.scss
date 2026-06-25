@@ -473,3 +473,63 @@
     margin-bottom: 1.5rem;
   }
 }
+
+// ── SMTP: Read-only Konfig-Anzeige (kein Runtime-Setting, nur Doku) ────────────
+.smtp-config {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.625rem;
+  margin-bottom:  1rem;
+
+  &__label {
+    font-size:      rem(11px);
+    font-weight:    700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color:          color-mix(in srgb, var(--clr-text) 55%, transparent);
+    margin:         0;
+  }
+
+  &__list {
+    list-style:     none;
+    margin:         0;
+    padding:        0;
+    display:        flex;
+    flex-direction: column;
+    gap:            0.375rem;
+  }
+
+  &__row {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    gap:             1rem;
+    padding:         0.625rem 0.875rem;
+    background:      var(--clr-surface);
+    border:          1px solid var(--clr-secondary);
+    border-radius:   9px;
+  }
+
+  &__key {
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size:   rem(13px);
+    font-weight: 600;
+    color:       var(--clr-primary);
+  }
+
+  &__example {
+    font-size: rem(12.5px);
+    color:     color-mix(in srgb, var(--clr-text) 50%, transparent);
+  }
+
+  &__note {
+    margin-top:    1rem;
+    padding:       0.875rem 1rem;
+    background:    color-mix(in srgb, var(--clr-primary) 5%, transparent);
+    border:        1px solid color-mix(in srgb, var(--clr-primary) 12%, transparent);
+    border-radius: 10px;
+    font-size:     rem(12.5px);
+    line-height:   1.6;
+    color:         color-mix(in srgb, var(--clr-text) 65%, transparent);
+  }
+}

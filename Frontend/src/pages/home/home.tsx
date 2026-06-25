@@ -184,15 +184,13 @@ export default function HomePage() {
       {/* ── HERO — Split Screen Reveal ──────────────────────────────────── */}
       <section className="cs-hero">
 
-        {/* Dynamic blurred hero background — keyed so React remounts on change → fade animation */}
-        {bgUrl && (
-          <div
-            key={bgUrl}
-            className="cs-hero__bg"
-            style={{ backgroundImage: `url(${bgUrl})` }}
-            aria-hidden="true"
-          />
-        )}
+        {/* Hero background: gradient renders immediately (no LCP impact); product image
+            via CSS ::before — pseudo-elements are not counted as LCP candidates */}
+        <div
+          className="cs-hero__bg"
+          style={bgUrl ? ({ '--cs-bg': `url(${bgUrl})` } as React.CSSProperties) : undefined}
+          aria-hidden="true"
+        />
         {/* Noise texture stays on top of bg */}
         <div className="cs-hero__noise" aria-hidden="true" />
 

@@ -949,6 +949,25 @@ Für **Frontend**, **Backend** und **Admin** je ein eigenes Vercel-Projekt:
 4. Alle Umgebungsvariablen aus der jeweiligen `.env`-Datei in Vercel eintragen (**Settings → Environment Variables**)
 5. Deployen
 
+> ### ⚠️ PFLICHT vor dem ersten Live-Gang: Backend-URL im Rewrite ersetzen
+>
+> Frontend und Admin leiten in Produktion **alle** `/api/*`-Anfragen über einen Rewrite an
+> dein Backend weiter. Dieser Rewrite steht **fest verdrahtet** in zwei Dateien:
+>
+> - `Frontend/vercel.json`
+> - `Admin/vercel.json`
+>
+> Dort steht aktuell die Backend-Domain der ShopRay-Vorlage:
+>
+> ```json
+> { "source": "/api/:path*", "destination": "https://shopray-backend.vercel.app/api/:path*" }
+> ```
+>
+> **Ändere `shopray-backend.vercel.app` in BEIDEN Dateien auf die URL deines eigenen
+> Backend-Projekts** (z.B. `https://dein-backend.vercel.app` oder `https://api.deinshop.de`).
+> Tust du das nicht, schickt dein Shop sämtliche API-Anfragen — inklusive Login- und
+> Bestelldaten — an ein fremdes Backend. Nach dem Ändern: committen und neu deployen.
+
 ### Schritt 3 — GitHub mit bestehenden Vercel-Projekten verbinden
 
 Falls du bereits Vercel-Projekte hast und nachträglich GitHub verbindest:
