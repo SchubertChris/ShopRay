@@ -5,6 +5,7 @@ import QRCode from 'qrcode';
 import { supabase }    from '../lib/supabase';
 import { requireAdmin } from '../middleware/adminAuth';
 import { validate }     from '../lib/validate';
+import { encryptSecret } from '../lib/totpCrypto';
 
 const router = Router();
 
@@ -70,7 +71,7 @@ router.post('/confirm', requireAdmin, validate(ConfirmSchema), async (req: Reque
 
     // Vorhandenen Eintrag ersetzen (Re-Setup möglich)
     await supabase.from('mod_totp').delete().eq('user_id', userId);
-    const { error } = await supabase.from('mod_totp').insert({ user_id: userId, secret: totpSecret });
+    const { error } = await supabase.from('mod_totp').insert({ user_id: userId, secret: encryptSecret(totpSecret) });
     if (error) throw error;
 
     res.json({ ok: true });

@@ -7,6 +7,7 @@ import { supabase }                               from '../lib/supabase';
 import { requireAdmin, requireOwner, requireAdminOrSetup2FA }   from '../middleware/adminAuth';
 import { validate }                               from '../lib/validate';
 import { sendMail, adminLoginAlertHtml }          from '../lib/mailer';
+import { encryptSecret, decryptSecret }           from '../lib/totpCrypto';
 
 const router = Router();
 
@@ -67,7 +68,7 @@ router.post('/confirm', requireAdminOrSetup2FA, validate(ConfirmSchema), async (
     }
 
     await supabase.from('admin_totp').delete().neq('id', 0);
-    const { error } = await supabase.from('admin_totp').insert({ secret: totpSecret });
+    const { error } = await supabase.from('admin_totp').insert({ secret: encryptSecret(totpSecret) });
     if (error) throw error;
 
     // Erstkonfiguration via Setup-Token → vollständige Session ausstellen + Login-Alert senden
@@ -113,7 +114,7 @@ router.post('/verify', requireAdmin, validate(VerifySchema), async (req: Request
       return;
     }
 
-    const isValid = authenticator.verify({ token, secret: data.secret });
+    const isValid = authenticator.verify({ token, secret: decryptSecret(data.secret) });
     if (!isValid) {
       res.status(400).json({ error: 'Ungültiger TOTP-Code.' });
       return;

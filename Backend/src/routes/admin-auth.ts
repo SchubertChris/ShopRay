@@ -8,6 +8,7 @@ import { requireAdmin, requireOwner, clearModCache } from '../middleware/adminAu
 import { supabase }                     from '../lib/supabase';
 import { sendMail, adminLoginAlertHtml, modInviteHtml } from '../lib/mailer';
 import { validate }                     from '../lib/validate';
+import { decryptSecret, encryptSecret, isPlaintext, encryptionEnabled } from '../lib/totpCrypto';
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 const LoginSchema = z.object({
@@ -179,8 +180,13 @@ router.post('/login/totp', authRateLimit, validate(TotpSchema), async (req: Requ
   const { data: totpRow } = await supabase.from('admin_totp').select('secret').limit(1).single();
   if (!totpRow) { res.status(500).json({ error: '2FA nicht konfiguriert.' }); return; }
 
-  const isValid = authenticator.verify({ token: totpCode, secret: totpRow.secret });
+  const isValid = authenticator.verify({ token: totpCode, secret: decryptSecret(totpRow.secret) });
   if (!isValid) { res.status(401).json({ error: 'Ungültiger TOTP-Code.' }); return; }
+
+  // Lazy-Migration: Legacy-Klartext-Secret bei gesetztem Key einmalig verschlüsseln (non-blocking)
+  if (encryptionEnabled() && isPlaintext(totpRow.secret)) {
+    void supabase.from('admin_totp').update({ secret: encryptSecret(totpRow.secret) }).neq('id', 0);
+  }
 
   const sessionToken = jwt.sign({ role: 'owner', rootIat: Math.floor(Date.now() / 1000) }, secret, { expiresIn: '8h' });
 
@@ -309,8 +315,13 @@ router.post('/login/mod/totp', authRateLimit, validate(ModTotpSchema), async (re
 
   if (!totpRow) { res.status(400).json({ error: '2FA nicht konfiguriert.' }); return; }
 
-  const isValid = authenticator.verify({ token: totpCode, secret: totpRow.secret });
+  const isValid = authenticator.verify({ token: totpCode, secret: decryptSecret(totpRow.secret) });
   if (!isValid) { res.status(401).json({ error: 'Ungültiger TOTP-Code.' }); return; }
+
+  // Lazy-Migration: Legacy-Klartext-Secret bei gesetztem Key einmalig verschlüsseln (non-blocking)
+  if (encryptionEnabled() && isPlaintext(totpRow.secret)) {
+    void supabase.from('mod_totp').update({ secret: encryptSecret(totpRow.secret) }).eq('user_id', payload.userId);
+  }
 
   const sessionToken = jwt.sign(
     { role: payload.role, userId: payload.userId, rootIat: Math.floor(Date.now() / 1000) },
