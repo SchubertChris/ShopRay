@@ -55,6 +55,11 @@ app.use('/api/admin/products/bulk', express.json({ limit: '512kb' }));
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 
+// ── Demo-Modus: friert ALLE Schreibzugriffe ein (auch admin-Mutationen die unter
+// öffentlichen Routern liegen, z.B. PATCH /api/contact/:id oder PUT /api/settings/shop).
+// No-op wenn DEMO_MODE != 'true'. Muss vor allen Routern laufen.
+app.use(demoModeGuard);
+
 // ── Öffentliche Routes ────────────────────────────────────────────────────────
 app.use('/api/health',    healthRouter);
 app.use('/api/webhook',   stripeRouter);
@@ -72,7 +77,6 @@ app.use('/api/newsletter',  newsletterRouter);
 app.use('/sitemap.xml',     sitemapRouter);
 
 // ── Admin Routes (JWT HttpOnly Cookie erforderlich) ───────────────────────────
-app.use('/api/admin', demoModeGuard);
 app.use('/api/admin',             adminAuthRouter);
 app.use('/api/admin/products',    adminProductsRouter);
 app.use('/api/admin/categories',  adminCategoriesRouter);

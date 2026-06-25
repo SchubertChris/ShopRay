@@ -17,7 +17,7 @@ router.get('/', requireAdmin, async (_req: Request, res: Response, next: NextFun
         supabase.from('products').select('*', { count: 'exact', head: true }).eq('active', true),
         supabase.from('orders').select('*', { count: 'exact', head: true }).in('status', ['pending', 'paid']),
         supabase.from('tickets').select('*', { count: 'exact', head: true }).eq('status', 'open'),
-        supabase.from('contacts').select('*', { count: 'exact', head: true }).eq('status', 'new'),
+        supabase.from('contact_inquiries').select('*', { count: 'exact', head: true }).eq('status', 'new'),
         supabase
           .from('orders')
           .select('id, order_number, status, total, created_at, profiles(name, email)')

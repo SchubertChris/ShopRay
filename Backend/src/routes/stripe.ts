@@ -98,10 +98,10 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction): 
         const orderId = session.metadata?.orderId;
         if (!orderId) break;
 
-        // Idempotenz: Stripe liefert Events mind. einmal — doppelte Verarbeitung verhindern
-        const { data: idempotencyCheck } = await supabase.from('orders').select('status').eq('id', orderId).single();
-        if (idempotencyCheck?.status === 'paid') break;
-
+        // Atomarer Idempotenz-Guard: das UPDATE matcht nur solange status='pending'.
+        // Bei doppelter Zustellung (Stripe at-least-once) gewinnt genau EIN Event den
+        // Übergang pending→paid; die zweite Zustellung matcht 0 Zeilen → order=null → break.
+        // Kein separates SELECT mehr (vermeidet die TOCTOU-Race aus dem Audit).
         const { data: order, error } = await supabase
           .from('orders')
           .update({
@@ -113,10 +113,12 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction): 
             paid_at:                   new Date().toISOString(),
           })
           .eq('id', orderId)
+          .eq('status', 'pending')
           .select('*, order_items(*), profiles(name, email)')
-          .single();
+          .maybeSingle();
 
-        if (error || !order) { console.error('Order-Update fehlgeschlagen:', error); break; }
+        if (error) { console.error('Order-Update fehlgeschlagen:', error); break; }
+        if (!order) break; // bereits verarbeitet (status != pending) → idempotent abbrechen
 
         const customerEmail = session.customer_details?.email ?? order.profiles?.email;
         const customerName  = session.customer_details?.name  ?? order.profiles?.name ?? 'Kunde';
@@ -228,7 +230,12 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction): 
 
       case 'payment_intent.payment_failed': {
         const intent  = event.data.object as Stripe.PaymentIntent;
-        const orderId = intent.metadata?.orderId;
+        // Primär über Metadata (jetzt via payment_intent_data gesetzt), Fallback über PI-ID
+        let orderId: string | null = intent.metadata?.orderId ?? null;
+        if (!orderId) {
+          const { data } = await supabase.from('orders').select('id').eq('stripe_payment_intent_id', intent.id).maybeSingle();
+          orderId = (data?.id as string | undefined) ?? null;
+        }
         if (!orderId) break;
         await supabase.from('orders').update({ status: 'payment_failed' }).eq('id', orderId);
         void createNotification(
@@ -278,7 +285,14 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction): 
 
       case 'charge.refunded': {
         const charge  = event.data.object as Stripe.Charge;
-        const orderId = charge.metadata?.orderId;
+        // Charge erbt KEINE PaymentIntent-Metadata → primär über die PaymentIntent-ID
+        // auflösen (orders.stripe_payment_intent_id wird beim paid-Übergang gesetzt).
+        let orderId: string | null = charge.metadata?.orderId ?? null;
+        if (!orderId && charge.payment_intent) {
+          const pi = typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent.id;
+          const { data } = await supabase.from('orders').select('id').eq('stripe_payment_intent_id', pi).maybeSingle();
+          orderId = (data?.id as string | undefined) ?? null;
+        }
         if (!orderId) break;
         await supabase.from('orders').update({ status: 'refunded' }).eq('id', orderId);
         break;

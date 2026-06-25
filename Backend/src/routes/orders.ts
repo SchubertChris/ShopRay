@@ -194,6 +194,7 @@ router.post('/:id/return', requireAuth, validate(UUIDParam, 'params'), validate(
 // POST /api/orders/checkout — Stripe Checkout Session (Auth optional für Gastbestellungen)
 router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchema), async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   let claimedDiscountId: string | null = null;
+  let createdOrderId:    string | null = null;
   try {
     const { items, shippingAddress, paymentMethod, guestEmail, discountCode } = req.body as CheckoutBody;
 
@@ -336,7 +337,20 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
       }
     }
 
-    const orderTotal = Math.max(0, subtotalCents / 100 - discountAmount);
+    // ── Versandkosten serverseitig berechnen — niemals Client-Werten vertrauen ──
+    // Schwelle auf Subtotal (vor Rabatt), identisch zur Frontend-Anzeige in checkout.tsx.
+    const { data: shipRow } = await supabase
+      .from('shipping_settings')
+      .select('standard, free_above')
+      .eq('id', 1)
+      .single();
+    const shipStandard  = Number(shipRow?.standard   ?? 4.90);
+    const shipFreeAbove = Number(shipRow?.free_above  ?? 50.00);
+    const subtotalEur   = subtotalCents / 100;
+    const shippingEur   = shipFreeAbove > 0 && subtotalEur >= shipFreeAbove ? 0 : shipStandard;
+    const shippingCents = Math.round(shippingEur * 100);
+
+    const orderTotal = Math.max(0, subtotalEur + shippingEur - discountAmount);
     const orderNumber = `#${Date.now().toString().slice(-6)}`;
 
     const addressWithEmail = shippingAddress
@@ -359,8 +373,9 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
       .single();
 
     if (orderErr || !order) throw orderErr ?? new Error('Order konnte nicht erstellt werden');
+    createdOrderId = order.id as string;
 
-    await supabase.from('order_items').insert(
+    const { error: itemsErr } = await supabase.from('order_items').insert(
       lineItems.map(({ product, quantity, unitAmountCents, skuId, variantLabel }) => ({
         order_id:      order.id,
         product_id:    product.id,
@@ -371,6 +386,7 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
         sku_id:        skuId ?? null,
       })),
     );
+    if (itemsErr) throw itemsErr;
 
     const stripePaymentMethods = PAYMENT_METHOD_MAP[paymentMethod ?? 'card'] ?? ['card'];
 
@@ -400,10 +416,25 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
         },
         quantity,
       })),
+      // Versand als echte Stripe-Versandoption — sonst zieht Stripe weniger ein als angezeigt
+      ...(shippingCents > 0 ? {
+        shipping_options: [{
+          shipping_rate_data: {
+            type:         'fixed_amount' as const,
+            fixed_amount: { amount: shippingCents, currency: 'eur' },
+            display_name: 'Versand',
+          },
+        }],
+      } : {}),
+      // Metadata auch auf den PaymentIntent — damit refund/payment_failed die Order finden
+      payment_intent_data: { metadata: { orderId: order.id } },
       metadata:    { orderId: order.id, discountCode: resolvedCode ?? '', discountCodeId: claimedDiscountId ?? '' },
       success_url: `${process.env.CLIENT_URL}/order-success?order=${order.id}`,
       cancel_url:  `${process.env.CLIENT_URL}/cart`,
     });
+
+    // Ab hier existiert ein gültiger Zahlungsweg → Order nicht mehr als Orphan löschen
+    createdOrderId = null;
 
     await supabase.from('orders').update({ stripe_session_id: session.id }).eq('id', order.id);
 
@@ -433,6 +464,12 @@ router.post('/checkout', optionalAuth, checkoutRateLimit, validate(CheckoutSchem
     // Discount-Claim zurückgeben wenn Checkout nach dem Claim fehlschlug
     if (claimedDiscountId) {
       void supabase.rpc('release_discount_claim', { p_discount_id: claimedDiscountId });
+    }
+    // Orphan-Order aufräumen: nur wenn nie eine Stripe-Session erstellt wurde
+    // (createdOrderId wird nach erfolgreicher Session auf null gesetzt)
+    if (createdOrderId) {
+      void supabase.from('order_items').delete().eq('order_id', createdOrderId);
+      void supabase.from('orders').delete().eq('id', createdOrderId);
     }
     next(err);
   }

@@ -61,7 +61,7 @@ export function orderConfirmationHtml(params: {
 }): string {
   const itemRows = params.items.map(i =>
     `<tr>
-       <td style="padding:8px 0;border-bottom:1px solid #eee">${i.name}</td>
+       <td style="padding:8px 0;border-bottom:1px solid #eee">${escapeHtml(i.name)}</td>
        <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:center">×${i.qty}</td>
        <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right">€ ${i.price}</td>
      </tr>`,
@@ -72,7 +72,7 @@ export function orderConfirmationHtml(params: {
       <h2 style="font-size:22px;margin-bottom:4px">Bestellbestätigung</h2>
       <p style="color:#555;margin-top:0">Bestellung ${params.orderNumber}</p>
 
-      <p>Hallo ${params.customerName},<br>
+      <p>Hallo ${escapeHtml(params.customerName)},<br>
       vielen Dank für deine Bestellung! Wir bearbeiten sie so schnell wie möglich.</p>
 
       <table style="width:100%;border-collapse:collapse;margin:24px 0">
@@ -105,7 +105,7 @@ export function adminLoginAlertHtml(params: {
   date:      string;
   adminUrl:  string;
 }): string {
-  const ua = params.userAgent || 'Unbekannt';
+  const ua = escapeHtml(params.userAgent || 'Unbekannt');
   return `
     <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#111">
       <div style="background:#111;border-radius:12px 12px 0 0;padding:24px 28px">
@@ -125,7 +125,7 @@ export function adminLoginAlertHtml(params: {
           </tr>
           <tr>
             <td style="padding:10px 12px;background:#f8f8f8;font-weight:600;border-bottom:1px solid #eee">IP-Adresse</td>
-            <td style="padding:10px 12px;border-bottom:1px solid #eee;font-family:monospace;color:#222">${params.ip}</td>
+            <td style="padding:10px 12px;border-bottom:1px solid #eee;font-family:monospace;color:#222">${escapeHtml(params.ip)}</td>
           </tr>
           <tr>
             <td style="padding:10px 12px;background:#f8f8f8;font-weight:600;vertical-align:top;border-radius:0 0 0 6px">Browser</td>
@@ -161,7 +161,7 @@ export function accountBannedHtml(params: {
        </tr>`
     : `<tr>
          <td style="padding:10px 12px;background:#f8f8f8;font-weight:600;border-bottom:1px solid #eee">Gesperrt bis</td>
-         <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#92400e;font-weight:700">${params.until ?? '—'}</td>
+         <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#92400e;font-weight:700">${escapeHtml(params.until ?? '—')}</td>
        </tr>`;
 
   return `
@@ -172,7 +172,7 @@ export function accountBannedHtml(params: {
       </div>
       <div style="border:1px solid #e5e5e5;border-top:none;border-radius:0 0 12px 12px;padding:28px">
         <p style="margin:0 0 20px;font-size:15px;color:#444;line-height:1.6">
-          Hallo ${params.customerName},<br><br>
+          Hallo ${escapeHtml(params.customerName)},<br><br>
           dein Konto wurde von unserem Team gesperrt. Du kannst dich während der Sperre
           nicht einloggen und hast keinen Zugriff auf deine Bestellungen oder andere Funktionen.
         </p>
@@ -180,7 +180,7 @@ export function accountBannedHtml(params: {
         <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px">
           <tr>
             <td style="padding:10px 12px;background:#f8f8f8;font-weight:600;width:110px;border-bottom:1px solid #eee;border-radius:6px 0 0 0">Grund</td>
-            <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#222">${params.reason}</td>
+            <td style="padding:10px 12px;border-bottom:1px solid #eee;color:#222">${escapeHtml(params.reason)}</td>
           </tr>
           ${durationRow}
           <tr>
@@ -277,7 +277,7 @@ export function modInviteHtml(params: {
         <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px">
           <tr>
             <td style="padding:10px 12px;background:#f8f8f8;font-weight:600;width:130px;border-bottom:1px solid #eee;border-radius:6px 0 0 0">E-Mail</td>
-            <td style="padding:10px 12px;border-bottom:1px solid #eee;font-family:monospace;color:#222">${params.email}</td>
+            <td style="padding:10px 12px;border-bottom:1px solid #eee;font-family:monospace;color:#222">${escapeHtml(params.email)}</td>
           </tr>
           <tr>
             <td style="padding:10px 12px;background:#f8f8f8;font-weight:600;border-radius:0 0 0 6px">Startpasswort</td>
