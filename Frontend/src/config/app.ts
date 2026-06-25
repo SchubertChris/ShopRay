@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 /** Shop-Name — erscheint in Titel, Nav-Logo, Footer, Browser-Tab und SEO */
-export const APP_NAME = 'Concepts';
+export const APP_NAME = 'Candlescope-ShopRay';
 
 /** Aktuelle Version des Templates (nicht für den End-Kunden sichtbar) */
 export const APP_VERSION = '1.0.0';
