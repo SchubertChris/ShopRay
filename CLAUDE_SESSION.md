@@ -85,7 +85,14 @@ GPT-5.5 lieferte zwei „launch-ready"-Bewertungen. Multi-Agent-Audit (verify + 
 - **B2** ✓ `order-success` lädt echte Bestellnummer via gast-zugänglichem `GET /api/orders/:id/summary` (UUID=Capability, Rate-Limit).
 - Verifiziert: Backend tsc + Frontend/Admin Build + 10 Vitest-Tests grün; adversarischer Review 0 Blocker.
 
-**Wirklich noch offen:** nichts Kritisches mehr. Optionale Folge-Tasks: I2b (sessionStorage-Token ganz entfernen sobald Cookie-Pfad in Prod inkl. Mobile verifiziert), toter `totpPending`-Cookie-Read in admin-auth.ts aufräumen.
+**Session 19c (2026-06-26) — auch die optionalen Polish-Items erledigt:**
+- **I2b** ✓ Admin-Session-Token (8h) liegt nicht mehr in sessionStorage, sondern nur noch **in-memory**; über Reloads authentifiziert das httpOnly-Cookie (App.tsx `checkAuth`). Push-Mutationen senden jetzt `X-Requested-With`. Kein Lockout (Login-Flow + In-Memory-Bearer bleiben).
+- Toter `totpPending`-Cookie-Read in `admin-auth.ts` entfernt.
+- Deployed Commit `451c189`, Backend + Admin READY. tsc/Builds grün.
+
+**Hinweis:** Beim ersten Laden des neuen Admin-Bundles wird man **einmalig ausgeloggt** (alte sessionStorage-Session) → neu einloggen setzt das Cookie. Danach läuft alles cookie-basiert.
+
+**Wirklich noch offen:** nichts. Komplette GPT-5.5-Audit-Liste inkl. aller optionalen Härtungen abgeschlossen.
 
 ### Implementiert in Session 18 (2026-06-07)
 
