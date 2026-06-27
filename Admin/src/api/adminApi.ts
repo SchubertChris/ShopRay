@@ -2,13 +2,17 @@
 // Lokal: VITE_API_URL=http://localhost:5000
 export const API_URL = (import.meta.env.VITE_API_URL as string) ?? '';
 
-// ── Session-Token (sessionStorage) ───────────────────────────────────────────
-const TOKEN_KEY       = 'adminToken';
+// ── Session-Token: NUR In-Memory (nicht in sessionStorage) ───────────────────
+// XSS-Hardening: der 8h-Session-Token ist nicht mehr aus sessionStorage scrapebar
+// und verschwindet beim Reload. Über Reloads hinweg authentifiziert das httpOnly
+// adminSession-Cookie (credentials:'include'); der In-Memory-Token dient nur als
+// Bearer-Fallback innerhalb einer Page-Session (z.B. cross-domain/Mobile).
 const SETUP_TOKEN_KEY = 'adminSetupToken';
 
-export const getAdminToken   = ()          => sessionStorage.getItem(TOKEN_KEY);
-export const setAdminToken   = (t: string) => sessionStorage.setItem(TOKEN_KEY, t);
-export const clearAdminToken = ()          => sessionStorage.removeItem(TOKEN_KEY);
+let _adminToken: string | null = null;
+export const getAdminToken   = ()          => _adminToken;
+export const setAdminToken   = (t: string) => { _adminToken = t; };
+export const clearAdminToken = ()          => { _adminToken = null; };
 
 export const getSetupToken   = ()          => sessionStorage.getItem(SETUP_TOKEN_KEY);
 export const setSetupToken   = (t: string) => sessionStorage.setItem(SETUP_TOKEN_KEY, t);

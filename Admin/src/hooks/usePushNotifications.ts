@@ -58,7 +58,7 @@ export function usePushNotifications() {
       });
       const json = sub.toJSON();
       const token = getAdminToken();
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const headers: Record<string, string> = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
       const res = await fetch(`${API_URL}/api/admin/push/subscribe`, {
         method:      'POST',
@@ -87,7 +87,7 @@ export function usePushNotifications() {
         const endpoint = sub.endpoint;
         await sub.unsubscribe();
         const token = getAdminToken();
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        const headers: Record<string, string> = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
         await fetch(`${API_URL}/api/admin/push/subscribe`, {
           method:      'DELETE',

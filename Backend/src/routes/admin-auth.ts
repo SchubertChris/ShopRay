@@ -155,8 +155,7 @@ router.post('/login/totp', authRateLimit, validate(TotpSchema), async (req: Requ
   if (!secret) { res.status(500).json({ error: 'JWT_SECRET fehlt.' }); return; }
 
   const authHeader  = req.headers['authorization'];
-  const pendingRaw  = authHeader?.startsWith('Bearer ') ? authHeader.slice(7)
-    : (req.cookies as Record<string, string | undefined>)['totpPending'];
+  const pendingRaw  = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
   if (!pendingRaw) { res.status(401).json({ error: 'Kein Pending-Token. Bitte zuerst Passwort eingeben.' }); return; }
 
   try {
