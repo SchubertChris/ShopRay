@@ -234,22 +234,11 @@ Das legt folgende Tabellen an:
 | `reviews` | Produktbewertungen |
 | `tickets` | Support-Tickets |
 
-### Schritt 2 — Migrationen ausführen
+### Schritt 2 — Migrationen (nur für Updates bestehender Datenbanken)
 
-> **Frisch-Installation:** `schema.sql` aus Schritt 1 enthält bereits alle Änderungen bis Migration 029. Du musst danach **nur noch Migrationen 030–035** ausführen.
+> **Frisch-Installation:** `schema.sql` aus Schritt 1 enthält bereits **alle** Migrationen (001–035, inklusive der Sicherheits-Härtung 035). Du musst hier **nichts** weiter tun — überspringe diesen Schritt und mach mit „Was passiert automatisch" weiter.
 >
-> **Bestehende Datenbank aktualisieren:** Führe alle Migrationen die du noch nicht ausgeführt hast einzeln der Reihe nach aus. **Wichtig:** `migration_035` (Sicherheits-Härtung) muss auf **jeder** Datenbank ausgeführt werden — auch auf bereits bestehenden Installationen.
-
-#### Pflicht nach Frisch-Installation (030–035)
-
-| Datei | Was sie macht |
-|---|---|
-| `database/migration_030_discount_atomic.sql` | Atomarer Rabatt-Zähler (race-condition-sicher bei parallelen Bestellungen) |
-| `database/migration_031_team_lead_refund_requests.sql` | Teamleiter-Rolle + Erstattungsanträge-Tabelle (4-Augen-Prinzip) |
-| `database/migration_032_mod_totp.sql` | 2-Faktor-Authentifizierung für Mitarbeiter (Mods) |
-| `database/migration_033_stock_reservation.sql` | Stock-Reservierungen + atomarer Lagerbestand-Abzug (race-condition-/oversell-sicher) |
-| `database/migration_034_discount_claim.sql` | Atomare Gutschein-Reservierung (TOCTOU-Fix, verhindert Doppel-Einlösung bei max_uses=1) |
-| `database/migration_035_security_hardening.sql` | **Sicherheitskritisch:** RLS-Härtung (keine Rollen-Eskalation auf owner, keine Fake-paid-Orders per Direkt-Insert, Kontakt-Spam-Schutz) + Rating zählt nur verifizierte Reviews. **Auf jeder DB ausführen.** |
+> **Bestehende Datenbank aktualisieren:** Führe die Migrationen, die du noch nicht eingespielt hast, einzeln in der angezeigten Reihenfolge aus. **Wichtig:** `migration_035` (Sicherheits-Härtung) muss auf **jeder** Datenbank ausgeführt werden — auch auf bereits bestehenden Installationen.
 
 #### Vollständige Migrations-Übersicht (für bestehende DB-Updates)
 
@@ -268,8 +257,8 @@ Das legt folgende Tabellen an:
 | `database/migration_011_user_ban.sql` | Kunden-Sperrsystem (Ban/Unban) |
 | `database/migration_012_push_subscriptions.sql` | Push-Benachrichtigungen (Web Push) |
 | `database/migration_013_invoice_label.sql` | Rechnungsnummern + DHL-Tracking-Spalten |
-| `database/migration_014_ticket_messages.sql` | Ticket-Chat (Nachrichten-Verlauf) |
 | `database/migration_014_shop_settings_categories_image.sql` | Shop-Einstellungen + Kategorie-Bilder |
+| `database/migration_014b_ticket_messages.sql` | Ticket-Chat (Nachrichten-Verlauf) |
 | `database/migration_015_mod_invites_admin_config.sql` | Mitarbeiter-Einladungen + Admin-Konfiguration in DB |
 | `database/migration_016_must_change_password.sql` | Passwort-Wechsel-Pflicht beim ersten Login |
 | `database/migration_017_service_role_grants.sql` | Fehlende Backend-Berechtigungen (service_role) |
@@ -294,7 +283,7 @@ Das legt folgende Tabellen an:
 
 > **Reihenfolge wichtig:** Führe die Migrationen immer in der angezeigten Reihenfolge aus. Alle Dateien sind idempotent — mehrfaches Ausführen verursacht keine Fehler.
 >
-> **Hinweis zu Nummer 014:** Es gibt **absichtlich zwei** Dateien mit der Nummer 014 — `migration_014_shop_settings_categories_image.sql` UND `migration_014_ticket_messages.sql`. **Beide** müssen ausgeführt werden.
+> **Hinweis zu Nummer 014:** Migration 014 ist auf zwei Dateien aufgeteilt — `migration_014_shop_settings_categories_image.sql` und `migration_014b_ticket_messages.sql`. **Beide** müssen ausgeführt werden (nur relevant für bestehende DB-Updates).
 
 ### Was passiert automatisch
 

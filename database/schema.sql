@@ -1,17 +1,17 @@
 -- ══════════════════════════════════════════════════════════════════════════════
--- ShopRay — Datenbankschema (konsolidiert, Migrationen 001–030)
+-- ShopRay — Vollständiges Datenbankschema (konsolidiert, Migrationen 001–035)
 -- Stand: 2026-06-28
 -- ══════════════════════════════════════════════════════════════════════════════
 --
 -- FRISCHE INSTALLATION (Neukunde):
---   1. Dieses Script (schema.sql) im Supabase SQL-Editor ausführen  → deckt 001–030 ab
---   2. DANACH die Migrationen 031–035 einzeln der Reihe nach ausführen
---      (siehe SETUP.md Abschnitt 4). PFLICHT: migration_035 (Sicherheits-Härtung) —
---      ohne sie ist die Installation unvollständig und unsicher.
---   3. Optional: seed.sql ausführen → Beispieldaten zum Testen
+--   1. Dieses Script (schema.sql) im Supabase SQL-Editor ausführen — das war's.
+--      Es enthält ALLE Migrationen 001–035 (inkl. der Sicherheits-Härtung 035).
+--   2. Optional: seed.sql ausführen → Beispieldaten zum Testen
 --
--- Hinweis: schema.sql enthält 001–030; 031–035 werden danach separat eingespielt.
--- Die migration_XXX.sql Dateien dienen auch dem Update bestehender Datenbanken.
+-- Die einzelnen migration_XXX.sql Dateien werden für eine Frisch-Installation
+-- NICHT benötigt — sie dienen nur dem Update BESTEHENDER Datenbanken (führe dort
+-- die Migrationen aus, die du noch nicht eingespielt hast). migration_035 muss
+-- auf JEDER bestehenden DB nachgezogen werden (Sicherheit).
 --
 -- Ausführen: Supabase-Dashboard → SQL Editor → Inhalt einfügen → Run
 -- ══════════════════════════════════════════════════════════════════════════════
@@ -708,3 +708,171 @@ CREATE INDEX IF NOT EXISTS idx_admin_notification_reads_user_key
 
 CREATE INDEX IF NOT EXISTS idx_admin_tasks_status_assigned
   ON public.admin_tasks (status, assigned_to);
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- MIGRATIONEN 031–035 (konsolidiert — Teil des Frisch-Installs)
+-- Additive Tabellen/Funktionen + idempotente RLS-Härtung. Laufen sauber auf dem
+-- oben definierten Schema. Quelle: database/migration_031..035.sql.
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- ── 031: team_lead-Rolle + refund_requests (4-Augen-Erstattungen) ─────────────
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
+ALTER TABLE public.profiles ADD  CONSTRAINT profiles_role_check
+  CHECK (role IN ('customer', 'mod', 'team_lead', 'owner', 'admin'));
+
+CREATE TABLE IF NOT EXISTS public.refund_requests (
+  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id           UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+  order_number       TEXT NOT NULL,
+  amount             NUMERIC(10,2) NOT NULL,
+  requested_by       TEXT NOT NULL,
+  requested_by_role  TEXT NOT NULL,
+  status             TEXT NOT NULL DEFAULT 'pending'
+                     CHECK (status IN ('pending','approved','rejected')),
+  approved_by        TEXT,
+  approved_by_role   TEXT,
+  approved_at        TIMESTAMPTZ,
+  rejected_reason    TEXT,
+  stripe_refund_id   TEXT,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS refund_requests_status_idx   ON public.refund_requests(status);
+CREATE INDEX IF NOT EXISTS refund_requests_order_id_idx ON public.refund_requests(order_id);
+ALTER TABLE public.refund_requests ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "service_role_all_refund_requests" ON public.refund_requests;
+CREATE POLICY "service_role_all_refund_requests" ON public.refund_requests
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+GRANT ALL ON public.refund_requests TO service_role;
+
+-- ── 032: TOTP für Mitarbeiter (Mod + Team Lead) ───────────────────────────────
+CREATE TABLE IF NOT EXISTS public.mod_totp (
+  id         bigserial    PRIMARY KEY,
+  user_id    uuid         NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  secret     text         NOT NULL,
+  created_at timestamptz  NOT NULL DEFAULT now()
+);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'mod_totp_user_id_unique') THEN
+    ALTER TABLE public.mod_totp ADD CONSTRAINT mod_totp_user_id_unique UNIQUE (user_id);
+  END IF;
+END $$;
+GRANT ALL ON public.mod_totp                 TO service_role;
+GRANT ALL ON SEQUENCE public.mod_totp_id_seq TO service_role;
+
+-- ── 033: Stock-Reservierungen + atomarer Lagerbestand-Abzug ───────────────────
+CREATE TABLE IF NOT EXISTS public.stock_reservations (
+  id                uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  stripe_session_id text        NOT NULL,
+  order_id          uuid        REFERENCES public.orders(id) ON DELETE CASCADE,
+  product_id        uuid        NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  sku_id            uuid        REFERENCES public.product_skus(id) ON DELETE SET NULL,
+  quantity          int         NOT NULL CHECK (quantity > 0),
+  expires_at        timestamptz NOT NULL,
+  created_at        timestamptz DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_stock_res_session ON public.stock_reservations(stripe_session_id);
+CREATE INDEX IF NOT EXISTS idx_stock_res_expires ON public.stock_reservations(expires_at);
+CREATE INDEX IF NOT EXISTS idx_stock_res_product ON public.stock_reservations(product_id) WHERE sku_id IS NULL;
+CREATE INDEX IF NOT EXISTS idx_stock_res_sku     ON public.stock_reservations(sku_id)     WHERE sku_id IS NOT NULL;
+
+CREATE OR REPLACE FUNCTION public.decrement_stock(p_product_id uuid, p_quantity int, p_sku_id uuid DEFAULT NULL)
+RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
+  IF p_sku_id IS NOT NULL THEN
+    UPDATE public.product_skus SET stock = GREATEST(0, stock - p_quantity) WHERE id = p_sku_id;
+  ELSE
+    UPDATE public.products     SET stock = GREATEST(0, stock - p_quantity) WHERE id = p_product_id;
+  END IF;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.reserve_stock(p_stripe_session_id text, p_order_id uuid, p_items jsonb, p_expires_at timestamptz DEFAULT (now() + interval '2 hours'))
+RETURNS void LANGUAGE plpgsql AS $$
+DECLARE item jsonb;
+BEGIN
+  FOR item IN SELECT * FROM jsonb_array_elements(p_items)
+  LOOP
+    INSERT INTO public.stock_reservations (stripe_session_id, order_id, product_id, sku_id, quantity, expires_at)
+    VALUES (p_stripe_session_id, p_order_id, (item->>'product_id')::uuid, NULLIF(item->>'sku_id', '')::uuid, (item->>'quantity')::int, p_expires_at);
+  END LOOP;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.release_reservation(p_stripe_session_id text)
+RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
+  DELETE FROM public.stock_reservations WHERE stripe_session_id = p_stripe_session_id;
+END;
+$$;
+GRANT ALL     ON TABLE    public.stock_reservations TO service_role;
+GRANT EXECUTE ON FUNCTION public.decrement_stock     TO service_role;
+GRANT EXECUTE ON FUNCTION public.reserve_stock       TO service_role;
+GRANT EXECUTE ON FUNCTION public.release_reservation TO service_role;
+
+-- ── 034: Atomare Discount-Reservierung (TOCTOU-Fix) ───────────────────────────
+CREATE OR REPLACE FUNCTION public.claim_discount(p_code text, p_order_total numeric)
+RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE v_id uuid; v_type text; v_value numeric; v_amount numeric;
+BEGIN
+  UPDATE public.discount_codes
+  SET    uses = uses + 1
+  WHERE  lower(code) = lower(p_code)
+    AND  active = true
+    AND  (expires_at IS NULL OR expires_at > now())
+    AND  (max_uses   IS NULL OR uses < max_uses)
+    AND  (min_order  IS NULL OR min_order <= p_order_total)
+  RETURNING id, type, value INTO v_id, v_type, v_value;
+  IF v_id IS NULL THEN RETURN NULL; END IF;
+  IF v_type = 'percent' THEN
+    v_amount := round(p_order_total * v_value / 100, 2);
+  ELSE
+    v_amount := least(v_value, p_order_total);
+  END IF;
+  RETURN jsonb_build_object('id', v_id, 'type', v_type, 'value', v_value, 'amount', v_amount);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.release_discount_claim(p_discount_id uuid)
+RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
+  UPDATE public.discount_codes SET uses = GREATEST(0, uses - 1) WHERE id = p_discount_id;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.claim_discount         TO service_role;
+GRANT EXECUTE ON FUNCTION public.release_discount_claim TO service_role;
+
+-- ── 035: Security-Härtung (RLS) — PFLICHT ─────────────────────────────────────
+-- D1: profiles.role gegen Selbst-Eskalation (Spalten-genaue UPDATE-Rechte);
+-- D2: keine Client-Order-Inserts; D3: Kontakt nur über Backend;
+-- E2: Produkt-Rating nur aus verifizierten Reviews.
+REVOKE UPDATE ON public.profiles FROM authenticated;
+GRANT  UPDATE (name, phone, address_street, address_zip, address_city, address_country)
+       ON public.profiles TO authenticated;
+
+DROP POLICY IF EXISTS "Order erstellen" ON public.orders;
+REVOKE INSERT ON public.orders      FROM authenticated;
+REVOKE INSERT ON public.order_items FROM authenticated;
+
+DROP POLICY IF EXISTS "Kontaktanfrage einreichen" ON public.contact_inquiries;
+REVOKE INSERT ON public.contact_inquiries FROM anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.update_product_rating()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE public.products
+  SET
+    rating  = COALESCE((SELECT ROUND(AVG(rating)::NUMERIC, 1) FROM public.reviews
+                        WHERE product_id = COALESCE(NEW.product_id, OLD.product_id) AND verified = TRUE), 0),
+    reviews = (SELECT COUNT(*) FROM public.reviews
+               WHERE product_id = COALESCE(NEW.product_id, OLD.product_id) AND verified = TRUE)
+  WHERE id = COALESCE(NEW.product_id, OLD.product_id);
+  RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- ENDE — schema.sql deckt jetzt Migrationen 001–035 vollständig ab.
+-- ════════════════════════════════════════════════════════════════════════════

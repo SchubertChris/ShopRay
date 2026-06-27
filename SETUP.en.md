@@ -226,22 +226,11 @@ This creates the following tables:
 | `reviews` | Product reviews |
 | `tickets` | Support tickets |
 
-### Step 2 — Run migrations
+### Step 2 — Migrations (only for updating existing databases)
 
-> **Fresh installation:** `schema.sql` from Step 1 already includes all changes through Migration 029. After that you only need to run **Migrations 030–035**.
+> **Fresh installation:** `schema.sql` from Step 1 already includes **all** migrations (001–035, including the security hardening in 035). There is **nothing more to do** here — skip this step and continue with "What happens automatically".
 >
-> **Updating an existing database:** Run any migrations you haven't run yet, one at a time, in order. **Important:** `migration_035` (security hardening) must be run on **every** database — including already-existing installations.
-
-#### Required after fresh installation (030–035)
-
-| File | What it does |
-|---|---|
-| `database/migration_030_discount_atomic.sql` | Atomic discount counter (race-condition-safe for parallel orders) |
-| `database/migration_031_team_lead_refund_requests.sql` | Team lead role + refund requests table (4-eyes principle) |
-| `database/migration_032_mod_totp.sql` | Two-factor authentication for staff members (Mods) |
-| `database/migration_033_stock_reservation.sql` | Stock reservations + atomic stock decrement (race-condition- and oversell-safe) |
-| `database/migration_034_discount_claim.sql` | Atomic discount reservation (TOCTOU fix — prevents double redemption when max_uses=1) |
-| `database/migration_035_security_hardening.sql` | **Security-critical:** RLS hardening (no role escalation to owner, no fake "paid" orders via direct insert, contact-spam protection) + ratings count only verified reviews. **Run on every DB.** |
+> **Updating an existing database:** Run any migrations you haven't run yet, one at a time, in the order listed. **Important:** `migration_035` (security hardening) must be run on **every** database — including already-existing installations.
 
 #### Full migration list (for existing DB updates)
 
@@ -260,8 +249,8 @@ This creates the following tables:
 | `database/migration_011_user_ban.sql` | Customer ban/unban system |
 | `database/migration_012_push_subscriptions.sql` | Web push notifications |
 | `database/migration_013_invoice_label.sql` | Invoice numbers + DHL tracking columns |
-| `database/migration_014_ticket_messages.sql` | Ticket chat (message history) |
 | `database/migration_014_shop_settings_categories_image.sql` | Shop settings + category images |
+| `database/migration_014b_ticket_messages.sql` | Ticket chat (message history) |
 | `database/migration_015_mod_invites_admin_config.sql` | Staff invitations + admin configuration in DB |
 | `database/migration_016_must_change_password.sql` | Password change requirement on first login |
 | `database/migration_017_service_role_grants.sql` | Missing backend permissions (service_role) |
@@ -286,7 +275,7 @@ This creates the following tables:
 
 > **Order matters:** Always run migrations in the order listed above. All files are idempotent — running them more than once will not cause errors.
 >
-> **Note on number 014:** There are **intentionally two** files numbered 014 — `migration_014_shop_settings_categories_image.sql` AND `migration_014_ticket_messages.sql`. **Both** must be run.
+> **Note on number 014:** Migration 014 is split into two files — `migration_014_shop_settings_categories_image.sql` and `migration_014b_ticket_messages.sql`. **Both** must be run (only relevant for existing DB updates).
 
 ### What happens automatically
 

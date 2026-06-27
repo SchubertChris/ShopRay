@@ -458,8 +458,8 @@ Diese Tests prüfen die ShopRay-Präsentation auf candlescope.de (separate Verce
 **Einmalig ausführen bevor alle Tests starten:**
 
 1. Supabase SQL Editor öffnen: https://supabase.com/dashboard → Dein Projekt → SQL Editor → New query
-2. Inhalt von `database/seed_supplements.sql` einfügen → Run
-3. Ergebnis: 6 Kategorien + 12 Supplement-Produkte, alle alten Daten weg
+2. Inhalt von `database/seed.sql` einfügen → Run
+3. Ergebnis: Beispiel-Kategorien + Produkte, alle alten Test-Daten weg
 
 **Was der Seed NICHT anfasst:** User-Accounts (profiles), Versandeinstellungen, Admin-2FA
 

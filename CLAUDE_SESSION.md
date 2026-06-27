@@ -268,8 +268,8 @@ GPT-5.5 lieferte zwei „launch-ready"-Bewertungen. Multi-Agent-Audit (verify + 
 | 011 | migration_011_user_ban.sql | Ban-Felder in profiles |
 | 012 | migration_012_push_subscriptions.sql | Web Push Tabelle |
 | 013 | migration_013_invoice_label.sql | invoice_number + tracking |
-| 014a | migration_014_ticket_messages.sql | Ticket-Chat-Nachrichten |
-| 014b | migration_014_shop_settings_categories_image.sql | shop_settings + categories.image_url |
+| 014  | migration_014_shop_settings_categories_image.sql | shop_settings + categories.image_url |
+| 014b | migration_014b_ticket_messages.sql | Ticket-Chat-Nachrichten |
 | 015 | migration_015_mod_invites_admin_config.sql | Mod-Invite + Admin-Config |
 | 016 | migration_016_must_change_password.sql | must_change_password Flag |
 | 017 | migration_017_service_role_grants.sql | Fehlende service_role Grants |
