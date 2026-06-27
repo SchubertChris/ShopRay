@@ -93,6 +93,23 @@ export interface ReturnItem {
   price:       string;
 }
 
+export interface OrderSummary {
+  orderNumber: string;
+  total:       number;
+  status:      string;
+}
+
+/**
+ * Öffentlicher, gast-tauglicher Lookup für die Bestellbestätigungsseite.
+ * Liefert nur Minimal-Daten (Bestellnummer, Summe, Status) — kein Auth nötig,
+ * die UUID in der URL dient als Capability-Token.
+ */
+export async function getOrderSummary(id: string): Promise<OrderSummary> {
+  const res = await fetch(`/api/orders/${id}/summary`);
+  if (!res.ok) throw new Error('Bestellung nicht gefunden');
+  return res.json() as Promise<OrderSummary>;
+}
+
 export async function requestReturn(id: string, reason: string, returnItems?: ReturnItem[]): Promise<ReturnRequest> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Nicht eingeloggt');

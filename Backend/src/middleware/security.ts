@@ -71,3 +71,12 @@ export const discountRateLimit = rateLimit({
   legacyHeaders:   false,
   message:         { error: 'Zu viele Gutschein-Anfragen. Bitte versuche es später erneut.' },
 });
+
+// ── Order-Lookup Rate-Limit — 60 Abfragen / 15 Min pro IP (UUID-Enumeration-Schutz) ──
+export const orderLookupRateLimit = rateLimit({
+  windowMs:        15 * 60 * 1000,
+  max:             60,
+  standardHeaders: true,
+  legacyHeaders:   false,
+  message:         { error: 'Zu viele Anfragen. Bitte versuche es später erneut.' },
+});

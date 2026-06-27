@@ -4,7 +4,7 @@ import Stripe from 'stripe';
 import { supabase } from '../lib/supabase';
 import { stripe }   from '../lib/stripe';
 import { requireAuth, optionalAuth, AuthRequest } from '../middleware/auth';
-import { checkoutRateLimit } from '../middleware/security';
+import { checkoutRateLimit, orderLookupRateLimit } from '../middleware/security';
 import { validate, UUIDParam } from '../lib/validate';
 
 const router = Router();
@@ -51,6 +51,32 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response, next: NextF
 
     if (error) throw error;
     res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/orders/:id/summary — Minimal-Daten für die Bestellbestätigungsseite.
+// Gast-zugänglich: die unguessbare UUIDv4 dient als Capability-Token. Liefert NUR
+// order_number, total, status — keine sensiblen Felder (Adresse/E-Mail/Payment).
+router.get('/:id/summary', orderLookupRateLimit, validate(UUIDParam, 'params'), async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('order_number, total, status')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error || !data) {
+      res.status(404).json({ error: 'Bestellung nicht gefunden' });
+      return;
+    }
+
+    res.json({
+      orderNumber: data.order_number,
+      total:       Number(data.total),
+      status:      data.status,
+    });
   } catch (err) {
     next(err);
   }

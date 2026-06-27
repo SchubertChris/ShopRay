@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useCart } from '@features/cart';
+import { getOrderSummary, type OrderSummary } from '@features/orders';
 import { SeoMeta } from '@components/ui';
 import { ROUTES } from '@config/routes';
 
@@ -15,14 +16,28 @@ export default function OrderSuccessPage() {
   const [searchParams]      = useSearchParams();
   const state               = location.state as OrderSuccessState | null;
 
-  const orderIdFromUrl  = searchParams.get('order');
-  const orderNumber     = state?.orderNumber
-    ?? (orderIdFromUrl ? `#${orderIdFromUrl.slice(0, 8).toUpperCase()}` : '#SR-2026-XXXX');
-  const total           = state?.total != null ? `${state.total.toFixed(2)} €` : null;
+  const orderIdFromUrl      = searchParams.get('order');
+  const [summary, setSummary] = useState<OrderSummary | null>(null);
 
   useEffect(() => {
     clearCart();
   }, []);
+
+  // Nach dem Stripe-Redirect gibt es kein location.state → echte Bestellnummer nachladen
+  useEffect(() => {
+    if (!orderIdFromUrl || state?.orderNumber) return;
+    let active = true;
+    getOrderSummary(orderIdFromUrl)
+      .then(d => { if (active) setSummary(d); })
+      .catch(() => { /* Fallback: bisheriges Verhalten (UUID-Kürzung) */ });
+    return () => { active = false; };
+  }, [orderIdFromUrl, state?.orderNumber]);
+
+  const orderNumber = state?.orderNumber
+    ?? summary?.orderNumber
+    ?? (orderIdFromUrl ? `#${orderIdFromUrl.slice(0, 8).toUpperCase()}` : '#SR-2026-XXXX');
+  const totalValue  = state?.total ?? summary?.total ?? null;
+  const total       = totalValue != null ? `${totalValue.toFixed(2)} €` : null;
 
   return (
     <>
