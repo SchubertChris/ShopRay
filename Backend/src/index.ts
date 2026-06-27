@@ -5,6 +5,7 @@ import { corsMiddleware }                          from './middleware/cors';
 import { errorHandler }                           from './middleware/errorHandler';
 import { helmetMiddleware, globalRateLimit }       from './middleware/security';
 import { demoModeGuard }                           from './middleware/demoMode';
+import { csrfGuard }                               from './middleware/csrf';
 import healthRouter       from './routes/health';
 import stripeRouter       from './routes/stripe';
 import ordersRouter       from './routes/orders';
@@ -59,6 +60,11 @@ app.use(cookieParser());
 // öffentlichen Routern liegen, z.B. PATCH /api/contact/:id oder PUT /api/settings/shop).
 // No-op wenn DEMO_MODE != 'true'. Muss vor allen Routern laufen.
 app.use(demoModeGuard);
+
+// CSRF-Schutz: greift nur bei Cookie-authentifizierten Admin-Mutationen ohne
+// X-Requested-With (siehe middleware/csrf.ts). Global gemountet → deckt auch
+// Admin-Routen unter öffentlichen Prefixes ab; Gast-/Kunden-Flows bleiben frei.
+app.use(csrfGuard);
 
 // ── Öffentliche Routes ────────────────────────────────────────────────────────
 app.use('/api/health',    healthRouter);

@@ -9,6 +9,7 @@ import { supabase }                     from '../lib/supabase';
 import { sendMail, adminLoginAlertHtml, modInviteHtml } from '../lib/mailer';
 import { validate }                     from '../lib/validate';
 import { decryptSecret, encryptSecret, isPlaintext, encryptionEnabled } from '../lib/totpCrypto';
+import { setAdminCookie, clearAdminCookie } from '../lib/adminCookie';
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 const LoginSchema = z.object({
@@ -50,7 +51,6 @@ const StrongPasswordSchema = z.object({
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const TOTP_PENDING_MAX_AGE = 5 * 60 * 1000; // 5 Minuten
-const SESSION_MAX_AGE      = 8 * 60 * 60 * 1000;  // 8 Stunden
 const LOCKOUT_MAX_ATTEMPTS = 5;
 const LOCKOUT_WINDOW_MS    = 15 * 60 * 1000; // 15 Minuten
 
@@ -58,17 +58,6 @@ function getClientIp(req: Request): string {
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string') return forwarded.split(',')[0].trim();
   return req.ip ?? 'unbekannt';
-}
-
-function setAdminCookie(res: Response, token: string): void {
-  const isProd = process.env.NODE_ENV === 'production';
-  res.cookie('adminSession', token, {
-    httpOnly: true,
-    secure:   isProd,
-    sameSite: isProd ? 'none' : 'lax',
-    maxAge:   SESSION_MAX_AGE,
-    path:     '/',
-  });
 }
 
 function generateTempPassword(): string {
@@ -206,6 +195,7 @@ router.post('/login/totp', authRateLimit, validate(TotpSchema), async (req: Requ
     }).catch(() => null);
   }
 
+  setAdminCookie(res, sessionToken);
   res.json({ ok: true, token: sessionToken });
 });
 
@@ -285,6 +275,7 @@ router.post('/login/mod', authRateLimit, validate(ModLoginSchema), async (req: R
     email:      authData.user.email ?? email,
   }).then(({ error: e }) => { if (e) console.error('[login-log] insert failed:', e.message); });
 
+  setAdminCookie(res, token);
   res.json({ ok: true, token, role: actualRole, mustChangePassword: profile?.must_change_password ?? false });
 });
 
@@ -339,13 +330,13 @@ router.post('/login/mod/totp', authRateLimit, validate(ModTotpSchema), async (re
     email:      null,
   }).then(({ error: e }) => { if (e) console.error('[login-log] insert failed:', e.message); });
 
+  setAdminCookie(res, sessionToken);
   res.json({ ok: true, token: sessionToken, role: payload.role });
 });
 
 // ── POST /api/admin/logout ────────────────────────────────────────────────────
 router.post('/logout', (_req: Request, res: Response): void => {
-  const isProd = process.env.NODE_ENV === 'production';
-  res.clearCookie('adminSession', { httpOnly: true, secure: isProd, sameSite: isProd ? 'none' : 'lax', path: '/' });
+  clearAdminCookie(res);
   res.json({ ok: true });
 });
 

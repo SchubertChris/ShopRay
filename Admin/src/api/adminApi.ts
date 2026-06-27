@@ -26,6 +26,7 @@ async function apiFetch<T>(
 
   const headers: Record<string, string> = {};
   if (!isFormData) headers['Content-Type'] = contentType ?? 'application/json';
+  headers['X-Requested-With'] = 'XMLHttpRequest';  // CSRF-Marker für Cookie-Auth
 
   // Bearer-Token hat Vorrang vor Cookie (funktioniert cross-domain auf Mobile)
   const token = getAdminToken();
@@ -34,6 +35,7 @@ async function apiFetch<T>(
   const res = await fetch(`${API_URL}${path}`, {
     method,
     headers,
+    credentials: 'include',  // httpOnly adminSession-Cookie mitsenden
     body: isFormData ? body : body !== undefined ? JSON.stringify(body) : undefined,
   });
 
@@ -58,11 +60,13 @@ export const adminLogin  = (password: string) =>
 // ── Forced 2FA Setup (mit kurzlebigem Setup-Token als Bearer) ─────────────────
 async function setup2FAFetch<T>(path: string, method: HttpMethod = 'GET', body?: unknown): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  headers['X-Requested-With'] = 'XMLHttpRequest';
   const token = getSetupToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${API_URL}${path}`, {
     method,
     headers,
+    credentials: 'include',
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) {
@@ -476,6 +480,7 @@ export async function downloadOrderInvoice(id: string): Promise<void> {
 
   const res = await fetch(`${API_URL}/api/admin/orders/${id}/invoice`, {
     headers,
+    credentials: 'include',
   });
 
   if (!res.ok) throw new Error('Rechnung konnte nicht generiert werden.');
@@ -680,7 +685,7 @@ export async function exportOrdersCsv(from: string, to: string): Promise<void> {
   const token = getAdminToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_URL}/api/admin/orders/export?from=${from}&to=${to}`, { headers });
+  const res = await fetch(`${API_URL}/api/admin/orders/export?from=${from}&to=${to}`, { headers, credentials: 'include' });
   if (!res.ok) {
     const json = await res.json().catch(() => ({}));
     throw new Error((json as { error?: string }).error ?? `HTTP ${res.status}`);

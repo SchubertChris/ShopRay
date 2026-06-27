@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { supabase } from '../lib/supabase';
+import { setAdminCookie } from '../lib/adminCookie';
 
 export type AdminRole = 'owner' | 'team_lead' | 'mod';
 
@@ -91,7 +92,8 @@ function issueRenewal(payload: AdminJwtPayload, secret: string, res: Response): 
     secret,
     { expiresIn: '8h' },
   );
-  res.setHeader('X-New-Token', renewed);
+  res.setHeader('X-New-Token', renewed);  // Bearer-Pfad (sessionStorage)
+  setAdminCookie(res, renewed);            // Cookie-Pfad mit erneuern
 }
 
 // ── Zentrale Token-Verifikation ───────────────────────────────────────────────

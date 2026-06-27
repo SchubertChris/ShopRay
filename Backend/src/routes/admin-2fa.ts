@@ -8,6 +8,7 @@ import { requireAdmin, requireOwner, requireAdminOrSetup2FA }   from '../middlew
 import { validate }                               from '../lib/validate';
 import { sendMail, adminLoginAlertHtml }          from '../lib/mailer';
 import { encryptSecret, decryptSecret }           from '../lib/totpCrypto';
+import { setAdminCookie }                          from '../lib/adminCookie';
 
 const router = Router();
 
@@ -76,7 +77,7 @@ router.post('/confirm', requireAdminOrSetup2FA, validate(ConfirmSchema), async (
       const jwtSecret = process.env.JWT_SECRET;
       if (!jwtSecret) throw new Error('JWT_SECRET fehlt');
 
-      const sessionToken = jwt.sign({ role: 'owner' }, jwtSecret, { expiresIn: '8h' });
+      const sessionToken = jwt.sign({ role: 'owner', rootIat: Math.floor(Date.now() / 1000) }, jwtSecret, { expiresIn: '8h' });
 
       const ip        = getClientIp(req);
       const userAgent = (req.headers['user-agent'] ?? '').slice(0, 500);
@@ -93,6 +94,7 @@ router.post('/confirm', requireAdminOrSetup2FA, validate(ConfirmSchema), async (
         }).catch(() => null);
       }
 
+      setAdminCookie(res, sessionToken);
       res.json({ ok: true, token: sessionToken });
       return;
     }
