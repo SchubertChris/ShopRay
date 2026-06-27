@@ -77,9 +77,15 @@ GPT-5.5 lieferte zwei „launch-ready"-Bewertungen. Multi-Agent-Audit (verify + 
 | **J4** 🟡 | keine Tests/CI | Vitest (10 Tests, totpCrypto) + `.github/workflows/ci.yml` |
 
 **Deploy:** Commits gruppiert auf `main` gepusht, alle 3 Vercel-Projekte READY (Stand 2026-06-26).
-**TOTP_ENC_KEY:** in `Backend/.env.example` dokumentiert — User muss ihn noch in Vercel (Backend) + lokal setzen (`openssl rand -hex 32`), sonst bleiben TOTP-Secrets Klartext (kein Fehler, nur unverschlüsselt). Nach dem Setzen: 1× einloggen → Lazy-Migration verschlüsselt bestehende Secrets.
+**TOTP_ENC_KEY:** gesetzt ✓ (2026-06-26) — in Vercel shopray-backend + lokal, redeployed, Login durchgeführt → TOTP-Secrets at-rest verschlüsselt (AES-256-GCM).
 
-**Noch offen (bewusst zurückgestellt, Architektur — User-Entscheidung):** I2 (Admin-Token sessionStorage → httpOnly-Cookie + CSRF), J1 (große Dateien `home.tsx` 488 / `product-form.tsx` 528 Zeilen splitten), B2 (order-success lädt echte Bestellnummer statt gekürzter UUID).
+**Session 19b (2026-06-26) — restliche Dev-Items erledigt (Plan- + Review-Workflow):**
+- **I2** ✓ Admin-Auth httpOnly-Cookie + CSRF-Guard (rückwärtskompatibel, Bearer bleibt Fallback). `adminCookie.ts`, `csrf.ts` (global, greift nur bei Cookie-Auth-Mutationen ohne `X-Requested-With`).
+- **J1** ✓ `home.tsx` 488→94 + `product-form.tsx` 528→91 in Komponenten/Hooks gesplittet. DOM-Äquivalenz adversarisch verifiziert.
+- **B2** ✓ `order-success` lädt echte Bestellnummer via gast-zugänglichem `GET /api/orders/:id/summary` (UUID=Capability, Rate-Limit).
+- Verifiziert: Backend tsc + Frontend/Admin Build + 10 Vitest-Tests grün; adversarischer Review 0 Blocker.
+
+**Wirklich noch offen:** nichts Kritisches mehr. Optionale Folge-Tasks: I2b (sessionStorage-Token ganz entfernen sobald Cookie-Pfad in Prod inkl. Mobile verifiziert), toter `totpPending`-Cookie-Read in admin-auth.ts aufräumen.
 
 ### Implementiert in Session 18 (2026-06-07)
 
