@@ -1,14 +1,17 @@
 -- ══════════════════════════════════════════════════════════════════════════════
--- ShopRay — Vollständiges Datenbankschema (konsolidiert)
--- Stand: 2026-05-20 — enthält alle Änderungen aus Migrations 001–028
+-- ShopRay — Datenbankschema (konsolidiert, Migrationen 001–030)
+-- Stand: 2026-06-28
 -- ══════════════════════════════════════════════════════════════════════════════
 --
 -- FRISCHE INSTALLATION (Neukunde):
---   1. Dieses Script (schema.sql) im Supabase SQL-Editor ausführen
---   2. Optional: seed.sql ausführen → Beispieldaten zum Testen
+--   1. Dieses Script (schema.sql) im Supabase SQL-Editor ausführen  → deckt 001–030 ab
+--   2. DANACH die Migrationen 031–035 einzeln der Reihe nach ausführen
+--      (siehe SETUP.md Abschnitt 4). PFLICHT: migration_035 (Sicherheits-Härtung) —
+--      ohne sie ist die Installation unvollständig und unsicher.
+--   3. Optional: seed.sql ausführen → Beispieldaten zum Testen
 --
--- Das war's. Keine einzelnen Migrations-Dateien nötig.
--- Die migration_XXX.sql Dateien sind nur für Updates bestehender Datenbanken.
+-- Hinweis: schema.sql enthält 001–030; 031–035 werden danach separat eingespielt.
+-- Die migration_XXX.sql Dateien dienen auch dem Update bestehender Datenbanken.
 --
 -- Ausführen: Supabase-Dashboard → SQL Editor → Inhalt einfügen → Run
 -- ══════════════════════════════════════════════════════════════════════════════
