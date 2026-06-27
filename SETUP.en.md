@@ -1,6 +1,6 @@
 # ShopRay — Setup Guide
 
-**Version:** 2.0.0 | **Last updated:** 2026-05-27
+**Version:** 2.1.0 | **Last updated:** 2026-06-28
 
 This guide walks you step by step through setting up your ShopRay template —
 from installation to a fully live shop.
@@ -20,16 +20,19 @@ from installation to a fully live shop.
 9. [Invoice Setup](#9-invoice-setup)
 10. [DHL Shipping Labels](#10-dhl-shipping-labels)
 11. [Push Notifications](#11-push-notifications)
-12. [Choosing a Theme](#12-choosing-a-theme)
-13. [Shop Name & Company Details](#13-shop-name--company-details)
-14. [Enabling or Disabling Features](#14-enabling-or-disabling-features)
-15. [Adding Products](#15-adding-products)
-16. [Legal Pages](#16-legal-pages)
-17. [Admin Panel Setup](#17-admin-panel-setup)
-18. [Deployment](#18-deployment)
-19. [Packages — What's included?](#19-packages--whats-included)
-20. [Technology & Open Source](#20-technology--open-source)
-21. [Marketing, SEO & GEO](#21-marketing-seo--geo)
+12. [Newsletter (Brevo)](#12-newsletter-brevo)
+13. [Choosing a Theme](#13-choosing-a-theme)
+14. [Shop Name & Company Details](#14-shop-name--company-details)
+15. [Enabling or Disabling Features](#15-enabling-or-disabling-features)
+16. [Adding Products](#16-adding-products)
+17. [Legal Pages](#17-legal-pages)
+18. [Admin Panel Setup](#18-admin-panel-setup)
+19. [Deployment](#19-deployment)
+20. [Packages — What's included?](#20-packages--whats-included)
+21. [Technology & Open Source](#21-technology--open-source)
+22. [Security](#22-security)
+23. [Marketing, SEO & GEO](#23-marketing-seo--geo)
+24. [Help & Support](#24-help--support)
 
 ---
 
@@ -92,6 +95,18 @@ cd ShopRay/Backend && npm run dev    # → http://localhost:5000
 cd ShopRay/Admin && npm run dev      # → http://localhost:5174
 ```
 
+### Step 4 — Tests & type-checking (recommended)
+
+The backend ships with **Vitest unit tests**. Before every deploy it's worth running a quick local check:
+
+```bash
+cd Backend
+npm run check   # TypeScript type-check (tsc --noEmit)
+npm test        # Run unit tests (vitest run)
+```
+
+In addition, a **GitHub Actions CI** runs automatically on every push and pull request to the `main` and `dev` branches (`.github/workflows/ci.yml`, Node 24): it checks the backend (type-check + tests) and builds both the Frontend and Admin. If CI fails, you should not deploy.
+
 ---
 
 ## 3. Environment Variables
@@ -104,6 +119,7 @@ cd ShopRay/Admin && npm run dev      # → http://localhost:5174
 VITE_API_URL=https://api.yourshop.com          # Your backend URL
 VITE_SUPABASE_URL=https://xxxx.supabase.co     # Supabase project URL
 VITE_SUPABASE_ANON_KEY=eyJ...                  # Supabase anon key (public)
+VITE_STRIPE_PUBLIC_KEY=pk_live_xxxx            # Stripe publishable key
 ```
 
 ### Backend/.env
@@ -121,10 +137,19 @@ STRIPE_WEBHOOK_SECRET=whsec_xxxx               # Stripe webhook signing secret
 JWT_SECRET=a-very-long-random-string
 ADMIN_PASSWORD_HASH=$2b$12$...                 # bcrypt hash of your admin password
 ADMIN_URL=https://admin.yourshop.com           # Admin panel URL — must match exactly!
+# Encrypts 2FA/TOTP secrets at rest in the database (AES-256-GCM).
+# Generate: openssl rand -hex 32
+# If left empty, secrets are stored in PLAINTEXT (backward-compatible). Strongly recommended.
+# After setting it: re-enroll existing 2FA once OR log in once —
+# the secrets are then encrypted automatically.
+# In production (Vercel) this key MUST be set, otherwise 2FA secrets are
+# cloneable by anyone with DB or backup access.
+TOTP_ENC_KEY=
 
 # ── URLs ──────────────────────────────────────────────────────────────────────
 CLIENT_URL=https://yourshop.com                # Shop URL (for Stripe redirect after payment)
-FRONTEND_URL=https://yourshop.com              # Used in email links
+FRONTEND_URL=https://yourshop.com              # Base URL for internal links in emails
+PORT=5000                                      # Server port (default 5000)
 NODE_ENV=production
 DEMO_MODE=false                                # true = all admin writes are blocked
 
@@ -136,38 +161,46 @@ SMTP_PASS=re_xxxx
 SMTP_FROM_EMAIL=orders@yourshop.com
 SMTP_FROM_NAME=My Shop                         # Sender name in emails
 
-# ── Invoice PDF (§14 UStG / required for billing) ────────────────────────────
+# ── Shop data for invoice PDF (§14 UStG — German VAT invoicing law) ───────────
+# These details appear on every generated invoice
 SHOP_NAME=My Shop LLC
 SHOP_STREET=123 Main Street
 SHOP_ZIP=10001
-SHOP_CITY=New York
+SHOP_CITY=Anytown
 SHOP_COUNTRY=United States
 SHOP_EMAIL=info@yourshop.com
 SHOP_PHONE=+1 555 000 0000                     # optional
-SHOP_VAT_ID=DE123456789                        # VAT ID (recommended for EU)
+SHOP_VAT_ID=DE123456789                        # VAT ID (recommended)
 SHOP_TAX_NUMBER=12/345/67890                   # Tax number (alternative to VAT ID)
 INVOICE_PREFIX=INV                             # Invoice number prefix (INV-2026-00001)
 
 # ── DHL Shipping Labels ───────────────────────────────────────────────────────
-DHL_API_KEY=your-dhl-api-key
+# Credentials from the DHL Business Customer Portal (developer.dhl.com)
+DHL_API_KEY=your-dhl-api-key                   # DHL Business API key
 DHL_BILLING_NUMBER=12345678012082              # 14-digit billing number from your DHL contract
-DHL_SHIPPER_NAME=My Shop LLC
-DHL_SHIPPER_STREET=123 Main Street
-DHL_SHIPPER_ZIP=10001
-DHL_SHIPPER_CITY=New York
-DHL_SANDBOX=true                               # true for testing, false for real labels
+DHL_SHIPPER_NAME=My Shop LLC                   # Sender name on the label
+DHL_SHIPPER_STREET=123 Main Street             # Sender street + house number
+DHL_SHIPPER_ZIP=10001                          # Sender ZIP code
+DHL_SHIPPER_CITY=Anytown                       # Sender city
+DHL_SANDBOX=true                               # set to false for real labels in production
 
 # ── Push Notifications (VAPID) ───────────────────────────────────────────────
+# Generate once: node -e "require('web-push').generateVAPIDKeys()"
 VAPID_PUBLIC_KEY=BGJBw...                      # VAPID public key (starts with B)
 VAPID_PRIVATE_KEY=FazEa...                     # VAPID private key (secret!)
-VAPID_EMAIL=mailto:admin@yourshop.com          # Contact email for push service
+VAPID_EMAIL=mailto:admin@yourshop.com          # Contact email for the push service
+
+# ── Newsletter (Brevo) ───────────────────────────────────────────────────────
+# optional — newsletter signups, details in Section 12
+BREVO_API_KEY=xkeysib-...                      # Brevo API key
+BREVO_LIST_ID=3                                # Brevo list ID
+BREVO_DOI_TEMPLATE_ID=1                        # Double opt-in template ID (recommended for EU)
+BREVO_REDIRECT_URL=https://yourshop.com/newsletter-confirmed
 ```
 
 ### Admin/.env
 
 ```env
-VITE_SUPABASE_URL=https://xxxx.supabase.co     # Supabase project URL
-VITE_SUPABASE_ANON_KEY=eyJ...                  # Supabase anon key (public)
 VITE_API_URL=https://api.yourshop.com          # Your backend URL
 ```
 
@@ -182,7 +215,7 @@ All database changes are stored as SQL files in the `database/` folder. They nee
 1. Go to **supabase.com → Your Project → SQL Editor**
 2. Open `database/schema.sql`, copy the entire contents, and click **"Run"**
 
-This creates all tables, functions, and RLS policies in one step.
+This creates the following tables:
 
 | Table | Contents |
 |---|---|
@@ -195,17 +228,20 @@ This creates all tables, functions, and RLS policies in one step.
 
 ### Step 2 — Run migrations
 
-> **Fresh installation:** `schema.sql` from Step 1 already includes all changes through Migration 029. After that you only need to run **Migrations 030–032**.
+> **Fresh installation:** `schema.sql` from Step 1 already includes all changes through Migration 029. After that you only need to run **Migrations 030–035**.
 >
-> **Updating an existing database:** Run any migrations you haven't run yet, in order.
+> **Updating an existing database:** Run any migrations you haven't run yet, one at a time, in order. **Important:** `migration_035` (security hardening) must be run on **every** database — including already-existing installations.
 
-#### Required after fresh installation (030–032)
+#### Required after fresh installation (030–035)
 
 | File | What it does |
 |---|---|
 | `database/migration_030_discount_atomic.sql` | Atomic discount counter (race-condition-safe for parallel orders) |
 | `database/migration_031_team_lead_refund_requests.sql` | Team lead role + refund requests table (4-eyes principle) |
 | `database/migration_032_mod_totp.sql` | Two-factor authentication for staff members (Mods) |
+| `database/migration_033_stock_reservation.sql` | Stock reservations + atomic stock decrement (race-condition- and oversell-safe) |
+| `database/migration_034_discount_claim.sql` | Atomic discount reservation (TOCTOU fix — prevents double redemption when max_uses=1) |
+| `database/migration_035_security_hardening.sql` | **Security-critical:** RLS hardening (no role escalation to owner, no fake "paid" orders via direct insert, contact-spam protection) + ratings count only verified reviews. **Run on every DB.** |
 
 #### Full migration list (for existing DB updates)
 
@@ -217,7 +253,7 @@ This creates all tables, functions, and RLS policies in one step.
 | `database/migration_004_grants.sql` | Permissions for all tables |
 | `database/migration_005_shipping_settings.sql` | Shipping cost configuration |
 | `database/migration_006_admin_totp.sql` | Admin 2FA table (TOTP) |
-| `database/migration_007_categories.sql` | Categories table |
+| `database/migration_007_categories.sql` | Categories table for the admin panel |
 | `database/migration_008_profiles_email.sql` | Email column in customer profiles + automatic trigger |
 | `database/migration_009_profiles_roles.sql` | Role extension (team lead role) |
 | `database/migration_010_order_payment_method.sql` | Payment method + product image in orders |
@@ -240,12 +276,17 @@ This creates all tables, functions, and RLS policies in one step.
 | `database/migration_026_product_variants.sql` | Product variants (size, color — with per-variant stock) |
 | `database/migration_027_login_log_user.sql` | Role + email in the login log |
 | `database/migration_028_notifications_tasks.sql` | Notification center + task management system |
-| `database/migration_029_invoice_sequence.sql` | Atomic invoice number sequence (audit-compliant) |
+| `database/migration_029_invoice_sequence.sql` | Atomic invoice number sequence (GoBD-compliant — German audit-proof bookkeeping standard) |
 | `database/migration_030_discount_atomic.sql` | Atomic discount counter (race-condition-safe) |
 | `database/migration_031_team_lead_refund_requests.sql` | Team lead role + refund requests |
 | `database/migration_032_mod_totp.sql` | 2FA for staff members |
+| `database/migration_033_stock_reservation.sql` | Stock reservations + atomic stock decrement (race-condition- and oversell-safe) |
+| `database/migration_034_discount_claim.sql` | Atomic discount reservation (TOCTOU fix — prevents double redemption when max_uses=1) |
+| `database/migration_035_security_hardening.sql` | **Security-critical:** RLS hardening (no role escalation to owner, no fake "paid" orders via direct insert, contact-spam protection) + ratings count only verified reviews — **run on every DB** |
 
 > **Order matters:** Always run migrations in the order listed above. All files are idempotent — running them more than once will not cause errors.
+>
+> **Note on number 014:** There are **intentionally two** files numbered 014 — `migration_014_shop_settings_categories_image.sql` AND `migration_014_ticket_messages.sql`. **Both** must be run.
 
 ### What happens automatically
 
@@ -278,22 +319,26 @@ This creates all tables, functions, and RLS policies in one step.
 
 1. In Supabase: **Authentication → URL Configuration**
 2. Set **Site URL**: your shop domain (e.g. `https://myshop.com`)
-3. Under **Redirect URLs** add:
+3. Under **Redirect URLs** add the following entries:
    ```
    https://myshop.com/auth/reset-password
    http://localhost:5173/auth/reset-password
    ```
+   This URL is needed for the password-reset link in the email Supabase sends to your customers.
 
 ### Step 4 — Disable email confirmation
 
-Until you have your own SMTP server set up, disable the confirmation email:
+By default, Supabase sends a confirmation email after registration. Until you have your own SMTP server set up, you should disable this:
 
 1. In Supabase: **Authentication → Sign In / Providers → Email**
-2. Turn off **"Confirm email"** → click **Save**
+2. Turn off the **"Confirm email"** toggle
+3. Click **Save**
 
-> Re-enable this after you have configured your own SMTP provider (Section 8).
+> Once you set up your own SMTP provider later (Section 8), you can re-enable this.
 
 ### Step 5 — Enable two-factor authentication (recommended)
+
+ShopRay supports TOTP-based 2FA (Google Authenticator, Authy, etc.) for customer accounts.
 
 1. In Supabase: **Authentication → Sign In / Up**
 2. Under **Multi-Factor Authentication** → set **TOTP** to **Enabled**
@@ -302,22 +347,35 @@ Customers can then enable 2FA themselves in their account settings.
 
 ### Step 6 — Set up Google login (optional)
 
+ShopRay supports login and registration with a Google account. For this you need a Google Cloud app.
+
 **Google Cloud Console:**
 
-1. Go to https://console.cloud.google.com → create a project
-2. **APIs & Services → Credentials → Create → OAuth 2.0 Client ID**
-3. Application type: **Web application**
-4. Authorized redirect URI: `https://YOUR-SUPABASE-URL.supabase.co/auth/v1/callback`
-5. Copy **Client ID** and **Client Secret**
+1. Go to https://console.cloud.google.com
+2. Create a new project (or use an existing one)
+3. **APIs & Services → OAuth consent screen** → choose "External" → fill in app name + email
+4. **APIs & Services → Credentials → Create Credentials → OAuth 2.0 Client ID**
+5. Application type: **Web application**
+6. Add the authorized redirect URI:
+   ```
+   https://YOUR-SUPABASE-URL.supabase.co/auth/v1/callback
+   ```
+   (You'll find the URL in Supabase under Settings → API → Project URL)
+7. Copy the **Client ID** and **Client Secret**
 
 **In Supabase:**
 
-1. **Authentication → Sign In / Providers → Google** → Enable
-2. Enter **Client ID** and **Client Secret** → Save
+1. **Authentication → Sign In / Providers → Google**
+2. Turn on the **"Enable"** toggle
+3. Enter the **Client ID** and **Client Secret** from Google
+4. **Save**
+
+After this step, the "Sign in with Google" and "Sign up with Google" buttons in the shop work automatically.
 
 ### Step 7 — Customize email templates (optional)
 
-In Supabase: **Authentication → Email Templates** — customize "Confirm signup", "Reset Password", and "Magic Link" with your shop name and branding.
+1. In Supabase: **Authentication → Email Templates**
+2. Customize the templates for "Confirm signup", "Reset Password", and "Magic Link" with your shop name and branding.
 
 ---
 
@@ -325,57 +383,71 @@ In Supabase: **Authentication → Email Templates** — customize "Confirm signu
 
 ### Step 1 — Account and keys
 
-1. Go to https://stripe.com → **Developers → API Keys**
-2. Copy **"Publishable key"** (`pk_live_...`) — this is used in the frontend
-3. Copy **"Secret key"** (`sk_live_...`) → `Backend/.env` as `STRIPE_SECRET_KEY`
+1. Go to https://stripe.com and sign in
+2. In the dashboard: **Developers → API Keys**
+3. Copy the **"Publishable key"** (starts with `pk_live_`) → `Frontend/.env` as `VITE_STRIPE_PUBLIC_KEY`
+4. Copy the **"Secret key"** (starts with `sk_live_`) → `Backend/.env` as `STRIPE_SECRET_KEY`
 
 > **Important:** Never put the secret key in the frontend — backend only!
 
 ### Step 2 — Test mode
 
-During development use test keys (`pk_test_...`, `sk_test_...`).
-Test card: `4242 4242 4242 4242`, any future expiry, any CVC.
+During development, work with test keys (`pk_test_...`, `sk_test_...`). Test card that always works: `4242 4242 4242 4242`, any future expiry date, any CVC.
 
-### Step 3 — Production webhook
+### Step 3 — Set up the webhook
 
-After deployment (see Section 18):
-
-1. Stripe Dashboard → **Developers → Webhooks → Add endpoint**
-2. URL: `https://YOUR-BACKEND-URL.vercel.app/api/webhook/stripe`
-3. Events: `checkout.session.completed`, `payment_intent.payment_failed`, `charge.refunded`
-4. Copy **Signing Secret** → add to Vercel as `STRIPE_WEBHOOK_SECRET`
+The webhook is set up after the backend deployment (see Step 7).
 
 ---
 
 ## 7. Backend & Webhook
 
-> **Note:** Built-in rate limiting: 100 requests / 15 min globally, stricter limits for login and checkout.
+> **Note:** The backend has built-in rate limiting (100 requests / 15 minutes globally, with stricter limits for login and checkout). The limits reset on a server restart.
 
-### Start locally
+### Step 1 — Start the backend locally
 
 ```bash
-cd Backend && npm run dev
+cd Backend
+npm install
+npm run dev
 # Test: http://localhost:5000/api/health → {"status":"ok"}
 ```
 
-### Test webhook locally
+### Step 2 — Test the Stripe webhook locally
 
 Install the [Stripe CLI](https://stripe.com/docs/stripe-cli) and run:
 
 ```bash
 stripe login
 stripe listen --forward-to localhost:5000/api/webhook/stripe
-# Copy the whsec_... secret → Backend/.env as STRIPE_WEBHOOK_SECRET
 ```
 
-### Backend endpoints
+The CLI prints a **webhook signing secret** (`whsec_...`) — add it to `Backend/.env` as `STRIPE_WEBHOOK_SECRET`.
+
+### Step 3 — Deploy the backend (Vercel)
+
+See Section 19 for the full deployment guide with Vercel.
+
+### Step 4 — Stripe webhook in production
+
+After deployment:
+
+1. Stripe Dashboard → **Developers → Webhooks → Add endpoint**
+2. URL: `https://YOUR-BACKEND-URL.vercel.app/api/webhook/stripe`
+3. Events: `checkout.session.completed`, `checkout.session.expired`, `payment_intent.payment_failed`, `charge.refunded`
+4. Copy the **Signing Secret** → into the Vercel backend project as `STRIPE_WEBHOOK_SECRET`
+
+> **About the `checkout.session.expired` event:** When a Stripe checkout session expires, the backend automatically releases the reserved stock (Migration 033) and the discount reservation (Migration 034), and sets the associated `pending` order to `cancelled`. This way no stock stays artificially blocked.
+
+### Backend endpoints overview
 
 | Method | Route | Description |
 |---|---|---|
 | GET | `/api/health` | Status check |
+| POST | `/api/webhook/stripe` | Stripe events (internal) |
 | GET | `/api/products` | All active products |
 | GET | `/api/products/:slug` | Single product |
-| GET | `/api/settings/shipping` | Shipping settings (public) |
+| GET | `/api/settings/shipping` | Shipping cost settings (public) |
 | POST | `/api/orders/checkout` | Start Stripe checkout |
 | GET | `/api/orders` | Own orders (auth) |
 | GET | `/api/customers/me` | Own profile (auth) |
@@ -384,13 +456,19 @@ stripe listen --forward-to localhost:5000/api/webhook/stripe
 | POST | `/api/contact` | Send contact request |
 | POST | `/api/admin/login` | Admin login |
 | GET | `/api/admin/products` | All products (admin) |
-| GET | `/api/admin/orders` | Orders (admin) |
-| PATCH | `/api/admin/orders/:id/status` | Update order status (admin) |
-| GET | `/api/admin/customers` | Customer list (admin) |
-| DELETE | `/api/admin/customers/:id` | Delete customer (admin) |
+| GET | `/api/admin/categories` | Categories list (admin) |
+| POST | `/api/admin/categories` | Create category (admin) |
+| DELETE | `/api/admin/categories/:id` | Delete category (admin) |
 | GET | `/api/admin/reviews` | Manage reviews (admin) |
-| GET | `/api/admin/tickets` | Support tickets (admin) |
-| GET | `/api/admin/stats` | Dashboard statistics (admin) |
+| PATCH | `/api/admin/reviews/:id/verify` | Approve review (admin) |
+| PATCH | `/api/admin/reviews/:id/reject` | Reject review (admin) |
+| DELETE | `/api/admin/reviews/:id` | Delete review (admin) |
+| GET | `/api/admin/customers` | Customer list (admin) |
+| GET | `/api/admin/customers/:id` | Customer profile + GDPR export (admin) |
+| PATCH | `/api/admin/customers/:id/role` | Change customer role (admin) |
+| DELETE | `/api/admin/customers/:id` | Delete customer (admin) |
+| GET | `/api/admin/orders` | Orders (admin) |
+| PATCH | `/api/admin/orders/:id/status` | Change order status (admin) |
 | PUT | `/api/admin/settings/shipping` | Save shipping settings (admin) |
 
 ---
@@ -398,6 +476,8 @@ stripe listen --forward-to localhost:5000/api/webhook/stripe
 ## 8. Email Setup
 
 The shop automatically sends emails for order confirmations, password resets, and ticket replies.
+
+### Recommended providers
 
 | Provider | Free tier | Link |
 |---|---|---|
@@ -407,29 +487,29 @@ The shop automatically sends emails for order confirmations, password resets, an
 
 ### Setup (example: Resend)
 
-1. Create account → verify domain (DNS records — Resend walks you through it)
-2. Create API key
-3. Add to `Backend/.env`:
+1. Create an account at https://resend.com
+2. Verify your domain (set DNS records — Resend walks you through it step by step)
+3. Create an **API key**
+4. Add to `Backend/.env`:
    ```env
    SMTP_HOST=smtp.resend.com
    SMTP_PORT=587
    SMTP_USER=resend
    SMTP_PASS=re_xxxx
    SMTP_FROM_EMAIL=orders@yourshop.com
-   SMTP_FROM_NAME=My Shop
    ```
 
-> **Note:** SMTP is only used in the backend — the API key never goes in the frontend.
+> **Note:** SMTP is only used in the backend — no API key goes in the frontend.
 
 ---
 
 ## 9. Invoice Setup
 
-ShopRay automatically generates a legally compliant PDF invoice as soon as an order is paid. The invoice is:
-- sent **automatically** to the customer by email (via Stripe webhook)
+ShopRay automatically generates a GoBD-compliant (German audit-proof bookkeeping standard) PDF invoice as soon as an order is paid. The invoice is:
+- sent **automatically** to the customer by email (via the Stripe webhook)
 - available as a download in the **admin panel** on the order detail page
 
-### Required fields
+### Required fields (§14 UStG — German VAT invoicing law)
 
 Add your company details to `Backend/.env` — they appear on every invoice:
 
@@ -437,24 +517,22 @@ Add your company details to `Backend/.env` — they appear on every invoice:
 SHOP_NAME=My Shop LLC
 SHOP_STREET=123 Main Street
 SHOP_ZIP=10001
-SHOP_CITY=New York
+SHOP_CITY=Anytown
 SHOP_COUNTRY=United States
 SHOP_EMAIL=info@yourshop.com
 SHOP_PHONE=+1 555 000 0000       # optional
-SHOP_VAT_ID=DE123456789          # VAT ID (recommended for EU sellers)
-SHOP_TAX_NUMBER=12/345/67890     # Tax number (alternative to VAT ID)
-INVOICE_PREFIX=INV               # Prefix for invoice numbers (INV-2026-00001, INV-2026-00002, …)
+SHOP_VAT_ID=DE123456789          # VAT ID (e.g. DE123456789)
+SHOP_TAX_NUMBER=12/345/67890     # Tax number (from the tax authority)
+INVOICE_PREFIX=INV               # Invoice number prefix (INV-2026-00001, INV-2026-00002, …)
 ```
 
-> **VAT ID vs. Tax Number:** For EU businesses, a VAT ID is recommended, especially for cross-border sales. You can set both — the invoice displays whatever is present.
+> **VAT ID vs. Tax Number:** For B2C shops, the tax number is enough. If you also issue B2B invoices or sell across the EU, we recommend adding the VAT ID as well. Just enter both — the invoice automatically shows whatever is present.
 
 ### Invoice numbers
 
-Invoice numbers are assigned sequentially (e.g. `INV-2026-00001`, `INV-2026-00002`, …). The assignment is atomic and idempotent — if the same order is processed again, the same number is returned. This satisfies legal requirements for immutability.
+Invoice numbers are assigned sequentially (e.g. `INV-2026-00001`, `INV-2026-00002`, …). The assignment is idempotent — if the same order is fetched more than once, the number stays the same. This satisfies the GoBD requirement of immutability.
 
-> **Important:** Never change `INVOICE_PREFIX` once invoices have been issued — this would break the sequential numbering required by auditing regulations.
-
-### Download manually
+### Download an invoice manually
 
 Admin panel → **Orders** → open an order → **"Invoice"** button (top right).
 
@@ -475,17 +553,17 @@ DHL labels are created directly from the admin panel — no need to open the DHL
 DHL_API_KEY=your-dhl-api-key
 DHL_BILLING_NUMBER=12345678012082   # 14-digit billing number from your DHL contract
 DHL_SHIPPER_NAME=My Shop LLC
-DHL_SHIPPER_STREET=123 Main Street
+DHL_SHIPPER_STREET=123 Main Street  # street + house number
 DHL_SHIPPER_ZIP=10001
-DHL_SHIPPER_CITY=New York
-DHL_SANDBOX=true                    # true for testing, false for real labels in production
+DHL_SHIPPER_CITY=Anytown
+DHL_SANDBOX=true                    # For testing: true. For real labels: false
 ```
 
 **Where do I find the billing number?** In the DHL Business Customer Portal under **My DHL → Products & Contracts**. It is 14 digits and starts with your 8-digit EKP number.
 
 ### Step 2 — Test with sandbox
 
-With `DHL_SANDBOX=true`, labels are created against the DHL test environment. Labels are not valid for real shipping but are perfect for testing.
+With `DHL_SANDBOX=true`, labels are created against the DHL test environment. The labels are not valid for real shipping, but are perfect for testing.
 
 Sandbox credentials for testing: https://developer.dhl.com/api-reference/parcel-de-shipping-post-parcel-germany-v2#section/Authentication/ApiKeyAuth
 
@@ -501,7 +579,7 @@ After this, real labels are created and the customer's order status is automatic
 
 Admin panel → **Orders** → open an order → **"DHL Label"** button → enter package weight → **"Create & Download Label"**
 
-The label is downloaded as a PDF. The DHL tracking number is saved in the order and shown as a clickable tracking link.
+The label is downloaded as a PDF. The DHL tracking number is saved in the order and shown as a tracking link.
 
 ---
 
@@ -539,21 +617,99 @@ VAPID_PRIVATE_KEY=FazEa...
 VAPID_EMAIL=mailto:admin@yourshop.com
 ```
 
-> **Important:** Only generate keys once. If you generate new keys, all existing push subscriptions are invalidated — users must re-subscribe.
+> **Important:** Only generate the keys once. If you generate new keys, all existing push subscriptions must be renewed (users must re-subscribe).
 
 ### Step 2 — Enable in the admin panel
 
-1. Open admin panel → **Settings → Notifications**
+1. Open the admin panel → **Settings → Notifications**
 2. Click **"Enable Notifications"**
-3. Confirm browser permission
+3. Confirm the browser permission
 
 After this, a push notification appears for every new order — even when the browser is minimized.
 
 ---
 
-## 12. Choosing a Theme
+## 12. Newsletter (Brevo)
 
-4 color palettes × 2 modes (dark/light) = **8 themes**.
+The template ships with a ready-made backend route for newsletter signups. All you need is a free Brevo account.
+
+> **Why Brevo?** Brevo is EU-hosted, GDPR-compliant, and has double opt-in built in — legally required in Germany under §7 UWG (German anti-spam / consent law, specifically § 7 (2) No. 3 UWG).
+
+### Step 1 — Create a Brevo account
+
+1. Go to **https://www.brevo.com** and create a free account
+2. Confirm your email address and log in
+
+### Step 2 — Create a contact list
+
+1. In the Brevo dashboard: **Contacts → Lists → Create a list**
+2. Give it a name (e.g. "Shop Newsletter")
+3. Note the **List ID** — a number visible in the URL (e.g. `/lists/3` → the ID is `3`)
+
+### Step 3 — Create an API key
+
+1. Click your **account name** in the top right → **SMTP & API**
+2. Go to the **API Keys** tab → **Generate a new API key**
+3. Give it a name (e.g. "ShopRay") and click **Generate**
+4. Copy the displayed key immediately — it is only shown once!
+
+### Step 4 — Set the environment variables
+
+Add these values to `Backend/.env` and to Vercel (**Settings → Environment Variables**):
+
+```env
+# Required
+BREVO_API_KEY=xkeysib-...           # your API key from Step 3
+BREVO_LIST_ID=3                     # list ID from Step 2
+
+# Optional — double opt-in (recommended for the EU / Germany)
+BREVO_DOI_TEMPLATE_ID=1             # template ID (see Step 5)
+BREVO_REDIRECT_URL=https://your-domain.com/newsletter-confirmed
+```
+
+### Step 5 — Set up double opt-in (recommended)
+
+Double opt-in means: after signing up, the customer receives an email and must click a link inside it. Only then are they added to the list. This is legally required in Germany (§7 UWG — German anti-spam / consent law).
+
+**Create a template in Brevo:**
+
+1. **Campaigns → Email Templates → Create a template**
+2. Template type: **Confirmation** (confirmation email)
+3. Write some text, for example:
+   > *Hi, click the button to confirm your subscription.*
+4. Link the button to the placeholder `{{ doubleoptin }}` — Brevo automatically replaces it with the confirmation link
+5. Save the template → note the **Template ID** (shown in the URL)
+6. Enter this ID as `BREVO_DOI_TEMPLATE_ID`
+
+> **Without `BREVO_DOI_TEMPLATE_ID`:** The contact is added to the list directly (no confirmation email). Only use this if you can prove consent some other way.
+
+### Step 6 — Enable the newsletter feature
+
+In `Frontend/src/config/features.ts`:
+
+```ts
+newsletter: true,   // show the newsletter form on the homepage
+```
+
+### How it works in the background
+
+When a visitor enters their email and clicks "Subscribe":
+
+1. The frontend sends the email to `POST /api/newsletter/subscribe`
+2. The backend validates the email address (format, max. 254 characters)
+3. Brevo is called — with DOI: a confirmation email is sent; without DOI: direct assignment to the list
+4. Already-subscribed addresses are silently ignored (no error)
+5. The visitor sees "Almost done! Check your inbox…"
+
+### What happens if `BREVO_API_KEY` is not set?
+
+The route still returns `200 OK` — the shop works normally and the signup is silently discarded. This way there are no visible errors if you haven't configured the newsletter yet.
+
+---
+
+## 13. Choosing a Theme
+
+ShopRay comes with **4 color palettes**, each in **dark and light mode** — making 8 themes in total.
 
 | Palette | Character | Best for |
 |---|---|---|
@@ -562,7 +718,9 @@ After this, a push notification appears for every new order — even when the br
 | **terra** | Earth tones, warm | Fashion, lifestyle, home |
 | **electric** | Bright blue, modern | Streetwear, gaming, tech |
 
-Change the default in [Frontend/src/providers/ThemeProvider.tsx](Frontend/src/providers/ThemeProvider.tsx):
+### Change the default theme
+
+Open [Frontend/src/providers/ThemeProvider.tsx](Frontend/src/providers/ThemeProvider.tsx) and change the default value:
 
 ```tsx
 // Palette: 'sage' | 'navy' | 'terra' | 'electric'
@@ -576,10 +734,12 @@ Change the default in [Frontend/src/providers/ThemeProvider.tsx](Frontend/src/pr
 
 ---
 
-## 13. Shop Name & Company Details
+## 14. Shop Name & Company Details
 
-All shop and company data is configured in one file:
+All shop and company data is configured in one central file:
 [Frontend/src/config/app.ts](Frontend/src/config/app.ts)
+
+Changes there are automatically applied to the header, footer, imprint, privacy policy, and withdrawal form.
 
 ```ts
 export const APP_NAME    = 'Your Shop Name';
@@ -590,7 +750,7 @@ export const APP_COMPANY = {
   owner:   'John Doe',
   street:  '123 Main Street',
   zip:     '10001',
-  city:    'New York',
+  city:    'Anytown',
   country: 'United States',
   ustId:   'DE 123 456 789',
   hrb:     '',
@@ -599,32 +759,29 @@ export const APP_COMPANY = {
 export const APP_CONTACT = {
   email:   'hello@your-domain.com',
   phone:   '+1 555 000 0000',
-  address: '123 Main Street, 10001 New York',
+  address: '123 Main Street, 10001 Anytown',
 };
 ```
-
-Changes automatically apply to the header, footer, imprint, privacy policy, and withdrawal form.
 
 > **Important:** Use real data — placeholders are not suitable for a live shop. Incorrect imprint data can result in legal warnings.
 
 ---
 
-## 14. Enabling or Disabling Features
+## 15. Enabling or Disabling Features
 
-Edit `Frontend/src/config/features.ts`:
+Edit the values in `Frontend/src/config/features.ts`:
 
 ```ts
 export const FEATURES = {
-  reviews:  true,   // Product reviews
-  wishlist: true,   // Wishlist
-  tickets:  true,   // Support tickets
-  chat:     false,  // Live chat
+  reviews:    true,   // Product reviews
+  wishlist:   true,   // Wishlist
+  tickets:    true,   // Support tickets
+  lmiv:       false,  // Nutritional info (only for food / supplements)
+  newsletter: true,   // Newsletter form on the homepage (requires Brevo — Section 12)
 };
 ```
 
-Set to `false` to hide a feature. The code stays, nothing breaks.
-
-To remove completely:
+### Removing features completely
 
 | Feature | What to remove |
 |---|---|
@@ -637,15 +794,17 @@ After any change: run `npx tsc --noEmit` to check for TypeScript errors.
 
 ---
 
-## 15. Adding Products
+## 16. Adding Products
 
-### Via Admin panel (recommended)
+Products are created via the **admin panel** (recommended) or inserted directly into the database via SQL.
 
-1. Admin panel → **Products → New Product**
-2. Fill in name, price, description, images, category
-3. Click **Save** — visible in the shop immediately
+### Option A — Admin panel (recommended)
 
-### Product variants (size, color, material …)
+1. Open the admin panel → **Products → New Product**
+2. Fill in all fields: name, price, description, images, category
+3. Click **"Save"** — the product is visible in the shop immediately
+
+### Setting up product variants (size, color, material …)
 
 If your product comes in different variations (e.g. sizes S/M/L or colors Red/Blue), you can set up variants. Each variant has its own stock.
 
@@ -653,87 +812,111 @@ If your product comes in different variations (e.g. sizes S/M/L or colors Red/Bl
 
 **How to set up:**
 
-1. Open a product: Admin panel → **Products → Edit product**
+1. Open an existing product: Admin panel → **Products → Edit product**
 2. On the right side, find the **"Variants"** section
 3. Click **"Add option group"** — e.g. "Size"
-4. Enter values (e.g. S, M, L, XL) and confirm each with Enter
+4. Enter the values (e.g. S, M, L, XL) and confirm each value with Enter
 5. Add more option groups if needed (e.g. "Color" → Red, Blue) — up to 3 groups
 6. Click **"Generate SKU matrix"** — the system automatically creates all combinations (e.g. S/Red, S/Blue, M/Red, …)
-7. Set stock and optionally a price surcharge for each combination
+7. For each combination, enter stock and optionally a price surcharge
 8. Click **"Save variants"**
 
-**In the shop:** The customer sees selection fields for each option group. Sold-out combinations are automatically shown as unavailable. Prices update instantly when a surcharge is set.
+**What happens in the shop:**
+- The customer sees selection fields for each option group
+- Sold-out combinations are automatically struck through
+- The price adjusts instantly if you set a price surcharge
+- Each variant has its own stock — automatically deducted after an order
 
-**No variants needed?** Products without variants work exactly as before — the feature is fully optional.
+**No variant system needed?** Products without variants work exactly as before — the feature is fully optional.
 
-### Discount / coupon codes
+### Creating discount codes
 
-You can create coupon codes that give customers a percentage or fixed-amount discount.
+With discount codes you can create discounts for customers. A code can be configured as a percentage (e.g. 10% off the order total) or a fixed amount (e.g. $5 off).
 
 **Prerequisite:** Migration 025 must have been run (see Section 4).
 
 **How to set up:**
 
 1. Admin panel → **Discount Codes → New Code**
-2. Fill in the fields:
-   - **Code** — e.g. `SUMMER10` (case-insensitive at checkout)
+2. Fill in the following fields:
+   - **Code** — e.g. `SUMMER10` (customers enter this code at checkout, case-insensitive)
    - **Type** — Percent (%) or fixed amount (€/$)
-   - **Value** — e.g. 10 for 10% or 5 for €5 off
-   - **Minimum order value** — e.g. 30 (optional, 0 = no minimum)
-   - **Max redemptions** — how many times the code can be used total (empty = unlimited)
+   - **Value** — e.g. 10 for 10% or 5 for $5
+   - **Minimum order value** — e.g. $30 (optional, 0 = no minimum)
+   - **Max redemptions** — how many times the code can be redeemed in total (empty = unlimited)
    - **Valid until** — optional expiry date
-3. Click **Save**
+3. Click **"Save"**
 
-**In the shop:** The customer enters the code at checkout — the discount is shown immediately and deducted from the order total. After a successful payment, the redemption counter is automatically incremented.
+**What happens in the shop:** The customer enters the code at checkout — the discount is shown immediately and deducted from the order total. After a successful payment, the redemption counter is automatically incremented.
 
-### Via seed data (testing)
+### Option B — Seed data (for testing)
 
-Run `database/seed.sql` in the Supabase SQL Editor to populate with sample products.
+The `database/seed.sql` file contains sample products. You can run it once in the SQL Editor to populate the shop with test data.
 
 ---
 
-## 16. Legal Pages
+## 17. Legal Pages
 
-> **Important:** Legal texts in the template are placeholders. Update before going live — use a lawyer or a service like Termly or iubenda.
+> **Important:** The legal texts in the template are placeholders. Update them before launch — ideally with a lawyer or a service like eRecht24 or Trusted Shops (or, outside Germany, an equivalent like Termly or iubenda).
 
-Company data from `app.ts` is automatically applied to `/imprint`, `/privacy`, and `/withdrawal`.
+### Company data — applied automatically
+
+When you enter your data in `Frontend/src/config/app.ts` (Section 14), it is automatically applied to the following pages:
+- `/impressum` (imprint) — name, address, VAT ID, contact
+- `/datenschutz` (privacy policy) — name of the responsible party, contact email
+- `/widerruf` (withdrawal) — company address in the withdrawal form
+
+### Check the remaining texts manually
 
 | Page | File | What to update |
 |---|---|---|
 | **Terms & Conditions** | `src/pages/info/terms.tsx` | Payment methods, delivery times |
 | **Privacy Policy** | `src/pages/info/privacy.tsx` | Add your data processors |
-| **Withdrawal** | `src/pages/info/widerruf.tsx` | Check if template applies |
+| **Withdrawal** | `src/pages/info/widerruf.tsx` | Check if the template applies |
+| **Shipping** | Automatic from the admin panel | No manual changes needed |
 
-**Newsletter:** The template has no double opt-in. GDPR requires confirmed opt-in for marketing emails — integrate an external provider (Mailchimp, Brevo, Klaviyo).
+### Newsletter — legal note
 
-**If selling food / supplements (LMIV active):**
-- Register with your national food authority before first sale
-- Fill in all nutritional fields on every product page
-- Only use EU-approved health claims
+The template includes a ready-made Brevo integration WITH double opt-in (§7 UWG — German anti-spam / consent law). Set up Brevo as described in **Section 12** and set `BREVO_DOI_TEMPLATE_ID` — this fulfills the legal consent requirement. Without a DOI template, contacts are added directly, which is only permitted if you can prove consent some other way.
+
+### Additional steps for food supplements
+
+- **National food authority registration** before the first sale (in Germany: BfR notification)
+- **LMIV details** (EU Food Information Regulation 1169/2011) filled in completely on every product page
+- **Health claims** checked: only use EU-approved claims
 
 ---
 
-## 17. Admin Panel Setup
+## 18. Admin Panel Setup
 
-The admin panel is a separate project (`Admin/`) that runs independently from the shop frontend.
+The admin panel is a separate project (`Admin/`) and runs independently from the shop frontend.
 
 ### What the admin panel can do
 
 | Section | Function |
 |---|---|
-| **Dashboard** | Revenue, orders, customers at a glance — click any order row to open details |
-| **Analytics** | Revenue and order trends, top products, order status breakdown, KPI cards — for 7, 30, or 90 days |
+| **Dashboard** | Revenue, orders, customers at a glance — click an order to open its details |
+| **Analytics** | Revenue and order trends as charts, top products, order status breakdown, KPI cards — for 7, 30, or 90 days |
 | **Products** | Create, edit, upload images, CSV bulk import, variants (size/color/…) |
 | **Orders** | Manage status, download PDF invoice, create DHL shipping label |
-| **Customers** | List, order history, GDPR export (Art. 20), ban/unban |
-| **Categories** | Create, reorder, delete |
-| **Reviews** | Approve, reject, or delete — with tab filter |
-| **Discount Codes** | Create percentage or fixed-amount codes, set expiry and redemption limits |
-| **Support** | Reply to contact requests and tickets |
-| **Settings → Shipping** | Shipping costs, free shipping threshold, delivery time — live configuration |
-| **Settings → Security** | Admin login log — every login is recorded |
-| **Settings → Notifications** | Enable push notifications for new orders |
-| **Settings → Team** | Add and remove moderator accounts (limited access) |
+| **Customers** | Customer list, order history, GDPR export (Art. 20), ban/unban customers |
+| **Categories** | Create categories, set their order, delete |
+| **Reviews** | Approve, reject, or delete — with a tab filter |
+| **Discount Codes** | Create discount codes (percentage or fixed amount), validity period, minimum order value, max redemptions |
+| **Support** | Reply to incoming contact requests and tickets |
+| **Settings → Shipping** | Configure shipping costs, free-shipping threshold, delivery time live |
+| **Settings → Security** | Login log — every admin login is recorded |
+| **Settings → Notifications** | Enable push notifications (new orders on your smartphone) |
+
+### Configure shipping costs
+
+Shipping costs are configured **exclusively in the admin panel** — no code change needed:
+
+1. Admin panel → **Settings → Shipping**
+2. Set the standard shipping, express shipping, free-shipping threshold, and delivery time
+3. Click **"Save"**
+
+Changes are immediately visible at checkout and on the shop's shipping info page.
 
 ### Admin login setup
 
@@ -741,10 +924,10 @@ The admin panel is a separate project (`Admin/`) that runs independently from th
 
 ```bash
 cd Backend
-node -e "const b = require('bcrypt'); b.hash('YOUR-PASSWORD', 12).then(h => console.log(h));"
+node -e "const b = require('bcryptjs'); b.hash('YOUR-PASSWORD', 12).then(h => console.log(h));"
 ```
 
-Add the output (`$2b$12$...`) to `Backend/.env` as `ADMIN_PASSWORD_HASH`.
+Add the hash (`$2b$12$...`) to `Backend/.env` as `ADMIN_PASSWORD_HASH`.
 
 **Step 2 — Generate a JWT secret:**
 
@@ -752,11 +935,11 @@ Add the output (`$2b$12$...`) to `Backend/.env` as `ADMIN_PASSWORD_HASH`.
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'));"
 ```
 
-Add to `Backend/.env` as `JWT_SECRET`.
+Add the value to `Backend/.env` as `JWT_SECRET`.
 
-> **Important:** Change the default password from the template before going live!
+> **Important:** The default password from the template must be changed before launch!
 
-### Admin locally
+### Start the admin locally
 
 ```bash
 cd Admin && npm install && npm run dev
@@ -765,23 +948,28 @@ cd Admin && npm install && npm run dev
 
 ---
 
-## 18. Deployment
+## 19. Deployment
 
-ShopRay uses a **monorepo** with three separate Vercel projects.
+ShopRay consists of three separate Vercel projects in the same GitHub repository (**monorepo**).
 
-### Step 1 — GitHub repository
+### Step 1 — Set up the GitHub repository
 
 1. Create a new **private** repository at https://github.com/new
-2. In your ShopRay folder:
+2. Do not check README or .gitignore
+3. In your ShopRay folder:
 
 ```bash
 git remote add origin git@github.com:YOUR-USERNAME/ShopRay.git
 git push -u origin main
 ```
 
-### Step 2 — Three Vercel projects
+### Step 2 — Create three Vercel projects
 
-Create one project per part at https://vercel.com → **"Add New Project"**:
+Create a separate Vercel project for **Frontend**, **Backend**, and **Admin**:
+
+1. https://vercel.com → **"Add New Project"**
+2. Select the GitHub repository
+3. Set the **Root Directory** — this is critical:
 
 | Vercel project | Root Directory | Framework |
 |---|---|---|
@@ -789,13 +977,38 @@ Create one project per part at https://vercel.com → **"Add New Project"**:
 | shopray-backend | `Backend` | Node.js |
 | shopray-admin | `Admin` | Vite |
 
-Add all environment variables from the respective `.env` file under **Settings → Environment Variables**.
+4. Add all environment variables from the respective `.env` file in Vercel (**Settings → Environment Variables**)
+5. Deploy
 
-### Step 3 — Production branch
+> ### ⚠️ MANDATORY before going live: replace the backend URL in the rewrite
+>
+> In production, the Frontend and Admin route **all** `/api/*` requests through a rewrite
+> to your backend. This rewrite is **hard-coded** in two files:
+>
+> - `Frontend/vercel.json`
+> - `Admin/vercel.json`
+>
+> They currently contain the backend domain of the ShopRay template:
+>
+> ```json
+> { "source": "/api/:path*", "destination": "https://shopray-backend.vercel.app/api/:path*" }
+> ```
+>
+> **Change `shopray-backend.vercel.app` in BOTH files to the URL of your own
+> backend project** (e.g. `https://your-backend.vercel.app` or `https://api.yourshop.com`).
+> If you don't, your shop sends every API request — including login and order data —
+> to someone else's backend. After changing it: commit and redeploy.
 
-In each Vercel project: **Settings → Git → Production Branch** → set to `main`.
+### Step 3 — Connect GitHub to existing Vercel projects
 
-Now every `git push origin main` deploys to production automatically.
+If you already have Vercel projects and are connecting GitHub afterward:
+
+1. Vercel → Your project → **Settings → Git**
+2. **"Connect Git Repository"** → GitHub → select your repo
+3. Vercel → **Settings → Build and Deployment → Root Directory** → enter the right folder
+4. Click **Save**
+
+From now on, Vercel deploys automatically on every `git push`.
 
 ### Step 4 — Custom domain (recommended)
 
@@ -805,11 +1018,13 @@ Now every `git push origin main` deploys to production automatically.
 | Backend | `api.yourshop.com` |
 | Admin | `admin.yourshop.com` |
 
-In Vercel: **Settings → Domains → Add** → enter domain → set DNS records as instructed.
+In Vercel: **Settings → Domains → Add** → enter the domain → set the DNS records as instructed.
 
 > The admin panel should never be on a publicly known URL. A custom domain with password protection is recommended.
 
 ### Step 5 — Verify after deployment
+
+Open these URLs and check that everything works:
 
 | URL | Expected result |
 |---|---|
@@ -831,11 +1046,13 @@ Fix:
 1. Vercel → **Backend project → Settings → Environment Variables**
 2. Set `ADMIN_URL` to the exact URL of the admin panel (e.g. `https://admin.yourshop.com`)
 3. Set `CLIENT_URL` to the exact URL of the shop (e.g. `https://yourshop.com`)
-4. Redeploy backend (Vercel → **Deployments → Redeploy**)
+4. Redeploy the backend (Vercel → **Deployments → Redeploy**)
+
+> **Tip:** Vercel also creates a preview URL on every deployment (e.g. `shopray-admin-xxxx.vercel.app`). The admin panel automatically allows all `*.vercel.app` subdomains — so you only need to enter your own domain in `ADMIN_URL`.
 
 **Admin login fails (500)**
 
-Check that `JWT_SECRET` and `ADMIN_PASSWORD_HASH` are set in Vercel environment variables (Section 17).
+Check that `JWT_SECRET` and `ADMIN_PASSWORD_HASH` are set in the Vercel environment variables (Section 18).
 
 ### Step 6 — Demo mode (optional)
 
@@ -848,7 +1065,7 @@ In demo mode all admin write operations are blocked (HTTP 403). Login, logout, a
 
 ---
 
-## 19. Packages — What's included?
+## 20. Packages — What's included?
 
 | Feature | Lite | Pro | Enterprise |
 |---|---|---|---|
@@ -866,18 +1083,18 @@ In demo mode all admin write operations are blocked (HTTP 403). Login, logout, a
 | **Admin: shipping configuration** | ❌ | ✅ | ✅ |
 | **Admin: category manager** | ❌ | ✅ | ✅ |
 | **Admin: review moderation** | ❌ | ✅ | ✅ |
-| **Admin: discount / coupon codes** | ❌ | ✅ | ✅ |
-| **Admin: product variants** | ❌ | ✅ | ✅ |
+| **Discount / coupon codes** | ❌ | ✅ | ✅ |
+| **Product variants (size/color)** | ❌ | ✅ | ✅ |
 | **GoBD-compliant PDF invoices** | ❌ | ✅ | ✅ |
 | **DHL shipping labels** | ❌ | ✅ | ✅ |
 | **Web push notifications** | ❌ | ✅ | ✅ |
-| **RBAC (Owner + Moderator roles)** | ❌ | ✅ | ✅ |
+| **RBAC (Owner / Team Lead / Mod roles)** | ❌ | ✅ | ✅ |
 | Source code | ❌ | ✅ | ✅ |
 | Priority support | ❌ | ❌ | ✅ |
 
 ---
 
-## 20. Technology & Open Source
+## 21. Technology & Open Source
 
 ShopRay is built almost entirely on open-source technologies.
 
@@ -890,18 +1107,19 @@ ShopRay is built almost entirely on open-source technologies.
 | **Zod** | Input validation | MIT | — |
 | **Nodemailer** | Email sending | MIT | — |
 | **Zustand** | State management | MIT | — |
-| **PostgreSQL** | Database | PostgreSQL License | ✅ |
-| **Supabase** | Auth + database host | Apache 2.0 | ✅ |
-| **Stripe** | Payment processing | proprietary | ❌ |
+| **PostgreSQL** | Database | PostgreSQL License | ✅ yes |
+| **Supabase** | Auth + database host | Apache 2.0 | ✅ yes |
+| **Stripe** | Payment processing | proprietary | ❌ no |
 
 ### Self-hosting Supabase
 
 Supabase is fully open source and can be run on your own server:
 
-- VPS with at least 4 GB RAM (Hetzner, DigitalOcean, Linode)
-- Docker + official guide: https://supabase.com/docs/guides/self-hosting/docker
+- VPS with at least 4 GB RAM (e.g. Hetzner, Contabo, DigitalOcean)
+- Docker
+- Official guide: https://supabase.com/docs/guides/self-hosting/docker
 
-Swap the URL in `.env`:
+Just swap the URL in `.env`:
 ```env
 VITE_SUPABASE_URL=https://supabase.yourserver.com
 SUPABASE_URL=https://supabase.yourserver.com
@@ -918,7 +1136,64 @@ SUPABASE_URL=https://supabase.yourserver.com
 
 ---
 
-## 21. Marketing, SEO & GEO
+## 22. Security
+
+Security is built into ShopRay from the start — not bolted on afterward. This section sums up what the template protects automatically and what you still need to do before going live. You don't need any security knowledge to run the shop safely; the important safeguards are built in.
+
+### Admin login: cookie + CSRF protection
+
+The admin signs in via an **httpOnly session cookie** (`adminSession`, `sameSite=lax`, HTTPS-only in production, 8-hour lifetime). "httpOnly" means: malicious code in the browser cannot read the login token.
+
+In addition, a **CSRF protection** (Cross-Site Request Forgery — forged requests from other websites) is in place. State-changing admin requests that rely only on the cookie require an extra `X-Requested-With` header — the admin frontend sets it automatically, so you don't have to do anything. **Guest and customer actions** (checkout, contact form, newsletter) are never affected by this.
+
+### Two-factor authentication (2FA / TOTP)
+
+The owner and staff members can secure their login with an authenticator app (Google Authenticator, Authy, …). The associated secrets are stored **encrypted with AES-256-GCM** in the database — the key for this is `TOTP_ENC_KEY` (see Section 3). Without a key set, the secrets are stored in plaintext (backward-compatible) — **in production you should always set the key.**
+
+### Database hardening (Row Level Security)
+
+All tables have **Row Level Security (RLS)** — every user only sees and changes their own data. `migration_035` hardens this further:
+
+- Users **cannot** escalate their own role to "owner" (no privilege escalation).
+- It is **not possible to write fake "paid" orders** via a direct insert into the database — an order is only marked paid via the verified Stripe webhook.
+- Contact requests run exclusively through the rate-limited backend (spam protection).
+
+> **Mandatory:** `migration_035` must be run on **every** database — including already-existing installations, not just on a fresh installation (see Section 4).
+
+### Amounts are calculated server-side
+
+**Shipping costs and discounts** are calculated exclusively in the backend and passed to the payment as real Stripe line items (`shipping_option`). Values from the customer's browser are **never** trusted — a manipulated cart cannot change the amount to be paid.
+
+### Stripe webhook: signed and idempotent
+
+Incoming payment confirmations from Stripe are verified via a **signature check** (`STRIPE_WEBHOOK_SECRET`) — forged confirmations are rejected. Processing is **idempotent**: the transition from `pending` to `paid` happens exactly once per order, even if Stripe sends an event multiple times.
+
+### Protection against race conditions
+
+- **Stock** (`migration_033`) and **discount codes** (`migration_034`) are reserved atomically — even with many simultaneous orders, nothing can be sold twice or redeemed twice.
+- **Refunds** follow the **4-eyes principle**: a refund must be confirmed by a team lead (`migration_031`).
+
+### Further protection mechanisms
+
+- **Rate limiting** on login, checkout, contact, newsletter, and discount-code validation — slows down automated attacks and spam.
+- **`SUPABASE_SERVICE_ROLE_KEY`** belongs exclusively in the backend, **never** in the frontend or admin — this key bypasses RLS and has full database access.
+- **Demo mode** (`DEMO_MODE=true`) blocks all write access (HTTP 403) — ideal for a publicly reachable demo instance.
+- **Security headers** (CSP, HSTS, `X-Frame-Options: DENY`, `nosniff`, and more) are set via `vercel.json` and the `helmet` middleware.
+- **vercel.json rewrite:** Enter your **own** backend URL in `Frontend/vercel.json` and `Admin/vercel.json`, otherwise API requests go to someone else's backend (see Section 19).
+
+### Before go-live — security checklist
+
+- [ ] `TOTP_ENC_KEY` set (mandatory in production — otherwise 2FA secrets are in plaintext)
+- [ ] `migration_035` run on the production database
+- [ ] Your own backend URL entered in **both** `vercel.json` files (Frontend + Admin)
+- [ ] Real company data in `Frontend/src/config/app.ts` and `Backend/.env` (no placeholders)
+- [ ] Stripe **Live** keys set instead of test keys
+- [ ] Default admin password from the template changed (`ADMIN_PASSWORD_HASH`)
+- [ ] `npm run check` + `npm test` green in the backend locally (see Section 2)
+
+---
+
+## 23. Marketing, SEO & GEO
 
 All marketing and SEO settings are configured in **one central file**:
 `Frontend/src/config/app.ts`
@@ -990,6 +1265,7 @@ ShopRay sets the following for every page:
 | Twitter/X card | Twitter preview |
 | Canonical URL | Prevents duplicate content |
 | Product photo as preview image | Social share of product pages |
+| Category name in the title | e.g. "Kitchen \| Your Shop" instead of "All Products" |
 
 **JSON-LD Structured Data (for Google & AI search):**
 
@@ -1072,7 +1348,7 @@ With the correct `Product` schema on product pages, your shop is already prepare
 
 ---
 
-## Help & Support
+## 24. Help & Support
 
 For questions about the template:
 - GitHub Issues: https://github.com/SchubertChris/ShopRay/issues

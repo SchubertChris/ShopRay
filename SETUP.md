@@ -1,6 +1,6 @@
 # ShopRay — Setup Guide
 
-**Version:** 2.0.0 | **Letzte Aktualisierung:** 2026-05-27
+**Version:** 2.1.0 | **Letzte Aktualisierung:** 2026-06-28
 
 Dieser Guide führt dich Schritt für Schritt durch die Einrichtung deines ShopRay-Templates —
 von der Installation bis zum fertigen, live geschalteten Shop.
@@ -30,6 +30,9 @@ von der Installation bis zum fertigen, live geschalteten Shop.
 19. [Deployment (Veröffentlichen)](#19-deployment)
 20. [Was gehört zu welchem Paket?](#20-pakete--was-gehört-wozu)
 21. [Technologie & Open Source](#21-technologie--open-source)
+22. [Sicherheit](#22-sicherheit)
+23. [Marketing, SEO & GEO einrichten](#23-marketing-seo--geo-einrichten)
+24. [Hilfe & Support](#24-hilfe--support)
 
 ---
 
@@ -100,6 +103,18 @@ cd ShopRay/Admin && npm run dev
 # → http://localhost:5174
 ```
 
+### Schritt 4 — Tests & Typprüfung (empfohlen)
+
+Das Backend bringt **Vitest-Unit-Tests** mit. Vor jedem Deploy lohnt sich ein kurzer lokaler Check:
+
+```bash
+cd Backend
+npm run check   # TypeScript-Typprüfung (tsc --noEmit)
+npm test        # Unit-Tests ausführen (vitest run)
+```
+
+Zusätzlich läuft bei jedem Push/Pull-Request auf die Branches `main` und `dev` automatisch eine **GitHub-Actions-CI** (`.github/workflows/ci.yml`, Node 24): sie prüft das Backend (Typecheck + Tests) sowie den Build von Frontend und Admin. Schlägt die CI fehl, solltest du nicht deployen.
+
 ---
 
 ## 3. Umgebungsvariablen einrichten
@@ -130,9 +145,19 @@ STRIPE_WEBHOOK_SECRET=whsec_xxxx            # Stripe Webhook Signing Secret
 JWT_SECRET=ein-sehr-langer-zufaelliger-string
 ADMIN_PASSWORD_HASH=$2b$12$...              # bcrypt-Hash deines Admin-Passworts
 ADMIN_URL=https://admin.deinshop.de         # Admin-Panel-URL — MUSS exakt stimmen!
+# Verschlüsselt 2FA/TOTP-Secrets at-rest in der DB (AES-256-GCM).
+# Generieren: openssl rand -hex 32
+# Wenn leer, werden Secrets im KLARTEXT gespeichert (rückwärtskompatibel). Stark empfohlen.
+# Nach dem Setzen: bestehende 2FA einmal neu einrichten ODER einmal einloggen —
+# dann werden die Secrets automatisch verschlüsselt.
+# In Produktion (Vercel) MUSS dieser Key gesetzt sein, sonst sind 2FA-Secrets bei
+# DB-/Backup-Zugriff klonebar.
+TOTP_ENC_KEY=
 
 # ── URLs ──────────────────────────────────────────────────────────────────────
 CLIENT_URL=https://deinshop.de              # Shop-URL (für Stripe Redirect nach Zahlung)
+FRONTEND_URL=https://deinshop.de            # Basis-URL für interne Links in E-Mails
+PORT=5000                                   # Server-Port (Default 5000)
 NODE_ENV=production
 DEMO_MODE=false                             # true = alle Schreibzugriffe im Admin gesperrt
 
@@ -172,6 +197,13 @@ DHL_SANDBOX=true                           # auf false setzen für echte Labels 
 VAPID_PUBLIC_KEY=BGJBw...                  # VAPID Public Key (beginnt mit B)
 VAPID_PRIVATE_KEY=FazEa...                 # VAPID Private Key (geheim!)
 VAPID_EMAIL=mailto:admin@deinshop.de       # Kontakt-E-Mail für Push-Service
+
+# ── Newsletter (Brevo) ───────────────────────────────────────────────────────
+# optional — Newsletter, Details in Abschnitt 12
+BREVO_API_KEY=xkeysib-...                  # Brevo API-Schlüssel
+BREVO_LIST_ID=3                            # Brevo Listen-ID
+BREVO_DOI_TEMPLATE_ID=1                    # Double-Opt-In Template-ID (empfohlen für DE)
+BREVO_REDIRECT_URL=https://deinshop.de/newsletter-bestaetigt
 ```
 
 ### Admin/.env
@@ -204,17 +236,20 @@ Das legt folgende Tabellen an:
 
 ### Schritt 2 — Migrationen ausführen
 
-> **Frisch-Installation:** `schema.sql` aus Schritt 1 enthält bereits alle Änderungen bis Migration 029. Du musst danach **nur noch Migrationen 030–032** ausführen.
+> **Frisch-Installation:** `schema.sql` aus Schritt 1 enthält bereits alle Änderungen bis Migration 029. Du musst danach **nur noch Migrationen 030–035** ausführen.
 >
-> **Bestehende Datenbank aktualisieren:** Führe alle Migrationen die du noch nicht ausgeführt hast einzeln der Reihe nach aus.
+> **Bestehende Datenbank aktualisieren:** Führe alle Migrationen die du noch nicht ausgeführt hast einzeln der Reihe nach aus. **Wichtig:** `migration_035` (Sicherheits-Härtung) muss auf **jeder** Datenbank ausgeführt werden — auch auf bereits bestehenden Installationen.
 
-#### Pflicht nach Frisch-Installation (030–032)
+#### Pflicht nach Frisch-Installation (030–035)
 
 | Datei | Was sie macht |
 |---|---|
 | `database/migration_030_discount_atomic.sql` | Atomarer Rabatt-Zähler (race-condition-sicher bei parallelen Bestellungen) |
 | `database/migration_031_team_lead_refund_requests.sql` | Teamleiter-Rolle + Erstattungsanträge-Tabelle (4-Augen-Prinzip) |
 | `database/migration_032_mod_totp.sql` | 2-Faktor-Authentifizierung für Mitarbeiter (Mods) |
+| `database/migration_033_stock_reservation.sql` | Stock-Reservierungen + atomarer Lagerbestand-Abzug (race-condition-/oversell-sicher) |
+| `database/migration_034_discount_claim.sql` | Atomare Gutschein-Reservierung (TOCTOU-Fix, verhindert Doppel-Einlösung bei max_uses=1) |
+| `database/migration_035_security_hardening.sql` | **Sicherheitskritisch:** RLS-Härtung (keine Rollen-Eskalation auf owner, keine Fake-paid-Orders per Direkt-Insert, Kontakt-Spam-Schutz) + Rating zählt nur verifizierte Reviews. **Auf jeder DB ausführen.** |
 
 #### Vollständige Migrations-Übersicht (für bestehende DB-Updates)
 
@@ -253,8 +288,13 @@ Das legt folgende Tabellen an:
 | `database/migration_030_discount_atomic.sql` | Atomarer Rabatt-Zähler (race-condition-sicher) |
 | `database/migration_031_team_lead_refund_requests.sql` | Teamleiter-Rolle + Erstattungsanträge |
 | `database/migration_032_mod_totp.sql` | 2FA für Mitarbeiter |
+| `database/migration_033_stock_reservation.sql` | Stock-Reservierungen + atomarer Lagerbestand-Abzug (race-condition-/oversell-sicher) |
+| `database/migration_034_discount_claim.sql` | Atomare Gutschein-Reservierung (TOCTOU-Fix, verhindert Doppel-Einlösung bei max_uses=1) |
+| `database/migration_035_security_hardening.sql` | **Sicherheitskritisch:** RLS-Härtung (keine Rollen-Eskalation auf owner, keine Fake-paid-Orders per Direkt-Insert, Kontakt-Spam-Schutz) + Rating zählt nur verifizierte Reviews — **auf jeder DB ausführen** |
 
 > **Reihenfolge wichtig:** Führe die Migrationen immer in der angezeigten Reihenfolge aus. Alle Dateien sind idempotent — mehrfaches Ausführen verursacht keine Fehler.
+>
+> **Hinweis zu Nummer 014:** Es gibt **absichtlich zwei** Dateien mit der Nummer 014 — `migration_014_shop_settings_categories_image.sql` UND `migration_014_ticket_messages.sql`. **Beide** müssen ausgeführt werden.
 
 ### Was passiert automatisch
 
@@ -394,7 +434,7 @@ Die CLI zeigt einen **Webhook Signing Secret** (`whsec_...`) — trage ihn in `B
 
 ### Schritt 3 — Backend deployen (Vercel)
 
-Sieh Abschnitt 15 für die vollständige Deployment-Anleitung mit Vercel.
+Sieh Abschnitt 19 für die vollständige Deployment-Anleitung mit Vercel.
 
 ### Schritt 4 — Stripe Webhook in Produktion
 
@@ -402,8 +442,10 @@ Nach dem Deployment:
 
 1. Stripe Dashboard → **Developers → Webhooks → Add endpoint**
 2. URL: `https://DEINE-BACKEND-URL.vercel.app/api/webhook/stripe`
-3. Events: `checkout.session.completed`, `payment_intent.payment_failed`, `charge.refunded`
+3. Events: `checkout.session.completed`, `checkout.session.expired`, `payment_intent.payment_failed`, `charge.refunded`
 4. **Signing Secret** kopieren → in Vercel Backend-Projekt als `STRIPE_WEBHOOK_SECRET`
+
+> **Zum Event `checkout.session.expired`:** Läuft eine Stripe-Checkout-Sitzung ab, gibt das Backend den reservierten Lagerbestand (Migration 033) und die Gutschein-Reservierung (Migration 034) automatisch wieder frei und setzt die zugehörige `pending`-Bestellung auf `cancelled`. So bleibt kein Lager künstlich blockiert.
 
 ### Backend-Endpunkte Übersicht
 
@@ -829,7 +871,7 @@ Im Ordner `database/seed.sql` liegt eine Datei mit Beispielprodukten. Diese kann
 
 ### Firmendaten — werden automatisch übernommen
 
-Wenn du deine Daten in `Frontend/src/config/app.ts` einträgst (Abschnitt 10), werden sie automatisch in folgende Seiten übernommen:
+Wenn du deine Daten in `Frontend/src/config/app.ts` einträgst (Abschnitt 14), werden sie automatisch in folgende Seiten übernommen:
 - `/impressum` — Name, Adresse, USt-ID, Kontakt
 - `/datenschutz` — Name des Verantwortlichen, Kontakt-E-Mail
 - `/widerruf` — Unternehmensanschrift im Widerrufsformular
@@ -864,7 +906,6 @@ Der Admin-Bereich ist ein separates Projekt (`Admin/`) und läuft unabhängig vo
 | Bereich | Funktion |
 |---|---|
 | **Dashboard** | Umsatz, Bestellungen, Kunden auf einen Blick — Klick auf Bestellung öffnet Details |
-| **Dashboard** | Umsatz, Bestellungen, Kunden auf einen Blick — Klick auf Bestellung öffnet Details |
 | **Analytics** | Umsatz- und Bestellungsverlauf als Diagramm, Top-Produkte, Bestellstatus-Verteilung, KPI-Karten — für 7, 30 oder 90 Tage |
 | **Produkte** | Anlegen, bearbeiten, Bilder hochladen, CSV-Massenimport, Varianten (Größe/Farbe/…) |
 | **Bestellungen** | Status verwalten, Rechnung als PDF herunterladen, DHL-Versandlabel erstellen |
@@ -893,7 +934,7 @@ Die Versandkosten werden **ausschließlich im Admin-Panel** eingestellt — kein
 
 ```bash
 cd Backend
-node -e "const b = require('bcrypt'); b.hash('DEIN-PASSWORT', 12).then(h => console.log(h));"
+node -e "const b = require('bcryptjs'); b.hash('DEIN-PASSWORT', 12).then(h => console.log(h));"
 ```
 
 Den Hash (`$2b$12$...`) in `Backend/.env` als `ADMIN_PASSWORD_HASH` eintragen.
@@ -1021,7 +1062,7 @@ Lösung:
 
 **Admin-Login schlägt fehl (500)**
 
-Prüfe ob `JWT_SECRET` und `ADMIN_PASSWORD_HASH` in den Vercel Umgebungsvariablen gesetzt sind (Abschnitt 17).
+Prüfe ob `JWT_SECRET` und `ADMIN_PASSWORD_HASH` in den Vercel Umgebungsvariablen gesetzt sind (Abschnitt 18).
 
 ### Schritt 6 — Demo-Modus (optional)
 
@@ -1052,6 +1093,12 @@ Im Demo-Modus sind alle schreibenden Admin-Operationen gesperrt (HTTP 403). Logi
 | **Admin: Versandkosten konfigurieren** | ❌ | ✅ | ✅ |
 | **Admin: Kategorien-Manager** | ❌ | ✅ | ✅ |
 | **Admin: Bewertungs-Moderation** | ❌ | ✅ | ✅ |
+| **Gutschein-/Rabattcodes** | ❌ | ✅ | ✅ |
+| **Produktvarianten (Größe/Farbe)** | ❌ | ✅ | ✅ |
+| **GoBD-konforme PDF-Rechnungen** | ❌ | ✅ | ✅ |
+| **DHL-Versandlabels** | ❌ | ✅ | ✅ |
+| **Web-Push-Benachrichtigungen** | ❌ | ✅ | ✅ |
+| **RBAC (Owner / Team-Lead / Mod)** | ❌ | ✅ | ✅ |
 | Source Code | ❌ | ✅ | ✅ |
 | Prioritäts-Support | ❌ | ❌ | ✅ |
 
@@ -1099,7 +1146,64 @@ SUPABASE_URL=https://supabase.deineserver.de
 
 ---
 
-## 21. Marketing, SEO & GEO einrichten
+## 22. Sicherheit
+
+Sicherheit ist in ShopRay von Anfang an mitgedacht — nicht nachträglich aufgesetzt. Dieser Abschnitt fasst zusammen, was das Template automatisch schützt und was du vor dem Go-Live noch tun musst. Du brauchst kein Security-Wissen, um den Shop sicher zu betreiben; die wichtigen Vorkehrungen sind eingebaut.
+
+### Admin-Login: Cookie + CSRF-Schutz
+
+Der Admin meldet sich über ein **httpOnly-Session-Cookie** an (`adminSession`, `sameSite=lax`, in Produktion nur über HTTPS, Laufzeit 8 Stunden). „httpOnly" bedeutet: Schadcode im Browser kann das Login-Token nicht auslesen.
+
+Zusätzlich greift ein **CSRF-Schutz** (Cross-Site Request Forgery — gefälschte Anfragen von fremden Webseiten). Verändernde Admin-Anfragen, die nur über das Cookie laufen, verlangen den zusätzlichen Header `X-Requested-With` — das Admin-Frontend setzt ihn automatisch, du musst nichts tun. **Gast- und Kundenaktionen** (Checkout, Kontaktformular, Newsletter) sind davon nie betroffen.
+
+### Zwei-Faktor-Authentifizierung (2FA / TOTP)
+
+Owner und Mitarbeiter können ihren Login mit einer Authenticator-App (Google Authenticator, Authy …) absichern. Die zugehörigen Geheimnisse („Secrets") werden mit **AES-256-GCM verschlüsselt** in der Datenbank gespeichert — der Schlüssel dafür ist `TOTP_ENC_KEY` (siehe Abschnitt 3). Ohne gesetzten Key werden die Secrets im Klartext gespeichert (rückwärtskompatibel) — **in Produktion solltest du den Key immer setzen.**
+
+### Datenbank-Härtung (Row Level Security)
+
+Alle Tabellen haben **Row Level Security (RLS)** — jeder Nutzer sieht und ändert nur seine eigenen Daten. `migration_035` härtet das zusätzlich ab:
+
+- Nutzer können ihre eigene Rolle **nicht** auf „owner" hochstufen (keine Rechte-Eskalation).
+- Es lassen sich **keine gefälschten „paid"-Bestellungen** per Direkt-Insert in die Datenbank schreiben — bezahlt wird eine Bestellung nur über den verifizierten Stripe-Webhook.
+- Kontaktanfragen laufen ausschließlich über das ratelimitierte Backend (Spam-Schutz).
+
+> **Pflicht:** `migration_035` muss auf **jeder** Datenbank ausgeführt werden — auch auf bereits bestehenden Installationen, nicht nur bei einer Frisch-Installation (siehe Abschnitt 4).
+
+### Beträge werden server-seitig berechnet
+
+**Versandkosten und Rabatte** werden ausschließlich im Backend berechnet und als echte Stripe-Positionen (`shipping_option`) an die Zahlung übergeben. Werten aus dem Browser des Kunden wird **nie** vertraut — ein manipulierter Warenkorb kann den zu zahlenden Betrag nicht verändern.
+
+### Stripe-Webhook: signiert und idempotent
+
+Eingehende Zahlungsbestätigungen von Stripe werden über eine **Signaturprüfung** (`STRIPE_WEBHOOK_SECRET`) verifiziert — gefälschte Bestätigungen werden abgewiesen. Die Verarbeitung ist **idempotent**: Der Übergang von `pending` zu `paid` passiert für jede Bestellung nur genau einmal, auch wenn Stripe ein Event mehrfach sendet.
+
+### Schutz gegen Race Conditions
+
+- **Lagerbestand** (`migration_033`) und **Gutscheine** (`migration_034`) werden atomar reserviert — selbst bei vielen gleichzeitigen Bestellungen kann nichts doppelt verkauft oder doppelt eingelöst werden.
+- **Erstattungen** folgen dem **4-Augen-Prinzip**: Eine Erstattung muss von einem Team-Lead bestätigt werden (`migration_031`).
+
+### Weitere Schutzmechanismen
+
+- **Rate-Limiting** auf Login, Checkout, Kontakt, Newsletter und Gutschein-Prüfung — bremst automatisierte Angriffe und Spam aus.
+- **`SUPABASE_SERVICE_ROLE_KEY`** gehört ausschließlich ins Backend, **niemals** ins Frontend oder Admin — dieser Schlüssel umgeht die RLS und hat vollen Datenbankzugriff.
+- **Demo-Modus** (`DEMO_MODE=true`) sperrt alle Schreibzugriffe (HTTP 403) — ideal für eine öffentlich erreichbare Demo-Instanz.
+- **Sicherheits-Header** (CSP, HSTS, `X-Frame-Options: DENY`, `nosniff` u.a.) werden über `vercel.json` und die `helmet`-Middleware gesetzt.
+- **vercel.json-Rewrite:** Trage in `Frontend/vercel.json` und `Admin/vercel.json` deine **eigene** Backend-URL ein, sonst gehen API-Anfragen an ein fremdes Backend (siehe Abschnitt 19).
+
+### Vor dem Go-Live — Sicherheits-Checkliste
+
+- [ ] `TOTP_ENC_KEY` gesetzt (in Produktion Pflicht — sonst 2FA-Secrets im Klartext)
+- [ ] `migration_035` auf der produktiven Datenbank ausgeführt
+- [ ] Eigene Backend-URL in **beiden** `vercel.json` (Frontend + Admin) eingetragen
+- [ ] Echte Firmendaten in `Frontend/src/config/app.ts` und `Backend/.env` (kein Platzhalter)
+- [ ] Stripe **Live**-Keys statt Test-Keys gesetzt
+- [ ] Standard-Admin-Passwort aus dem Template geändert (`ADMIN_PASSWORD_HASH`)
+- [ ] Lokal `npm run check` + `npm test` im Backend grün (siehe Abschnitt 2)
+
+---
+
+## 23. Marketing, SEO & GEO einrichten
 
 Alle Marketing- und SEO-Einstellungen werden in **einer zentralen Datei** konfiguriert:
 `Frontend/src/config/app.ts`
@@ -1253,7 +1357,7 @@ Mit dem korrekten `Product`-Schema auf Produktseiten ist dein Shop bereits für 
 
 ---
 
-## Hilfe & Support
+## 24. Hilfe & Support
 
 Bei Fragen zum Template:
 - GitHub Issues: https://github.com/SchubertChris/ShopRay/issues
