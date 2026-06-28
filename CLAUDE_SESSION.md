@@ -55,6 +55,22 @@ git push origin main   → PRODUCTION auf Vercel (alle 3 Projekte automatisch)
 | Security Audit | 27 Sicherheitslücken gefunden + alle geschlossen (Stand 2026-05-20) |
 | Docs-Cleanup | .env.examples korrigiert, QUICKSTART.md, SETUP.en.md v1.8.0 — alles gepusht |
 
+### Session 20 (2026-06-28) — Käufer-Doku, Projekt-Aufräumung & DB-Konsolidierung
+
+**SETUP-Doku v2.1.0 (DE + EN, volle Parität):** auf echten Code-Stand gebracht (TOTP_ENC_KEY, Migrationen bis 035, `checkout.session.expired`, Tests/CI), neuer **Security-Abschnitt**, Nummerierung gefixt (doppeltes „21" weg, lückenlos 1–24), EN-Newsletter-Abschnitt ergänzt, deutsche Rechtsnormen für int. Käufer erklärt. `Backend/.env.example` um Brevo-Block ergänzt.
+
+**Projekt-Aufräumung** (Dead-Code-Scan + Review, alles tsc/Build-verifiziert): entfernt — 5 ungenutzte Frontend-Hooks, `HomeLayout.tsx`, `config/constants.ts`, 2 Theme-Stub-SCSS, `Admin/public/icons.svg`, 7 leere `pages/*/index.ts`, `Frontend/nul` (71 KB Artefakt), Seed-Dubletten (`seed.ts` ×2, `seed_supplements.sql`), obsoletes `scripts/migrate.ts`.
+
+**Migrationen geordnet & DB konsolidiert:**
+- Doppeltes `014` → `migration_014b_ticket_messages.sql`.
+- `schema.sql` auf **001–035 konsolidiert** (031–035 angehängt) → Frisch-Install = nur `schema.sql`. Irreführender Header (verschwieg Sicherheits-035) korrigiert.
+- Alle 36 Einzelmigrationen nach **`database/migrations/archive/`** verschoben; `database/` Root = `schema.sql` + `seed.sql` + `README.md`.
+- **Entscheidung:** `schema.sql` ist ab jetzt **Single Source of Truth** — neue DB-Änderungen direkt dort, keine neuen nummerierten Migrationen mehr (Memory `[[shopray-db-single-source]]`).
+
+**GitGuardian-Alert** (commit `325c1e2`, „Company Email Password"): verifiziert als **False Positive** — nur Platzhalter-SMTP (`SMTP_PASS=re_xxxx` + `SMTP_FROM_EMAIL`), kein echtes Secret, keine `.env` getrackt, repo-weiter Scan 0 Treffer. Nichts zu rotieren.
+
+**Stand:** alles committet + gepusht (HEAD `f6f19e5`), alle 3 Vercel-Projekte READY, Builds/tsc/10 Tests grün.
+
 ### Implementiert in Session 19 (2026-06-25) — GPT-5.5-Audit Gegenprüfung + Fixes
 
 GPT-5.5 lieferte zwei „launch-ready"-Bewertungen. Multi-Agent-Audit (verify + adversarisch) gegen den echten Code: **7 Behauptungen erfunden** (API-URL-Chaos, Service-Key im Admin, Stripe-Redirects falsch, Cart zu früh geleert, Stock ungeprüft, Reviews ungefiltert, CSRF) — **16 bestätigt**. Bestätigte echte Bugs gefixt:
