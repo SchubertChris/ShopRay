@@ -230,48 +230,48 @@ This creates the following tables:
 
 > **Fresh installation:** `schema.sql` from Step 1 already includes **all** migrations (001–035, including the security hardening in 035). There is **nothing more to do** here — skip this step and continue with "What happens automatically".
 >
-> **Updating an existing database:** Run any migrations you haven't run yet, one at a time, in the order listed. **Important:** `migration_035` (security hardening) must be run on **every** database — including already-existing installations.
+> **Updating an existing database:** The individual migrations live in the `database/migrations/archive/` folder. Run any you haven't run yet, one at a time, in the order listed. **Important:** `migration_035` (security hardening) must be run on **every** database — including already-existing installations.
 
 #### Full migration list (for existing DB updates)
 
 | File | What it does |
 |---|---|
-| `database/migration_001_products_detail.sql` | Extended product fields (highlights, certificates, nutritional info, rich text) |
-| `database/migration_002_admin_login_log.sql` | Login log for the admin panel |
-| `database/migration_003_product_images.sql` | Supabase Storage bucket for product images |
-| `database/migration_004_grants.sql` | Permissions for all tables |
-| `database/migration_005_shipping_settings.sql` | Shipping cost configuration |
-| `database/migration_006_admin_totp.sql` | Admin 2FA table (TOTP) |
-| `database/migration_007_categories.sql` | Categories table for the admin panel |
-| `database/migration_008_profiles_email.sql` | Email column in customer profiles + automatic trigger |
-| `database/migration_009_profiles_roles.sql` | Role extension (team lead role) |
-| `database/migration_010_order_payment_method.sql` | Payment method + product image in orders |
-| `database/migration_011_user_ban.sql` | Customer ban/unban system |
-| `database/migration_012_push_subscriptions.sql` | Web push notifications |
-| `database/migration_013_invoice_label.sql` | Invoice numbers + DHL tracking columns |
-| `database/migration_014_shop_settings_categories_image.sql` | Shop settings + category images |
-| `database/migration_014b_ticket_messages.sql` | Ticket chat (message history) |
-| `database/migration_015_mod_invites_admin_config.sql` | Staff invitations + admin configuration in DB |
-| `database/migration_016_must_change_password.sql` | Password change requirement on first login |
-| `database/migration_017_service_role_grants.sql` | Missing backend permissions (service_role) |
-| `database/migration_018_tickets_guest.sql` | Guest tickets (support without an account) |
-| `database/migration_019_ticket_priority.sql` | Ticket priority levels (low / normal / high / urgent) |
-| `database/migration_020_cleanup_testdata.sql` | Cleanup of test data |
-| `database/migration_021_missing_grants.sql` | Additional missing permissions |
-| `database/migration_022_stripe_payment_intent.sql` | Stripe Payment Intent ID in orders |
-| `database/migration_023_return_requests.sql` | Return requests table |
-| `database/migration_024_return_items.sql` | Items in return requests (JSONB) |
-| `database/migration_025_discount_codes.sql` | Discount / coupon code system |
-| `database/migration_026_product_variants.sql` | Product variants (size, color — with per-variant stock) |
-| `database/migration_027_login_log_user.sql` | Role + email in the login log |
-| `database/migration_028_notifications_tasks.sql` | Notification center + task management system |
-| `database/migration_029_invoice_sequence.sql` | Atomic invoice number sequence (GoBD-compliant — German audit-proof bookkeeping standard) |
-| `database/migration_030_discount_atomic.sql` | Atomic discount counter (race-condition-safe) |
-| `database/migration_031_team_lead_refund_requests.sql` | Team lead role + refund requests |
-| `database/migration_032_mod_totp.sql` | 2FA for staff members |
-| `database/migration_033_stock_reservation.sql` | Stock reservations + atomic stock decrement (race-condition- and oversell-safe) |
-| `database/migration_034_discount_claim.sql` | Atomic discount reservation (TOCTOU fix — prevents double redemption when max_uses=1) |
-| `database/migration_035_security_hardening.sql` | **Security-critical:** RLS hardening (no role escalation to owner, no fake "paid" orders via direct insert, contact-spam protection) + ratings count only verified reviews — **run on every DB** |
+| `database/migrations/archive/migration_001_products_detail.sql` | Extended product fields (highlights, certificates, nutritional info, rich text) |
+| `database/migrations/archive/migration_002_admin_login_log.sql` | Login log for the admin panel |
+| `database/migrations/archive/migration_003_product_images.sql` | Supabase Storage bucket for product images |
+| `database/migrations/archive/migration_004_grants.sql` | Permissions for all tables |
+| `database/migrations/archive/migration_005_shipping_settings.sql` | Shipping cost configuration |
+| `database/migrations/archive/migration_006_admin_totp.sql` | Admin 2FA table (TOTP) |
+| `database/migrations/archive/migration_007_categories.sql` | Categories table for the admin panel |
+| `database/migrations/archive/migration_008_profiles_email.sql` | Email column in customer profiles + automatic trigger |
+| `database/migrations/archive/migration_009_profiles_roles.sql` | Role extension (team lead role) |
+| `database/migrations/archive/migration_010_order_payment_method.sql` | Payment method + product image in orders |
+| `database/migrations/archive/migration_011_user_ban.sql` | Customer ban/unban system |
+| `database/migrations/archive/migration_012_push_subscriptions.sql` | Web push notifications |
+| `database/migrations/archive/migration_013_invoice_label.sql` | Invoice numbers + DHL tracking columns |
+| `database/migrations/archive/migration_014_shop_settings_categories_image.sql` | Shop settings + category images |
+| `database/migrations/archive/migration_014b_ticket_messages.sql` | Ticket chat (message history) |
+| `database/migrations/archive/migration_015_mod_invites_admin_config.sql` | Staff invitations + admin configuration in DB |
+| `database/migrations/archive/migration_016_must_change_password.sql` | Password change requirement on first login |
+| `database/migrations/archive/migration_017_service_role_grants.sql` | Missing backend permissions (service_role) |
+| `database/migrations/archive/migration_018_tickets_guest.sql` | Guest tickets (support without an account) |
+| `database/migrations/archive/migration_019_ticket_priority.sql` | Ticket priority levels (low / normal / high / urgent) |
+| `database/migrations/archive/migration_020_cleanup_testdata.sql` | Cleanup of test data |
+| `database/migrations/archive/migration_021_missing_grants.sql` | Additional missing permissions |
+| `database/migrations/archive/migration_022_stripe_payment_intent.sql` | Stripe Payment Intent ID in orders |
+| `database/migrations/archive/migration_023_return_requests.sql` | Return requests table |
+| `database/migrations/archive/migration_024_return_items.sql` | Items in return requests (JSONB) |
+| `database/migrations/archive/migration_025_discount_codes.sql` | Discount / coupon code system |
+| `database/migrations/archive/migration_026_product_variants.sql` | Product variants (size, color — with per-variant stock) |
+| `database/migrations/archive/migration_027_login_log_user.sql` | Role + email in the login log |
+| `database/migrations/archive/migration_028_notifications_tasks.sql` | Notification center + task management system |
+| `database/migrations/archive/migration_029_invoice_sequence.sql` | Atomic invoice number sequence (GoBD-compliant — German audit-proof bookkeeping standard) |
+| `database/migrations/archive/migration_030_discount_atomic.sql` | Atomic discount counter (race-condition-safe) |
+| `database/migrations/archive/migration_031_team_lead_refund_requests.sql` | Team lead role + refund requests |
+| `database/migrations/archive/migration_032_mod_totp.sql` | 2FA for staff members |
+| `database/migrations/archive/migration_033_stock_reservation.sql` | Stock reservations + atomic stock decrement (race-condition- and oversell-safe) |
+| `database/migrations/archive/migration_034_discount_claim.sql` | Atomic discount reservation (TOCTOU fix — prevents double redemption when max_uses=1) |
+| `database/migrations/archive/migration_035_security_hardening.sql` | **Security-critical:** RLS hardening (no role escalation to owner, no fake "paid" orders via direct insert, contact-spam protection) + ratings count only verified reviews — **run on every DB** |
 
 > **Order matters:** Always run migrations in the order listed above. All files are idempotent — running them more than once will not cause errors.
 >

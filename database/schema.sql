@@ -8,10 +8,10 @@
 --      Es enthält ALLE Migrationen 001–035 (inkl. der Sicherheits-Härtung 035).
 --   2. Optional: seed.sql ausführen → Beispieldaten zum Testen
 --
--- Die einzelnen migration_XXX.sql Dateien werden für eine Frisch-Installation
--- NICHT benötigt — sie dienen nur dem Update BESTEHENDER Datenbanken (führe dort
--- die Migrationen aus, die du noch nicht eingespielt hast). migration_035 muss
--- auf JEDER bestehenden DB nachgezogen werden (Sicherheit).
+-- Die einzelnen migration_XXX.sql Dateien (in database/migrations/archive/) werden
+-- für eine Frisch-Installation NICHT benötigt — sie dienen nur dem Update
+-- BESTEHENDER Datenbanken. migration_035 muss auf JEDER bestehenden DB nachgezogen
+-- werden (Sicherheit). Siehe database/README.md.
 --
 -- Ausführen: Supabase-Dashboard → SQL Editor → Inhalt einfügen → Run
 -- ══════════════════════════════════════════════════════════════════════════════

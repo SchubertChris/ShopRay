@@ -175,8 +175,8 @@ GPT-5.5 lieferte zwei „launch-ready"-Bewertungen. Multi-Agent-Audit (verify + 
 ## Offene Aufgaben (manuell durch User)
 
 ### Supabase-Migrationen noch ausführen
-- [ ] **Migration 030** — `increment_discount_uses` RPC — `database/migration_030_discount_atomic.sql`
-- [ ] **Migration 031** — team_lead-Rolle + refund_requests — `database/migration_031_team_lead_refund_requests.sql`
+- [ ] **Migration 030** — `increment_discount_uses` RPC — `database/migrations/archive/migration_030_discount_atomic.sql`
+- [ ] **Migration 031** — team_lead-Rolle + refund_requests — `database/migrations/archive/migration_031_team_lead_refund_requests.sql`
 - [x] **Migration 032** — `mod_totp` Tabelle (Mod-2FA) — ausgeführt ✓
 - [x] **Migration 033** — Stock-Reservierungen + atomarer Abzug — ausgeführt ✓
 - [x] **Migration 034** — Atomare Discount-Reservierung (TOCTOU-Fix) — ausgeführt ✓
